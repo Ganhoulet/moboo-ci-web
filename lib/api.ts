@@ -1,4 +1,10 @@
-import type { Espace, Paginated, Residence } from "./types";
+import type {
+  Espace,
+  EspaceDetail,
+  Paginated,
+  Residence,
+  ResidenceDetail,
+} from "./types";
 
 /**
  * Client du moteur NestJS (module `marketplace`, endpoints publics).
@@ -48,8 +54,27 @@ export async function listEspaces(params?: {
   }
 }
 
-/** Formate un montant en FCFA (XOF), sans décimales. */
-export function formatXOF(n: number | null | undefined): string {
-  if (n == null) return "—";
-  return new Intl.NumberFormat("fr-FR").format(Math.round(n)) + " FCFA";
+/** Détail d'une résidence (avec ses appartements). null si introuvable. */
+export async function getResidence(id: string): Promise<ResidenceDetail | null> {
+  try {
+    return await apiGet<ResidenceDetail>(`/marketplace/residences/${encodeURIComponent(id)}`);
+  } catch {
+    return null;
+  }
+}
+
+/** Détail d'un espace événementiel. null si introuvable. */
+export async function getEspace(idOrSlug: string): Promise<EspaceDetail | null> {
+  try {
+    return await apiGet<EspaceDetail>(`/marketplace/espaces/${encodeURIComponent(idOrSlug)}`);
+  } catch {
+    return null;
+  }
+}
+
+/** Formate un montant en FCFA (XOF), sans décimales. Accepte number | string. */
+export function formatXOF(n: number | string | null | undefined): string {
+  const v = typeof n === "string" ? Number(n) : n;
+  if (v == null || Number.isNaN(v)) return "—";
+  return new Intl.NumberFormat("fr-FR").format(Math.round(v)) + " FCFA";
 }

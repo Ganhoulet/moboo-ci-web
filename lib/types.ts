@@ -40,3 +40,25 @@ export interface Paginated<T> {
   perPage: number;
   items: T[];
 }
+
+export interface Apartment {
+  id: string;
+  type: string;
+  surface: number | null;
+  nightlyPrice: number | string;
+  weeklyPrice: number | string | null;
+  photos: string[];
+  amenities: string[];
+  description: string | null;
+  status: string;
+}
+
+export interface ResidenceDetail extends Residence {
+  apartments: Apartment[];
+}
+
+export interface EspaceDetail extends Espace {
+  photos: string[];
+  reglesInternes: string | null;
+  equipementsInclus: string[];
+}
