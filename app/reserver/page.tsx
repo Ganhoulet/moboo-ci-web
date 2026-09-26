@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getEspace, getResidence } from "@/lib/api";
 import { BookingForm } from "@/components/booking-form";
+import { EventBookingForm } from "@/components/event-booking-form";
 
 export const metadata: Metadata = { title: "Réserver" };
 
@@ -71,22 +72,38 @@ export default async function ReserverPage({
     }
   }
 
-  // ── Espace événementiel : tunnel dédié à venir ──
+  // ── Espace événementiel : demande de date ──
   if (type === "espace" && id) {
     const e = await getEspace(id);
+    const zone = e ? [e.quartier, e.commune].filter(Boolean).join(", ") : "";
     return (
-      <div className="container-page py-14">
-        <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-card">
-          <h1 className="font-display text-2xl font-extrabold text-ink">
-            Réserver — {e?.nom ?? "espace"}
-          </h1>
-          <p className="mt-2 text-muted">
-            La réservation en ligne des espaces événementiels arrive très bientôt.
-            En attendant, contactez le propriétaire depuis la fiche.
-          </p>
-          <Link href={`/espace/${id}`} className="btn-ghost mt-6">
-            ← Retour à l'espace
-          </Link>
+      <div className="container-page py-10">
+        <Link href={`/espace/${id}`} className="text-sm font-semibold text-muted hover:text-ink">
+          ← {e?.nom ?? "Espace"}
+        </Link>
+        <h1 className="mt-3 font-display text-2xl font-extrabold text-ink sm:text-3xl">
+          Réserver — {e?.nom ?? "espace"}
+        </h1>
+        {zone ? <p className="mt-1 text-muted">{zone}</p> : null}
+        <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_400px]">
+          <div className="space-y-3">
+            {[
+              { n: "1", t: "Votre demande", d: "Date, type d'événement, nombre d'invités." },
+              { n: "2", t: "Confirmation & devis", d: "Le propriétaire vous recontacte pour la date et le prix." },
+              { n: "3", t: "Acompte", d: "Vous réglez pour bloquer la date." },
+            ].map((s) => (
+              <div key={s.n} className="flex gap-3 rounded-xl bg-white p-4 shadow-card">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-800 text-sm font-bold text-white">
+                  {s.n}
+                </span>
+                <div>
+                  <p className="font-semibold text-ink">{s.t}</p>
+                  <p className="text-sm text-muted">{s.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <EventBookingForm espaceId={id} />
         </div>
       </div>
     );

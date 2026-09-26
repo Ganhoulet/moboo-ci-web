@@ -47,3 +47,45 @@ export async function submitReservation(
     return { ok: false, message: "Service indisponible pour le moment. Réessayez plus tard." };
   }
 }
+
+/** Demande de réservation d'un espace événementiel. */
+export async function submitEventReservation(
+  _prev: ReserveState,
+  formData: FormData,
+): Promise<ReserveState> {
+  const espaceId = String(formData.get("espaceId") || "");
+  const payload = {
+    guestName: String(formData.get("guestName") || "").trim(),
+    guestPhone: String(formData.get("guestPhone") || "").trim(),
+    dateDebut: String(formData.get("dateDebut") || ""),
+    dateFin: String(formData.get("dateFin") || ""),
+    nbInvites: Number(formData.get("nbInvites") || 1),
+    typeEvenement: String(formData.get("typeEvenement") || "") || undefined,
+    nomEvenement: String(formData.get("nomEvenement") || "") || undefined,
+  };
+  if (!espaceId || !payload.guestName || !payload.guestPhone || !payload.dateDebut || !payload.dateFin) {
+    return { ok: false, message: "Merci de remplir les dates, vos nom et téléphone." };
+  }
+  try {
+    const res = await fetch(
+      `${API_URL}/marketplace/espaces/${encodeURIComponent(espaceId)}/reserve`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      },
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, message: (data && data.message) || "La demande a échoué. Réessayez." };
+    }
+    return {
+      ok: true,
+      message:
+        "Demande envoyée ! Le propriétaire va vous recontacter pour confirmer la date et le devis.",
+    };
+  } catch {
+    return { ok: false, message: "Service indisponible pour le moment. Réessayez plus tard." };
+  }
+}
