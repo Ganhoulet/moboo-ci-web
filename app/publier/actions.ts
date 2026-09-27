@@ -10,6 +10,8 @@ export async function submitListing(
   formData: FormData,
 ): Promise<SubmitState> {
   const transaction = String(formData.get("transaction") || "");
+  const listingKind = String(formData.get("listingKind") || "classic");
+  const subType = String(formData.get("subType") || "").trim() || undefined;
   const photos = String(formData.get("photos") || "")
     .split(/\s*\n\s*/)
     .map((s) => s.trim())
@@ -20,12 +22,15 @@ export async function submitListing(
     return v != null && String(v).trim() !== "" ? Number(v) : undefined;
   };
 
+  const kind = ["furnished", "event"].includes(listingKind) ? listingKind : "classic";
   const payload = {
     transaction,
+    listingKind: kind,
+    subType,
     propertyType: String(formData.get("propertyType") || "autre"),
     title: String(formData.get("title") || "").trim(),
     price: Number(formData.get("price") || 0),
-    priceUnit: transaction === "rent" ? "month" : undefined,
+    priceUnit: kind === "furnished" ? "night" : transaction === "rent" ? "month" : undefined,
     city: String(formData.get("city") || "").trim(),
     commune: String(formData.get("commune") || "").trim() || undefined,
     quartier: String(formData.get("quartier") || "").trim() || undefined,
