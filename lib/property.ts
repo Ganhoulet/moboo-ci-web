@@ -25,6 +25,8 @@ export interface Property {
   transaction: Transaction;
   reservable: boolean;
   meta?: string;
+  propertyType?: string; // pour les annonces classiques (filtre)
+  bedrooms?: number | null;
 }
 
 export const TRANSACTION_BADGE: Record<Transaction, string> = {
@@ -93,6 +95,8 @@ async function generalListings(transaction?: "rent" | "sale"): Promise<Property[
     meta: l.bedrooms
       ? `${l.bedrooms} ch.`
       : PROPERTY_TYPE_LABEL[l.propertyType] ?? l.propertyType,
+    propertyType: l.propertyType,
+    bedrooms: l.bedrooms,
   }));
 }
 
