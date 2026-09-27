@@ -130,6 +130,21 @@ export async function listListingsPage(opts: {
   return { items: items.map(mapListing), total, page, perPage };
 }
 
+/** Biens similaires : même ville + même type de transaction (hors bien courant). */
+export async function similarListings(opts: {
+  city: string;
+  transaction: "rent" | "sale";
+  excludeId: string; // id complet "lst-xxx" ou l'id brut
+  limit?: number;
+}): Promise<Property[]> {
+  const { items } = await listListings({ transaction: opts.transaction, city: opts.city, perPage: 8 });
+  const raw = opts.excludeId.replace(/^lst-/, "");
+  return items
+    .filter((l) => l.id !== raw)
+    .slice(0, opts.limit ?? 3)
+    .map(mapListing);
+}
+
 /** Annonces classiques (à louer / à vendre) via /marketplace/properties. */
 async function generalListings(transaction?: "rent" | "sale"): Promise<Property[]> {
   const { items } = await listListings({ transaction, perPage: 24 });

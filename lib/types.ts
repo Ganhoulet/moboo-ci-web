@@ -79,6 +79,8 @@ export interface ListingItem {
   surface: number | null;
   photos: string[];
   // détail uniquement :
+  latitude?: number | null;
+  longitude?: number | null;
   description?: string | null;
   contactName?: string | null;
   contactPhone?: string | null;
