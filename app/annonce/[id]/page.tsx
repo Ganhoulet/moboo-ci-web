@@ -8,6 +8,7 @@ import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
 import { InquiryForm } from "@/components/inquiry-form";
 import { AgentCard } from "@/components/agent-card";
+import { VisitForm } from "@/components/visit-form";
 
 export const revalidate = 60;
 
@@ -186,6 +187,10 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
               <AgentCard agent={l.agent} />
             </div>
           ) : null}
+
+          <div className="mt-4">
+            <VisitForm listingId={l.id} />
+          </div>
 
           <div className="mt-4">
             <InquiryForm listingId={l.id} title={l.title} />

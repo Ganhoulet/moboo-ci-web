@@ -164,13 +164,15 @@ export function siteLogout(refreshToken?: string) {
   return apiPost("/site/auth/logout", { refreshToken });
 }
 
-/** Demande de contact sur une annonce (formulaire de demande). */
+/** Demande de contact ou de visite sur une annonce. */
 export function submitInquiry(input: {
   listingId?: string;
   name: string;
   phone: string;
   email?: string;
   message?: string;
+  kind?: "contact" | "visit";
+  preferredDate?: string;
 }) {
   return apiPost<{ id: string; ok: boolean }>("/marketplace/inquiries", input);
 }
