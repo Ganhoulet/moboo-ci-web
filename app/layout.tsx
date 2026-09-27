@@ -49,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/annonces?transaction=sale" className="hover:text-ink">Acheter</Link>
               <Link href="/reserver" className="hover:text-ink">Réserver</Link>
               <a href="https://moboo.ci/blog" className="hover:text-ink">Blog</a>
+              <Link href="/agent/login" className="font-semibold text-brand-800 hover:text-brand-900">Espace agent</Link>
               <span className="text-slate-400">© {new Date().getFullYear()} Moboo</span>
             </nav>
           </div>
