@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatXOF, getEspace } from "@/lib/api";
+import { formatXOF, getEspace, getEspaceOccupied } from "@/lib/api";
 import { PhotoGrid } from "@/components/photo-grid";
+import { EspaceBooking } from "@/components/espace-booking";
 
 export const revalidate = 60;
 
@@ -35,6 +36,7 @@ export default async function EspacePage({ params }: { params: { slug: string } 
   const prices = (e.tarifs ?? []).map((t) => t.prix ?? 0).filter((p) => p > 0);
   const aPartir = prices.length ? Math.min(...prices) : null;
   const photos = [e.photoPrincipaleUrl, ...(e.photos ?? [])].filter(Boolean) as string[];
+  const occupied = await getEspaceOccupied(e.id);
 
   return (
     <div className="container-page py-8">
@@ -104,25 +106,7 @@ export default async function EspacePage({ params }: { params: { slug: string } 
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-            <div className="flex items-baseline gap-1">
-              {aPartir ? (
-                <>
-                  <span className="text-sm text-muted">dès</span>
-                  <span className="text-2xl font-extrabold text-ink">{formatXOF(aPartir)}</span>
-                </>
-              ) : (
-                <span className="text-xl font-bold text-ink">Sur demande</span>
-              )}
-            </div>
-            <p className="mt-1 text-sm text-muted">Acompte à la réservation.</p>
-            <Link
-              href={`/reserver?type=espace&id=${encodeURIComponent(e.slug || e.id)}`}
-              className="btn-primary mt-4 w-full bg-accent-600 hover:bg-accent-700"
-            >
-              Demander une date
-            </Link>
-          </div>
+          <EspaceBooking espaceId={e.id} occupied={occupied} fromPrice={aPartir} />
         </aside>
       </div>
     </div>

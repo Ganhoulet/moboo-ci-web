@@ -191,6 +191,28 @@ export async function siteGetMe(token: string): Promise<SiteAccount | null> {
   }
 }
 
+export interface OccupiedRange { from: string; to: string }
+
+/** Dates déjà réservées d'un logement (pour le calendrier). Ne casse jamais le rendu. */
+export async function getApartmentOccupied(apartmentId: string): Promise<OccupiedRange[]> {
+  try {
+    const r = await apiGet<{ ranges: OccupiedRange[] }>(`/marketplace/apartments/${encodeURIComponent(apartmentId)}/occupied`, 30);
+    return r.ranges ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/** Dates déjà réservées d'un espace événementiel. */
+export async function getEspaceOccupied(espaceId: string): Promise<OccupiedRange[]> {
+  try {
+    const r = await apiGet<{ ranges: OccupiedRange[] }>(`/marketplace/espaces/${encodeURIComponent(espaceId)}/occupied`, 30);
+    return r.ranges ?? [];
+  } catch {
+    return [];
+  }
+}
+
 /** Formate un montant en FCFA (XOF), sans décimales. Accepte number | string. */
 export function formatXOF(n: number | string | null | undefined): string {
   const v = typeof n === "string" ? Number(n) : n;

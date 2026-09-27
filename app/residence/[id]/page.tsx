@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatXOF, getResidence } from "@/lib/api";
+import { formatXOF, getResidence, getApartmentOccupied, type OccupiedRange } from "@/lib/api";
 import { PhotoGrid } from "@/components/photo-grid";
+import { ResidenceBooking, type BookableApt } from "@/components/residence-booking";
 
 export const revalidate = 60;
 
@@ -24,6 +25,15 @@ export default async function ResidencePage({ params }: { params: { id: string }
     ...(r.photos ?? []),
     ...r.apartments.flatMap((a) => a.photos ?? []),
   ];
+
+  // Logements réservables + dates occupées (calendrier), récupérées côté serveur.
+  const bookable: BookableApt[] = (r.apartments ?? []).map((a) => ({
+    id: a.id, type: a.type, nightlyPrice: Number(a.nightlyPrice) || 0,
+  }));
+  const occupiedByApt: Record<string, OccupiedRange[]> = {};
+  await Promise.all(
+    bookable.map(async (a) => { occupiedByApt[a.id] = await getApartmentOccupied(a.id); }),
+  );
 
   return (
     <div className="container-page py-8">
@@ -96,35 +106,24 @@ export default async function ResidencePage({ params }: { params: { id: string }
           ) : null}
         </div>
 
-        {/* Carte de réservation */}
+        {/* Carte de réservation avec calendrier (façon Airbnb) */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-extrabold text-ink">{formatXOF(r.minNightlyPrice)}</span>
-              <span className="text-sm text-muted">/ nuit</span>
+          {bookable.length > 0 ? (
+            <ResidenceBooking apartments={bookable} occupiedByApt={occupiedByApt} depositPercent={30} />
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-extrabold text-ink">{formatXOF(r.minNightlyPrice)}</span>
+                <span className="text-sm text-muted">/ nuit</span>
+              </div>
+              <Link
+                href={`/reserver?type=residence&id=${encodeURIComponent(r.id)}`}
+                className="btn-primary mt-4 w-full bg-accent-600 hover:bg-accent-700"
+              >
+                Choisir les dates
+              </Link>
             </div>
-            <p className="mt-1 text-sm text-muted">Acompte 30 % à la réservation.</p>
-            <Link
-              href={`/reserver?type=residence&id=${encodeURIComponent(r.id)}`}
-              className="btn-primary mt-4 w-full bg-accent-600 hover:bg-accent-700"
-            >
-              Choisir les dates
-            </Link>
-            <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              {[
-                "L'hôte confirme la disponibilité",
-                "Paiement sécurisé de l'acompte",
-                "Code d'arrivée à votre check-in",
-              ].map((t) => (
-                <li key={t} className="flex items-start gap-2">
-                  <svg className="mt-0.5 shrink-0 text-accent-600" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                    <path d="m5 12 4 4 10-10" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </div>
+          )}
           <p className="mt-3 px-1 text-xs text-muted">
             L'adresse exacte est communiquée après le paiement de l'acompte.
           </p>
