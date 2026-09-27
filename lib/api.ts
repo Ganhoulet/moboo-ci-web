@@ -99,6 +99,75 @@ export async function getEspace(idOrSlug: string): Promise<EspaceDetail | null> 
   }
 }
 
+// ─── Auth consommateur (OTP) ──────────────────────────────────────────────
+export interface SiteAccount {
+  id: string;
+  phone: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  locale: string;
+  createdAt: string;
+}
+
+export interface SiteTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  isNew?: boolean;
+  account?: SiteAccount;
+}
+
+async function apiPost<T>(path: string, body: unknown, token?: string): Promise<{ ok: boolean; status: number; data: any }> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
+
+export function siteRequestOtp(phone: string, deviceId?: string) {
+  return apiPost<{ sent: boolean; channel: string; expiresIn: number; devCode?: string }>(
+    "/site/auth/request-otp",
+    { phone, deviceId },
+  );
+}
+
+export function siteVerifyOtp(input: {
+  phone: string;
+  code: string;
+  firstName?: string;
+  lastName?: string;
+  deviceId?: string;
+}) {
+  return apiPost<SiteTokens>("/site/auth/verify-otp", input);
+}
+
+export function siteLogout(refreshToken?: string) {
+  return apiPost("/site/auth/logout", { refreshToken });
+}
+
+/** Profil du compte connecté (Authorization: Bearer). */
+export async function siteGetMe(token: string): Promise<SiteAccount | null> {
+  try {
+    const res = await fetch(`${API_URL}/site/auth/me`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as SiteAccount;
+  } catch {
+    return null;
+  }
+}
+
 /** Formate un montant en FCFA (XOF), sans décimales. Accepte number | string. */
 export function formatXOF(n: number | string | null | undefined): string {
   const v = typeof n === "string" ? Number(n) : n;
