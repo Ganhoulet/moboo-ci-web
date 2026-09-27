@@ -6,6 +6,7 @@ import { similarListings } from "@/lib/property";
 import { PhotoGrid } from "@/components/photo-grid";
 import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
+import { InquiryForm } from "@/components/inquiry-form";
 
 export const revalidate = 60;
 
@@ -177,6 +178,10 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
               Mise en relation directe avec l'annonceur — Moboo ne prend pas de commission
               sur les ventes et locations classiques.
             </p>
+          </div>
+
+          <div className="mt-4">
+            <InquiryForm listingId={l.id} title={l.title} />
           </div>
         </aside>
       </div>

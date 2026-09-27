@@ -164,6 +164,17 @@ export function siteLogout(refreshToken?: string) {
   return apiPost("/site/auth/logout", { refreshToken });
 }
 
+/** Demande de contact sur une annonce (formulaire de demande). */
+export function submitInquiry(input: {
+  listingId?: string;
+  name: string;
+  phone: string;
+  email?: string;
+  message?: string;
+}) {
+  return apiPost<{ id: string; ok: boolean }>("/marketplace/inquiries", input);
+}
+
 /** Profil du compte connecté (Authorization: Bearer). */
 export async function siteGetMe(token: string): Promise<SiteAccount | null> {
   try {
