@@ -1,6 +1,7 @@
 import type {
   Espace,
   EspaceDetail,
+  ListingItem,
   Paginated,
   Residence,
   ResidenceDetail,
@@ -51,6 +52,32 @@ export async function listEspaces(params?: {
     return await apiGet<Paginated<Espace>>(`/marketplace/espaces?${q}`);
   } catch {
     return { total: 0, page: 1, perPage: 0, items: [] };
+  }
+}
+
+/** Annonces classiques à louer / à vendre. Ne casse jamais le rendu. */
+export async function listListings(params?: {
+  transaction?: "rent" | "sale";
+  city?: string;
+  perPage?: number;
+}): Promise<Paginated<ListingItem>> {
+  const q = new URLSearchParams();
+  if (params?.transaction) q.set("transaction", params.transaction);
+  if (params?.city) q.set("city", params.city);
+  q.set("perPage", String(params?.perPage ?? 24));
+  try {
+    return await apiGet<Paginated<ListingItem>>(`/marketplace/properties?${q}`);
+  } catch {
+    return { total: 0, page: 1, perPage: 0, items: [] };
+  }
+}
+
+/** Détail d'une annonce. null si introuvable. */
+export async function getListing(id: string): Promise<ListingItem | null> {
+  try {
+    return await apiGet<ListingItem>(`/marketplace/properties/${encodeURIComponent(id)}`);
+  } catch {
+    return null;
   }
 }
 

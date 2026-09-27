@@ -75,9 +75,8 @@ export default async function AnnoncesPage({
         <div className="mx-auto mt-12 max-w-md rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
           <h3 className="font-semibold text-ink">Aucun bien pour ce filtre</h3>
           <p className="mt-1 text-sm text-muted">
-            Les annonces classiques (à louer / à vendre) arrivent avec la migration
-            du catalogue. Les biens réservables (meublés & espaces) sont publiés
-            depuis Moboo Resi & Event.
+            Aucune annonce ne correspond pour le moment. De nouvelles annonces
+            sont publiées régulièrement — revenez bientôt.
           </p>
           <Link href="/annonces" className="btn-ghost mt-5">
             Voir tout

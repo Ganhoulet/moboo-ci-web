@@ -1,4 +1,15 @@
-import { listEspaces, listResidences } from "./api";
+import { listEspaces, listListings, listResidences } from "./api";
+
+const PROPERTY_TYPE_LABEL: Record<string, string> = {
+  appartement: "Appartement",
+  maison: "Maison",
+  villa: "Villa",
+  studio: "Studio",
+  terrain: "Terrain",
+  bureau: "Bureau",
+  magasin: "Magasin",
+  autre: "Bien",
+};
 
 /** Le site couvre TOUT Moboo.ci : à louer, à vendre + le réservable (meublé/event). */
 export type Transaction = "rent" | "sale" | "furnished" | "event";
@@ -66,22 +77,50 @@ async function reservableEspaces(): Promise<Property[]> {
   });
 }
 
+/** Annonces classiques (à louer / à vendre) via /marketplace/properties. */
+async function generalListings(transaction?: "rent" | "sale"): Promise<Property[]> {
+  const { items } = await listListings({ transaction, perPage: 24 });
+  return items.map((l) => ({
+    id: `lst-${l.id}`,
+    href: `/annonce/${l.id}`,
+    title: l.title,
+    zone: [l.quartier || l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire",
+    image: l.photos?.[0] ?? null,
+    price: l.price,
+    priceLabel: l.transaction === "rent" ? "/ mois" : "",
+    transaction: l.transaction,
+    reservable: false,
+    meta: l.bedrooms
+      ? `${l.bedrooms} ch.`
+      : PROPERTY_TYPE_LABEL[l.propertyType] ?? l.propertyType,
+  }));
+}
+
 /**
- * Catalogue Moboo.ci. Les biens RÉSERVABLES (meublé/événementiel) viennent du
- * module `marketplace`. Les annonces classiques (à louer / à vendre) viendront
- * de l'endpoint `/properties` du moteur — brique à construire (migration
- * WordPress → NestJS des annonces). En attendant, on affiche le réservable.
+ * Catalogue Moboo.ci complet : réservable (meublé/événementiel, via marketplace)
+ * + annonces classiques (à louer / à vendre, via /properties). On ne récupère
+ * que les sources utiles au filtre demandé.
  */
 export async function listProperties(opts?: {
   transaction?: Transaction | "all";
   reservable?: boolean;
 }): Promise<Property[]> {
-  const [res, esp] = await Promise.all([reservableResidences(), reservableEspaces()]);
-  let all: Property[] = [...res, ...esp];
-  // TODO(engine): + annonces générales rent/sale via GET /properties.
-  if (opts?.reservable) all = all.filter((p) => p.reservable);
-  if (opts?.transaction && opts.transaction !== "all") {
-    all = all.filter((p) => p.transaction === opts.transaction);
-  }
+  const t = opts?.transaction && opts.transaction !== "all" ? opts.transaction : undefined;
+  const reservableOnly = !!opts?.reservable;
+
+  const [res, esp, lst] = await Promise.all([
+    !reservableOnly && (t === "rent" || t === "sale") ? Promise.resolve([]) :
+      (!t || t === "furnished") ? reservableResidences() : Promise.resolve([]),
+    !reservableOnly && (t === "rent" || t === "sale") ? Promise.resolve([]) :
+      (!t || t === "event") ? reservableEspaces() : Promise.resolve([]),
+    reservableOnly ? Promise.resolve([]) :
+      (!t || t === "rent" || t === "sale")
+        ? generalListings(t === "rent" || t === "sale" ? t : undefined)
+        : Promise.resolve([]),
+  ]);
+
+  let all: Property[] = [...res, ...esp, ...lst];
+  if (reservableOnly) all = all.filter((p) => p.reservable);
+  if (t) all = all.filter((p) => p.transaction === t);
   return all;
 }

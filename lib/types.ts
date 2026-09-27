@@ -62,3 +62,24 @@ export interface EspaceDetail extends Espace {
   reglesInternes: string | null;
   equipementsInclus: string[];
 }
+
+/** Annonce classique (à louer / à vendre) — feed public /marketplace/properties. */
+export interface ListingItem {
+  id: string;
+  transaction: "rent" | "sale";
+  propertyType: string;
+  title: string;
+  price: number;
+  priceUnit: string | null;
+  currency: string;
+  city: string;
+  commune: string | null;
+  quartier: string | null;
+  bedrooms: number | null;
+  surface: number | null;
+  photos: string[];
+  // détail uniquement :
+  description?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+}
