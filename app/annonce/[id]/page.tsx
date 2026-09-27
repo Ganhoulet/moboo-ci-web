@@ -9,6 +9,7 @@ import { PropertyCard } from "@/components/property-card";
 import { InquiryForm } from "@/components/inquiry-form";
 import { AgentCard } from "@/components/agent-card";
 import { VisitForm } from "@/components/visit-form";
+import { MobileContactBar } from "@/components/mobile-contact-bar";
 
 export const revalidate = 60;
 
@@ -76,8 +77,11 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
   const ytId = youtubeId(l.videoUrl);
   const features = l.features ?? [];
 
+  const barPhone = l.agent?.phone || l.contactPhone;
+  const barWhatsapp = l.agent?.whatsapp || l.contactPhone;
+
   return (
-    <div className="container-page py-8">
+    <div className="container-page py-8 pb-24 lg:pb-8">
       <Link href={`/annonces?transaction=${l.transaction}`} className="text-sm font-semibold text-muted hover:text-ink">
         ← Retour aux annonces
       </Link>
@@ -208,6 +212,8 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
           </div>
         </section>
       ) : null}
+
+      <MobileContactBar price={l.price} transaction={l.transaction} phone={barPhone} whatsapp={barWhatsapp} />
     </div>
   );
 }
