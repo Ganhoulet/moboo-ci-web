@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatXOF } from "@/lib/api";
 import { TRANSACTION_BADGE, type Property } from "@/lib/property";
+import { FavoriteButton } from "./favorite-button";
 
 export function PropertyCard({ p }: { p: Property }) {
   return (
@@ -28,6 +29,9 @@ export function PropertyCard({ p }: { p: Property }) {
           <span className="absolute right-3 top-3 rounded-md bg-ink/75 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
             {TRANSACTION_BADGE[p.transaction]}
           </span>
+
+          {/* Favori (localStorage, sans compte) */}
+          <FavoriteButton property={p} className="absolute left-3 top-3" />
 
           {/* Prix en overlay bas-gauche */}
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/75 via-ink/20 to-transparent p-3">

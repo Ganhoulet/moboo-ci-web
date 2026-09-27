@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MobooLogo } from "./logo";
+import { FavoritesNavButton } from "./favorites-nav-button";
 
 const NAV = [
   { href: "/annonces?transaction=rent", label: "Louer" },
@@ -34,6 +35,7 @@ export function SiteHeader() {
             </svg>
             Publier
           </Link>
+          <FavoritesNavButton />
           <button
             aria-label="Mon compte"
             className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 text-slate-600 transition hover:bg-slate-50"
