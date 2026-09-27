@@ -10,6 +10,7 @@ import { InquiryForm } from "@/components/inquiry-form";
 import { AgentCard } from "@/components/agent-card";
 import { VisitForm } from "@/components/visit-form";
 import { MobileContactBar } from "@/components/mobile-contact-bar";
+import { ListingReservation } from "@/components/listing-reservation";
 
 export const revalidate = 60;
 
@@ -79,6 +80,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
 
   const barPhone = l.agent?.phone || l.contactPhone;
   const barWhatsapp = l.agent?.whatsapp || l.contactPhone;
+  const isReservable = l.listingKind === "furnished" || l.listingKind === "event";
 
   return (
     <div className="container-page py-8 pb-24 lg:pb-8">
@@ -88,7 +90,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-          {TX_LABEL[l.transaction] ?? l.transaction}
+          {l.listingKind === "furnished" ? "Meublé" : l.listingKind === "event" ? "Événementiel" : TX_LABEL[l.transaction] ?? l.transaction}
         </span>
         <span className="chip">{TYPE_LABEL[l.propertyType] ?? "Bien"}</span>
       </div>
@@ -162,29 +164,38 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-extrabold text-ink">{formatXOF(l.price)}</span>
-              {l.transaction === "rent" ? <span className="text-sm text-muted">/ mois</span> : null}
-            </div>
-            {l.contactName ? (
-              <p className="mt-3 text-sm text-slate-600">
-                Contact : <span className="font-semibold text-ink">{l.contactName}</span>
-              </p>
-            ) : null}
-            {phoneDigits ? (
-              <div className="mt-3 grid gap-2">
-                <a href={`tel:${l.contactPhone}`} className="btn-primary w-full bg-brand-800 hover:bg-brand-900">Appeler</a>
-                <a href={`https://wa.me/${phoneDigits}`} className="btn-ghost w-full" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+          {isReservable ? (
+            <ListingReservation
+              listingId={l.id}
+              mode={l.listingKind === "event" ? "event" : "furnished"}
+              price={l.price}
+              depositPercent={30}
+            />
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-extrabold text-ink">{formatXOF(l.price)}</span>
+                {l.transaction === "rent" ? <span className="text-sm text-muted">/ mois</span> : null}
               </div>
-            ) : (
-              <p className="mt-3 text-sm text-muted">Contact communiqué par l'annonceur.</p>
-            )}
-            <p className="mt-3 text-xs text-muted">
-              Mise en relation directe avec l'annonceur — Moboo ne prend pas de commission
-              sur les ventes et locations classiques.
-            </p>
-          </div>
+              {l.contactName ? (
+                <p className="mt-3 text-sm text-slate-600">
+                  Contact : <span className="font-semibold text-ink">{l.contactName}</span>
+                </p>
+              ) : null}
+              {phoneDigits ? (
+                <div className="mt-3 grid gap-2">
+                  <a href={`tel:${l.contactPhone}`} className="btn-primary w-full bg-brand-800 hover:bg-brand-900">Appeler</a>
+                  <a href={`https://wa.me/${phoneDigits}`} className="btn-ghost w-full" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-muted">Contact communiqué par l'annonceur.</p>
+              )}
+              <p className="mt-3 text-xs text-muted">
+                Mise en relation directe avec l'annonceur — Moboo ne prend pas de commission
+                sur les ventes et locations classiques.
+              </p>
+            </div>
+          )}
 
           {l.agent ? (
             <div className="mt-4">

@@ -87,6 +87,8 @@ export async function reservableEspaces(): Promise<Property[]> {
 }
 
 function mapListing(l: import("./types").ListingItem): Property {
+  const kind = l.listingKind ?? "classic";
+  const reservable = kind === "furnished" || kind === "event";
   return {
     id: `lst-${l.id}`,
     href: `/annonce/${l.id}`,
@@ -94,9 +96,9 @@ function mapListing(l: import("./types").ListingItem): Property {
     zone: [l.quartier || l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire",
     image: l.photos?.[0] ?? null,
     price: l.price,
-    priceLabel: l.transaction === "rent" ? "/ mois" : "",
-    transaction: l.transaction,
-    reservable: false,
+    priceLabel: kind === "furnished" ? "/ nuit" : l.transaction === "rent" ? "/ mois" : "",
+    transaction: kind === "event" ? "event" : kind === "furnished" ? "furnished" : l.transaction,
+    reservable,
     meta: l.bedrooms
       ? `${l.bedrooms} ch.`
       : PROPERTY_TYPE_LABEL[l.propertyType] ?? l.propertyType,

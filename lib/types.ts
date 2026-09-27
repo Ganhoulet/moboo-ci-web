@@ -68,6 +68,8 @@ export interface ListingItem {
   id: string;
   transaction: "rent" | "sale";
   propertyType: string;
+  listingKind?: string; // classic | furnished | event
+  subType?: string | null;
   title: string;
   price: number;
   priceUnit: string | null;

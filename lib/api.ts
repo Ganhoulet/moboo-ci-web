@@ -171,7 +171,7 @@ export function submitInquiry(input: {
   phone: string;
   email?: string;
   message?: string;
-  kind?: "contact" | "visit";
+  kind?: "contact" | "visit" | "reservation";
   preferredDate?: string;
 }) {
   return apiPost<{ id: string; ok: boolean }>("/marketplace/inquiries", input);
