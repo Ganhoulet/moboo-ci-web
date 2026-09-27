@@ -7,6 +7,7 @@ import { PhotoGrid } from "@/components/photo-grid";
 import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
 import { InquiryForm } from "@/components/inquiry-form";
+import { AgentCard } from "@/components/agent-card";
 
 export const revalidate = 60;
 
@@ -179,6 +180,12 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
               sur les ventes et locations classiques.
             </p>
           </div>
+
+          {l.agent ? (
+            <div className="mt-4">
+              <AgentCard agent={l.agent} />
+            </div>
+          ) : null}
 
           <div className="mt-4">
             <InquiryForm listingId={l.id} title={l.title} />

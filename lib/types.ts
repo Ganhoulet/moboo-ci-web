@@ -89,4 +89,15 @@ export interface ListingItem {
   description?: string | null;
   contactName?: string | null;
   contactPhone?: string | null;
+  agent?: {
+    name: string;
+    kind: string; // agent | agency
+    phone?: string | null;
+    whatsapp?: string | null;
+    email?: string | null;
+    photoUrl?: string | null;
+    position?: string | null;
+    company?: string | null;
+    serviceArea?: string | null;
+  } | null;
 }
