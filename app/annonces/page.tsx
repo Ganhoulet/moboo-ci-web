@@ -3,6 +3,8 @@ import Link from "next/link";
 import { listProperties, type Transaction } from "@/lib/property";
 import { PropertyCard } from "@/components/property-card";
 import { FilterBar } from "@/components/filter-bar";
+import { SaveSearchButton } from "@/components/save-search-button";
+import { getSession } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "Annonces",
@@ -41,6 +43,14 @@ export default async function AnnoncesPage({
   if (propertyType) items = items.filter((p) => p.propertyType === propertyType);
 
   const hasFilters = !!(q || priceMin || priceMax || propertyType || active !== "all");
+  const loggedIn = !!getSession();
+  const searchCriteria = {
+    transaction: active !== "all" ? active : undefined,
+    q: q || undefined,
+    propertyType: propertyType || undefined,
+    priceMin,
+    priceMax,
+  };
 
   return (
     <div className="container-page py-8 sm:py-10">
@@ -65,6 +75,12 @@ export default async function AnnoncesPage({
           reservable={reservable}
         />
       </div>
+
+      {hasFilters ? (
+        <div className="mt-4">
+          <SaveSearchButton params={searchCriteria} loggedIn={loggedIn} />
+        </div>
+      ) : null}
 
       {items.length > 0 ? (
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

@@ -27,6 +27,13 @@ export function setSession(tokens: SiteTokens, account: SiteAccount) {
   jar.set(PROFILE, JSON.stringify(account), { ...baseCookie, maxAge: 60 * 60 * 24 * 30 });
 }
 
+/** Met à jour uniquement les jetons (après un refresh), sans toucher au profil. */
+export function setTokens(accessToken: string, refreshToken: string, expiresIn?: number) {
+  const jar = cookies();
+  jar.set(AT, accessToken, { ...baseCookie, maxAge: expiresIn ?? 7200 });
+  jar.set(RT, refreshToken, { ...baseCookie, maxAge: 60 * 60 * 24 * 30 });
+}
+
 export function clearSession() {
   const jar = cookies();
   jar.delete(AT);
