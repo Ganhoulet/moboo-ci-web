@@ -63,6 +63,7 @@ export async function listListings(params?: {
   priceMin?: number;
   priceMax?: number;
   propertyType?: string;
+  listingKind?: string;
   page?: number;
   perPage?: number;
 }): Promise<Paginated<ListingItem>> {
@@ -73,6 +74,7 @@ export async function listListings(params?: {
   if (params?.priceMin) q.set("priceMin", String(params.priceMin));
   if (params?.priceMax) q.set("priceMax", String(params.priceMax));
   if (params?.propertyType) q.set("propertyType", params.propertyType);
+  if (params?.listingKind) q.set("listingKind", params.listingKind);
   if (params?.page) q.set("page", String(params.page));
   q.set("perPage", String(params?.perPage ?? 24));
   try {

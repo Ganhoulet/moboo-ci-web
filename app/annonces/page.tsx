@@ -43,22 +43,28 @@ export default async function AnnoncesPage({
   const propertyType = (searchParams.propertyType ?? "").trim();
   const page = Math.max(1, Number(searchParams.page) || 1);
 
-  // Les meublés / espaces sont des jeux réduits (réservables) → filtrage client.
   const isReservableTab = active === "furnished" || active === "event";
 
   let items: Property[] = [];
   let total = 0;
 
   if (isReservableTab) {
-    const base = active === "furnished" ? await reservableResidences() : await reservableEspaces();
-    items = base;
-    if (q) {
-      const n = q.toLowerCase();
-      items = items.filter((p) => `${p.title} ${p.zone}`.toLowerCase().includes(n));
+    // Meublés / espaces = annonces réservables (listingKind) paginées côté serveur,
+    // + l'inventaire réservable des apps Moboo Resi/Event en tête de 1re page.
+    const kind = active === "furnished" ? "furnished" : "event";
+    const res = await listListingsPage({ listingKind: kind, q, priceMin, priceMax, propertyType, page, perPage: PER_PAGE });
+    let extra: Property[] = [];
+    if (page === 1) {
+      extra = active === "furnished" ? await reservableResidences() : await reservableEspaces();
+      if (q) {
+        const n = q.toLowerCase();
+        extra = extra.filter((p) => `${p.title} ${p.zone}`.toLowerCase().includes(n));
+      }
+      if (priceMin != null) extra = extra.filter((p) => p.price != null && p.price >= priceMin);
+      if (priceMax != null) extra = extra.filter((p) => p.price != null && p.price <= priceMax);
     }
-    if (priceMin != null) items = items.filter((p) => p.price != null && p.price >= priceMin);
-    if (priceMax != null) items = items.filter((p) => p.price != null && p.price <= priceMax);
-    total = items.length;
+    items = [...extra, ...res.items];
+    total = res.total + (page === 1 ? extra.length : 0);
   } else {
     // Tout / à louer / à vendre → pagination + filtres serveur (des milliers de biens).
     const tx = active === "rent" || active === "sale" ? active : undefined;
@@ -77,7 +83,7 @@ export default async function AnnoncesPage({
     priceMax,
   };
   const rangeFrom = total === 0 ? 0 : (page - 1) * PER_PAGE + 1;
-  const rangeTo = isReservableTab ? total : Math.min(page * PER_PAGE, total);
+  const rangeTo = Math.min(rangeFrom - 1 + items.length, total);
 
   return (
     <div className="container-page py-8 sm:py-10">
@@ -87,7 +93,7 @@ export default async function AnnoncesPage({
         </h1>
         <p className="text-sm text-muted">
           {total.toLocaleString("fr-FR")} bien(s)
-          {!isReservableTab && total > PER_PAGE ? ` · ${rangeFrom}–${rangeTo} affichés` : ""}
+          {total > PER_PAGE ? ` · ${rangeFrom}–${rangeTo} affichés` : ""}
           {q ? ` · « ${q} »` : ""}
         </p>
       </div>
@@ -116,20 +122,18 @@ export default async function AnnoncesPage({
               <PropertyCard key={p.id} p={p} />
             ))}
           </div>
-          {!isReservableTab ? (
-            <Pagination
-              page={page}
-              perPage={PER_PAGE}
-              total={total}
-              params={{
-                transaction: active !== "all" ? active : undefined,
-                q: q || undefined,
-                priceMin: priceMin ? String(priceMin) : undefined,
-                priceMax: priceMax ? String(priceMax) : undefined,
-                propertyType: propertyType || undefined,
-              }}
-            />
-          ) : null}
+          <Pagination
+            page={page}
+            perPage={PER_PAGE}
+            total={total}
+            params={{
+              transaction: active !== "all" ? active : undefined,
+              q: q || undefined,
+              priceMin: priceMin ? String(priceMin) : undefined,
+              priceMax: priceMax ? String(priceMax) : undefined,
+              propertyType: propertyType || undefined,
+            }}
+          />
         </>
       ) : (
         <div className="mx-auto mt-12 max-w-md rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">

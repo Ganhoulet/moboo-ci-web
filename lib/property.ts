@@ -117,6 +117,7 @@ export async function listListingsPage(opts: {
   priceMin?: number;
   priceMax?: number;
   propertyType?: string;
+  listingKind?: string;
   page?: number;
   perPage?: number;
 }): Promise<PagedProperties> {
@@ -126,6 +127,7 @@ export async function listListingsPage(opts: {
     priceMin: opts.priceMin,
     priceMax: opts.priceMax,
     propertyType: opts.propertyType,
+    listingKind: opts.listingKind,
     page: opts.page ?? 1,
     perPage: opts.perPage ?? 24,
   });
