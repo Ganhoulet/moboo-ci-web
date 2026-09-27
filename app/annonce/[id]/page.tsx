@@ -44,7 +44,7 @@ const I = {
 /** Extrait l'ID YouTube d'une URL (watch?v=, youtu.be, embed). */
 function youtubeId(url?: string | null): string | null {
   if (!url) return null;
-  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
   return m ? m[1] : null;
 }
 
