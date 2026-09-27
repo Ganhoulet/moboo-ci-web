@@ -32,6 +32,22 @@ function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
+const I = {
+  home: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  bed: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7v10M21 11v6M3 12h18v-1a3 3 0 0 0-3-3H8a3 3 0 0 0-3 3" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  bath: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-3ZM6 12V6a2 2 0 0 1 2-2h1M18 20l1 2M6 20l-1 2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  car: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 13 6.5 8h11L19 13M4 17h16v-4H4zM7 17v2M17 17v2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  area: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16v16H4z M4 9h16M9 4v16" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  cal: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+};
+
+/** Extrait l'ID YouTube d'une URL (watch?v=, youtu.be, embed). */
+function youtubeId(url?: string | null): string | null {
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? m[1] : null;
+}
+
 export default async function AnnoncePage({ params }: { params: { id: string } }) {
   const l = await getListing(params.id);
   if (!l) notFound();
@@ -44,6 +60,18 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
     excludeId: l.id,
     limit: 4,
   }).catch(() => []);
+
+  const specs: { icon: React.ReactNode; label: string; value: string }[] = [
+    { icon: I.home, label: "Type", value: TYPE_LABEL[l.propertyType] ?? "Bien" },
+  ];
+  if (l.bedrooms != null) specs.push({ icon: I.bed, label: "Chambres", value: String(l.bedrooms) });
+  if (l.bathrooms != null) specs.push({ icon: I.bath, label: "Salles de bain", value: String(l.bathrooms) });
+  if (l.garage != null && l.garage > 0) specs.push({ icon: I.car, label: "Garage", value: String(l.garage) });
+  if (l.surface != null) specs.push({ icon: I.area, label: "Surface", value: `${l.surface} m²` });
+  if (l.yearBuilt != null && l.yearBuilt > 0) specs.push({ icon: I.cal, label: "Année", value: String(l.yearBuilt) });
+
+  const ytId = youtubeId(l.videoUrl);
+  const features = l.features ?? [];
 
   return (
     <div className="container-page py-8">
@@ -74,24 +102,47 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
         <div className="space-y-8">
           {/* Caractéristiques */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Spec
-              icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-              label="Type" value={TYPE_LABEL[l.propertyType] ?? "Bien"}
-            />
-            <Spec
-              icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7v10M21 7v10M3 12h18M7 7v5M17 7v5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-              label="Chambres" value={l.bedrooms != null ? String(l.bedrooms) : "—"}
-            />
-            <Spec
-              icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16v16H4z M4 9h16M9 4v16" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-              label="Surface" value={l.surface != null ? `${l.surface} m²` : "—"}
-            />
+            {specs.map((s) => (
+              <Spec key={s.label} icon={s.icon} label={s.label} value={s.value} />
+            ))}
           </section>
 
           {l.description ? (
             <section>
               <h2 className="font-display text-lg font-bold text-ink">Description</h2>
               <p className="mt-2 whitespace-pre-line text-slate-600">{l.description}</p>
+            </section>
+          ) : null}
+
+          {features.length > 0 ? (
+            <section>
+              <h2 className="font-display text-lg font-bold text-ink">Équipements</h2>
+              <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
+                {features.map((f) => (
+                  <span key={f} className="flex items-center gap-2 text-sm text-slate-600">
+                    <svg className="shrink-0 text-accent-600" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                      <path d="m5 12 4 4 10-10" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {f}
+                  </span>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {ytId ? (
+            <section>
+              <h2 className="mb-2 font-display text-lg font-bold text-ink">Vidéo</h2>
+              <div className="aspect-video overflow-hidden rounded-2xl border border-slate-200 bg-black">
+                <iframe
+                  title="Vidéo du bien"
+                  src={`https://www.youtube.com/embed/${ytId}`}
+                  loading="lazy"
+                  allowFullScreen
+                  className="h-full w-full"
+                  style={{ border: 0 }}
+                />
+              </div>
             </section>
           ) : null}
 

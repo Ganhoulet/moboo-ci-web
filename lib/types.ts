@@ -76,9 +76,14 @@ export interface ListingItem {
   commune: string | null;
   quartier: string | null;
   bedrooms: number | null;
+  bathrooms?: number | null;
   surface: number | null;
   photos: string[];
   // détail uniquement :
+  garage?: number | null;
+  yearBuilt?: number | null;
+  features?: string[];
+  videoUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   description?: string | null;
