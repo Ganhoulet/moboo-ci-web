@@ -55,18 +55,28 @@ export async function listEspaces(params?: {
   }
 }
 
-/** Annonces classiques à louer / à vendre. Ne casse jamais le rendu. */
+/** Annonces classiques à louer / à vendre (filtres + pagination serveur). */
 export async function listListings(params?: {
   transaction?: "rent" | "sale";
   city?: string;
+  q?: string;
+  priceMin?: number;
+  priceMax?: number;
+  propertyType?: string;
+  page?: number;
   perPage?: number;
 }): Promise<Paginated<ListingItem>> {
   const q = new URLSearchParams();
   if (params?.transaction) q.set("transaction", params.transaction);
   if (params?.city) q.set("city", params.city);
+  if (params?.q) q.set("q", params.q);
+  if (params?.priceMin) q.set("priceMin", String(params.priceMin));
+  if (params?.priceMax) q.set("priceMax", String(params.priceMax));
+  if (params?.propertyType) q.set("propertyType", params.propertyType);
+  if (params?.page) q.set("page", String(params.page));
   q.set("perPage", String(params?.perPage ?? 24));
   try {
-    return await apiGet<Paginated<ListingItem>>(`/marketplace/properties?${q}`);
+    return await apiGet<Paginated<ListingItem>>(`/marketplace/properties?${q}`, 30);
   } catch {
     return { total: 0, page: 1, perPage: 0, items: [] };
   }

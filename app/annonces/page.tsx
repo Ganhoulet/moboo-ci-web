@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listProperties, type Transaction } from "@/lib/property";
+import {
+  listListingsPage,
+  reservableResidences,
+  reservableEspaces,
+  type Transaction,
+  type Property,
+} from "@/lib/property";
 import { PropertyCard } from "@/components/property-card";
 import { FilterBar } from "@/components/filter-bar";
+import { Pagination } from "@/components/pagination";
 import { SaveSearchButton } from "@/components/save-search-button";
 import { getSession } from "@/lib/session";
 
@@ -11,7 +18,9 @@ export const metadata: Metadata = {
   description: "Tous les biens Moboo.ci : à louer, à vendre, meublés et espaces événementiels.",
 };
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+
+const PER_PAGE = 24;
 
 export default async function AnnoncesPage({
   searchParams,
@@ -23,6 +32,7 @@ export default async function AnnoncesPage({
     priceMin?: string;
     priceMax?: string;
     propertyType?: string;
+    page?: string;
   };
 }) {
   const reservable = searchParams.reservable === "1";
@@ -31,16 +41,31 @@ export default async function AnnoncesPage({
   const priceMin = Number(searchParams.priceMin) > 0 ? Number(searchParams.priceMin) : undefined;
   const priceMax = Number(searchParams.priceMax) > 0 ? Number(searchParams.priceMax) : undefined;
   const propertyType = (searchParams.propertyType ?? "").trim();
+  const page = Math.max(1, Number(searchParams.page) || 1);
 
-  const base = await listProperties({ transaction: active, reservable });
-  let items = base;
-  if (q) {
-    const needle = q.toLowerCase();
-    items = items.filter((p) => `${p.title} ${p.zone}`.toLowerCase().includes(needle));
+  // Les meublés / espaces sont des jeux réduits (réservables) → filtrage client.
+  const isReservableTab = active === "furnished" || active === "event";
+
+  let items: Property[] = [];
+  let total = 0;
+
+  if (isReservableTab) {
+    const base = active === "furnished" ? await reservableResidences() : await reservableEspaces();
+    items = base;
+    if (q) {
+      const n = q.toLowerCase();
+      items = items.filter((p) => `${p.title} ${p.zone}`.toLowerCase().includes(n));
+    }
+    if (priceMin != null) items = items.filter((p) => p.price != null && p.price >= priceMin);
+    if (priceMax != null) items = items.filter((p) => p.price != null && p.price <= priceMax);
+    total = items.length;
+  } else {
+    // Tout / à louer / à vendre → pagination + filtres serveur (des milliers de biens).
+    const tx = active === "rent" || active === "sale" ? active : undefined;
+    const res = await listListingsPage({ transaction: tx, q, priceMin, priceMax, propertyType, page, perPage: PER_PAGE });
+    items = res.items;
+    total = res.total;
   }
-  if (priceMin != null) items = items.filter((p) => p.price != null && p.price >= priceMin);
-  if (priceMax != null) items = items.filter((p) => p.price != null && p.price <= priceMax);
-  if (propertyType) items = items.filter((p) => p.propertyType === propertyType);
 
   const hasFilters = !!(q || priceMin || priceMax || propertyType || active !== "all");
   const loggedIn = !!getSession();
@@ -51,18 +76,20 @@ export default async function AnnoncesPage({
     priceMin,
     priceMax,
   };
+  const rangeFrom = total === 0 ? 0 : (page - 1) * PER_PAGE + 1;
+  const rangeTo = isReservableTab ? total : Math.min(page * PER_PAGE, total);
 
   return (
     <div className="container-page py-8 sm:py-10">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">
-            {reservable ? "Biens réservables" : "Annonces"}
-          </h1>
-          <p className="text-sm text-muted">
-            {items.length} bien(s){q ? ` · « ${q} »` : ""}
-          </p>
-        </div>
+      <div>
+        <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">
+          {reservable ? "Biens réservables" : "Annonces"}
+        </h1>
+        <p className="text-sm text-muted">
+          {total.toLocaleString("fr-FR")} bien(s)
+          {!isReservableTab && total > PER_PAGE ? ` · ${rangeFrom}–${rangeTo} affichés` : ""}
+          {q ? ` · « ${q} »` : ""}
+        </p>
       </div>
 
       <div className="mt-5">
@@ -83,11 +110,27 @@ export default async function AnnoncesPage({
       ) : null}
 
       {items.length > 0 ? (
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((p) => (
-            <PropertyCard key={p.id} p={p} />
-          ))}
-        </div>
+        <>
+          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {items.map((p) => (
+              <PropertyCard key={p.id} p={p} />
+            ))}
+          </div>
+          {!isReservableTab ? (
+            <Pagination
+              page={page}
+              perPage={PER_PAGE}
+              total={total}
+              params={{
+                transaction: active !== "all" ? active : undefined,
+                q: q || undefined,
+                priceMin: priceMin ? String(priceMin) : undefined,
+                priceMax: priceMax ? String(priceMax) : undefined,
+                propertyType: propertyType || undefined,
+              }}
+            />
+          ) : null}
+        </>
       ) : (
         <div className="mx-auto mt-12 max-w-md rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
           <h3 className="font-semibold text-ink">Aucun bien pour ces critères</h3>

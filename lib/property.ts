@@ -44,7 +44,14 @@ export const TRANSACTION_FILTERS: { key: Transaction | "all"; label: string }[] 
   { key: "event", label: "Espaces" },
 ];
 
-async function reservableResidences(): Promise<Property[]> {
+export interface PagedProperties {
+  items: Property[];
+  total: number;
+  page: number;
+  perPage: number;
+}
+
+export async function reservableResidences(): Promise<Property[]> {
   const { items } = await listResidences({ perPage: 24 });
   return items.map((r) => ({
     id: `res-${r.id}`,
@@ -60,7 +67,7 @@ async function reservableResidences(): Promise<Property[]> {
   }));
 }
 
-async function reservableEspaces(): Promise<Property[]> {
+export async function reservableEspaces(): Promise<Property[]> {
   const { items } = await listEspaces({ perPage: 24 });
   return items.map((e) => {
     const prices = (e.tarifs ?? []).map((t) => t.prix ?? 0).filter((p) => p > 0);
@@ -77,6 +84,50 @@ async function reservableEspaces(): Promise<Property[]> {
       meta: `${e.capaciteMin}–${e.capaciteMax} pers.`,
     };
   });
+}
+
+function mapListing(l: import("./types").ListingItem): Property {
+  return {
+    id: `lst-${l.id}`,
+    href: `/annonce/${l.id}`,
+    title: l.title,
+    zone: [l.quartier || l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire",
+    image: l.photos?.[0] ?? null,
+    price: l.price,
+    priceLabel: l.transaction === "rent" ? "/ mois" : "",
+    transaction: l.transaction,
+    reservable: false,
+    meta: l.bedrooms
+      ? `${l.bedrooms} ch.`
+      : PROPERTY_TYPE_LABEL[l.propertyType] ?? l.propertyType,
+    propertyType: l.propertyType,
+    bedrooms: l.bedrooms,
+  };
+}
+
+/**
+ * Annonces classiques paginées + filtrées côté serveur (à louer / à vendre / tout).
+ * C'est le chemin principal du catalogue (des milliers de biens).
+ */
+export async function listListingsPage(opts: {
+  transaction?: "rent" | "sale";
+  q?: string;
+  priceMin?: number;
+  priceMax?: number;
+  propertyType?: string;
+  page?: number;
+  perPage?: number;
+}): Promise<PagedProperties> {
+  const { items, total, page, perPage } = await listListings({
+    transaction: opts.transaction,
+    q: opts.q,
+    priceMin: opts.priceMin,
+    priceMax: opts.priceMax,
+    propertyType: opts.propertyType,
+    page: opts.page ?? 1,
+    perPage: opts.perPage ?? 24,
+  });
+  return { items: items.map(mapListing), total, page, perPage };
 }
 
 /** Annonces classiques (à louer / à vendre) via /marketplace/properties. */
