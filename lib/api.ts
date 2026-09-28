@@ -128,6 +128,29 @@ export interface SiteAccount {
   email: string | null;
   locale: string;
   createdAt: string;
+  // Type de compte (inscription par étapes) — cf. lib/accounts.ts
+  accountType?: string;
+  accountSubtype?: string | null;
+  accountRole?: string | null;
+  username?: string | null;
+  companyName?: string | null;
+  city?: string | null;
+  commune?: string | null;
+  onboarded?: boolean;
+}
+
+/** Profil saisi pendant l'inscription (envoyé à la vérification du code). */
+export interface SignupProfile {
+  accountType?: string;
+  accountSubtype?: string;
+  accountRole?: string;
+  username?: string;
+  email?: string;
+  companyName?: string;
+  city?: string;
+  commune?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface SiteTokens {
@@ -163,11 +186,17 @@ export function siteRequestOtp(phone: string, deviceId?: string) {
 export function siteVerifyOtp(input: {
   phone: string;
   code: string;
-  firstName?: string;
-  lastName?: string;
   deviceId?: string;
-}) {
+} & SignupProfile) {
   return apiPost<SiteTokens>("/site/auth/verify-otp", input);
+}
+
+/** Inscription : nom d'utilisateur / e-mail disponibles ? numéro déjà inscrit ? */
+export function siteCheckSignup(input: { username?: string; email?: string; phone?: string }) {
+  return apiPost<{ usernameAvailable: boolean; emailAvailable: boolean; phoneRegistered: boolean; phoneOnboarded: boolean }>(
+    "/site/auth/check-signup",
+    input,
+  );
 }
 
 export function siteLogout(refreshToken?: string) {

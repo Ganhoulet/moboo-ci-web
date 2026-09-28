@@ -47,6 +47,13 @@ export function SiteHeader() {
               {initials(account)}
             </Link>
           ) : (
+            <>
+            <Link
+              href="/inscription"
+              className="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-ink transition hover:border-slate-300 hover:bg-slate-50 md:inline-flex"
+            >
+              Créer un compte
+            </Link>
             <Link
               href="/compte"
               aria-label="Se connecter"
@@ -57,6 +64,7 @@ export function SiteHeader() {
                 <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" strokeLinecap="round" />
               </svg>
             </Link>
+            </>
           )}
         </div>
       </div>

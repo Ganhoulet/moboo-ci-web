@@ -34,6 +34,11 @@ export function setTokens(accessToken: string, refreshToken: string, expiresIn?:
   jar.set(RT, refreshToken, { ...baseCookie, maxAge: 60 * 60 * 24 * 30 });
 }
 
+/** Met à jour l'instantané du profil (après complétion / modification). */
+export function setProfile(account: SiteAccount) {
+  cookies().set(PROFILE, JSON.stringify(account), { ...baseCookie, maxAge: 60 * 60 * 24 * 30 });
+}
+
 export function clearSession() {
   const jar = cookies();
   jar.delete(AT);

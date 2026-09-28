@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useFormState } from "react-dom";
 import { submitListing, type SubmitState } from "@/app/publier/actions";
 import { Field, SubmitButton } from "./booking-form";
+import { MOBOO_APPS } from "@/lib/accounts";
 
 const TYPES: [string, string][] = [
   ["appartement", "Appartement"],
@@ -34,20 +35,7 @@ const SHORTS: { key: ShortType; label: string; icon: string }[] = [
 
 // Les annonces réservables se publient uniquement depuis l'appli métier
 // (feuille de route §4) : Moboo.ci n'en est que la vitrine.
-const APPS = {
-  resi: {
-    name: "Moboo Resi",
-    what: "résidences meublées",
-    play: "https://play.google.com/store/apps/details?id=ci.moboo.moboo_resi_manager",
-    page: "https://resi.moboo.ci/telecharger",
-  },
-  event: {
-    name: "Moboo Event",
-    what: "espaces événementiels et coworkings",
-    play: "https://play.google.com/store/apps/details?id=ci.moboo.moboo_event_manager",
-    page: "https://event.moboo.ci/telecharger",
-  },
-};
+const APPS = MOBOO_APPS;
 
 function AppRedirect({ short }: { short: ShortType }) {
   const app = short === "furnished" ? APPS.resi : APPS.event;
@@ -83,7 +71,7 @@ function AppRedirect({ short }: { short: ShortType }) {
   );
 }
 
-export function ListingForm() {
+export function ListingForm({ defaults }: { defaults?: { contactName?: string; contactPhone?: string } } = {}) {
   const [state, action] = useFormState<SubmitState, FormData>(submitListing, null);
   const [cat, setCat] = useState<Category>("rent");
   const [short, setShort] = useState<ShortType>("furnished");
@@ -189,8 +177,8 @@ export function ListingForm() {
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Votre nom"><input name="contactName" placeholder="Nom" className="input" /></Field>
-            <Field label="Téléphone (contact)"><input name="contactPhone" required inputMode="tel" placeholder="07 00 00 00 00" className="input" /></Field>
+            <Field label="Votre nom"><input name="contactName" placeholder="Nom" className="input" defaultValue={defaults?.contactName} /></Field>
+            <Field label="Téléphone (contact)"><input name="contactPhone" required inputMode="tel" placeholder="07 00 00 00 00" className="input" defaultValue={defaults?.contactPhone} /></Field>
           </div>
 
           {state && !state.ok ? <p className="text-sm font-medium text-red-600">{state.message}</p> : null}

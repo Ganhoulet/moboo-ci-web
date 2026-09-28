@@ -1,6 +1,9 @@
 "use server";
 
 import { API_URL } from "@/lib/api";
+import { getSession } from "@/lib/session";
+import { authedFetch } from "@/lib/server-api";
+import { revalidatePath } from "next/cache";
 
 export type SubmitState = { ok: boolean; message: string; id?: string } | null;
 
@@ -53,6 +56,17 @@ export async function submitListing(
   }
 
   try {
+    // Connecté : l'annonce est rattachée au compte (visible dans « Mon espace »).
+    if (getSession()) {
+      const { ok, data } = await authedFetch("/site/me/listings", { method: "POST", body: JSON.stringify(payload) });
+      if (!ok) return { ok: false, message: (data && data.message) || "La publication a échoué. Réessayez." };
+      revalidatePath("/compte");
+      return {
+        ok: true,
+        id: data.id,
+        message: "Votre annonce est publiée ! Retrouvez-la avec ses vues et demandes dans votre espace.",
+      };
+    }
     const res = await fetch(`${API_URL}/marketplace/properties/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
