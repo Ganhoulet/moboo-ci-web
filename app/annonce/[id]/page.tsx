@@ -3,14 +3,13 @@ import { notFound } from "next/navigation";
 import { formatXOF, getListing } from "@/lib/api";
 import { mapListing, similarListings } from "@/lib/property";
 import { ReadMore } from "@/components/detail-actions";
-import { DetailHero, type HeroPerson } from "@/components/detail-hero";
+import { AsidePerson, DetailHero, DetailIntro, type HeroPerson } from "@/components/detail-hero";
 import {
   DetailMeta, FeatureList, Icons as I, JsonLd, KeyFacts, Section, displayName, type Fact,
 } from "@/components/detail";
 import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
 import { InquiryForm } from "@/components/inquiry-form";
-import { AgentCard } from "@/components/agent-card";
 import { VisitForm } from "@/components/visit-form";
 import { MobileContactBar } from "@/components/mobile-contact-bar";
 import { ListingReservation } from "@/components/listing-reservation";
@@ -40,7 +39,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
   if (!l) notFound();
 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
-  const phoneDigits = (l.contactPhone ?? "").replace(/[^0-9]/g, "");
+  const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");
   const similar = await similarListings({
     city: l.city,
     transaction: l.transaction,
@@ -79,6 +78,16 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
     : l.contactName
       ? { role: "Annonceur", name: displayName(l.contactName), sub: "Contact direct, sans commission" }
       : null;
+
+  // Phrase de résumé : « À vendre : villa · 3 chambres · 2 salles de bain · 250 m² ».
+  // (Sur mobile les badges portent déjà la transaction : on n'y reprend que les chiffres.)
+  const summary = [
+    `${txLabel} : ${(TYPE_LABEL[l.propertyType] ?? "bien").toLowerCase()}`,
+    l.bedrooms ? `${l.bedrooms} chambre${l.bedrooms > 1 ? "s" : ""}` : null,
+    l.bathrooms ? `${l.bathrooms} salle${l.bathrooms > 1 ? "s" : ""} de bain` : null,
+    l.surface ? `${l.surface} m²` : null,
+  ];
+  const meta = <DetailMeta reference={l.reference} updatedAt={l.updatedAt} views={l.views} />;
 
   return (
     <div className="container-page py-8 pb-24 lg:pb-8">
@@ -120,24 +129,21 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
         }
         title={l.title}
         zone={zone}
-        summary={[
-          l.bedrooms ? `${l.bedrooms} chambre${l.bedrooms > 1 ? "s" : ""}` : null,
-          l.bathrooms ? `${l.bathrooms} salle${l.bathrooms > 1 ? "s" : ""} de bain` : null,
-          l.surface ? `${l.surface} m²` : null,
-        ]}
+        summary={summary.slice(1)}
         price={
           <p className="text-xl font-extrabold text-brand-800">
             {formatXOF(l.price)}
             {l.transaction === "rent" ? <span className="text-sm font-medium text-muted"> / mois</span> : null}
           </p>
         }
-        meta={<DetailMeta reference={l.reference} updatedAt={l.updatedAt} views={l.views} />}
+        meta={meta}
         person={person}
         property={mapListing(l)}
       />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-10">
+          <DetailIntro summary={summary} meta={meta} />
           <KeyFacts items={specs} />
 
           {l.description ? (
@@ -205,7 +211,8 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
           ) : null}
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+        <aside className="lg:self-start">
+          <AsidePerson person={person} />
           {isReservable ? (
             <ListingReservation
               listingId={l.id}
@@ -219,14 +226,10 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
                 <span className="text-2xl font-extrabold text-ink">{formatXOF(l.price)}</span>
                 {l.transaction === "rent" ? <span className="text-sm text-muted">/ mois</span> : null}
               </div>
-              {l.contactName ? (
-                <p className="mt-3 text-sm text-slate-600">
-                  Contact : <span className="font-semibold text-ink">{l.contactName}</span>
-                </p>
-              ) : null}
+              {/* Coordonnées de l'agent si rattaché, sinon de l'annonceur. */}
               {phoneDigits ? (
-                <div className="mt-3 grid gap-2">
-                  <a href={`tel:${l.contactPhone}`} className="btn-primary w-full bg-brand-800 hover:bg-brand-900">Appeler</a>
+                <div className="mt-4 grid gap-2">
+                  <a href={`tel:${barPhone}`} className="btn-primary w-full bg-brand-800 hover:bg-brand-900">Appeler</a>
                   <a href={`https://wa.me/${phoneDigits}`} className="btn-ghost w-full" target="_blank" rel="noopener noreferrer">WhatsApp</a>
                 </div>
               ) : (
@@ -238,12 +241,6 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
               </p>
             </div>
           )}
-
-          {l.agent ? (
-            <div className="mt-4">
-              <AgentCard agent={l.agent} />
-            </div>
-          ) : null}
 
           <div className="mt-4">
             <VisitForm listingId={l.id} />

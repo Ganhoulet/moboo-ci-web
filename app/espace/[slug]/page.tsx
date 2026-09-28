@@ -8,7 +8,7 @@ import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
 import { MobileBookBar } from "@/components/mobile-book-bar";
 import { ReadMore } from "@/components/detail-actions";
-import { DetailHero } from "@/components/detail-hero";
+import { AsidePerson, DetailHero, DetailIntro, type HeroPerson } from "@/components/detail-hero";
 import {
   BookingSteps, DetailMeta, FeatureList, HostCard, Icons, JsonLd,
   KeyFacts, Section, displayName, type Fact,
@@ -76,7 +76,7 @@ export default async function EspacePage({ params }: { params: { slug: string } 
   ];
   if (e.superficie) facts.push({ icon: Icons.area, label: "Superficie", value: `${e.superficie} m²` });
   if (e.horaireOuverture && e.horaireFermeture) facts.push({ icon: Icons.clock, label: "Horaires", value: `${e.horaireOuverture} – ${e.horaireFermeture}` });
-  if (aPartir) facts.push({ icon: Icons.tag, label: "À partir de", value: formatXOF(aPartir) });
+  // Le prix n'est pas répété ici : il est en tête de la carte de réservation.
   if (e.cautionMontant) facts.push({ icon: Icons.shield, label: "Caution", value: formatXOF(e.cautionMontant) });
 
   const acompte = e.acomptePourcentage ?? 30;
@@ -89,6 +89,14 @@ export default async function EspacePage({ params }: { params: { slug: string } 
     steps.push({ title: "Caution restituée", text: `Une caution de ${formatXOF(e.cautionMontant)} est demandée et restituée après l'événement si tout est en ordre.` });
   }
   const hasMap = e.latitude != null && e.longitude != null;
+  const summary = [typeLabel, `${e.capaciteMin} à ${e.capaciteMax} personnes`, e.superficie ? `${e.superficie} m²` : null];
+  const meta = <DetailMeta reference={e.reference} updatedAt={e.updatedAt} />;
+  const person: HeroPerson | null = e.host ? {
+    role: "Hôte",
+    name: displayName(e.host.name),
+    photoUrl: e.host.avatarUrl,
+    sub: e.host.listingsCount > 1 ? `${e.host.listingsCount} espaces sur Moboo.ci` : "Hôte Moboo.ci",
+  } : null;
 
   return (
     <div className="container-page py-8 pb-28 lg:pb-8">
@@ -122,11 +130,7 @@ export default async function EspacePage({ params }: { params: { slug: string } 
         }
         title={e.nom}
         zone={zone}
-        summary={[
-          typeLabel,
-          `${e.capaciteMin} à ${e.capaciteMax} personnes`,
-          e.superficie ? `${e.superficie} m²` : null,
-        ]}
+        summary={summary}
         price={
           aPartir ? (
             <p className="text-lg font-extrabold text-ink">
@@ -135,18 +139,14 @@ export default async function EspacePage({ params }: { params: { slug: string } 
             </p>
           ) : null
         }
-        meta={<DetailMeta reference={e.reference} updatedAt={e.updatedAt} />}
-        person={e.host ? {
-          role: "Hôte",
-          name: displayName(e.host.name),
-          photoUrl: e.host.avatarUrl,
-          sub: e.host.listingsCount > 1 ? `${e.host.listingsCount} espaces sur Moboo.ci` : "Hôte Moboo.ci",
-        } : null}
+        meta={meta}
+        person={person}
         property={mapEspace(e)}
       />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-10">
+          <DetailIntro summary={summary} meta={meta} />
           <KeyFacts items={facts} />
 
           {e.description ? (
@@ -226,7 +226,8 @@ export default async function EspacePage({ params }: { params: { slug: string } 
           {e.host ? <HostCard host={e.host} noun="espace" /> : null}
         </div>
 
-        <aside id="reserver" className="scroll-mt-24 lg:sticky lg:top-24 lg:self-start">
+        <aside id="reserver" className="scroll-mt-24 lg:self-start">
+          <AsidePerson person={person} />
           <EspaceBooking espaceId={e.id} occupied={occupied} fromPrice={aPartir} />
         </aside>
       </div>

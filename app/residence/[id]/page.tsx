@@ -8,7 +8,7 @@ import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
 import { MobileBookBar } from "@/components/mobile-book-bar";
 import { ReadMore } from "@/components/detail-actions";
-import { DetailHero } from "@/components/detail-hero";
+import { AsidePerson, DetailHero, DetailIntro, type HeroPerson } from "@/components/detail-hero";
 import {
   BookingSteps, DetailMeta, FeatureList, HostCard, Icons, JsonLd,
   KeyFacts, Section, displayName, type Fact,
@@ -52,16 +52,13 @@ export default async function ResidencePage({ params }: { params: { id: string }
   // Caractéristiques clés (comme l'en-tête « valued features » de l'appli).
   const surfaces = apts.map((a) => num(a.surface)).filter(Boolean);
   const deposits = apts.map((a) => num(a.deposit)).filter(Boolean);
-  const weekly = apts.map((a) => num(a.weeklyPrice)).filter(Boolean);
-  const monthly = apts.map((a) => num(a.monthlyPrice)).filter(Boolean);
   const facts: Fact[] = [
     { icon: Icons.home, label: "Type", value: apts.length === 1 ? apartmentLabel(apts[0].type) : "Résidence meublée" },
   ];
   if (apts.length > 1) facts.push({ icon: Icons.door, label: "Logements", value: String(apts.length) });
   if (surfaces.length) facts.push({ icon: Icons.area, label: "Surface", value: surfaces.length > 1 ? `${Math.min(...surfaces)}–${Math.max(...surfaces)} m²` : `${surfaces[0]} m²` });
-  if (r.minNightlyPrice) facts.push({ icon: Icons.tag, label: "Par nuit, dès", value: formatXOF(r.minNightlyPrice) });
-  if (weekly.length) facts.push({ icon: Icons.cal, label: "Par semaine, dès", value: formatXOF(Math.min(...weekly)) });
-  if (monthly.length) facts.push({ icon: Icons.cal, label: "Par mois, dès", value: formatXOF(Math.min(...monthly)) });
+  // Les prix ne sont pas répétés ici : nuit en tête de la carte de réservation,
+  // semaine / mois dans la liste des logements.
   if (deposits.length) facts.push({ icon: Icons.shield, label: "Caution", value: formatXOF(Math.max(...deposits)) });
 
   const amenities = [...(r.amenities ?? []), ...apts.flatMap((a) => a.amenities ?? [])];
@@ -69,6 +66,18 @@ export default async function ResidencePage({ params }: { params: { id: string }
   const services = apts.map((a) => a.services?.trim()).find(Boolean);
   const tour = apts.map((a) => a.virtualTourUrl).find((u) => u && /^https?:\/\//i.test(u));
   const hasMap = r.latitude != null && r.longitude != null;
+  const summary = [
+    apts.length === 1 ? `Logement entier : ${apartmentLabel(apts[0].type).toLowerCase()}` : `${apts.length} logements`,
+    surfaces.length ? `${Math.min(...surfaces)} m²` : null,
+    amenities.length ? `${new Set(amenities).size} équipements` : null,
+  ];
+  const meta = <DetailMeta reference={r.reference} updatedAt={r.updatedAt} />;
+  const person: HeroPerson | null = r.host ? {
+    role: "Hôte",
+    name: displayName(r.host.name),
+    photoUrl: r.host.avatarUrl,
+    sub: r.host.listingsCount > 1 ? `${r.host.listingsCount} logements sur Moboo.ci` : "Hôte Moboo.ci",
+  } : null;
 
   return (
     <div className="container-page py-8 pb-28 lg:pb-8">
@@ -102,11 +111,7 @@ export default async function ResidencePage({ params }: { params: { id: string }
         }
         title={r.name}
         zone={zone}
-        summary={[
-          apts.length === 1 ? `Logement entier : ${apartmentLabel(apts[0].type).toLowerCase()}` : `${apts.length} logements`,
-          surfaces.length ? `${Math.min(...surfaces)} m²` : null,
-          amenities.length ? `${new Set(amenities).size} équipements` : null,
-        ]}
+        summary={summary}
         price={
           r.minNightlyPrice ? (
             <p className="text-lg font-extrabold text-ink">
@@ -116,18 +121,14 @@ export default async function ResidencePage({ params }: { params: { id: string }
             </p>
           ) : null
         }
-        meta={<DetailMeta reference={r.reference} updatedAt={r.updatedAt} />}
-        person={r.host ? {
-          role: "Hôte",
-          name: displayName(r.host.name),
-          photoUrl: r.host.avatarUrl,
-          sub: r.host.listingsCount > 1 ? `${r.host.listingsCount} logements sur Moboo.ci` : "Hôte Moboo.ci",
-        } : null}
+        meta={meta}
+        person={person}
         property={mapResidence(r)}
       />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-10">
+          <DetailIntro summary={summary} meta={meta} />
           <KeyFacts items={facts} />
 
           {r.description ? (
@@ -221,7 +222,8 @@ export default async function ResidencePage({ params }: { params: { id: string }
         </div>
 
         {/* Carte de réservation avec calendrier (façon Airbnb) */}
-        <aside id="reserver" className="scroll-mt-24 lg:sticky lg:top-24 lg:self-start">
+        <aside id="reserver" className="scroll-mt-24 lg:self-start">
+          <AsidePerson person={person} />
           {bookable.length > 0 ? (
             <ResidenceBooking apartments={bookable} occupiedByApt={occupiedByApt} depositPercent={30} />
           ) : (
