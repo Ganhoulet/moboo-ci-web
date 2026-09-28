@@ -17,6 +17,14 @@ export interface Tarif {
   id?: string;
   nom?: string;
   prix?: number;
+  type?: string; // soiree | journee | weekend | heure | forfait
+  dureesIncluses?: number;
+  prixHeureSup?: number;
+  inclutSon?: boolean;
+  inclutLumiere?: boolean;
+  inclutNettoyage?: boolean;
+  inclutSecurite?: boolean;
+  inclutParking?: boolean;
 }
 
 export interface Espace {
@@ -45,22 +53,53 @@ export interface Apartment {
   id: string;
   type: string;
   surface: number | null;
+  floor?: number | null;
   nightlyPrice: number | string;
   weeklyPrice: number | string | null;
+  monthlyPrice?: number | string | null;
+  deposit?: number | string | null;
   photos: string[];
   amenities: string[];
   description: string | null;
   status: string;
+  houseRules?: string | null;
+  services?: string | null;
+  virtualTourUrl?: string | null;
+}
+
+/** Hôte affiché sur les fiches réservables (jamais de coordonnées avant l'acompte). */
+export interface Host {
+  name: string;
+  avatarUrl: string | null;
+  listingsCount: number;
 }
 
 export interface ResidenceDetail extends Residence {
   apartments: Apartment[];
+  host?: Host;
+  reference?: number | null;
+  videoUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  updatedAt?: string;
 }
 
 export interface EspaceDetail extends Espace {
   photos: string[];
   reglesInternes: string | null;
   equipementsInclus: string[];
+  host?: Host;
+  superficie?: number | null;
+  horaireOuverture?: string | null;
+  horaireFermeture?: string | null;
+  cautionMontant?: number | null;
+  acomptePourcentage?: number | null;
+  delaiAnnulationHeures?: number | null;
+  accepteReservationAuto?: boolean;
+  reference?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  updatedAt?: string;
 }
 
 /** Annonce classique (à louer / à vendre) — feed public /marketplace/properties. */
@@ -91,6 +130,11 @@ export interface ListingItem {
   description?: string | null;
   contactName?: string | null;
   contactPhone?: string | null;
+  units?: { title: string; price?: number | null; bedrooms?: string; bathrooms?: string; size?: string }[];
+  reference?: number | null;
+  views?: number;
+  createdAt?: string;
+  updatedAt?: string;
   agent?: {
     name: string;
     kind: string; // agent | agency

@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatXOF, getListing } from "@/lib/api";
-import { similarListings } from "@/lib/property";
+import { mapListing, similarListings } from "@/lib/property";
 import { PhotoGrid } from "@/components/photo-grid";
+import { DetailActions, ReadMore } from "@/components/detail-actions";
+import {
+  Breadcrumbs, DetailMeta, FeatureList, Icons as I, JsonLd, KeyFacts, PinIcon, Section, VideoSection, type Fact,
+} from "@/components/detail";
 import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
 import { InquiryForm } from "@/components/inquiry-form";
@@ -22,35 +25,14 @@ const TYPE_LABEL: Record<string, string> = {
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const l = await getListing(params.id);
-  return { title: l ? l.title : "Annonce" };
-}
-
-function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-800">{icon}</span>
-      <span className="min-w-0">
-        <span className="block text-xs text-muted">{label}</span>
-        <span className="block truncate font-semibold text-ink">{value}</span>
-      </span>
-    </div>
-  );
-}
-
-const I = {
-  home: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-  bed: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7v10M21 11v6M3 12h18v-1a3 3 0 0 0-3-3H8a3 3 0 0 0-3 3" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-  bath: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-3ZM6 12V6a2 2 0 0 1 2-2h1M18 20l1 2M6 20l-1 2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-  car: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 13 6.5 8h11L19 13M4 17h16v-4H4zM7 17v2M17 17v2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-  area: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16v16H4z M4 9h16M9 4v16" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-  cal: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-};
-
-/** Extrait l'ID YouTube d'une URL (watch?v=, youtu.be, embed). */
-function youtubeId(url?: string | null): string | null {
-  if (!url) return null;
-  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
-  return m ? m[1] : null;
+  if (!l) return { title: "Annonce" };
+  const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ");
+  const description = `${TYPE_LABEL[l.propertyType] ?? "Bien"} ${l.transaction === "rent" ? "à louer" : "à vendre"} à ${zone} — ${formatXOF(l.price)}${l.transaction === "rent" ? " / mois" : ""}. Contact direct sur Moboo.ci.`;
+  return {
+    title: l.title,
+    description,
+    openGraph: { title: l.title, description, images: l.photos?.slice(0, 1) },
+  };
 }
 
 export default async function AnnoncePage({ params }: { params: { id: string } }) {
@@ -66,7 +48,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
     limit: 4,
   }).catch(() => []);
 
-  const specs: { icon: React.ReactNode; label: string; value: string }[] = [
+  const specs: Fact[] = [
     { icon: I.home, label: "Type", value: TYPE_LABEL[l.propertyType] ?? "Bien" },
   ];
   if (l.bedrooms != null) specs.push({ icon: I.bed, label: "Chambres", value: String(l.bedrooms) });
@@ -75,8 +57,12 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
   if (l.surface != null) specs.push({ icon: I.area, label: "Surface", value: `${l.surface} m²` });
   if (l.yearBuilt != null && l.yearBuilt > 0) specs.push({ icon: I.cal, label: "Année", value: String(l.yearBuilt) });
 
-  const ytId = youtubeId(l.videoUrl);
+  if (l.transaction === "sale" && l.surface && l.price > 0 && l.propertyType === "terrain") {
+    specs.push({ icon: I.tag, label: "Prix au m²", value: formatXOF(l.price / l.surface) });
+  }
   const features = l.features ?? [];
+  const units = (l.units ?? []).filter((u) => u?.title);
+  const txLabel = l.transaction === "rent" ? "À louer" : "À vendre";
 
   const barPhone = l.agent?.phone || l.contactPhone;
   const barWhatsapp = l.agent?.whatsapp || l.contactPhone;
@@ -84,9 +70,32 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
 
   return (
     <div className="container-page py-8 pb-24 lg:pb-8">
-      <Link href={`/annonces?transaction=${l.transaction}`} className="text-sm font-semibold text-muted hover:text-ink">
-        ← Retour aux annonces
-      </Link>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "RealEstateListing",
+          name: l.title,
+          description: l.description ?? undefined,
+          image: (l.photos ?? []).slice(0, 5),
+          datePosted: l.createdAt,
+          offers: {
+            "@type": "Offer",
+            price: l.price,
+            priceCurrency: "XOF",
+            businessFunction: l.transaction === "rent" ? "http://purl.org/goodrelations/v1#LeaseOut" : "http://purl.org/goodrelations/v1#Sell",
+          },
+          address: { "@type": "PostalAddress", addressLocality: l.commune ?? l.city, addressRegion: l.city, addressCountry: "CI" },
+        }}
+      />
+
+      <Breadcrumbs
+        items={[
+          { label: "Accueil", href: "/" },
+          { label: txLabel, href: `/annonces?transaction=${l.transaction}` },
+          ...(l.commune ? [{ label: l.commune, href: `/annonces?transaction=${l.transaction}&q=${encodeURIComponent(l.commune)}` }] : []),
+          { label: l.title },
+        ]}
+      />
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
@@ -94,72 +103,91 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
         </span>
         <span className="chip">{TYPE_LABEL[l.propertyType] ?? "Bien"}</span>
       </div>
-      <h1 className="mt-2 font-display text-2xl font-extrabold text-ink sm:text-3xl">{l.title}</h1>
-      <p className="mt-1 flex items-center gap-1 text-muted">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 21s-7-5.2-7-11a7 7 0 1 1 14 0c0 5.8-7 11-7 11Z" strokeLinejoin="round" />
-          <circle cx="12" cy="10" r="2.5" />
-        </svg>
-        {zone}
-      </p>
+      <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">{l.title}</h1>
+          <p className="mt-1 flex items-center gap-1 text-muted">{PinIcon}{zone}</p>
+          <p className="mt-1 text-xl font-extrabold text-brand-800">
+            {formatXOF(l.price)}
+            {l.transaction === "rent" ? <span className="text-sm font-medium text-muted"> / mois</span> : null}
+          </p>
+          <div className="mt-1"><DetailMeta reference={l.reference} updatedAt={l.updatedAt} views={l.views} /></div>
+        </div>
+        <DetailActions property={mapListing(l)} />
+      </div>
 
       <div className="mt-6">
         <PhotoGrid photos={l.photos} alt={l.title} />
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-8">
-          {/* Caractéristiques */}
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {specs.map((s) => (
-              <Spec key={s.label} icon={s.icon} label={s.label} value={s.value} />
-            ))}
-          </section>
+        <div className="min-w-0 space-y-10">
+          <KeyFacts items={specs} />
 
           {l.description ? (
-            <section>
-              <h2 className="font-display text-lg font-bold text-ink">Description</h2>
-              <p className="mt-2 whitespace-pre-line text-slate-600">{l.description}</p>
-            </section>
+            <Section title="Description">
+              <ReadMore text={l.description} />
+            </Section>
           ) : null}
 
           {features.length > 0 ? (
-            <section>
-              <h2 className="font-display text-lg font-bold text-ink">Équipements</h2>
-              <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
-                {features.map((f) => (
-                  <span key={f} className="flex items-center gap-2 text-sm text-slate-600">
-                    <svg className="shrink-0 text-accent-600" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                      <path d="m5 12 4 4 10-10" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    {f}
-                  </span>
-                ))}
-              </div>
-            </section>
+            <Section title="Équipements">
+              <FeatureList items={features} />
+            </Section>
           ) : null}
 
-          {ytId ? (
-            <section>
-              <h2 className="mb-2 font-display text-lg font-bold text-ink">Vidéo</h2>
-              <div className="aspect-video overflow-hidden rounded-2xl border border-slate-200 bg-black">
-                <iframe
-                  title="Vidéo du bien"
-                  src={`https://www.youtube.com/embed/${ytId}`}
-                  loading="lazy"
-                  allowFullScreen
-                  className="h-full w-full"
-                  style={{ border: 0 }}
-                />
+          {units.length > 0 ? (
+            <Section title={`Unités disponibles (${units.length})`}>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                <table className="w-full min-w-[28rem] text-sm">
+                  <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-muted">
+                    <tr>
+                      <th className="px-4 py-2.5 font-semibold">Unité</th>
+                      <th className="px-4 py-2.5 font-semibold">Chambres</th>
+                      <th className="px-4 py-2.5 font-semibold">Surface</th>
+                      <th className="px-4 py-2.5 text-right font-semibold">Prix</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {units.map((u, i) => (
+                      <tr key={u.title + i}>
+                        <td className="px-4 py-3 font-semibold text-ink">{u.title}</td>
+                        <td className="px-4 py-3 text-slate-600">{u.bedrooms || "—"}</td>
+                        <td className="px-4 py-3 text-slate-600">{u.size ? `${u.size.replace(/\s*m(²|2)?$/i, "")} m²` : "—"}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-ink">{u.price ? formatXOF(u.price) : "Sur demande"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </section>
+            </Section>
           ) : null}
+
+          <VideoSection url={l.videoUrl} />
 
           {l.latitude != null && l.longitude != null ? (
-            <section>
-              <h2 className="mb-2 font-display text-lg font-bold text-ink">Localisation</h2>
+            <Section title="Localisation">
               <LocationMap lat={l.latitude} lng={l.longitude} label={zone} />
-            </section>
+            </Section>
+          ) : null}
+
+          {!isReservable ? (
+            <Section title="Conseils avant de vous engager">
+              <ul className="space-y-2 text-sm text-slate-600">
+                {[
+                  "Visitez toujours le bien avant de verser de l'argent.",
+                  l.transaction === "sale"
+                    ? "Vérifiez les documents (ACD, titre foncier, lettre d'attribution) auprès d'un notaire."
+                    : "Demandez un contrat de bail écrit et un reçu pour chaque paiement (caution, avance).",
+                  "Méfiez-vous des prix anormalement bas ou des demandes d'avance à distance.",
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0 text-brand-800">{I.shield}</span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </Section>
           ) : null}
         </div>
 

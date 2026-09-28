@@ -6,14 +6,19 @@ export function LocationMap({
   lat,
   lng,
   label,
+  approximate = false,
+  note = "Localisation approximative — l'adresse exacte est communiquée par l'annonceur.",
 }: {
   lat: number;
   lng: number;
   label?: string;
+  /** Réservables : coordonnées arrondies, on montre le quartier sans marqueur. */
+  approximate?: boolean;
+  note?: string;
 }) {
-  const d = 0.008; // ~800 m de marge : zone, pas point exact
+  const d = approximate ? 0.012 : 0.008; // zone, pas point exact
   const bbox = [lng - d, lat - d, lng + d, lat + d].join(",");
-  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik${approximate ? "" : `&marker=${lat},${lng}`}`;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
@@ -29,7 +34,7 @@ export function LocationMap({
           <path d="M12 21s-7-5.2-7-11a7 7 0 1 1 14 0c0 5.8-7 11-7 11Z" strokeLinejoin="round" />
           <circle cx="12" cy="10" r="2.5" />
         </svg>
-        Localisation approximative — l'adresse exacte est communiquée par l'annonceur.
+        {note}
       </div>
     </div>
   );

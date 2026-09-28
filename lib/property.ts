@@ -51,7 +51,21 @@ export interface PagedProperties {
   perPage: number;
 }
 
-function mapResidence(r: import("./types").Residence): Property {
+/** Libellés des types de logement Moboo Resi (enum ApartmentType). */
+export const APARTMENT_TYPE_LABEL: Record<string, string> = {
+  STUDIO: "Studio",
+  TWO_ROOMS: "2 pièces",
+  THREE_ROOMS: "3 pièces",
+  VILLA: "Villa",
+  PENTHOUSE: "Penthouse",
+  OTHER: "Logement meublé",
+};
+
+export function apartmentLabel(type: string) {
+  return APARTMENT_TYPE_LABEL[type] ?? type;
+}
+
+export function mapResidence(r: import("./types").Residence): Property {
   return {
     id: `res-${r.id}`,
     href: `/residence/${r.id}`,
@@ -66,7 +80,7 @@ function mapResidence(r: import("./types").Residence): Property {
   };
 }
 
-function mapEspace(e: import("./types").Espace): Property {
+export function mapEspace(e: import("./types").Espace): Property {
   const prices = (e.tarifs ?? []).map((t) => t.prix ?? 0).filter((p) => p > 0);
   return {
     id: `esp-${e.id}`,
@@ -94,6 +108,30 @@ export async function espacesPage(opts: { q?: string; page?: number; perPage?: n
   return { items: items.map(mapEspace), total, page, perPage };
 }
 
+/** Résidences proches (même commune, sinon même ville), hors résidence courante. */
+export async function similarResidences(opts: { commune?: string | null; city?: string; excludeId: string; limit?: number }): Promise<Property[]> {
+  const limit = opts.limit ?? 4;
+  const pick = (items: import("./types").Residence[]) => items.filter((r) => r.id !== opts.excludeId);
+  let items = opts.commune ? pick((await listResidences({ q: opts.commune, perPage: limit + 1 })).items) : [];
+  if (items.length < limit && opts.city) {
+    const more = pick((await listResidences({ city: opts.city, perPage: limit + 4 })).items);
+    items = [...items, ...more.filter((m) => !items.some((i) => i.id === m.id))];
+  }
+  return items.slice(0, limit).map(mapResidence);
+}
+
+/** Espaces de la même commune, hors espace courant. */
+export async function similarEspaces(opts: { commune?: string | null; excludeId: string; limit?: number }): Promise<Property[]> {
+  const limit = opts.limit ?? 4;
+  const pick = (items: import("./types").Espace[]) => items.filter((e) => e.id !== opts.excludeId);
+  let items = opts.commune ? pick((await listEspaces({ commune: opts.commune, perPage: limit + 1 })).items) : [];
+  if (items.length < limit) {
+    const more = pick((await listEspaces({ perPage: limit + 4 })).items);
+    items = [...items, ...more.filter((m) => !items.some((i) => i.id === m.id))];
+  }
+  return items.slice(0, limit).map(mapEspace);
+}
+
 export async function reservableResidences(): Promise<Property[]> {
   return (await residencesPage({ perPage: 24 })).items;
 }
@@ -102,7 +140,7 @@ export async function reservableEspaces(): Promise<Property[]> {
   return (await espacesPage({ perPage: 24 })).items;
 }
 
-function mapListing(l: import("./types").ListingItem): Property {
+export function mapListing(l: import("./types").ListingItem): Property {
   const kind = l.listingKind ?? "classic";
   const reservable = kind === "furnished" || kind === "event";
   return {
