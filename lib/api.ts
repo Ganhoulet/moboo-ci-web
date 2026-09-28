@@ -26,10 +26,14 @@ async function apiGet<T>(path: string, revalidate = 60): Promise<T> {
 /** Résidences meublées publiées sur la marketplace. Ne casse jamais le rendu. */
 export async function listResidences(params?: {
   city?: string;
+  q?: string;
+  page?: number;
   perPage?: number;
 }): Promise<Paginated<Residence>> {
   const q = new URLSearchParams();
   if (params?.city) q.set("city", params.city);
+  if (params?.q) q.set("q", params.q);
+  if (params?.page) q.set("page", String(params.page));
   q.set("perPage", String(params?.perPage ?? 24));
   try {
     return await apiGet<Paginated<Residence>>(`/marketplace/residences?${q}`);
@@ -42,11 +46,15 @@ export async function listResidences(params?: {
 export async function listEspaces(params?: {
   commune?: string;
   type?: string;
+  q?: string;
+  page?: number;
   perPage?: number;
 }): Promise<Paginated<Espace>> {
   const q = new URLSearchParams();
   if (params?.commune) q.set("commune", params.commune);
   if (params?.type) q.set("type", params.type);
+  if (params?.q) q.set("q", params.q);
+  if (params?.page) q.set("page", String(params.page));
   q.set("perPage", String(params?.perPage ?? 24));
   try {
     return await apiGet<Paginated<Espace>>(`/marketplace/espaces?${q}`);

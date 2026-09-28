@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   listListingsPage,
-  reservableResidences,
-  reservableEspaces,
+  residencesPage,
+  espacesPage,
   type Transaction,
   type Property,
 } from "@/lib/property";
@@ -49,22 +49,13 @@ export default async function AnnoncesPage({
   let total = 0;
 
   if (isReservableTab) {
-    // Meublés / espaces = annonces réservables (listingKind) paginées côté serveur,
-    // + l'inventaire réservable des apps Moboo Resi/Event en tête de 1re page.
-    const kind = active === "furnished" ? "furnished" : "event";
-    const res = await listListingsPage({ listingKind: kind, q, priceMin, priceMax, propertyType, page, perPage: PER_PAGE });
-    let extra: Property[] = [];
-    if (page === 1) {
-      extra = active === "furnished" ? await reservableResidences() : await reservableEspaces();
-      if (q) {
-        const n = q.toLowerCase();
-        extra = extra.filter((p) => `${p.title} ${p.zone}`.toLowerCase().includes(n));
-      }
-      if (priceMin != null) extra = extra.filter((p) => p.price != null && p.price >= priceMin);
-      if (priceMax != null) extra = extra.filter((p) => p.price != null && p.price <= priceMax);
-    }
-    items = [...extra, ...res.items];
-    total = res.total + (page === 1 ? extra.length : 0);
+    // Meublés / espaces = l'inventaire réservable publié depuis Moboo Resi /
+    // Moboo Event (feuille de route §4 : Moboo.ci n'en est que la vitrine).
+    const res = active === "furnished"
+      ? await residencesPage({ q, page, perPage: PER_PAGE })
+      : await espacesPage({ q, page, perPage: PER_PAGE });
+    items = res.items;
+    total = res.total;
   } else {
     // Tout / à louer / à vendre → pagination + filtres serveur (des milliers de biens).
     const tx = active === "rent" || active === "sale" ? active : undefined;

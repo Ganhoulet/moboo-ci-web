@@ -51,9 +51,8 @@ export interface PagedProperties {
   perPage: number;
 }
 
-export async function reservableResidences(): Promise<Property[]> {
-  const { items } = await listResidences({ perPage: 24 });
-  return items.map((r) => ({
+function mapResidence(r: import("./types").Residence): Property {
+  return {
     id: `res-${r.id}`,
     href: `/residence/${r.id}`,
     title: r.name,
@@ -64,26 +63,43 @@ export async function reservableResidences(): Promise<Property[]> {
     transaction: "furnished" as const,
     reservable: true,
     meta: r.apartmentsCount ? `${r.apartmentsCount} logement(s)` : undefined,
-  }));
+  };
+}
+
+function mapEspace(e: import("./types").Espace): Property {
+  const prices = (e.tarifs ?? []).map((t) => t.prix ?? 0).filter((p) => p > 0);
+  return {
+    id: `esp-${e.id}`,
+    href: `/espace/${e.slug || e.id}`,
+    title: e.nom,
+    zone: [e.quartier, e.commune].filter(Boolean).join(", ") || "Côte d'Ivoire",
+    image: e.photoPrincipaleUrl,
+    price: prices.length ? Math.min(...prices) : null,
+    priceLabel: prices.length ? "/ jour" : "",
+    transaction: "event" as const,
+    reservable: true,
+    meta: `${e.capaciteMin}–${e.capaciteMax} pers.`,
+  };
+}
+
+/** Résidences meublées réservables (publiées depuis Moboo Resi), paginées. */
+export async function residencesPage(opts: { q?: string; page?: number; perPage?: number }): Promise<PagedProperties> {
+  const { items, total, page, perPage } = await listResidences({ q: opts.q, page: opts.page ?? 1, perPage: opts.perPage ?? 24 });
+  return { items: items.map(mapResidence), total, page, perPage };
+}
+
+/** Espaces événementiels réservables (publiés depuis Moboo Event), paginés. */
+export async function espacesPage(opts: { q?: string; page?: number; perPage?: number }): Promise<PagedProperties> {
+  const { items, total, page, perPage } = await listEspaces({ q: opts.q, page: opts.page ?? 1, perPage: opts.perPage ?? 24 });
+  return { items: items.map(mapEspace), total, page, perPage };
+}
+
+export async function reservableResidences(): Promise<Property[]> {
+  return (await residencesPage({ perPage: 24 })).items;
 }
 
 export async function reservableEspaces(): Promise<Property[]> {
-  const { items } = await listEspaces({ perPage: 24 });
-  return items.map((e) => {
-    const prices = (e.tarifs ?? []).map((t) => t.prix ?? 0).filter((p) => p > 0);
-    return {
-      id: `esp-${e.id}`,
-      href: `/espace/${e.slug || e.id}`,
-      title: e.nom,
-      zone: [e.quartier, e.commune].filter(Boolean).join(", ") || "Côte d'Ivoire",
-      image: e.photoPrincipaleUrl,
-      price: prices.length ? Math.min(...prices) : null,
-      priceLabel: "",
-      transaction: "event" as const,
-      reservable: true,
-      meta: `${e.capaciteMin}–${e.capaciteMax} pers.`,
-    };
-  });
+  return (await espacesPage({ perPage: 24 })).items;
 }
 
 function mapListing(l: import("./types").ListingItem): Property {
