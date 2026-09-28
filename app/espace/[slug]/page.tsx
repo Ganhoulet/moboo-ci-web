@@ -3,15 +3,15 @@ import { notFound } from "next/navigation";
 import { formatXOF, getEspace, getEspaceOccupied } from "@/lib/api";
 import { mapEspace, similarEspaces } from "@/lib/property";
 import type { Tarif } from "@/lib/types";
-import { PhotoGrid } from "@/components/photo-grid";
 import { EspaceBooking } from "@/components/espace-booking";
 import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
 import { MobileBookBar } from "@/components/mobile-book-bar";
-import { DetailActions, ReadMore } from "@/components/detail-actions";
+import { ReadMore } from "@/components/detail-actions";
+import { DetailHero } from "@/components/detail-hero";
 import {
-  BookingSteps, Breadcrumbs, DetailMeta, FeatureList, HostCard, Icons, JsonLd,
-  KeyFacts, PinIcon, Section, VideoSection, type Fact,
+  BookingSteps, DetailMeta, FeatureList, HostCard, Icons, JsonLd,
+  KeyFacts, Section, displayName, type Fact,
 } from "@/components/detail";
 
 export const revalidate = 60;
@@ -104,32 +104,46 @@ export default async function EspacePage({ params }: { params: { slug: string } 
         }}
       />
 
-      <Breadcrumbs
-        items={[
+      <DetailHero
+        photos={photos}
+        videoUrl={e.videoUrl}
+        backHref="/annonces?transaction=event"
+        breadcrumbs={[
           { label: "Accueil", href: "/" },
           { label: "Espaces", href: "/annonces?transaction=event" },
           ...(e.commune ? [{ label: e.commune, href: `/annonces?transaction=event&q=${encodeURIComponent(e.commune)}` }] : []),
           { label: e.nom },
         ]}
+        badges={
+          <>
+            <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">{typeLabel}</span>
+            {e.accepteReservationAuto ? <span className="chip">Confirmation rapide</span> : null}
+          </>
+        }
+        title={e.nom}
+        zone={zone}
+        summary={[
+          typeLabel,
+          `${e.capaciteMin} à ${e.capaciteMax} personnes`,
+          e.superficie ? `${e.superficie} m²` : null,
+        ]}
+        price={
+          aPartir ? (
+            <p className="text-lg font-extrabold text-ink">
+              <span className="text-sm font-medium text-muted">dès </span>
+              {formatXOF(aPartir)}
+            </p>
+          ) : null
+        }
+        meta={<DetailMeta reference={e.reference} updatedAt={e.updatedAt} />}
+        person={e.host ? {
+          role: "Hôte",
+          name: displayName(e.host.name),
+          photoUrl: e.host.avatarUrl,
+          sub: e.host.listingsCount > 1 ? `${e.host.listingsCount} espaces sur Moboo.ci` : "Hôte Moboo.ci",
+        } : null}
+        property={mapEspace(e)}
       />
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">{typeLabel}</span>
-        <span className="chip">{e.capaciteMin}–{e.capaciteMax} pers.</span>
-        {e.accepteReservationAuto ? <span className="chip">Confirmation rapide</span> : null}
-      </div>
-      <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">{e.nom}</h1>
-          <p className="mt-1 flex items-center gap-1 text-muted">{PinIcon}{zone}</p>
-          <div className="mt-1"><DetailMeta reference={e.reference} updatedAt={e.updatedAt} /></div>
-        </div>
-        <DetailActions property={mapEspace(e)} />
-      </div>
-
-      <div className="mt-6">
-        <PhotoGrid photos={photos} alt={e.nom} />
-      </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-10">
@@ -183,8 +197,6 @@ export default async function EspacePage({ params }: { params: { slug: string } 
               <ReadMore text={e.reglesInternes} lines={5} />
             </Section>
           ) : null}
-
-          <VideoSection url={e.videoUrl} />
 
           {hasMap ? (
             <Section title="Où se situe l'espace">

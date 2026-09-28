@@ -3,15 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatXOF, getResidence, getApartmentOccupied, type OccupiedRange } from "@/lib/api";
 import { apartmentLabel, mapResidence, similarResidences } from "@/lib/property";
-import { PhotoGrid } from "@/components/photo-grid";
 import { ResidenceBooking, type BookableApt } from "@/components/residence-booking";
 import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
 import { MobileBookBar } from "@/components/mobile-book-bar";
-import { DetailActions, ReadMore } from "@/components/detail-actions";
+import { ReadMore } from "@/components/detail-actions";
+import { DetailHero } from "@/components/detail-hero";
 import {
-  BookingSteps, Breadcrumbs, DetailMeta, FeatureList, HostCard, Icons, JsonLd,
-  KeyFacts, PinIcon, Section, VideoSection, type Fact,
+  BookingSteps, DetailMeta, FeatureList, HostCard, Icons, JsonLd,
+  KeyFacts, Section, displayName, type Fact,
 } from "@/components/detail";
 
 export const revalidate = 60;
@@ -84,31 +84,47 @@ export default async function ResidencePage({ params }: { params: { id: string }
         }}
       />
 
-      <Breadcrumbs
-        items={[
+      <DetailHero
+        photos={photos}
+        videoUrl={r.videoUrl}
+        backHref="/annonces?transaction=furnished"
+        breadcrumbs={[
           { label: "Accueil", href: "/" },
           { label: "Meublés", href: "/annonces?transaction=furnished" },
           ...(r.commune ? [{ label: r.commune, href: `/annonces?transaction=furnished&q=${encodeURIComponent(r.commune)}` }] : []),
           { label: r.name },
         ]}
+        badges={
+          <>
+            <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">Meublé</span>
+            <span className="chip">Réservable en ligne</span>
+          </>
+        }
+        title={r.name}
+        zone={zone}
+        summary={[
+          apts.length === 1 ? `Logement entier : ${apartmentLabel(apts[0].type).toLowerCase()}` : `${apts.length} logements`,
+          surfaces.length ? `${Math.min(...surfaces)} m²` : null,
+          amenities.length ? `${new Set(amenities).size} équipements` : null,
+        ]}
+        price={
+          r.minNightlyPrice ? (
+            <p className="text-lg font-extrabold text-ink">
+              {apts.length > 1 ? <span className="text-sm font-medium text-muted">dès </span> : null}
+              {formatXOF(r.minNightlyPrice)}
+              <span className="text-sm font-medium text-muted"> / nuit</span>
+            </p>
+          ) : null
+        }
+        meta={<DetailMeta reference={r.reference} updatedAt={r.updatedAt} />}
+        person={r.host ? {
+          role: "Hôte",
+          name: displayName(r.host.name),
+          photoUrl: r.host.avatarUrl,
+          sub: r.host.listingsCount > 1 ? `${r.host.listingsCount} logements sur Moboo.ci` : "Hôte Moboo.ci",
+        } : null}
+        property={mapResidence(r)}
       />
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">Meublé</span>
-        <span className="chip">Réservable en ligne</span>
-      </div>
-      <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">{r.name}</h1>
-          <p className="mt-1 flex items-center gap-1 text-muted">{PinIcon}{zone}</p>
-          <div className="mt-1"><DetailMeta reference={r.reference} updatedAt={r.updatedAt} /></div>
-        </div>
-        <DetailActions property={mapResidence(r)} />
-      </div>
-
-      <div className="mt-6">
-        <PhotoGrid photos={photos} alt={r.name} />
-      </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-10">
@@ -169,8 +185,6 @@ export default async function ResidencePage({ params }: { params: { id: string }
               <p className="whitespace-pre-line text-slate-600">{rules}</p>
             </Section>
           ) : null}
-
-          <VideoSection url={r.videoUrl} />
 
           {tour ? (
             <Section title="Visite virtuelle">

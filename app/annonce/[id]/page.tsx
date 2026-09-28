@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { formatXOF, getListing } from "@/lib/api";
 import { mapListing, similarListings } from "@/lib/property";
-import { PhotoGrid } from "@/components/photo-grid";
-import { DetailActions, ReadMore } from "@/components/detail-actions";
+import { ReadMore } from "@/components/detail-actions";
+import { DetailHero, type HeroPerson } from "@/components/detail-hero";
 import {
-  Breadcrumbs, DetailMeta, FeatureList, Icons as I, JsonLd, KeyFacts, PinIcon, Section, VideoSection, type Fact,
+  DetailMeta, FeatureList, Icons as I, JsonLd, KeyFacts, Section, displayName, type Fact,
 } from "@/components/detail";
 import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
@@ -68,6 +68,18 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
   const barWhatsapp = l.agent?.whatsapp || l.contactPhone;
   const isReservable = l.listingKind === "furnished" || l.listingKind === "event";
 
+  // Agent / agence rattaché (reprise WP), sinon l'annonceur particulier.
+  const person: HeroPerson | null = l.agent
+    ? {
+        role: l.agent.kind === "agency" ? "Agence" : "Agent",
+        name: l.agent.name,
+        photoUrl: l.agent.photoUrl,
+        sub: [l.agent.position, l.agent.company].filter(Boolean).join(" · ") || l.agent.serviceArea || "Agent immobilier Moboo.ci",
+      }
+    : l.contactName
+      ? { role: "Annonceur", name: displayName(l.contactName), sub: "Contact direct, sans commission" }
+      : null;
+
   return (
     <div className="container-page py-8 pb-24 lg:pb-8">
       <JsonLd
@@ -88,37 +100,41 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
         }}
       />
 
-      <Breadcrumbs
-        items={[
+      <DetailHero
+        photos={l.photos}
+        videoUrl={l.videoUrl}
+        backHref={`/annonces?transaction=${l.transaction}`}
+        breadcrumbs={[
           { label: "Accueil", href: "/" },
           { label: txLabel, href: `/annonces?transaction=${l.transaction}` },
           ...(l.commune ? [{ label: l.commune, href: `/annonces?transaction=${l.transaction}&q=${encodeURIComponent(l.commune)}` }] : []),
           { label: l.title },
         ]}
-      />
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-          {l.listingKind === "furnished" ? "Meublé" : l.listingKind === "event" ? "Événementiel" : TX_LABEL[l.transaction] ?? l.transaction}
-        </span>
-        <span className="chip">{TYPE_LABEL[l.propertyType] ?? "Bien"}</span>
-      </div>
-      <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">{l.title}</h1>
-          <p className="mt-1 flex items-center gap-1 text-muted">{PinIcon}{zone}</p>
-          <p className="mt-1 text-xl font-extrabold text-brand-800">
+        badges={
+          <>
+            <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+              {l.listingKind === "furnished" ? "Meublé" : l.listingKind === "event" ? "Événementiel" : TX_LABEL[l.transaction] ?? l.transaction}
+            </span>
+            <span className="chip">{TYPE_LABEL[l.propertyType] ?? "Bien"}</span>
+          </>
+        }
+        title={l.title}
+        zone={zone}
+        summary={[
+          l.bedrooms ? `${l.bedrooms} chambre${l.bedrooms > 1 ? "s" : ""}` : null,
+          l.bathrooms ? `${l.bathrooms} salle${l.bathrooms > 1 ? "s" : ""} de bain` : null,
+          l.surface ? `${l.surface} m²` : null,
+        ]}
+        price={
+          <p className="text-xl font-extrabold text-brand-800">
             {formatXOF(l.price)}
             {l.transaction === "rent" ? <span className="text-sm font-medium text-muted"> / mois</span> : null}
           </p>
-          <div className="mt-1"><DetailMeta reference={l.reference} updatedAt={l.updatedAt} views={l.views} /></div>
-        </div>
-        <DetailActions property={mapListing(l)} />
-      </div>
-
-      <div className="mt-6">
-        <PhotoGrid photos={l.photos} alt={l.title} />
-      </div>
+        }
+        meta={<DetailMeta reference={l.reference} updatedAt={l.updatedAt} views={l.views} />}
+        person={person}
+        property={mapListing(l)}
+      />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-10">
@@ -162,8 +178,6 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
               </div>
             </Section>
           ) : null}
-
-          <VideoSection url={l.videoUrl} />
 
           {l.latitude != null && l.longitude != null ? (
             <Section title="Localisation">

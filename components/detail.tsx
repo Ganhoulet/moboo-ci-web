@@ -73,39 +73,6 @@ export function FeatureList({ items }: { items: string[] }) {
   );
 }
 
-/** Extrait l'ID YouTube d'une URL (watch?v=, youtu.be, embed, shorts, live). */
-export function youtubeId(url?: string | null): string | null {
-  if (!url) return null;
-  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
-  return m ? m[1] : null;
-}
-
-/** Vidéo de présentation : lecteur YouTube intégré, sinon lien (TikTok, Facebook…). */
-export function VideoSection({ url }: { url?: string | null }) {
-  if (!url || !/^https?:\/\//i.test(url)) return null;
-  const yt = youtubeId(url);
-  return (
-    <Section title="Vidéo">
-      {yt ? (
-        <div className="aspect-video overflow-hidden rounded-2xl border border-slate-200 bg-black">
-          <iframe
-            title="Vidéo de présentation"
-            src={`https://www.youtube-nocookie.com/embed/${yt}`}
-            loading="lazy"
-            allowFullScreen
-            className="h-full w-full"
-            style={{ border: 0 }}
-          />
-        </div>
-      ) : (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="btn-ghost inline-flex">
-          Voir la vidéo de présentation ↗
-        </a>
-      )}
-    </Section>
-  );
-}
-
 /** « IREHERMANN » / « jean » → « Irehermann » / « Jean ». */
 export function displayName(name: string) {
   return name
