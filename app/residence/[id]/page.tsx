@@ -35,7 +35,7 @@ export default async function ResidencePage({ params }: { params: { id: string }
   const r = await getResidence(params.id);
   if (!r) notFound();
 
-  const zone = [r.commune, r.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
+  const zone = [r.quartier, r.commune, r.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const apts = r.apartments ?? [];
   const photos = [...(r.photos ?? []), ...apts.flatMap((a) => a.photos ?? [])];
 
@@ -52,11 +52,32 @@ export default async function ResidencePage({ params }: { params: { id: string }
   // Caractéristiques clés (comme l'en-tête « valued features » de l'appli).
   const surfaces = apts.map((a) => num(a.surface)).filter(Boolean);
   const deposits = apts.map((a) => num(a.deposit)).filter(Boolean);
+  // Fiche meublé (saisie dans Moboo Resi) : un seul logement → ses valeurs ;
+  // plusieurs → le maximum (« jusqu'à 6 voyageurs »).
+  const maxOf = (k: "maxGuests" | "bedrooms" | "beds" | "bathrooms") => {
+    const v = apts.map((a) => num(a[k])).filter(Boolean);
+    return v.length ? Math.max(...v) : 0;
+  };
+  const guests = maxOf("maxGuests"), bedrooms = maxOf("bedrooms"), beds = maxOf("beds"), baths = maxOf("bathrooms");
+  const one = apts.length === 1 ? apts[0] : null;
+  const checkIn = apts.map((a) => a.checkInTime).find(Boolean);
+  const checkOut = apts.map((a) => a.checkOutTime).find(Boolean);
+  const minNights = Math.min(...apts.map((a) => num(a.minNights)).filter(Boolean), Infinity);
+  const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
+
   const facts: Fact[] = [
-    { icon: Icons.home, label: "Type", value: apts.length === 1 ? apartmentLabel(apts[0].type) : "Résidence meublée" },
+    { icon: Icons.home, label: "Type", value: one ? apartmentLabel(one.type) : "Résidence meublée" },
   ];
   if (apts.length > 1) facts.push({ icon: Icons.door, label: "Logements", value: String(apts.length) });
+  if (guests) facts.push({ icon: Icons.users, label: "Voyageurs", value: one ? String(guests) : `jusqu'à ${guests}` });
+  if (bedrooms) facts.push({ icon: Icons.door, label: "Chambres", value: String(bedrooms) });
+  if (beds) facts.push({ icon: Icons.bed, label: "Lits", value: String(beds) });
+  if (baths) facts.push({ icon: Icons.bath, label: "Salles de bain", value: String(baths) });
   if (surfaces.length) facts.push({ icon: Icons.area, label: "Surface", value: surfaces.length > 1 ? `${Math.min(...surfaces)}–${Math.max(...surfaces)} m²` : `${surfaces[0]} m²` });
+  if (checkIn || checkOut) {
+    facts.push({ icon: Icons.clock, label: "Arrivée / départ", value: [checkIn ? `dès ${checkIn}` : null, checkOut ? `avant ${checkOut}` : null].filter(Boolean).join(" · ") });
+  }
+  if (Number.isFinite(minNights) && minNights > 1) facts.push({ icon: Icons.cal, label: "Séjour minimum", value: `${minNights} nuits` });
   // Les prix ne sont pas répétés ici : nuit en tête de la carte de réservation,
   // semaine / mois dans la liste des logements.
   if (deposits.length) facts.push({ icon: Icons.shield, label: "Caution", value: formatXOF(Math.max(...deposits)) });
@@ -66,10 +87,14 @@ export default async function ResidencePage({ params }: { params: { id: string }
   const services = apts.map((a) => a.services?.trim()).find(Boolean);
   const tour = apts.map((a) => a.virtualTourUrl).find((u) => u && /^https?:\/\//i.test(u));
   const hasMap = r.latitude != null && r.longitude != null;
+  // « Logement entier : studio · 2 voyageurs · 1 chambre · 1 lit · 1 salle de bain » (façon Airbnb)
   const summary = [
-    apts.length === 1 ? `Logement entier : ${apartmentLabel(apts[0].type).toLowerCase()}` : `${apts.length} logements`,
-    surfaces.length ? `${Math.min(...surfaces)} m²` : null,
-    amenities.length ? `${new Set(amenities).size} équipements` : null,
+    one ? `Logement entier : ${apartmentLabel(one.type).toLowerCase()}` : `${apts.length} logements`,
+    guests ? (one ? plural(guests, "voyageur", "voyageurs") : `jusqu'à ${guests} voyageurs`) : null,
+    bedrooms ? plural(bedrooms, "chambre", "chambres") : null,
+    beds ? plural(beds, "lit", "lits") : null,
+    baths ? plural(baths, "salle de bain", "salles de bain") : null,
+    !guests && !bedrooms && surfaces.length ? `${Math.min(...surfaces)} m²` : null,
   ];
   const meta = <DetailMeta reference={r.reference} updatedAt={r.updatedAt} />;
   const person: HeroPerson | null = r.host ? {
@@ -149,6 +174,9 @@ export default async function ResidencePage({ params }: { params: { id: string }
                 {apts.map((a) => {
                   const cover = a.photos?.[0] ?? r.photos?.[0];
                   const details = [
+                    a.maxGuests ? plural(a.maxGuests, "voyageur", "voyageurs") : null,
+                    a.bedrooms ? plural(a.bedrooms, "ch.", "ch.") : null,
+                    a.beds ? plural(a.beds, "lit", "lits") : null,
                     a.surface ? `${a.surface} m²` : null,
                     a.floor != null ? (a.floor === 0 ? "Rez-de-chaussée" : `${a.floor}e étage`) : null,
                     num(a.weeklyPrice) ? `${formatXOF(a.weeklyPrice)} / semaine` : null,

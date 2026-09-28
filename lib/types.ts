@@ -65,6 +65,13 @@ export interface Apartment {
   houseRules?: string | null;
   services?: string | null;
   virtualTourUrl?: string | null;
+  maxGuests?: number | null;
+  bedrooms?: number | null;
+  beds?: number | null;
+  bathrooms?: number | null;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+  minNights?: number | null;
 }
 
 /** Hôte affiché sur les fiches réservables (jamais de coordonnées avant l'acompte). */
@@ -76,6 +83,7 @@ export interface Host {
 
 export interface ResidenceDetail extends Residence {
   apartments: Apartment[];
+  quartier?: string | null;
   host?: Host;
   reference?: number | null;
   videoUrl?: string | null;
