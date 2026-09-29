@@ -273,7 +273,14 @@ function FavoriteCircle({ property }: { property: Property }) {
  * Galerie style Airbnb : un grand média (la vidéo si l'annonce en a une) +
  * 4 vignettes, bouton « Voir les N photos » et visionneuse plein écran.
  */
-export function PhotoGrid({ photos, alt, videoUrl }: { photos: string[]; alt: string; videoUrl?: string | null }) {
+export type BannerStyle = "mosaic" | "wide" | "split" | "collage";
+
+/**
+ * Photos en tête de fiche (ordinateur). `variant` (back-office → Détails de la
+ * propriété → Bannière) : mosaïque 1 + 4, grande photo + vignettes, grande
+ * photo + 2 à droite, collage en colonnes.
+ */
+export function PhotoGrid({ photos, alt, videoUrl, variant = "mosaic" }: { photos: string[]; alt: string; videoUrl?: string | null; variant?: BannerStyle }) {
   const media = buildMedia(photos, videoUrl);
   const [open, setOpen] = useState<number | null>(null);
   const hasVideo = media[0]?.kind === "video";
@@ -284,6 +291,84 @@ export function PhotoGrid({ photos, alt, videoUrl }: { photos: string[]; alt: st
   const [main, ...rest] = media;
   const thumbs = rest.slice(0, 4);
   const thumbSrc = (m: Media) => (m.kind === "photo" ? m.src : m.poster);
+
+  /** Une tuile cliquable (ouvre la visionneuse sur ce média). */
+  const tile = (m: Media, i: number, className: string) => (
+    <button key={i} type="button" onClick={() => setOpen(i)} className={`relative min-h-0 min-w-0 overflow-hidden bg-slate-200 ${className}`}
+      aria-label={m.kind === "video" ? "Lire la vidéo" : `Photo ${i + 1}`}>
+      {m.kind === "video" ? (
+        <Poster m={m} alt={alt} className="h-full w-full object-cover transition hover:scale-[1.02]" />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={thumbSrc(m) ?? ""} alt={i === 0 ? alt : ""} loading={i === 0 ? undefined : "lazy"} decoding="async" className="h-full w-full object-cover transition hover:scale-[1.02]" />
+      )}
+      {m.kind === "video" ? <PlayBadge size={i === 0 ? 72 : 44} /> : null}
+    </button>
+  );
+
+  const overlay = (
+    <div className="absolute bottom-3 right-3 flex gap-2">
+      {hasVideo ? (
+        <button type="button" onClick={() => setOpen(0)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white/95 px-3 py-1.5 text-sm font-semibold text-ink shadow-sm backdrop-blur transition hover:bg-white">
+          {IconVideo} Vidéo
+        </button>
+      ) : null}
+      {photoCount > 1 ? (
+        <button type="button" onClick={() => setOpen(hasVideo ? 1 : 0)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white/95 px-3 py-1.5 text-sm font-semibold text-ink shadow-sm backdrop-blur transition hover:bg-white">
+          {IconPhotos} Voir les {photoCount} photos
+        </button>
+      ) : null}
+    </div>
+  );
+
+  if (variant !== "mosaic") {
+    let grid: React.ReactNode;
+    if (variant === "wide") {
+      const strip = media.slice(1, 7);
+      grid = (
+        <div className="space-y-2">
+          <div className="relative">{tile(main, 0, "block h-[26rem] w-full rounded-2xl")}{overlay}</div>
+          {strip.length ? (
+            <div className="grid grid-cols-6 gap-2">{strip.map((m, j) => tile(m, j + 1, "aspect-[4/3] rounded-xl"))}</div>
+          ) : null}
+        </div>
+      );
+    } else if (variant === "split") {
+      grid = (
+        <div className="relative grid h-[26rem] grid-cols-3 grid-rows-[minmax(0,1fr)] gap-2">
+          {tile(main, 0, `rounded-2xl ${rest.length ? "col-span-2" : "col-span-3"}`)}
+          {rest.length ? (
+            <div className="grid min-h-0 gap-2" style={{ gridTemplateRows: `repeat(${Math.min(2, rest.length)}, minmax(0, 1fr))` }}>
+              {rest.slice(0, 2).map((m, j) => tile(m, j + 1, "rounded-xl"))}
+            </div>
+          ) : null}
+          {overlay}
+        </div>
+      );
+    } else {
+      // Collage : une grande colonne + deux colonnes de deux.
+      const cols = [rest.slice(0, 2), rest.slice(2, 4)].filter((c) => c.length);
+      grid = (
+        <div className="relative grid h-[26rem] grid-rows-[minmax(0,1fr)] gap-2" style={{ gridTemplateColumns: `1.2fr ${cols.map(() => "1fr").join(" ")}` }}>
+          {tile(main, 0, "rounded-2xl")}
+          {cols.map((c, ci) => (
+            <div key={ci} className="grid min-h-0 gap-2" style={{ gridTemplateRows: `repeat(${c.length}, minmax(0, 1fr))` }}>
+              {c.map((m, j) => tile(m, 1 + ci * 2 + j, "rounded-xl"))}
+            </div>
+          ))}
+          {overlay}
+        </div>
+      );
+    }
+    return (
+      <>
+        {grid}
+        {open !== null && <Lightbox media={media} alt={alt} start={open} onClose={() => setOpen(null)} />}
+      </>
+    );
+  }
 
   return (
     <>

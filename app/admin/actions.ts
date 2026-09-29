@@ -8,7 +8,7 @@ const errMsg = (data: any, fallback: string) =>
   (Array.isArray(data?.message) ? data.message[0] : data?.message)
   || (Array.isArray(data?.error?.message) ? data.error.message[0] : data?.error?.message) || fallback;
 
-export type FieldType = "bool" | "number" | "text" | "textarea" | "url" | "image" | "enum" | "multi" | "color" | "html" | "emails";
+export type FieldType = "bool" | "number" | "text" | "textarea" | "url" | "image" | "enum" | "multi" | "color" | "html" | "emails" | "visual";
 
 export interface SettingField {
   key: string; label: string; help?: string; type: FieldType;

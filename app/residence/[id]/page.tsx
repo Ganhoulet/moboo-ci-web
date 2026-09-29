@@ -13,6 +13,7 @@ import {
   BookingSteps, DetailMeta, FeatureList, HostCard, Icons, JsonLd,
   KeyFacts, Section, displayName, type Fact,
 } from "@/components/detail";
+import { getSiteSettings } from "@/lib/settings";
 
 export const revalidate = 60;
 
@@ -119,6 +120,7 @@ export default async function ResidencePage({ params }: { params: { id: string }
       />
 
       <DetailHero
+        bannerStyle={(await getSiteSettings()).listing.bannerStyle}
         photos={photos}
         videoUrl={r.videoUrl}
         backHref="/annonces?transaction=furnished"

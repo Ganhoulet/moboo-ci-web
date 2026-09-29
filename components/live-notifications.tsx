@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -25,18 +25,51 @@ interface LiveMessage {
 
 const POLL_MS = 30_000;
 
+/* Compteur de non-lus partagé : une seule connexion (LiveNotifications, montée
+   une fois dans la page) et autant de cloches que l'en-tête en affiche. */
+let unreadCount = 0;
+const listeners = new Set<() => void>();
+function setUnreadCount(n: number) {
+  if (n === unreadCount) return;
+  unreadCount = n;
+  listeners.forEach((l) => l());
+}
+const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
+const useUnread = () => useSyncExternalStore(subscribe, () => unreadCount, () => 0);
+
+/** Cloche « Messages » (pastille des non-lus). `tone="dark"` : sur fond sombre. */
+export function MessagesBell({ tone = "light" }: { tone?: "light" | "dark" }) {
+  const unread = useUnread();
+  return (
+    <Link href="/mon-espace/messages" aria-label={unread ? `Messages (${unread} non lus)` : "Messages"}
+      className={"relative grid h-10 w-10 place-items-center rounded-full border transition " +
+        (tone === "dark" ? "border-white/25 text-white hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-50")}>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {unread ? (
+        <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-accent-600 px-1 text-[11px] font-bold text-white ring-2 ring-white">
+          {unread > 99 ? "99+" : unread}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
 /**
- * Cloche « Messages » de l'en-tête, en temps réel : flux SSE de l'API (ticket
- * obtenu côté serveur), pastille des non-lus, notification à l'écran et du
- * navigateur (onglet en arrière-plan), rafraîchissement de l'espace compte.
- * Si le flux est indisponible, on interroge le compteur toutes les 30 s.
+ * Notifications de messages en temps réel (à monter UNE fois, compte connecté) :
+ * flux SSE de l'API (ticket obtenu côté serveur), compteur partagé avec les
+ * cloches (MessagesBell), notification à l'écran et du navigateur (onglet en
+ * arrière-plan), rafraîchissement de l'espace compte. Si le flux est
+ * indisponible, on interroge le compteur toutes les 30 s.
  */
 export function LiveNotifications() {
   const router = useRouter();
   const pathname = usePathname();
   const path = useRef(pathname);
   path.current = pathname;
-  const [unread, setUnread] = useState(0);
+  const unread = useUnread();
+  const setUnread = setUnreadCount;
   const [toasts, setToasts] = useState<LiveMessage[]>([]);
 
   const dismiss = useCallback((id: string) => setToasts((t) => t.filter((x) => x.messageId !== id)), []);
@@ -116,18 +149,6 @@ export function LiveNotifications() {
 
   return (
     <>
-      <Link href="/mon-espace/messages" aria-label={unread ? `Messages (${unread} non lus)` : "Messages"}
-        className="relative grid h-10 w-10 place-items-center rounded-full border border-slate-200 text-slate-600 transition hover:bg-slate-50">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        {unread ? (
-          <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-accent-600 px-1 text-[11px] font-bold text-white ring-2 ring-white">
-            {unread > 99 ? "99+" : unread}
-          </span>
-        ) : null}
-      </Link>
-
       {toasts.length ? (
         <div className="fixed inset-x-3 bottom-3 z-50 space-y-2 sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-96" aria-live="polite">
           {toasts.map((m) => (

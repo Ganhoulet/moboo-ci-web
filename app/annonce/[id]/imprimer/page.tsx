@@ -1,0 +1,118 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { formatXOF, getListing } from "@/lib/api";
+import { getSiteSettings } from "@/lib/settings";
+import { MobooLogo } from "@/components/logo";
+import { PrintButton } from "@/components/print-button";
+
+export const metadata: Metadata = { robots: { index: false } };
+
+const TYPE_LABEL: Record<string, string> = {
+  appartement: "Appartement", maison: "Maison", villa: "Villa", studio: "Studio",
+  terrain: "Terrain", bureau: "Bureau", magasin: "Magasin", autre: "Bien",
+};
+
+/**
+ * Fiche imprimable d'une annonce (back-office → Imprimer la propriété) :
+ * logo, photo, prix, détails, description, équipements, galerie, contact.
+ */
+export default async function PrintListing({ params }: { params: { id: string } }) {
+  const [l, settings] = await Promise.all([getListing(params.id), getSiteSettings()]);
+  const cfg = settings.print;
+  if (!l || !cfg.enabled) notFound();
+
+  const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ");
+  const details: [string, string][] = [
+    ["Transaction", l.transaction === "rent" ? "À louer" : "À vendre"],
+    ["Type", TYPE_LABEL[l.propertyType] ?? "Bien"],
+    ...(l.bedrooms != null ? [["Chambres", String(l.bedrooms)] as [string, string]] : []),
+    ...(l.bathrooms != null ? [["Salles de bain", String(l.bathrooms)] as [string, string]] : []),
+    ...(l.surface != null ? [["Surface", `${l.surface} m²`] as [string, string]] : []),
+    ...(l.garage ? [["Garage", String(l.garage)] as [string, string]] : []),
+    ...(l.reference ? [["Référence", String(l.reference)] as [string, string]] : []),
+  ];
+  const contact = l.agent
+    ? { name: l.agent.name, phone: l.agent.phone || l.agent.whatsapp, email: l.agent.email, role: l.agent.kind === "agency" ? "Agence" : "Agent" }
+    : { name: l.contactName || "Annonceur", phone: l.contactPhone, email: null, role: "Annonceur" };
+  const logo = cfg.logoUrl || settings.branding.logoUrl;
+  const url = `https://moboo.ci/annonce/${l.id}`;
+
+  return (
+    <div className="mx-auto max-w-3xl bg-white px-6 py-8 text-ink print:max-w-none print:p-0">
+      <div className="mb-6 flex items-center justify-between gap-3 print:hidden">
+        <Link href={`/annonce/${l.id}`} className="text-sm font-semibold text-brand-800 hover:underline">← Retour à l’annonce</Link>
+        <PrintButton />
+      </div>
+
+      <header className="flex items-center justify-between border-b-2 border-brand-800 pb-4">
+        <MobooLogo src={logo} height={40} alt={settings.branding.siteName} />
+        <p className="text-right text-xs text-slate-500">{new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}<br />{url}</p>
+      </header>
+
+      <section className="mt-5 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-extrabold">{l.title}</h1>
+          <p className="mt-1 text-slate-600">{zone}</p>
+        </div>
+        <p className="shrink-0 text-right text-xl font-extrabold text-brand-800">
+          {formatXOF(l.price)}{l.transaction === "rent" ? <span className="block text-xs font-medium text-slate-500">par mois</span> : null}
+        </p>
+      </section>
+
+      {l.photos?.[0] ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={l.photos[0]} alt="" className="mt-4 aspect-[16/9] w-full rounded-lg object-cover print:rounded-none" />
+      ) : null}
+
+      {cfg.showDetails ? (
+        <section className="mt-6 break-inside-avoid">
+          <h2 className="border-b border-slate-200 pb-1 font-display text-lg font-bold">Détails</h2>
+          <dl className="mt-3 grid grid-cols-2 gap-x-8 gap-y-2 text-sm sm:grid-cols-3">
+            {details.map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-2 border-b border-dotted border-slate-200 pb-1"><dt className="text-slate-500">{k}</dt><dd className="font-semibold">{v}</dd></div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
+
+      {cfg.showDescription && l.description ? (
+        <section className="mt-6">
+          <h2 className="border-b border-slate-200 pb-1 font-display text-lg font-bold">Description</h2>
+          <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">{l.description}</p>
+        </section>
+      ) : null}
+
+      {cfg.showFeatures && l.features?.length ? (
+        <section className="mt-6 break-inside-avoid">
+          <h2 className="border-b border-slate-200 pb-1 font-display text-lg font-bold">Équipements</h2>
+          <ul className="mt-3 grid grid-cols-2 gap-1.5 text-sm sm:grid-cols-3">
+            {l.features.map((f) => <li key={f}>✓ {f}</li>)}
+          </ul>
+        </section>
+      ) : null}
+
+      {cfg.showGallery && (l.photos?.length ?? 0) > 1 ? (
+        <section className="mt-6">
+          <h2 className="border-b border-slate-200 pb-1 font-display text-lg font-bold">Galerie</h2>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {l.photos.slice(1, 10).map((p) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={p} src={p} alt="" className="aspect-[4/3] w-full break-inside-avoid rounded object-cover" />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {cfg.showAgent ? (
+        <section className="mt-6 break-inside-avoid rounded-lg border border-slate-200 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{contact.role}</p>
+          <p className="mt-0.5 font-semibold">{contact.name}</p>
+          <p className="text-sm text-slate-700">{[contact.phone, contact.email].filter(Boolean).join(" · ")}</p>
+        </section>
+      ) : null}
+
+      <footer className="mt-8 border-t border-slate-200 pt-3 text-center text-xs text-slate-500">{cfg.footerText}</footer>
+    </div>
+  );
+}

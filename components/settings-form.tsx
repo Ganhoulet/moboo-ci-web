@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { resetSectionAction, saveSettingsAction, type SettingField, type SettingSection } from "@/app/admin/actions";
 import { uploadImageAction } from "@/app/mon-espace/actions";
 import { EmailPreview } from "./email-preview";
+import { VisualThumb } from "./visual-thumbs";
 
 type Values = Record<string, unknown>;
 
@@ -56,6 +57,19 @@ function Field({ f, value, onChange, onFocusText }: {
             <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={value === o.value}
               className={(i ? "border-l border-slate-300 " : "") + "px-4 py-2 transition " + (value === o.value ? "bg-brand-700 text-white" : "bg-white text-ink hover:bg-slate-50")}>
               {o.label}
+            </button>
+          ))}
+        </div>
+      );
+    case "visual":
+      // Choix par vignette (style d'en-tête, bannière, recherche…), comme Houzez.
+      return (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {f.options?.map((o) => (
+            <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={value === o.value}
+              className={"overflow-hidden rounded-md border-2 bg-slate-50 p-1.5 text-left transition " + (value === o.value ? "border-brand-600 ring-2 ring-brand-200" : "border-slate-200 hover:border-slate-400")}>
+              <VisualThumb field={f.key} value={o.value} />
+              <span className={"mt-1.5 block px-1 text-sm font-semibold " + (value === o.value ? "text-brand-800" : "text-ink")}>{o.label}</span>
             </button>
           ))}
         </div>

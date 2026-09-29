@@ -8,7 +8,7 @@ export function TopBar({ h }: { h: SiteSettings["header"] }) {
     ["LinkedIn", h.linkedinUrl], ["YouTube", h.youtubeUrl],
   ].filter(([, u]) => u) as [string, string][];
   return (
-    <div className="bg-brand-900 text-xs text-white/90">
+    <div className="bg-brand-900 text-xs text-white/90 print:hidden">
       <div className="container-page flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-1 py-1.5">
         <p className="min-w-0 font-medium">{h.topBarText}</p>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">

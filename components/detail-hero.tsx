@@ -1,5 +1,5 @@
 import type { Property } from "@/lib/property";
-import { MobileGallery, PhotoGrid } from "@/components/photo-grid";
+import { MobileGallery, PhotoGrid, type BannerStyle } from "@/components/photo-grid";
 import { DetailActions } from "@/components/detail-actions";
 import { Breadcrumbs, PinIcon } from "@/components/detail";
 
@@ -31,7 +31,13 @@ export function DetailHero({
   meta,
   person,
   property,
+  bannerStyle = "mosaic",
+  printHref,
 }: {
+  /** Lien « Imprimer » (réglage Imprimer la propriété). */
+  printHref?: string;
+  /** Bannière (ordinateur) choisie dans le back-office. */
+  bannerStyle?: BannerStyle;
   photos: string[];
   videoUrl?: string | null;
   backHref: string;
@@ -60,7 +66,7 @@ export function DetailHero({
           <MobileGallery photos={photos} videoUrl={videoUrl} alt={title} backHref={backHref} property={property} />
         </div>
         <div className="hidden lg:block">
-          <PhotoGrid photos={photos} videoUrl={videoUrl} alt={title} />
+          <PhotoGrid photos={photos} videoUrl={videoUrl} alt={title} variant={bannerStyle} />
         </div>
       </div>
 
@@ -83,7 +89,7 @@ export function DetailHero({
             {meta ? <div className="mt-1 lg:hidden">{meta}</div> : null}
           </div>
           <div className="hidden shrink-0 lg:block">
-            <DetailActions property={property} />
+            <DetailActions property={property} printHref={printHref} />
           </div>
         </div>
 

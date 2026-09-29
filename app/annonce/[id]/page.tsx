@@ -43,7 +43,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");
   // Sections affichées, extrait, biens similaires : back-office → Détails de la propriété.
-  const { listing: cfg, general } = await getSiteSettings();
+  const { listing: cfg, general, print } = await getSiteSettings();
   const similar = cfg.showSimilar
     ? await similarListings({
         city: l.city,
@@ -116,6 +116,8 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
       />
 
       <DetailHero
+        bannerStyle={cfg.bannerStyle}
+        printHref={print.enabled ? `/annonce/${l.id}/imprimer` : undefined}
         photos={l.photos}
         videoUrl={cfg.showVideo ? l.videoUrl : null}
         backHref={`/annonces?transaction=${l.transaction}`}

@@ -13,6 +13,8 @@ export interface SiteSettings {
     footerTagline: string; seoTitle: string; seoDescription: string;
   };
   header: {
+    headerStyle: "classic" | "dark" | "contacts" | "centered"; headerLayout: "container" | "full";
+    navAlign: "left" | "center" | "right"; headerAddress: string; headerHours: string;
     showPublishButton: boolean; publishButtonText: string; showSignupButton: boolean;
     topBarEnabled: boolean; topBarText: string; topBarPhone: string; topBarWhatsapp: string; topBarEmail: string;
     facebookUrl: string; instagramUrl: string; tiktokUrl: string; linkedinUrl: string; youtubeUrl: string;
@@ -23,11 +25,16 @@ export interface SiteSettings {
   };
   notifications: { inquirySuccessText: string; visitSuccessText: string; reservationSuccessText: string };
   listing: {
+    bannerStyle: "mosaic" | "wide" | "split" | "collage";
     showVideo: boolean; showFeatures: boolean; showMap: boolean; showVisitForm: boolean;
     showContactForm: boolean; showSimilar: boolean; similarCount: number; contactNotice: string;
   };
   submit: { maxPhotos: number; submitIntro: string };
-  search: { perPage: number };
+  search: { perPage: number; headerSearch: "none" | "simple" | "filters"; headerSearchPages: "details" | "all" };
+  print: {
+    enabled: boolean; logoUrl: string; showAgent: boolean; showDescription: boolean;
+    showDetails: boolean; showFeatures: boolean; showGallery: boolean; footerText: string;
+  };
 }
 
 /** Valeurs de secours (API injoignable) — les mêmes que le schéma de l'API. */
@@ -40,6 +47,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     seoDescription: "L’immobilier en Côte d’Ivoire : biens à louer, à vendre, résidences meublées et espaces événementiels. Réservation en ligne sécurisée quand c’est possible.",
   },
   header: {
+    headerStyle: "classic", headerLayout: "container", navAlign: "center", headerAddress: "", headerHours: "",
     showPublishButton: true, publishButtonText: "Publier", showSignupButton: true,
     topBarEnabled: false, topBarText: "", topBarPhone: "", topBarWhatsapp: "", topBarEmail: "",
     facebookUrl: "", instagramUrl: "", tiktokUrl: "", linkedinUrl: "", youtubeUrl: "",
@@ -55,12 +63,17 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     reservationSuccessText: "Demande de réservation envoyée ! L’annonceur confirme la disponibilité et vous recontacte.",
   },
   listing: {
+    bannerStyle: "mosaic",
     showVideo: true, showFeatures: true, showMap: true, showVisitForm: true, showContactForm: true,
     showSimilar: true, similarCount: 4,
     contactNotice: "Mise en relation directe avec l’annonceur — Moboo ne prend pas de commission sur les ventes et locations classiques.",
   },
   submit: { maxPhotos: 12, submitIntro: "Publiez votre bien en quelques minutes : les intéressés vous contactent directement, sans commission." },
-  search: { perPage: 24 },
+  search: { perPage: 24, headerSearch: "none", headerSearchPages: "details" },
+  print: {
+    enabled: true, logoUrl: "", showAgent: true, showDescription: true, showDetails: true, showFeatures: true,
+    showGallery: false, footerText: "Fiche imprimée depuis Moboo.ci — l’immobilier en Côte d’Ivoire.",
+  },
 };
 
 export const SETTINGS_TAG = "site-settings";

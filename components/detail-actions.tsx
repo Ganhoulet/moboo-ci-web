@@ -6,7 +6,7 @@ import { toggleAccountFavoriteAction } from "@/app/mon-espace/actions";
 import type { Property } from "@/lib/property";
 
 /** Boutons « Partager » et « Enregistrer » en tête de fiche (barre du haut de l'appli). */
-export function DetailActions({ property }: { property: Property }) {
+export function DetailActions({ property, printHref }: { property: Property; printHref?: string }) {
   const favorites = useFavorites();
   const saved = favorites.some((f) => f.id === property.id);
   const [copied, setCopied] = useState(false);
@@ -31,6 +31,12 @@ export function DetailActions({ property }: { property: Property }) {
 
   return (
     <div className="flex items-center gap-1">
+      {printHref ? (
+        <a href={printHref} className={btn} target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2" /><rect x="6" y="14" width="12" height="7" /></svg>
+          Imprimer
+        </a>
+      ) : null}
       <button type="button" onClick={share} className={btn}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" strokeLinecap="round" strokeLinejoin="round" />

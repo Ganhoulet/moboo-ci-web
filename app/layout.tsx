@@ -8,6 +8,8 @@ import { TopBar } from "@/components/top-bar";
 import { BackToTop, ClientSettings } from "@/components/site-chrome";
 import { getSiteSettings } from "@/lib/settings";
 import { getSession } from "@/lib/session";
+import { LiveNotifications } from "@/components/live-notifications";
+import { SearchStrip } from "@/components/search-strip";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const poppins = Poppins({
@@ -43,8 +45,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ClientSettings favoritesLoginRequired={general.favoritesLoginRequired} loggedIn={!!getSession()} />
         {header.topBarEnabled && (header.topBarText || header.topBarPhone || header.topBarEmail) ? <TopBar h={header} /> : null}
         <SiteHeader settings={settings} />
+        {settings.search.headerSearch !== "none" ? <SearchStrip variant={settings.search.headerSearch} pages={settings.search.headerSearchPages} /> : null}
         <main>{children}</main>
-        <footer className="mt-20 border-t border-slate-200 bg-white">
+        <footer className="mt-20 border-t border-slate-200 bg-white print:hidden">
           <div className="container-page flex flex-col gap-4 py-10 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <MobooLogo src={branding.logoUrl} height={branding.logoHeight} alt={branding.siteName} />
@@ -61,6 +64,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </footer>
         {general.backToTop ? <BackToTop /> : null}
+        {/* Temps réel : une seule connexion par onglet (les cloches lisent son compteur). */}
+        {getSession() ? <LiveNotifications /> : null}
       </body>
     </html>
   );
