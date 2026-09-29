@@ -11,13 +11,15 @@ import type {
  * Client du moteur NestJS (module `marketplace`, endpoints publics).
  * Base configurable via NEXT_PUBLIC_API_URL (inclut /api/v1).
  */
+import { relayHeaders } from "./relay";
+
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "https://resi.moboo.ci/api/v1";
 
 async function apiGet<T>(path: string, revalidate = 60): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     next: { revalidate },
-    headers: { Accept: "application/json" },
+    headers: { Accept: "application/json", ...relayHeaders(false) },
   });
   if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
   return (await res.json()) as T;
@@ -179,6 +181,7 @@ export interface SiteAccount {
   // Connexion au choix
   hasPassword?: boolean;
   googleLinked?: boolean;
+  isAdmin?: boolean;       // accès au back-office (/admin)
 }
 
 /** Profil saisi pendant l'inscription (envoyé à la vérification du code). */
@@ -209,6 +212,7 @@ async function apiPost<T>(path: string, body: unknown, token?: string): Promise<
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
+      ...relayHeaders(true),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(body),
@@ -277,7 +281,7 @@ export function submitInquiry(input: {
 export async function siteGetMe(token: string): Promise<SiteAccount | null> {
   try {
     const res = await fetch(`${API_URL}/site/auth/me`, {
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      headers: { Accept: "application/json", ...relayHeaders(true), Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
     if (!res.ok) return null;

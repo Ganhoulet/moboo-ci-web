@@ -59,8 +59,33 @@ export function DetailActions({ property }: { property: Property }) {
 }
 
 /** Description repliée au-delà de quelques lignes, avec « Lire la suite ». */
-export function ReadMore({ text, lines = 6 }: { text: string; lines?: number }) {
+/**
+ * Description longue repliée. `words` (réglage « Extrait automatique ») : coupe
+ * après ce nombre de mots ; 0 = description entière ; absent = 6 lignes.
+ */
+export function ReadMore({ text, lines = 6, words, label = "Lire la suite" }: { text: string; lines?: number; words?: number; label?: string }) {
   const [open, setOpen] = useState(false);
+  if (words !== undefined) {
+    const all = text.split(/(\s+)/);
+    const count = all.filter((w) => w.trim()).length;
+    const cut = words > 0 && count > words;
+    let shown = text;
+    if (cut && !open) {
+      let n = 0; let i = 0;
+      for (; i < all.length && n < words; i++) if (all[i].trim()) n++;
+      shown = all.slice(0, i).join("").trimEnd() + "…";
+    }
+    return (
+      <div>
+        <p className="whitespace-pre-line text-slate-600">{shown}</p>
+        {cut ? (
+          <button type="button" onClick={() => setOpen((v) => !v)} className="mt-2 text-sm font-semibold text-ink underline underline-offset-2">
+            {open ? "Réduire" : label}
+          </button>
+        ) : null}
+      </div>
+    );
+  }
   const long = text.length > 420 || text.split("\n").length > lines;
   return (
     <div>

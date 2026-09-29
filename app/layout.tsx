@@ -4,6 +4,10 @@ import Link from "next/link";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { MobooLogo } from "@/components/logo";
+import { TopBar } from "@/components/top-bar";
+import { BackToTop, ClientSettings } from "@/components/site-chrome";
+import { getSiteSettings } from "@/lib/settings";
+import { getSession } from "@/lib/session";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const poppins = Poppins({
@@ -13,36 +17,38 @@ const poppins = Poppins({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Moboo.ci — Louer, acheter & réserver en Côte d'Ivoire",
-    template: "%s · Moboo.ci",
-  },
-  description:
-    "L'immobilier en Côte d'Ivoire : biens à louer, à vendre, résidences meublées et espaces événementiels. Réservation en ligne sécurisée quand c'est possible.",
-  metadataBase: new URL("https://moboo.ci"),
-  openGraph: {
-    title: "Moboo.ci — Réservation en ligne",
-    description:
-      "Résidences meublées & espaces événementiels réservables en Côte d'Ivoire.",
-    type: "website",
-    locale: "fr_CI",
-  },
-};
+/** Titre, description et favicon réglables dans le back-office (Logos et favicon). */
+export async function generateMetadata(): Promise<Metadata> {
+  const { branding } = await getSiteSettings();
+  return {
+    title: { default: branding.seoTitle, template: `%s · ${branding.siteName}` },
+    description: branding.seoDescription,
+    metadataBase: new URL("https://moboo.ci"),
+    openGraph: {
+      title: branding.seoTitle,
+      description: branding.seoDescription,
+      type: "website",
+      locale: "fr_CI",
+    },
+    ...(branding.faviconUrl ? { icons: { icon: branding.faviconUrl, shortcut: branding.faviconUrl } } : {}),
+  };
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const settings = await getSiteSettings();
+  const { general, branding, header } = settings;
   return (
     <html lang="fr" className={`${inter.variable} ${poppins.variable}`}>
-      <body className="min-h-screen font-sans">
-        <SiteHeader />
+      <body className="min-h-screen font-sans" style={{ ["--container-max" as string]: `${general.containerWidth}px` }}>
+        <ClientSettings favoritesLoginRequired={general.favoritesLoginRequired} loggedIn={!!getSession()} />
+        {header.topBarEnabled && (header.topBarText || header.topBarPhone || header.topBarEmail) ? <TopBar h={header} /> : null}
+        <SiteHeader settings={settings} />
         <main>{children}</main>
         <footer className="mt-20 border-t border-slate-200 bg-white">
           <div className="container-page flex flex-col gap-4 py-10 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <MobooLogo />
-              <p className="mt-2 text-sm text-muted">
-                Louer, acheter, réserver — l'immobilier en Côte d'Ivoire.
-              </p>
+              <MobooLogo src={branding.logoUrl} height={branding.logoHeight} alt={branding.siteName} />
+              <p className="mt-2 text-sm text-muted">{branding.footerTagline}</p>
             </div>
             <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
               <Link href="/annonces?transaction=rent" className="hover:text-ink">Louer</Link>
@@ -54,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </nav>
           </div>
         </footer>
+        {general.backToTop ? <BackToTop /> : null}
       </body>
     </html>
   );

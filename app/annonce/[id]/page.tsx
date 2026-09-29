@@ -13,6 +13,7 @@ import { InquiryForm } from "@/components/inquiry-form";
 import { VisitForm } from "@/components/visit-form";
 import { MobileContactBar } from "@/components/mobile-contact-bar";
 import { ContactLink } from "@/components/contact-link";
+import { getSiteSettings } from "@/lib/settings";
 import { ListingReservation } from "@/components/listing-reservation";
 
 export const revalidate = 60;
@@ -41,12 +42,16 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");
-  const similar = await similarListings({
-    city: l.city,
-    transaction: l.transaction,
-    excludeId: l.id,
-    limit: 4,
-  }).catch(() => []);
+  // Sections affichées, extrait, biens similaires : back-office → Détails de la propriété.
+  const { listing: cfg, general } = await getSiteSettings();
+  const similar = cfg.showSimilar
+    ? await similarListings({
+        city: l.city,
+        transaction: l.transaction,
+        excludeId: l.id,
+        limit: cfg.similarCount,
+      }).catch(() => [])
+    : [];
 
   const specs: Fact[] = [
     { icon: I.home, label: "Type", value: TYPE_LABEL[l.propertyType] ?? "Bien" },
@@ -112,7 +117,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
 
       <DetailHero
         photos={l.photos}
-        videoUrl={l.videoUrl}
+        videoUrl={cfg.showVideo ? l.videoUrl : null}
         backHref={`/annonces?transaction=${l.transaction}`}
         breadcrumbs={[
           { label: "Accueil", href: "/" },
@@ -149,11 +154,11 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
 
           {l.description ? (
             <Section title="Description">
-              <ReadMore text={l.description} />
+              <ReadMore text={l.description} words={general.excerptEnabled ? general.excerptWords : 0} label={general.readMoreText} />
             </Section>
           ) : null}
 
-          {features.length > 0 ? (
+          {cfg.showFeatures && features.length > 0 ? (
             <Section title="Équipements">
               <FeatureList items={features} />
             </Section>
@@ -186,7 +191,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
             </Section>
           ) : null}
 
-          {l.latitude != null && l.longitude != null ? (
+          {cfg.showMap && l.latitude != null && l.longitude != null ? (
             <Section title="Localisation">
               <LocationMap lat={l.latitude} lng={l.longitude} label={zone} />
             </Section>
@@ -237,19 +242,22 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
                 <p className="mt-3 text-sm text-muted">Contact communiqué par l'annonceur.</p>
               )}
               <p className="mt-3 text-xs text-muted">
-                Mise en relation directe avec l'annonceur — Moboo ne prend pas de commission
-                sur les ventes et locations classiques.
+                {cfg.contactNotice}
               </p>
             </div>
           )}
 
-          <div className="mt-4">
-            <VisitForm listingId={l.id} />
-          </div>
+          {cfg.showVisitForm ? (
+            <div className="mt-4">
+              <VisitForm listingId={l.id} />
+            </div>
+          ) : null}
 
-          <div className="mt-4">
-            <InquiryForm listingId={l.id} title={l.title} />
-          </div>
+          {cfg.showContactForm ? (
+            <div className="mt-4">
+              <InquiryForm listingId={l.id} title={l.title} />
+            </div>
+          ) : null}
         </aside>
       </div>
 

@@ -1,6 +1,7 @@
 // N.B. module serveur uniquement (utilise next/headers) — importé par des
 // server components et server actions.
 import { cookies } from "next/headers";
+import "./client-ip"; // adresse du visiteur transmise à l'API (lib/relay)
 import type { SiteAccount, SiteTokens } from "./api";
 
 /**

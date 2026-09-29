@@ -1,6 +1,8 @@
 "use server";
 
 import { API_URL } from "@/lib/api";
+import { relayHeaders } from "@/lib/relay";
+import "@/lib/client-ip";
 
 export type ReserveState = {
   ok: boolean;
@@ -29,7 +31,7 @@ export async function submitReservation(
   try {
     const res = await fetch(`${API_URL}/marketplace/reserve`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: { "Content-Type": "application/json", Accept: "application/json", ...relayHeaders(true) },
       body: JSON.stringify(payload),
       cache: "no-store",
     });
@@ -71,7 +73,7 @@ export async function submitEventReservation(
       `${API_URL}/marketplace/espaces/${encodeURIComponent(espaceId)}/reserve`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json", ...relayHeaders(true) },
         body: JSON.stringify(payload),
         cache: "no-store",
       },

@@ -101,10 +101,18 @@ function PasswordForm({ onForgot }: { onForgot: () => void }) {
 
 /**
  * Connexion au choix : code reçu sur le numéro, identifiant + mot de passe,
- * ou Google (si NEXT_PUBLIC_GOOGLE_CLIENT_ID est configuré).
+ * ou Google (client OAuth : lib/google).
  */
-export function LoginPanel({ initialMode = "telephone", googleClientId }: { initialMode?: Mode; googleClientId?: string }) {
-  const [mode, setMode] = useState<Mode>(initialMode);
+export function LoginPanel({ initialMode = "telephone", googleClientId, methods = { phone: true, password: true } }: {
+  initialMode?: Mode; googleClientId?: string;
+  /** Méthodes activées dans le back-office (Connexion et inscription). */
+  methods?: { phone: boolean; password: boolean };
+}) {
+  // Au moins une méthode : le code par téléphone reste le recours.
+  const tabs = ([["telephone", "Par téléphone"], ["identifiant", "Par identifiant"]] as const)
+    .filter(([m]) => (m === "telephone" ? methods.phone : methods.password));
+  const available: Mode[] = tabs.length ? tabs.map(([m]) => m) : ["telephone"];
+  const [mode, setMode] = useState<Mode>(available.includes(initialMode) ? initialMode : available[0]);
   const [google, setGoogle] = useState<{ ticket: string; email?: string | null } | null>(null);
   const [googleError, setGoogleError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -148,14 +156,14 @@ export function LoginPanel({ initialMode = "telephone", googleClientId }: { init
         </div>
       ) : null}
 
-      <div role="tablist" className="grid grid-cols-2 rounded-full bg-slate-100 p-1 text-sm font-semibold">
-        {([["telephone", "Par téléphone"], ["identifiant", "Par identifiant"]] as const).map(([m, label]) => (
+      {tabs.length > 1 ? <div role="tablist" className="grid grid-cols-2 rounded-full bg-slate-100 p-1 text-sm font-semibold">
+        {tabs.map(([m, label]) => (
           <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}
             className={"rounded-full px-3 py-2 transition " + (mode === m ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-ink")}>
             {label}
           </button>
         ))}
-      </div>
+      </div> : null}
 
       {mode === "telephone" ? <LoginFlow /> : <PasswordForm onForgot={() => setMode("telephone")} />}
     </div>

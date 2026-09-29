@@ -12,6 +12,7 @@ import { FilterBar } from "@/components/filter-bar";
 import { Pagination } from "@/components/pagination";
 import { SaveSearchButton } from "@/components/save-search-button";
 import { getSession } from "@/lib/session";
+import { getSiteSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Annonces",
@@ -20,7 +21,6 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const PER_PAGE = 24;
 
 export default async function AnnoncesPage({
   searchParams,
@@ -35,6 +35,8 @@ export default async function AnnoncesPage({
     page?: string;
   };
 }) {
+  // Nombre d'annonces par page : back-office → Recherche et résultats.
+  const PER_PAGE = (await getSiteSettings()).search.perPage;
   const reservable = searchParams.reservable === "1";
   const active = (reservable ? "all" : (searchParams.transaction as Transaction | "all")) ?? "all";
   const q = (searchParams.q ?? "").trim();

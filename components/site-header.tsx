@@ -3,6 +3,7 @@ import { MobooLogo } from "./logo";
 import { FavoritesNavButton } from "./favorites-nav-button";
 import { LiveNotifications } from "./live-notifications";
 import { getSession, initials } from "@/lib/session";
+import type { SiteSettings } from "@/lib/settings";
 
 const NAV = [
   { href: "/annonces?transaction=rent", label: "Louer" },
@@ -11,13 +12,14 @@ const NAV = [
   { href: "/annonces?transaction=event", label: "Espaces" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ settings }: { settings: SiteSettings }) {
+  const { header, branding, auth } = settings;
   const account = getSession();
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between">
         <Link href="/" aria-label="Accueil Moboo">
-          <MobooLogo />
+          <MobooLogo src={branding.logoUrl} height={branding.logoHeight} alt={branding.siteName} />
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-600 md:flex">
@@ -29,15 +31,17 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link
-            href="/publier"
-            className="hidden items-center gap-1 rounded-full bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-700 sm:inline-flex"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            Publier
-          </Link>
+          {header.showPublishButton ? (
+            <Link
+              href="/publier"
+              className="hidden items-center gap-1 rounded-full bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-700 sm:inline-flex"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+              {header.publishButtonText}
+            </Link>
+          ) : null}
           <FavoritesNavButton />
           {account ? <LiveNotifications /> : null}
           {account ? (
@@ -50,12 +54,14 @@ export function SiteHeader() {
             </Link>
           ) : (
             <>
-            <Link
-              href="/inscription"
-              className="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-ink transition hover:border-slate-300 hover:bg-slate-50 md:inline-flex"
-            >
-              Créer un compte
-            </Link>
+            {header.showSignupButton && auth.signupEnabled ? (
+              <Link
+                href="/inscription"
+                className="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-ink transition hover:border-slate-300 hover:bg-slate-50 md:inline-flex"
+              >
+                Créer un compte
+              </Link>
+            ) : null}
             <Link
               href="/compte"
               aria-label="Se connecter"

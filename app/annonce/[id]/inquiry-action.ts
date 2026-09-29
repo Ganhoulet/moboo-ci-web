@@ -2,6 +2,7 @@
 
 import { submitInquiry } from "@/lib/api";
 import { getAccessToken, getSession } from "@/lib/session";
+import { getSiteSettings } from "@/lib/settings";
 
 export type InquiryState = { ok: boolean; message: string; link?: { href: string; label: string } } | null;
 
@@ -29,7 +30,8 @@ export async function sendInquiryAction(_prev: InquiryState, formData: FormData)
     return { ok: false, message: "Entrez votre nom et un numéro de téléphone valide." };
   }
   try {
-    return await send({ listingId, name, phone, message }, "Demande envoyée ! L'annonceur vous recontactera bientôt.");
+    const { notifications } = await getSiteSettings();
+    return await send({ listingId, name, phone, message }, notifications.inquirySuccessText);
   } catch {
     return { ok: false, message: "Service indisponible. Réessayez plus tard." };
   }
@@ -53,9 +55,10 @@ export async function requestReservationAction(_prev: InquiryState, formData: Fo
   const parts = [`Réservation du ${checkIn} au ${checkOut}`];
   if (guests) parts.push(`${guests} personne(s)`);
   try {
+    const { notifications } = await getSiteSettings();
     return await send(
       { listingId, name, phone, kind: "reservation", preferredDate: checkIn, message: parts.join(" · ") },
-      "Demande de réservation envoyée ! L'annonceur confirme la disponibilité et vous recontacte.",
+      notifications.reservationSuccessText,
     );
   } catch {
     return { ok: false, message: "Service indisponible. Réessayez plus tard." };
@@ -73,9 +76,10 @@ export async function requestVisitAction(_prev: InquiryState, formData: FormData
     return { ok: false, message: "Entrez votre nom et un numéro de téléphone valide." };
   }
   try {
+    const { notifications } = await getSiteSettings();
     return await send(
       { listingId, name, phone, kind: "visit", preferredDate, message: preferredDate ? `Demande de visite pour le ${preferredDate}` : "Demande de visite" },
-      "Demande de visite envoyée ! L'annonceur vous recontactera pour confirmer.",
+      notifications.visitSuccessText,
     );
   } catch {
     return { ok: false, message: "Service indisponible. Réessayez plus tard." };

@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { SignupWizard } from "@/components/signup-wizard";
 import type { AccountType } from "@/lib/accounts";
+import Link from "next/link";
+import { getSiteSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Créer un compte",
@@ -12,12 +14,22 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function InscriptionPage({ searchParams }: { searchParams: { profil?: string } }) {
+export default async function InscriptionPage({ searchParams }: { searchParams: { profil?: string } }) {
   const account = getSession();
   // Compte déjà configuré : l'inscription n'a plus lieu d'être (sauf changement de profil).
   if (account?.onboarded && searchParams.profil !== "modifier") redirect("/mon-espace");
 
   const mode = account ? "complete" : "signup";
+  const { auth } = await getSiteSettings();
+  if (mode === "signup" && !auth.signupEnabled) {
+    return (
+      <div className="container-page py-16 text-center">
+        <h1 className="font-display text-2xl font-extrabold text-ink">Inscriptions momentanément fermées</h1>
+        <p className="mx-auto mt-2 max-w-md text-muted">Vous avez déjà un compte ? Connectez-vous.</p>
+        <Link href="/compte" className="btn-primary mt-6 inline-flex bg-brand-800 hover:bg-brand-900">Se connecter</Link>
+      </div>
+    );
+  }
   const initial = account
     ? {
         accountType: (account.onboarded ? account.accountType : undefined) as AccountType | undefined,
@@ -52,7 +64,7 @@ export default function InscriptionPage({ searchParams }: { searchParams: { prof
               : "Dites-nous qui vous êtes : votre espace Moboo.ci s'adapte à votre activité."}
           </p>
           <div className="mt-6 rounded-3xl bg-white p-6 shadow-card sm:p-8">
-            <SignupWizard mode={mode} initial={initial} />
+            <SignupWizard mode={mode} initial={initial} allowedTypes={auth.signupAccountTypes} />
           </div>
         </div>
       </div>

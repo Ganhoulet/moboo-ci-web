@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { COMMUNES, LISTING_FEATURES, PROPERTY_TYPES } from "@/lib/accounts";
 import { saveListingAction, uploadImageAction } from "@/app/mon-espace/actions";
 
-const MAX_PHOTOS = 12;
 const STEPS = ["L'essentiel", "Détails", "Équipements", "Localisation", "Photos & vidéo", "Contact"];
 
 export type ListingDraft = {
@@ -74,7 +73,11 @@ function parseCoords(s: string): [number, number] | null {
   return null;
 }
 
-export function ListingEditor({ id, initial }: { id?: string; initial: ListingDraft }) {
+export function ListingEditor({ id, initial, maxPhotos: MAX_PHOTOS = 12 }: {
+  id?: string; initial: ListingDraft;
+  /** Réglage « Nombre maximum de photos » (back-office). */
+  maxPhotos?: number;
+}) {
   const router = useRouter();
   const edit = !!id;
   const [step, setStep] = useState(0);

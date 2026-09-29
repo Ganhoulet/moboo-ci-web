@@ -25,9 +25,16 @@ export async function middleware(req: NextRequest) {
 
   let tokens: { accessToken?: string; refreshToken?: string; expiresIn?: number } | null = null;
   try {
+    const key = process.env.SITE_RELAY_KEY;
+    const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || req.headers.get("x-real-ip") || "";
     const r = await fetch(`${API_URL}/site/auth/refresh`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        // Limite de l'API comptée par visiteur (cf. lib/relay).
+        ...(key ? { "X-Moboo-Relay-Key": key, ...(ip ? { "X-Moboo-Client-IP": ip } : {}) } : {}),
+      },
       body: JSON.stringify({ refreshToken: rt }),
       cache: "no-store",
     });

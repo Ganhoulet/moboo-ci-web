@@ -1,5 +1,14 @@
-/** Logo Moboo — trois anneaux bleus + wordmark (repris de moboo.ci). */
-export function MobooLogo({ className = "" }: { className?: string }) {
+/**
+ * Logo Moboo — trois anneaux bleus + wordmark (repris de moboo.ci), ou le logo
+ * choisi dans le back-office (Logos et favicon).
+ */
+export function MobooLogo({ className = "", src, height = 32, alt = "Moboo.ci" }: {
+  className?: string; src?: string | null; height?: number; alt?: string;
+}) {
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={alt} style={{ height }} className={`w-auto ${className}`} />;
+  }
   return (
     <span className={`flex items-center gap-2 ${className}`}>
       <svg width="34" height="30" viewBox="0 0 48 44" aria-hidden="true" className="shrink-0">

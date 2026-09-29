@@ -23,6 +23,12 @@ export function FavoriteButton({
         // La carte est un <Link> : on empêche la navigation.
         e.preventDefault();
         e.stopPropagation();
+        // Réglage « Connexion requise pour les favoris » (back-office → Général).
+        const cfg = (window as any).__moboo;
+        if (!active && cfg?.favoritesLoginRequired && !cfg.loggedIn) {
+          window.location.assign("/compte");
+          return;
+        }
         const on = toggleFavorite(property);
         void toggleAccountFavoriteAction(property, on).catch(() => {});
       }}

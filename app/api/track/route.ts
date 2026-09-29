@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { API_URL } from "@/lib/api";
+import { relayHeaders } from "@/lib/relay";
+import "@/lib/client-ip";
 
 /**
  * Clic « Appeler » / « WhatsApp » sur une fiche (envoyé par sendBeacon, même
@@ -15,7 +17,7 @@ export async function POST(req: NextRequest) {
   try {
     await fetch(`${API_URL}/marketplace/listings/${encodeURIComponent(listingId)}/contact-click`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: { "Content-Type": "application/json", Accept: "application/json", ...relayHeaders(true) },
       body: JSON.stringify({ channel }),
       cache: "no-store",
     });

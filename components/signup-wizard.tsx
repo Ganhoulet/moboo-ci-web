@@ -53,7 +53,10 @@ function slug(s: string) {
 export function SignupWizard({
   mode = "signup",
   initial,
+  allowedTypes,
 }: {
+  /** Types de compte proposés (back-office → Connexion et inscription). */
+  allowedTypes?: string[];
   /** signup = création ; complete = compte connecté qui choisit / change son type. */
   mode?: "signup" | "complete";
   initial?: Partial<Data>;
@@ -181,7 +184,7 @@ export function SignupWizard({
           <>
             <StepTitle title={mode === "signup" ? "Bienvenue ! Qui êtes-vous ?" : "Quel est votre profil ?"} sub="Votre espace Moboo.ci s'adapte à votre activité." />
             <div className="grid gap-3">
-              {ACCOUNT_TYPES.map((t) => {
+              {ACCOUNT_TYPES.filter((t) => !allowedTypes?.length || allowedTypes.includes(t.key) || t.key === initial?.accountType).map((t) => {
                 const on = d.accountType === t.key;
                 return (
                   <button

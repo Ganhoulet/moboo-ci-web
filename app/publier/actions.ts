@@ -4,6 +4,8 @@ import { API_URL } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { authedFetch } from "@/lib/server-api";
 import { revalidatePath } from "next/cache";
+import { relayHeaders } from "@/lib/relay";
+import "@/lib/client-ip";
 
 export type SubmitState = { ok: boolean; message: string; id?: string } | null;
 
@@ -69,7 +71,7 @@ export async function submitListing(
     }
     const res = await fetch(`${API_URL}/marketplace/properties/submit`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: { "Content-Type": "application/json", Accept: "application/json", ...relayHeaders(true) },
       body: JSON.stringify(payload),
       cache: "no-store",
     });

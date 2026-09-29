@@ -2,6 +2,8 @@
 // Utilisé par des server components / server actions uniquement.
 import { cookies } from "next/headers";
 import { API_URL } from "./api";
+import { relayHeaders } from "./relay";
+import "./client-ip";
 
 const AT = "moboo_agent_at";
 const PROFILE = "moboo_agent";
@@ -51,7 +53,7 @@ export async function agentGet<T>(path: string): Promise<T | null> {
   if (!token) return null;
   try {
     const res = await fetch(`${API_URL}${path}`, {
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      headers: { Accept: "application/json", ...relayHeaders(true), Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
     if (!res.ok) return null;

@@ -195,7 +195,7 @@ export async function similarListings(opts: {
   excludeId: string; // id complet "lst-xxx" ou l'id brut
   limit?: number;
 }): Promise<Property[]> {
-  const { items } = await listListings({ transaction: opts.transaction, city: opts.city, perPage: 8 });
+  const { items } = await listListings({ transaction: opts.transaction, city: opts.city, perPage: Math.max(8, (opts.limit ?? 3) + 1) });
   const raw = opts.excludeId.replace(/^lst-/, "");
   return items
     .filter((l) => l.id !== raw)

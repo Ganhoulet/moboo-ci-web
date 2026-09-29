@@ -17,7 +17,9 @@
 
 @layer components {
   .container-page {
-    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    /* Largeur réglable dans le back-office (Général → Largeur du site). */
+    @apply mx-auto w-full px-4 sm:px-6 lg:px-8;
+    max-width: var(--container-max, 80rem);
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600;

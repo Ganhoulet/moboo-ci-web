@@ -2,6 +2,8 @@
 // automatiquement en cas de 401 (via le refresh token en cookie). À n'utiliser
 // que dans des server actions / route handlers (il peut réécrire les cookies).
 import { API_URL } from "./api";
+import { relayHeaders } from "./relay";
+import "./client-ip";
 import { cookies } from "next/headers";
 import { getAccessToken, getRefreshToken, setTokens, clearSession } from "./session";
 
@@ -11,6 +13,7 @@ async function doFetch(path: string, init: RequestInit, token: string | null) {
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
+      ...relayHeaders(true),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init.headers || {}),
     },
@@ -47,7 +50,7 @@ export async function authedFetch(
     if (rt) {
       const r = await fetch(`${API_URL}/site/auth/refresh`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json", ...relayHeaders(true) },
         body: JSON.stringify({ refreshToken: rt }),
         cache: "no-store",
       });

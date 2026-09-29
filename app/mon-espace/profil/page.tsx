@@ -6,6 +6,7 @@ import type { SiteAccount } from "@/lib/api";
 import { PageHeader } from "@/components/dashboard-ui";
 import { ProfileForm } from "@/components/profile-form";
 import { SecuritySettings } from "@/components/security-settings";
+import { GOOGLE_CLIENT_ID } from "@/lib/google";
 
 export default async function Profil() {
   // Profil à jour (mot de passe / Google reliés depuis un autre appareil).
@@ -25,7 +26,7 @@ export default async function Profil() {
         username={a.username ?? null}
         email={a.email}
         phone={a.phone}
-        googleClientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || undefined}
+        googleClientId={GOOGLE_CLIENT_ID}
       />
     </div>
   );

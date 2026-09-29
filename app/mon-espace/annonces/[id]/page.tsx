@@ -4,6 +4,7 @@ import { canAccess } from "@/lib/accounts";
 import { PageHeader, STATUS_LABEL } from "@/components/dashboard-ui";
 import { ListingEditor, type ListingDraft } from "@/components/listing-editor";
 import { getMyListing } from "../../actions";
+import { getSiteSettings } from "@/lib/settings";
 
 const s = (v: unknown) => (v == null ? "" : String(v));
 
@@ -33,7 +34,7 @@ export default async function ModifierAnnonce({ params }: { params: { id: string
         sub={`${l.views ?? 0} vues · publiée le ${new Date(l.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`}
         action={<span className={`rounded-full px-3 py-1 text-xs font-semibold ${st.cls}`}>{st.label}</span>}
       />
-      <ListingEditor id={params.id} initial={draft} />
+      <ListingEditor id={params.id} initial={draft} maxPhotos={(await getSiteSettings()).submit.maxPhotos} />
     </div>
   );
 }
