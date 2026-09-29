@@ -22,6 +22,7 @@ export function VisitForm({ listingId }: { listingId: string }) {
     return (
       <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-center text-sm font-semibold text-ink">
         {state.message}
+        {state.link ? <><br /><a href={state.link.href} className="mt-3 inline-block rounded-full bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900">{state.link.label}</a></> : null}
       </div>
     );
   }

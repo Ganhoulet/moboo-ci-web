@@ -127,6 +127,73 @@ export async function updateInquiryAction(id: string, patch: { status?: string; 
   return { ok };
 }
 
+/* ─── Messages ─────────────────────────────────────────────────────────── */
+
+export interface ConversationSummary {
+  id: string;
+  role: "owner" | "client";
+  listingId: string | null;
+  listingTitle: string | null;
+  listingPhoto: string | null;
+  counterpart: { name: string; avatarUrl: string | null };
+  lastMessage: string | null;
+  lastMessageAt: string;
+  unread: number;
+}
+
+export interface ChatMessage { id: string; mine: boolean; body: string; createdAt: string }
+
+export interface Conversation {
+  id: string;
+  role: "owner" | "client";
+  listingId: string | null;
+  listingTitle: string | null;
+  listingPhoto: string | null;
+  inquiryId: string | null;
+  counterpart: { name: string; avatarUrl: string | null; phone?: string; username?: string | null };
+  messages: ChatMessage[];
+}
+
+export async function listConversations(): Promise<ConversationSummary[]> {
+  if (!getSession()) return [];
+  const { ok, data } = await authedFetch("/site/me/conversations", { method: "GET" });
+  return ok && Array.isArray(data?.items) ? (data.items as ConversationSummary[]) : [];
+}
+
+export async function unreadMessages(): Promise<number> {
+  if (!getSession()) return 0;
+  const { ok, data } = await authedFetch("/site/me/conversations/unread", { method: "GET" });
+  return ok ? Number(data?.count) || 0 : 0;
+}
+
+export async function getConversation(id: string): Promise<Conversation | null> {
+  if (!getSession()) return null;
+  const { ok, data } = await authedFetch(`/site/me/conversations/${encodeURIComponent(id)}`, { method: "GET" });
+  return ok ? (data as Conversation) : null;
+}
+
+/** Recharge le fil (sondage périodique de la page ouverte). */
+export async function refreshConversationAction(id: string): Promise<ChatMessage[] | null> {
+  return (await getConversation(id))?.messages ?? null;
+}
+
+export async function sendMessageAction(id: string, body: string): Promise<{ ok: boolean; message?: ChatMessage; error?: string }> {
+  if (!getSession()) return { ok: false, error: "Connectez-vous d'abord." };
+  const { ok, data } = await authedFetch(`/site/me/conversations/${encodeURIComponent(id)}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ body }),
+  });
+  if (!ok) return { ok: false, error: errMsg(data, "Envoi impossible. Réessayez.") };
+  revalidatePath("/mon-espace/messages");
+  return { ok: true, message: data as ChatMessage };
+}
+
+/** Annonceur : ouvre (ou retrouve) le fil d'une demande reçue. */
+export async function openInquiryConversationAction(inquiryId: string): Promise<{ ok: boolean; id?: string; error?: string }> {
+  const { ok, data } = await authedFetch(`/site/me/conversations/from-inquiry/${encodeURIComponent(inquiryId)}`, { method: "POST" });
+  return ok && data?.id ? { ok: true, id: data.id } : { ok: false, error: errMsg(data, "Conversation indisponible pour cette demande.") };
+}
+
 /* ─── Favoris ──────────────────────────────────────────────────────────── */
 
 export async function listAccountFavorites(): Promise<Property[]> {

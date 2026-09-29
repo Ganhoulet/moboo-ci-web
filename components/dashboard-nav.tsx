@@ -12,6 +12,7 @@ export const DASH_ICONS: Record<DashKey, React.ReactNode> = {
   nouvelle: <svg {...sv}><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" {...lj} /></svg>,
   statistiques: <svg {...sv}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" {...lj} /></svg>,
   demandes: <svg {...sv}><path d="M4 5h16v11H8l-4 4V5Z" {...lj} /><path d="M8 9h8M8 12h5" {...lj} /></svg>,
+  messages: <svg {...sv}><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z" {...lj} /><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" strokeWidth="2.6" {...lj} /></svg>,
   favoris: <svg {...sv}><path d="M12 20.5s-7-4.6-9.2-9.1C1.3 8 3 4.5 6.3 4.5c2 0 3.4 1.2 4.2 2.5.8-1.3 2.2-2.5 4.2-2.5 3.3 0 5 3.5 3.5 6.9C19 15.9 12 20.5 12 20.5Z" {...lj} /></svg>,
   recherches: <svg {...sv}><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2M9 11h4M11 9v4" {...lj} /></svg>,
   profil: <svg {...sv}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-3.9 3.6-7 8-7s8 3.1 8 7" {...lj} /></svg>,

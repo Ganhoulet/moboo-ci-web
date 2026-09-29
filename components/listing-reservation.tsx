@@ -40,6 +40,7 @@ export function ListingReservation({
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><path d="m5 13 4 4L19 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </div>
         <p className="mt-3 font-semibold text-ink">{state.message}</p>
+        {state.link ? <a href={state.link.href} className="mt-3 inline-block rounded-full bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900">{state.link.label}</a> : null}
       </div>
     );
   }

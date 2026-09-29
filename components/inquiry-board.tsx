@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { INQUIRY_STEPS } from "@/lib/accounts";
-import { updateInquiryAction, type Inquiry } from "@/app/mon-espace/actions";
+import { openInquiryConversationAction, updateInquiryAction, type Inquiry } from "@/app/mon-espace/actions";
 
 /**
  * Suivi des demandes (reprise du « Board » CRM de moboo.ci) : colonnes par
@@ -68,6 +69,15 @@ function Card({ q, compact, open, onToggle, onPatch }: {
 }) {
   const [note, setNote] = useState(q.note ?? "");
   const [pending, start] = useTransition();
+  const [opening, startOpen] = useTransition();
+  const [chatError, setChatError] = useState<string | null>(null);
+  const router = useRouter();
+  const openChat = () => startOpen(async () => {
+    setChatError(null);
+    const r = await openInquiryConversationAction(q.id);
+    if (r.ok && r.id) router.push(`/mon-espace/messages/${r.id}`);
+    else setChatError(r.error ?? "Conversation indisponible.");
+  });
   const digits = q.phone.replace(/[^0-9]/g, "");
   const wa = digits.startsWith("225") ? digits : `225${digits}`;
   const date = new Date(q.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
@@ -91,6 +101,11 @@ function Card({ q, compact, open, onToggle, onPatch }: {
       {open ? (
         <div className="mt-3 space-y-3 border-t border-slate-100 pt-3">
           {q.message ? <p className="whitespace-pre-line text-sm text-slate-600">{q.message}</p> : null}
+          <button type="button" onClick={openChat} disabled={opening}
+            className="btn-primary w-full bg-brand-800 py-2 text-sm hover:bg-brand-900 disabled:opacity-60">
+            {opening ? "Ouverture…" : "💬 Répondre dans Messages"}
+          </button>
+          {chatError ? <p className="text-xs font-medium text-red-600">{chatError}</p> : null}
           <div className="flex flex-wrap gap-2">
             <a href={`tel:${q.phone}`} className="rounded-full bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white">📞 Appeler</a>
             <a href={`https://wa.me/${wa}?text=${encodeURIComponent(`Bonjour ${q.name}, suite à votre demande sur Moboo.ci concernant « ${q.listingTitle ?? "votre recherche"} »…`)}`}

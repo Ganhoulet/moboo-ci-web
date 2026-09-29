@@ -251,8 +251,9 @@ export function submitInquiry(input: {
   message?: string;
   kind?: "contact" | "visit" | "reservation";
   preferredDate?: string;
-}) {
-  return apiPost<{ id: string; ok: boolean }>("/marketplace/inquiries", input);
+}, token?: string | null) {
+  // Connecté : la demande ouvre un fil dans « Messages » rattaché au compte.
+  return apiPost<{ id: string; ok: boolean; conversationId?: string | null }>("/marketplace/inquiries", input, token ?? undefined);
 }
 
 /** Profil du compte connecté (Authorization: Bearer). */

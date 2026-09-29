@@ -6,7 +6,7 @@ import { accountLabel, isPublisher, menuFor } from "@/lib/accounts";
 import { DashboardSideNav, DashboardTabs } from "@/components/dashboard-nav";
 import { FavoritesSync } from "@/components/favorites-sync";
 import { logoutAction } from "@/app/compte/actions";
-import { listMyInquiries } from "./actions";
+import { listMyInquiries, unreadMessages } from "./actions";
 import { authedFetch } from "@/lib/server-api";
 import type { SiteAccount } from "@/lib/api";
 
@@ -27,8 +27,11 @@ export default async function EspaceLayout({ children }: { children: React.React
   const type = account.accountType ?? "particulier";
   const items = menuFor(type);
   const publisher = isPublisher(type);
-  const newInquiries = publisher ? (await listMyInquiries()).filter((q) => q.status === "new").length : 0;
-  const badges = newInquiries ? { demandes: newInquiries } : undefined;
+  const [newInquiries, unread] = await Promise.all([
+    publisher ? listMyInquiries().then((xs) => xs.filter((q) => q.status === "new").length) : 0,
+    unreadMessages(),
+  ]);
+  const badges = { ...(newInquiries ? { demandes: newInquiries } : {}), ...(unread ? { messages: unread } : {}) };
   const name = account.companyName && (type === "entreprise" || type === "agent") ? account.companyName : displayName(account);
 
   return (
