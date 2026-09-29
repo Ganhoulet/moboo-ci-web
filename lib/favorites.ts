@@ -27,10 +27,22 @@ function write(items: Property[]) {
   }
 }
 
-export function toggleFavorite(p: Property) {
+/** Ajoute / retire un favori. Renvoie true s'il est désormais en favori. */
+export function toggleFavorite(p: Property): boolean {
   const items = read();
   const exists = items.some((f) => f.id === p.id);
   write(exists ? items.filter((f) => f.id !== p.id) : [p, ...items]);
+  return !exists;
+}
+
+/** Lecture ponctuelle (synchronisation avec le compte). */
+export function readFavorites(): Property[] {
+  return read();
+}
+
+/** Remplace les favoris de l'appareil (après fusion avec le compte). */
+export function replaceFavorites(items: Property[]) {
+  write(items);
 }
 
 export function removeFavorite(id: string) {

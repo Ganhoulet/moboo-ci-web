@@ -147,7 +147,7 @@ export function SignupWizard({
     startTransition(async () => {
       const r = await verifySignupAction({ phone: d.phone, code: d.code, ...profile });
       if (!r.ok) return setError(r.error ?? "Erreur.");
-      router.replace("/compte?bienvenue=1");
+      router.replace("/mon-espace?bienvenue=1");
       router.refresh();
     });
   }
@@ -156,7 +156,7 @@ export function SignupWizard({
     startTransition(async () => {
       const r = await completeProfileAction(profile);
       if (!r.ok) return setError(r.error ?? "Erreur.");
-      router.replace("/compte?bienvenue=1");
+      router.replace("/mon-espace?bienvenue=1");
       router.refresh();
     });
   }

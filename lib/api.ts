@@ -101,6 +101,37 @@ export async function getListing(id: string): Promise<ListingItem | null> {
   }
 }
 
+export interface ProProfile {
+  username: string;
+  name: string;
+  firstName: string | null;
+  accountType: string;
+  accountSubtype: string | null;
+  commune: string | null;
+  city: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  website: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  linkedin: string | null;
+  memberSince: string;
+  listings: ListingItem[];
+}
+
+/** Page publique d'un pro (agent, agence, propriétaire). null si introuvable. */
+export async function getPro(username: string): Promise<ProProfile | null> {
+  try {
+    return await apiGet<ProProfile>(`/marketplace/pros/${encodeURIComponent(username)}`, 60);
+  } catch {
+    return null;
+  }
+}
+
 /** Détail d'une résidence (avec ses appartements). null si introuvable. */
 export async function getResidence(id: string): Promise<ResidenceDetail | null> {
   try {
@@ -137,6 +168,14 @@ export interface SiteAccount {
   city?: string | null;
   commune?: string | null;
   onboarded?: boolean;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  whatsapp?: string | null;
+  website?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
+  tiktok?: string | null;
+  linkedin?: string | null;
 }
 
 /** Profil saisi pendant l'inscription (envoyé à la vérification du code). */

@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default function InscriptionPage({ searchParams }: { searchParams: { profil?: string } }) {
   const account = getSession();
   // Compte déjà configuré : l'inscription n'a plus lieu d'être (sauf changement de profil).
-  if (account?.onboarded && searchParams.profil !== "modifier") redirect("/compte");
+  if (account?.onboarded && searchParams.profil !== "modifier") redirect("/mon-espace");
 
   const mode = account ? "complete" : "signup";
   const initial = account

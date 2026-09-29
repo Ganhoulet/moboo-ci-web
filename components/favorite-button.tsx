@@ -1,6 +1,7 @@
 "use client";
 
 import { toggleFavorite, useFavorites } from "@/lib/favorites";
+import { toggleAccountFavoriteAction } from "@/app/mon-espace/actions";
 import type { Property } from "@/lib/property";
 
 export function FavoriteButton({
@@ -22,7 +23,8 @@ export function FavoriteButton({
         // La carte est un <Link> : on empêche la navigation.
         e.preventDefault();
         e.stopPropagation();
-        toggleFavorite(property);
+        const on = toggleFavorite(property);
+        void toggleAccountFavoriteAction(property, on).catch(() => {});
       }}
       className={
         "grid h-9 w-9 place-items-center rounded-full backdrop-blur-sm transition " +

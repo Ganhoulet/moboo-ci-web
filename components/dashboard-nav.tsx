@@ -1,0 +1,68 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { DashItem, DashKey } from "@/lib/accounts";
+
+const sv = { width: 19, height: 19, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 } as const;
+const lj = { strokeLinecap: "round", strokeLinejoin: "round" } as const;
+export const DASH_ICONS: Record<DashKey, React.ReactNode> = {
+  tableau: <svg {...sv}><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></svg>,
+  annonces: <svg {...sv}><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5" {...lj} /></svg>,
+  nouvelle: <svg {...sv}><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" {...lj} /></svg>,
+  statistiques: <svg {...sv}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" {...lj} /></svg>,
+  demandes: <svg {...sv}><path d="M4 5h16v11H8l-4 4V5Z" {...lj} /><path d="M8 9h8M8 12h5" {...lj} /></svg>,
+  favoris: <svg {...sv}><path d="M12 20.5s-7-4.6-9.2-9.1C1.3 8 3 4.5 6.3 4.5c2 0 3.4 1.2 4.2 2.5.8-1.3 2.2-2.5 4.2-2.5 3.3 0 5 3.5 3.5 6.9C19 15.9 12 20.5 12 20.5Z" {...lj} /></svg>,
+  recherches: <svg {...sv}><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2M9 11h4M11 9v4" {...lj} /></svg>,
+  profil: <svg {...sv}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-3.9 3.6-7 8-7s8 3.1 8 7" {...lj} /></svg>,
+};
+
+function isActive(pathname: string, href: string) {
+  if (href === "/mon-espace") return pathname === "/mon-espace";
+  if (href === "/mon-espace/annonces") return pathname === "/mon-espace/annonces" || /^\/mon-espace\/annonces\/(?!nouvelle)/.test(pathname);
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
+/** Menu vertical (desktop). */
+export function DashboardSideNav({ items, badges }: { items: DashItem[]; badges?: Partial<Record<DashKey, number>> }) {
+  const pathname = usePathname();
+  return (
+    <nav className="space-y-1">
+      {items.map((it) => {
+        const on = isActive(pathname, it.href);
+        const n = badges?.[it.key];
+        return (
+          <Link key={it.key} href={it.href}
+            className={"flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition " +
+              (on ? "bg-brand-800 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-ink")}>
+            <span className={on ? "text-white" : "text-slate-400"}>{DASH_ICONS[it.key]}</span>
+            <span className="flex-1">{it.label}</span>
+            {n ? <span className={"rounded-full px-2 py-0.5 text-[11px] font-bold " + (on ? "bg-white/20 text-white" : "bg-accent-600 text-white")}>{n}</span> : null}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+/** Onglets défilants (mobile). */
+export function DashboardTabs({ items, badges }: { items: DashItem[]; badges?: Partial<Record<DashKey, number>> }) {
+  const pathname = usePathname();
+  return (
+    <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:px-6 lg:hidden [&::-webkit-scrollbar]:hidden">
+      {items.map((it) => {
+        const on = isActive(pathname, it.href);
+        const n = badges?.[it.key];
+        return (
+          <Link key={it.key} href={it.href}
+            className={"inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold transition " +
+              (on ? "border-brand-800 bg-brand-800 text-white" : "border-slate-200 bg-white text-slate-600")}>
+            <span className={on ? "text-white" : "text-slate-400"}>{DASH_ICONS[it.key]}</span>
+            {it.label}
+            {n ? <span className="rounded-full bg-accent-600 px-1.5 text-[10px] font-bold text-white">{n}</span> : null}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

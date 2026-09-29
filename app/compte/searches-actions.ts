@@ -31,13 +31,13 @@ export async function saveSearchAction(params: SearchParams): Promise<SaveResult
     body: JSON.stringify({ params: clean, alertsEnabled: true }),
   });
   if (!ok) return { ok: false, message: "Enregistrement impossible. Réessayez." };
-  revalidatePath("/compte");
+  revalidatePath("/mon-espace", "layout");
   return { ok: true, message: "Recherche enregistrée ! Vous serez alerté des nouveaux biens." };
 }
 
 export async function deleteSearchAction(id: string): Promise<void> {
   await authedFetch(`/site/searches/${encodeURIComponent(id)}`, { method: "DELETE" });
-  revalidatePath("/compte");
+  revalidatePath("/mon-espace", "layout");
 }
 
 export async function toggleAlertAction(id: string, alertsEnabled: boolean): Promise<void> {
@@ -45,5 +45,5 @@ export async function toggleAlertAction(id: string, alertsEnabled: boolean): Pro
     method: "PATCH",
     body: JSON.stringify({ alertsEnabled }),
   });
-  revalidatePath("/compte");
+  revalidatePath("/mon-espace", "layout");
 }

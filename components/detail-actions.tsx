@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toggleFavorite, useFavorites } from "@/lib/favorites";
+import { toggleAccountFavoriteAction } from "@/app/mon-espace/actions";
 import type { Property } from "@/lib/property";
 
 /** Boutons « Partager » et « Enregistrer » en tête de fiche (barre du haut de l'appli). */
@@ -46,7 +47,7 @@ export function DetailActions({ property }: { property: Property }) {
       >
         WhatsApp
       </button>
-      <button type="button" onClick={() => toggleFavorite(property)} aria-pressed={saved} className={btn}>
+      <button type="button" onClick={() => { const on = toggleFavorite(property); void toggleAccountFavoriteAction(property, on).catch(() => {}); }} aria-pressed={saved} className={btn}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"
           className={saved ? "text-accent-600" : ""}>
           <path d="M12 20.5s-7-4.6-9.2-9.1C1.3 8 3 4.5 6.3 4.5c2 0 3.4 1.2 4.2 2.5.8-1.3 2.2-2.5 4.2-2.5 3.3 0 5 3.5 3.5 6.9C19 15.9 12 20.5 12 20.5Z" strokeLinejoin="round" />

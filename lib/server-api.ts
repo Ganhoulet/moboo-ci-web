@@ -2,6 +2,7 @@
 // automatiquement en cas de 401 (via le refresh token en cookie). À n'utiliser
 // que dans des server actions / route handlers (il peut réécrire les cookies).
 import { API_URL } from "./api";
+import { cookies } from "next/headers";
 import { getAccessToken, getRefreshToken, setTokens, clearSession } from "./session";
 
 async function doFetch(path: string, init: RequestInit, token: string | null) {
@@ -17,7 +18,23 @@ async function doFetch(path: string, init: RequestInit, token: string | null) {
   });
 }
 
-/** Fetch authentifié avec rafraîchissement transparent du jeton sur 401. */
+/**
+ * Les cookies ne sont modifiables que dans une server action / un route handler.
+ * Pendant l'affichage d'une page (server component), c'est le middleware qui a
+ * déjà renouvelé la session : on ne rafraîchit donc pas ici (le jeton de
+ * rafraîchissement tourne à chaque usage — le consommer sans pouvoir enregistrer
+ * le nouveau casserait la session).
+ */
+function cookiesWritable(): boolean {
+  try {
+    cookies().set("moboo_probe", "", { maxAge: 0, path: "/" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Fetch authentifié avec rafraîchissement transparent du jeton sur 401 (actions). */
 export async function authedFetch(
   path: string,
   init: RequestInit = {},
@@ -25,7 +42,7 @@ export async function authedFetch(
   let token = getAccessToken();
   let res = await doFetch(path, init, token);
 
-  if (res.status === 401) {
+  if (res.status === 401 && cookiesWritable()) {
     const rt = getRefreshToken();
     if (rt) {
       const r = await fetch(`${API_URL}/site/auth/refresh`, {

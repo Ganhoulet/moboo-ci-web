@@ -160,3 +160,70 @@ export const WELCOME_NEXT: Record<AccountType, { text: string; cta?: { href: str
     text: "Téléchargez Moboo Resi ou Moboo Event ci-dessous pour publier vos logements et espaces : ils apparaîtront sur Moboo.ci.",
   },
 };
+
+/* ─── Espace compte (/espace) : menu et droits par type de compte ─────── */
+
+export type DashKey =
+  | "tableau" | "annonces" | "nouvelle" | "statistiques" | "demandes"
+  | "favoris" | "recherches" | "profil";
+
+export interface DashItem {
+  key: DashKey;
+  href: string;
+  label: string;
+  /** Types autorisés (reprise des droits du tableau de bord Houzez de moboo.ci). */
+  types: AccountType[] | "all";
+}
+
+const PUB: AccountType[] = ["proprietaire", "agent", "entreprise"];
+
+export const DASH_MENU: DashItem[] = [
+  { key: "tableau", href: "/mon-espace", label: "Tableau de bord", types: "all" },
+  { key: "annonces", href: "/mon-espace/annonces", label: "Mes annonces", types: PUB },
+  { key: "nouvelle", href: "/mon-espace/annonces/nouvelle", label: "Publier une annonce", types: PUB },
+  { key: "statistiques", href: "/mon-espace/statistiques", label: "Statistiques", types: PUB },
+  { key: "demandes", href: "/mon-espace/demandes", label: "Demandes", types: PUB },
+  { key: "favoris", href: "/mon-espace/favoris", label: "Favoris", types: "all" },
+  { key: "recherches", href: "/mon-espace/recherches", label: "Recherches & alertes", types: "all" },
+  { key: "profil", href: "/mon-espace/profil", label: "Mon profil", types: "all" },
+];
+
+export function canAccess(type: string | null | undefined, key: DashKey): boolean {
+  const item = DASH_MENU.find((i) => i.key === key);
+  if (!item) return false;
+  return item.types === "all" || item.types.includes((type || "particulier") as AccountType);
+}
+
+export function menuFor(type: string | null | undefined): DashItem[] {
+  return DASH_MENU.filter((i) => canAccess(type, i.key));
+}
+
+/** Étapes du suivi des demandes (tableau « Demandes »). */
+export const INQUIRY_STEPS = [
+  { key: "new", label: "Nouvelles", color: "bg-sky-500" },
+  { key: "contacted", label: "Contactées", color: "bg-violet-500" },
+  { key: "visit", label: "Visite prévue", color: "bg-amber-500" },
+  { key: "negotiation", label: "Négociation", color: "bg-accent-500" },
+  { key: "won", label: "Conclues", color: "bg-emerald-500" },
+  { key: "lost", label: "Perdues", color: "bg-slate-400" },
+] as const;
+
+/** Équipements proposés dans l'éditeur d'annonce (vente / location). */
+export const LISTING_FEATURES = [
+  "Climatisation", "Cuisine équipée", "Eau chaude", "Groupe électrogène", "Forage / château d'eau",
+  "Parking", "Garage", "Gardiennage", "Caméras de surveillance", "Piscine", "Jardin",
+  "Balcon / terrasse", "Ascenseur", "Salle de sport", "Wi-Fi / fibre", "Meublé",
+  "Titre foncier (ACD)", "Lotissement approuvé", "Viabilisé (eau, électricité)", "Clôturé",
+  "Accès goudronné", "Proche école", "Proche marché",
+];
+
+export const PROPERTY_TYPES = [
+  { key: "appartement", label: "Appartement" },
+  { key: "maison", label: "Maison" },
+  { key: "villa", label: "Villa" },
+  { key: "studio", label: "Studio" },
+  { key: "terrain", label: "Terrain" },
+  { key: "bureau", label: "Bureau" },
+  { key: "magasin", label: "Magasin / local" },
+  { key: "autre", label: "Autre" },
+];

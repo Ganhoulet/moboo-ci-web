@@ -60,7 +60,7 @@ export async function submitListing(
     if (getSession()) {
       const { ok, data } = await authedFetch("/site/me/listings", { method: "POST", body: JSON.stringify(payload) });
       if (!ok) return { ok: false, message: (data && data.message) || "La publication a échoué. Réessayez." };
-      revalidatePath("/compte");
+      revalidatePath("/mon-espace", "layout");
       return {
         ok: true,
         id: data.id,

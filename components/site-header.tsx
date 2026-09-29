@@ -40,8 +40,8 @@ export function SiteHeader() {
           <FavoritesNavButton />
           {account ? (
             <Link
-              href="/compte"
-              aria-label="Mon compte"
+              href="/mon-espace"
+              aria-label="Mon espace"
               className="grid h-10 w-10 place-items-center rounded-full bg-brand-800 text-sm font-bold text-white transition hover:bg-brand-900"
             >
               {initials(account)}
