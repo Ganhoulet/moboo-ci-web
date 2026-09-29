@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+import { withSeoOverride } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { PackageCards } from "@/components/package-cards";
 import { fcfa, getPackages } from "@/lib/community";
 import { getSession } from "@/lib/session";
 import { getSiteSettings } from "@/lib/settings";
 
-export const metadata: Metadata = { title: "Forfaits", description: "Publiez plus d’annonces et mettez vos biens en vedette sur Moboo.ci." };
+const BASE_METADATA: Metadata = { title: "Forfaits", description: "Publiez plus d’annonces et mettez vos biens en vedette sur Moboo.ci." };
+export function generateMetadata() {
+  return withSeoOverride("/forfaits", BASE_METADATA);
+}
 
 export default async function ForfaitsPage() {
   const [settings, packages] = await Promise.all([getSiteSettings(), getPackages()]);

@@ -112,6 +112,20 @@ export const BLOCKS: BlockDef[] = [
     defaults: { title: "Explorer par type de bien", subtitle: "", mode: "auto", types: [], items: [], showCount: true, background: "white" },
   },
   {
+    type: "seoLinks", label: "Liens SEO (villes et catégories)", icon: "🔗",
+    description: "Liens vers les pages SEO (« Maisons à louer Cocody »…) : onglets par ville et colonnes par catégorie, comme Magicbricks, ou colonnes centrées comme l’ancien moboo.ci.",
+    fields: [
+      { key: "title", label: "Titre", type: "text" },
+      { key: "subtitle", label: "Sous-titre (facultatif)", type: "text" },
+      { key: "style", label: "Présentation", type: "select", options: [{ value: "tabs", label: "Onglets par ville + colonnes (Magicbricks)" }, { value: "columns", label: "Colonnes centrées (ancien moboo.ci)" }] },
+      { key: "tabs", label: "Onglets affichés, dans l’ordre (vide : tous)", type: "text", help: "Séparés par des virgules, ex. Abidjan, Autres villes" },
+      { key: "columns", label: "Colonnes affichées, dans l’ordre (vide : toutes)", type: "text", help: "Ex. Maisons à vendre, Maisons à louer, Terrains à vendre, Résidences meublées" },
+      { key: "max", label: "Liens visibles par colonne", type: "number", min: 3, max: 30 },
+      ...common,
+    ],
+    defaults: { title: "Annonces immobilières en Côte d’Ivoire", subtitle: "", style: "tabs", tabs: "Abidjan, Autres villes, Toute la Côte d'Ivoire", columns: "", max: 8, background: "soft" },
+  },
+  {
     type: "marketing", label: "Bannières marketing", icon: "📣",
     description: "Campagnes en cours de la zone Marketing (emplacement « Site — bannière »). Rien ne s’affiche s’il n’y en a pas.",
     fields: [
@@ -357,6 +371,7 @@ export const DEFAULT_HOME: PageContent = {
     def("stats", "stats-main"),
     def("partners", "partners-main"),
     def("app", "app-main"),
+    def("seoLinks", "seolinks-main"),
     def("faq", "faq-main"),
   ],
 };

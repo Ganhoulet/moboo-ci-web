@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSeoOverride } from "@/lib/seo";
 import Link from "next/link";
 import {
   listListingsPage,
@@ -17,10 +18,13 @@ import { getSession } from "@/lib/session";
 import { getSiteSettings } from "@/lib/settings";
 import { getTaxonomies } from "@/lib/taxonomies";
 
-export const metadata: Metadata = {
+const BASE_METADATA: Metadata = {
   title: "Annonces",
   description: "Tous les biens Moboo.ci : à louer, à vendre, meublés et espaces événementiels.",
 };
+export function generateMetadata() {
+  return withSeoOverride("/annonces", BASE_METADATA);
+}
 
 export const dynamic = "force-dynamic";
 

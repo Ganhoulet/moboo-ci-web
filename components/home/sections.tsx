@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getSeoLinks, seoLinkLabel } from "@/lib/seo";
+import { SeoLinks, type LinkTab } from "./seo-links";
 import { getCampaigns } from "@/lib/marketing";
 import { SiteBanners } from "@/components/marketing/site-banners";
 import { blockDef, type Section } from "@/lib/page-blocks";
@@ -343,6 +345,38 @@ function Pros({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean })
 }
 
 /** Vrais chiffres de la plateforme (les catégories à zéro sont masquées). */
+async function SeoLinksBlock({ s, edit }: { s: Section; edit?: boolean }) {
+  const p: P = s.props;
+  const links = (await getSeoLinks()).filter((l) => l.kind === "landing" && !l.noindex);
+  if (!links.length) return null;
+  const list = (v: unknown) => String(v ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+  const wantTabs = list(p.tabs), wantCols = list(p.columns);
+  const order = (names: string[], want: string[]) => want.length ? want.filter((w) => names.includes(w)) : names;
+  // Par défaut, l'onglet qui a le plus de liens en premier.
+  const byCount = Array.from(new Set(links.map((l) => l.hubTab || "Autres")))
+    .sort((a, b) => links.filter((l) => (l.hubTab || "Autres") === b).length - links.filter((l) => (l.hubTab || "Autres") === a).length);
+  const tabNames = order(byCount, wantTabs);
+  const tabs: LinkTab[] = tabNames.map((t) => {
+    const inTab = links.filter((l) => (l.hubTab || "Autres") === t);
+    const colNames = order(Array.from(new Set(inTab.map((l) => l.hubColumn || "Autres recherches"))), wantCols);
+    return { title: t, columns: colNames.map((c) => ({ title: c, links: inTab.filter((l) => (l.hubColumn || "Autres recherches") === c).map((l) => ({ href: `/${l.slug}`, label: seoLinkLabel(l) })) })).filter((c) => c.links.length) };
+  }).filter((t) => t.columns.length);
+  if (!tabs.length) return null;
+  const centered = p.style === "columns";
+  return (
+    <Shell s={s} edit={edit}>
+      {centered ? (
+        <div className="mb-10 text-center">
+          {p.title ? <h2 className="font-display text-2xl font-extrabold tracking-tight text-ink sm:text-[30px]">{p.title}</h2> : null}
+          <span className="mx-auto mt-4 block h-1 w-40 rounded-full bg-accent-600" />
+          {p.subtitle ? <p className="mt-3 text-muted">{p.subtitle}</p> : null}
+        </div>
+      ) : <Head title={p.title} subtitle={p.subtitle} dark={p.background === "brand"} />}
+      <SeoLinks tabs={tabs} style={centered ? "columns" : "tabs"} max={Math.min(30, Math.max(3, Number(p.max) || 8))} />
+    </Shell>
+  );
+}
+
 async function Marketing({ s, edit }: { s: Section; edit?: boolean }) {
   const items = await getCampaigns("site_banner");
   if (!items.length) return null;
@@ -513,6 +547,7 @@ export async function HomeSection({ s, data, edit }: { s: Section; data: HomeDat
     case "steps": return <Steps s={s} edit={edit} />;
     case "pros": return <Pros s={s} data={data} edit={edit} />;
     case "marketing": return <Marketing s={s} edit={edit} />;
+    case "seoLinks": return <SeoLinksBlock s={s} edit={edit} />;
     case "stats": return <Stats s={s} data={data} edit={edit} />;
     case "calculator":
       return (

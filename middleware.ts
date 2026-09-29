@@ -19,9 +19,12 @@ const cookieOpts = {
 };
 
 export async function middleware(req: NextRequest) {
+  // Chemin de la page pour les server components (SEO des pages existantes : lib/seo).
+  req.headers.set("x-moboo-path", req.nextUrl.pathname);
+  const next = () => NextResponse.next({ request: { headers: req.headers } });
   const rt = req.cookies.get(RT)?.value;
   const hasAt = !!req.cookies.get(AT)?.value;
-  if (hasAt || !rt) return NextResponse.next();
+  if (hasAt || !rt) return next();
 
   let tokens: { accessToken?: string; refreshToken?: string; expiresIn?: number } | null = null;
   try {
@@ -41,7 +44,7 @@ export async function middleware(req: NextRequest) {
     if (r.ok) tokens = await r.json();
     else if (r.status < 500) tokens = { };   // refus explicite : session terminée
   } catch {
-    return NextResponse.next(); // API injoignable : on réessaiera à la page suivante
+    return next(); // API injoignable : on réessaiera à la page suivante
   }
 
   if (tokens?.accessToken && tokens.refreshToken) {
@@ -66,7 +69,7 @@ export async function middleware(req: NextRequest) {
     res.cookies.delete(PROFILE);
     return res;
   }
-  return NextResponse.next();
+  return next();
 }
 
 export const config = {
