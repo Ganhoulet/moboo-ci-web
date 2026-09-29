@@ -1,18 +1,14 @@
 import Link from "next/link";
 import { TRANSACTION_FILTERS, type Transaction } from "@/lib/property";
 
-const TYPES: [string, string][] = [
-  ["", "Tous types"],
-  ["appartement", "Appartement"],
-  ["maison", "Maison"],
-  ["villa", "Villa"],
-  ["studio", "Studio"],
-  ["terrain", "Terrain"],
-  ["bureau", "Bureau"],
-  ["magasin", "Magasin"],
+const DEFAULT_TYPES: [string, string][] = [
+  ["appartement", "Appartement"], ["maison", "Maison"], ["villa", "Villa"], ["studio", "Studio"],
+  ["terrain", "Terrain"], ["bureau", "Bureau"], ["magasin", "Magasin"],
 ];
 
 export interface FilterState {
+  /** Types de bien (back-office → Immobilier → Types de bien). */
+  types?: [string, string][];
   active: Transaction | "all";
   q: string;
   priceMin?: number;
@@ -86,7 +82,7 @@ export function FilterBar(f: FilterState) {
           aria-label="Prix maximum"
         />
         <select name="propertyType" defaultValue={f.propertyType} className="input" aria-label="Type de bien">
-          {TYPES.map(([v, l]) => (
+          {[["", "Tous types"] as [string, string], ...(f.types?.length ? f.types : DEFAULT_TYPES)].map(([v, l]) => (
             <option key={v} value={v}>{l}</option>
           ))}
         </select>

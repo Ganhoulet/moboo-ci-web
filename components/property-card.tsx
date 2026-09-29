@@ -30,6 +30,16 @@ export function PropertyCard({ p }: { p: Property }) {
             {TRANSACTION_BADGE[p.transaction]}
           </span>
 
+          {/* En vedette + étiquettes (back-office → Immobilier) */}
+          {p.featured || p.labels?.length ? (
+            <div className="absolute left-3 top-14 flex max-w-[70%] flex-col items-start gap-1">
+              {p.featured ? <span className="rounded-md bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow">★ En vedette</span> : null}
+              {p.labels?.slice(0, 2).map((l) => (
+                <span key={l.slug} className="rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow" style={{ background: l.color ?? "#334155" }}>{l.label}</span>
+              ))}
+            </div>
+          ) : null}
+
           {/* Favori (localStorage, sans compte) */}
           <FavoriteButton property={p} className="absolute left-3 top-3" />
 

@@ -5,6 +5,7 @@ import { canAccess, PROPERTY_TYPES } from "@/lib/accounts";
 import { EmptyState, PageHeader, STATUS_LABEL, fmtXOF } from "@/components/dashboard-ui";
 import { ListingRowActions } from "@/components/listing-row-actions";
 import { listMyListings } from "../actions";
+import { getTaxonomies } from "@/lib/taxonomies";
 
 const TABS = [
   { key: "", label: "Toutes" },
@@ -25,7 +26,8 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
   const items = all
     .filter((l) => (tab === "" ? true : tab === "CLOSED" ? ["SOLD", "RENTED"].includes(l.status) : l.status === tab))
     .filter((l) => !q || `${l.title} ${l.commune ?? ""} ${l.city}`.toLowerCase().includes(q));
-  const typeLabel = (k: string) => PROPERTY_TYPES.find((t) => t.key === k)?.label ?? "Bien";
+  const tax = await getTaxonomies();
+  const typeLabel = (k: string) => tax.type.find((t) => t.slug === k)?.label ?? PROPERTY_TYPES.find((t) => t.key === k)?.label ?? "Bien";
 
   return (
     <div>

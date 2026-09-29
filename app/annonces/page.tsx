@@ -13,6 +13,7 @@ import { Pagination } from "@/components/pagination";
 import { SaveSearchButton } from "@/components/save-search-button";
 import { getSession } from "@/lib/session";
 import { getSiteSettings } from "@/lib/settings";
+import { getTaxonomies } from "@/lib/taxonomies";
 
 export const metadata: Metadata = {
   title: "Annonces",
@@ -93,6 +94,7 @@ export default async function AnnoncesPage({
 
       <div className="mt-5">
         <FilterBar
+          types={(await getTaxonomies()).type.map((t) => [t.slug, t.label] as [string, string])}
           active={active}
           q={q}
           priceMin={priceMin}

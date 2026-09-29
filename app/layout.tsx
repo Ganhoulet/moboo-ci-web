@@ -10,6 +10,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { getSession } from "@/lib/session";
 import { LiveNotifications } from "@/components/live-notifications";
 import { SearchStrip } from "@/components/search-strip";
+import { getTaxonomies } from "@/lib/taxonomies";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const poppins = Poppins({
@@ -45,7 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ClientSettings favoritesLoginRequired={general.favoritesLoginRequired} loggedIn={!!getSession()} />
         {header.topBarEnabled && (header.topBarText || header.topBarPhone || header.topBarEmail) ? <TopBar h={header} /> : null}
         <SiteHeader settings={settings} />
-        {settings.search.headerSearch !== "none" ? <SearchStrip variant={settings.search.headerSearch} pages={settings.search.headerSearchPages} /> : null}
+        {settings.search.headerSearch !== "none" ? <SearchStrip variant={settings.search.headerSearch} pages={settings.search.headerSearchPages} types={(await getTaxonomies()).type} /> : null}
         <main>{children}</main>
         <footer className="mt-20 border-t border-slate-200 bg-white print:hidden">
           <div className="container-page flex flex-col gap-4 py-10 sm:flex-row sm:items-center sm:justify-between">

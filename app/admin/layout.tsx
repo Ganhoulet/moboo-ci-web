@@ -29,6 +29,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const settings = await getAdminSettings();
   const items = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
+    // Immobilier (façon Houzez « Real Estate ») : annonces, listes, agences et agents.
+    { href: "/admin/immobilier", label: "Immobilier", icon: "building", group: "immobilier" },
+    ...[
+      ["/admin/immobilier/nouvelle", "Nouvelle annonce"],
+      ["/admin/immobilier/listes/type", "Types de bien"],
+      ["/admin/immobilier/listes/feature", "Équipements"],
+      ["/admin/immobilier/listes/label", "Étiquettes"],
+      ["/admin/immobilier/listes/city", "Villes"],
+      ["/admin/immobilier/listes/area", "Quartiers et communes"],
+      ["/admin/immobilier/equipe/agences", "Agences"],
+      ["/admin/immobilier/equipe/agents", "Agents"],
+    ].map(([href, label]) => ({ href, label, icon: "building", child: true, group: "immobilier" })),
     // Rubriques, chacune suivie de ses sous-rubriques (ex. modèles d'e-mails).
     ...(settings?.schema ?? []).filter((s) => !s.parent).flatMap((s) => {
       const children = (settings?.schema ?? []).filter((c) => c.parent === s.id);

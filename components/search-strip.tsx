@@ -11,7 +11,7 @@ const DETAILS = [/^\/annonce\//, /^\/residence\//, /^\/espace\//];
  * « simple » = mot-clé + type ; « filters » = + type de bien et budget.
  * Envoie vers /annonces avec les mêmes paramètres que les filtres de la liste.
  */
-export function SearchStrip({ variant, pages }: { variant: "simple" | "filters"; pages: "details" | "all" }) {
+export function SearchStrip({ variant, pages, types }: { variant: "simple" | "filters"; pages: "details" | "all"; types: { slug: string; label: string }[] }) {
   const pathname = usePathname();
   if (HIDDEN.some((r) => r.test(pathname))) return null;
   if (pages === "details" && !DETAILS.some((r) => r.test(pathname))) return null;
@@ -31,13 +31,7 @@ export function SearchStrip({ variant, pages }: { variant: "simple" | "filters";
           <>
             <select name="propertyType" defaultValue="" className={`${field} hidden w-40 md:block`} aria-label="Type de bien">
               <option value="">Tous les biens</option>
-              <option value="appartement">Appartement</option>
-              <option value="maison">Maison</option>
-              <option value="villa">Villa</option>
-              <option value="studio">Studio</option>
-              <option value="terrain">Terrain</option>
-              <option value="bureau">Bureau</option>
-              <option value="magasin">Magasin</option>
+              {types.map((t) => <option key={t.slug} value={t.slug}>{t.label}</option>)}
             </select>
             <input name="priceMax" type="number" inputMode="numeric" min={0} step={5000} placeholder="Budget max (FCFA)" className={`${field} hidden w-44 md:block`} />
           </>

@@ -12,5 +12,6 @@ export const ADMIN_ICONS: Record<string, React.ReactNode> = {
   search: <svg {...sv}><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>,
   mail: <svg {...sv}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>,
   print: <svg {...sv}><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2" /><rect x="6" y="14" width="12" height="7" /></svg>,
+  building: <svg {...sv}><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M2 21h20M8 7h4M8 11h4M8 15h4" /></svg>,
   users: <svg {...sv}><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.3 2.9-6 6.5-6s6.5 2.7 6.5 6M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20c0-2.6-1.6-4.8-4-5.6" /></svg>,
 };

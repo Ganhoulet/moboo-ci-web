@@ -5,29 +5,25 @@ import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { formatXOF, getListing } from "@/lib/api";
 import { getSiteSettings } from "@/lib/settings";
+import { getTaxonomies, typeLabel } from "@/lib/taxonomies";
 import { MobooLogo } from "@/components/logo";
 import { PrintButton } from "@/components/print-button";
 
 export const metadata: Metadata = { robots: { index: false } };
-
-const TYPE_LABEL: Record<string, string> = {
-  appartement: "Appartement", maison: "Maison", villa: "Villa", studio: "Studio",
-  terrain: "Terrain", bureau: "Bureau", magasin: "Magasin", autre: "Bien",
-};
 
 /**
  * Fiche imprimable d'une annonce (back-office → Imprimer la propriété) :
  * logo, photo, prix, détails, description, équipements, galerie, contact.
  */
 export default async function PrintListing({ params }: { params: { id: string } }) {
-  const [l, settings] = await Promise.all([getListing(params.id), getSiteSettings()]);
+  const [l, settings, tax] = await Promise.all([getListing(params.id), getSiteSettings(), getTaxonomies()]);
   const cfg = settings.print;
   if (!l || !cfg.enabled) notFound();
 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ");
   const details: [string, string][] = [
     ["Transaction", l.transaction === "rent" ? "À louer" : "À vendre"],
-    ["Type", TYPE_LABEL[l.propertyType] ?? "Bien"],
+    ["Type", typeLabel(tax, l.propertyType)],
     ...(l.bedrooms != null ? [["Chambres", String(l.bedrooms)] as [string, string]] : []),
     ...(l.bathrooms != null ? [["Salles de bain", String(l.bathrooms)] as [string, string]] : []),
     ...(l.surface != null ? [["Surface", `${l.surface} m²`] as [string, string]] : []),

@@ -27,6 +27,9 @@ export interface Property {
   meta?: string;
   propertyType?: string; // pour les annonces classiques (filtre)
   bedrooms?: number | null;
+  /** Back-office : en vedette, étiquettes (Exclusivité, Nouveau…). */
+  featured?: boolean;
+  labels?: { slug: string; label: string; color: string | null }[];
 }
 
 export const TRANSACTION_BADGE: Record<Transaction, string> = {
@@ -158,6 +161,8 @@ export function mapListing(l: import("./types").ListingItem): Property {
       : PROPERTY_TYPE_LABEL[l.propertyType] ?? l.propertyType,
     propertyType: l.propertyType,
     bedrooms: l.bedrooms,
+    featured: !!l.featured,
+    labels: l.labels ?? [],
   };
 }
 

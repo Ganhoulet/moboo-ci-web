@@ -154,6 +154,9 @@ export interface ListingItem {
     company?: string | null;
     serviceArea?: string | null;
   } | null;
+  /** Back-office : « en vedette » et étiquettes (nom + couleur). */
+  featured?: boolean;
+  labels?: { slug: string; label: string; color: string | null }[];
   /** Annonceur (compte du site) : coordonnées publiques. */
   owner?: {
     name: string; kind: string; photoUrl: string | null; username: string | null;

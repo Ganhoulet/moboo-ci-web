@@ -14,6 +14,7 @@ import { VisitForm } from "@/components/visit-form";
 import { MobileContactBar } from "@/components/mobile-contact-bar";
 import { ContactLink } from "@/components/contact-link";
 import { getSiteSettings } from "@/lib/settings";
+import { getTaxonomies, typeLabel } from "@/lib/taxonomies";
 import { ListingReservation } from "@/components/listing-reservation";
 
 export const revalidate = 60;
@@ -44,6 +45,8 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
   const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");
   // Sections affichées, extrait, biens similaires : back-office → Détails de la propriété.
   const { listing: cfg, general, print } = await getSiteSettings();
+  const tax = await getTaxonomies();
+  const TYPE = (slug: string) => typeLabel(tax, slug);
   const similar = cfg.showSimilar
     ? await similarListings({
         city: l.city,
@@ -54,7 +57,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
     : [];
 
   const specs: Fact[] = [
-    { icon: I.home, label: "Type", value: TYPE_LABEL[l.propertyType] ?? "Bien" },
+    { icon: I.home, label: "Type", value: TYPE(l.propertyType) },
   ];
   if (l.bedrooms != null) specs.push({ icon: I.bed, label: "Chambres", value: String(l.bedrooms) });
   if (l.bathrooms != null) specs.push({ icon: I.bath, label: "Salles de bain", value: String(l.bathrooms) });
@@ -88,7 +91,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
   // Phrase de résumé : « À vendre : villa · 3 chambres · 2 salles de bain · 250 m² ».
   // (Sur mobile les badges portent déjà la transaction : on n'y reprend que les chiffres.)
   const summary = [
-    `${txLabel} : ${(TYPE_LABEL[l.propertyType] ?? "bien").toLowerCase()}`,
+    `${txLabel} : ${TYPE(l.propertyType).toLowerCase()}`,
     l.bedrooms ? `${l.bedrooms} chambre${l.bedrooms > 1 ? "s" : ""}` : null,
     l.bathrooms ? `${l.bathrooms} salle${l.bathrooms > 1 ? "s" : ""} de bain` : null,
     l.surface ? `${l.surface} m²` : null,
@@ -132,7 +135,9 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
             <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
               {l.listingKind === "furnished" ? "Meublé" : l.listingKind === "event" ? "Événementiel" : TX_LABEL[l.transaction] ?? l.transaction}
             </span>
-            <span className="chip">{TYPE_LABEL[l.propertyType] ?? "Bien"}</span>
+            <span className="chip">{TYPE(l.propertyType)}</span>
+            {l.featured ? <span className="rounded-md bg-amber-500 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">★ En vedette</span> : null}
+            {(l.labels ?? []).map((lb) => <span key={lb.slug} className="rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white" style={{ background: lb.color ?? "#334155" }}>{lb.label}</span>)}
           </>
         }
         title={l.title}

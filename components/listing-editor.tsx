@@ -32,14 +32,6 @@ export type ListingDraft = {
   contactPhone: string;
 };
 
-export function emptyDraft(contact?: { name?: string; phone?: string }): ListingDraft {
-  return {
-    transaction: "rent", propertyType: "appartement", title: "", price: "", description: "",
-    bedrooms: "", bathrooms: "", garage: "", surface: "", yearBuilt: "", features: [],
-    city: "Abidjan", commune: "", quartier: "", address: "", latitude: null, longitude: null,
-    photos: [], videoUrl: "", contactName: contact?.name ?? "", contactPhone: contact?.phone ?? "",
-  };
-}
 
 /** Compresse une image dans le navigateur (1600 px max, JPEG ~75 %) → data URI. */
 async function compress(file: File): Promise<string> {
@@ -73,10 +65,24 @@ function parseCoords(s: string): [number, number] | null {
   return null;
 }
 
-export function ListingEditor({ id, initial, maxPhotos: MAX_PHOTOS = 12 }: {
+export type EditorSave = (id: string | null, payload: Record<string, any>) => Promise<{ ok: boolean; id?: string; error?: string }>;
+
+export function ListingEditor({
+  id, initial, maxPhotos: MAX_PHOTOS = 12,
+  saveAction = saveListingAction, createdHref = "/mon-espace/annonces?publiee={id}",
+  types = PROPERTY_TYPES, features: FEATURES = LISTING_FEATURES, communes: AREAS = COMMUNES,
+}: {
   id?: string; initial: ListingDraft;
   /** Réglage « Nombre maximum de photos » (back-office). */
   maxPhotos?: number;
+  /** Enregistrement (espace compte par défaut ; le back-office passe le sien). */
+  saveAction?: EditorSave;
+  /** Page après création ; {id} = identifiant de la nouvelle annonce. */
+  createdHref?: string;
+  /** Listes du back-office (Immobilier) : types de bien, équipements, communes / quartiers. */
+  types?: { key: string; label: string }[];
+  features?: string[];
+  communes?: string[];
 }) {
   const router = useRouter();
   const edit = !!id;
@@ -121,10 +127,10 @@ export function ListingEditor({ id, initial, maxPhotos: MAX_PHOTOS = 12 }: {
       if (err) { setStep(s); setError(err); return; }
     }
     start(async () => {
-      const r = await saveListingAction(id ?? null, payload());
+      const r = await saveAction(id ?? null, payload());
       if (!r.ok) return setError(r.error ?? "Erreur.");
       if (edit) { setSaved(true); router.refresh(); }
-      else router.push(`/mon-espace/annonces?publiee=${r.id}`);
+      else router.push(createdHref.replace("{id}", encodeURIComponent(r.id!)));
     });
   }
 
@@ -192,7 +198,7 @@ export function ListingEditor({ id, initial, maxPhotos: MAX_PHOTOS = 12 }: {
             </div>
             <Field label="Type de bien">
               <div className="flex flex-wrap gap-2">
-                {PROPERTY_TYPES.map((t) => (
+                {types.map((t) => (
                   <Chip key={t.key} on={d.propertyType === t.key} onClick={() => set({ propertyType: t.key })}>{t.label}</Chip>
                 ))}
               </div>
@@ -231,7 +237,7 @@ export function ListingEditor({ id, initial, maxPhotos: MAX_PHOTOS = 12 }: {
           <>
             <p className="text-sm text-muted">Cochez ce qui s'applique : c'est ce que les visiteurs regardent en premier.</p>
             <div className="flex flex-wrap gap-2">
-              {[...LISTING_FEATURES, ...d.features.filter((f) => !LISTING_FEATURES.includes(f))].map((f) => {
+              {[...FEATURES, ...d.features.filter((f) => !FEATURES.includes(f))].map((f) => {
                 const on = d.features.includes(f);
                 return <Chip key={f} on={on} onClick={() => set({ features: on ? d.features.filter((x) => x !== f) : [...d.features, f] })}>{on ? "✓ " : ""}{f}</Chip>;
               })}
@@ -249,9 +255,9 @@ export function ListingEditor({ id, initial, maxPhotos: MAX_PHOTOS = 12 }: {
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Ville *"><input className="input" value={d.city} onChange={(e) => set({ city: e.target.value })} /></Field>
               <Field label="Commune">
-                <select className="input" value={COMMUNES.includes(d.commune) || !d.commune ? d.commune : "__autre"} onChange={(e) => set({ commune: e.target.value === "__autre" ? "" : e.target.value })}>
+                <select className="input" value={AREAS.includes(d.commune) || !d.commune ? d.commune : "__autre"} onChange={(e) => set({ commune: e.target.value === "__autre" ? "" : e.target.value })}>
                   <option value="">— Choisir —</option>
-                  {COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  {AREAS.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Field>
               <Field label="Quartier"><input className="input" value={d.quartier} placeholder="Ex. Riviera 2, Zone 4…" onChange={(e) => set({ quartier: e.target.value })} /></Field>
@@ -318,7 +324,7 @@ export function ListingEditor({ id, initial, maxPhotos: MAX_PHOTOS = 12 }: {
                 <img src={d.photos[0]} alt="" className="h-20 w-28 shrink-0 rounded-xl object-cover" />
               ) : <span className="grid h-20 w-28 shrink-0 place-items-center rounded-xl bg-slate-200 text-xs text-slate-500">Sans photo</span>}
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-accent-700">{d.transaction === "rent" ? "À louer" : "À vendre"} · {PROPERTY_TYPES.find((t) => t.key === d.propertyType)?.label}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-accent-700">{d.transaction === "rent" ? "À louer" : "À vendre"} · {types.find((t) => t.key === d.propertyType)?.label}</p>
                 <p className="truncate font-display font-bold text-ink">{d.title || "Titre de l'annonce"}</p>
                 <p className="text-sm font-bold text-ink">{Number(d.price) ? new Intl.NumberFormat("fr-FR").format(Number(d.price)) + " FCFA" : "—"}{d.transaction === "rent" ? " / mois" : ""}</p>
                 <p className="truncate text-xs text-muted">{[d.quartier, d.commune, d.city].filter(Boolean).join(", ")} · {d.photos.length} photo(s) · {d.features.length} équipement(s)</p>
