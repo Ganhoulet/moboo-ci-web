@@ -29,7 +29,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const settings = await getAdminSettings();
   const items = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
-    ...(settings?.schema ?? []).map((s) => ({ href: `/admin/reglages/${s.id}`, label: s.label, icon: s.icon })),
+    // Rubriques, chacune suivie de ses sous-rubriques (ex. modèles d'e-mails).
+    ...(settings?.schema ?? []).filter((s) => !s.parent).flatMap((s) => {
+      const children = (settings?.schema ?? []).filter((c) => c.parent === s.id);
+      return [
+        { href: `/admin/reglages/${s.id}`, label: s.label, icon: s.icon, group: children.length ? s.id : undefined },
+        ...children.map((c) => ({ href: `/admin/reglages/${c.id}`, label: c.label, icon: c.icon, child: true, group: s.id })),
+      ];
+    }),
     { href: "/admin/administrateurs", label: "Administrateurs", icon: "users" },
   ];
 

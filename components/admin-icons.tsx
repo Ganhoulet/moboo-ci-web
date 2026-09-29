@@ -10,5 +10,6 @@ export const ADMIN_ICONS: Record<string, React.ReactNode> = {
   home: <svg {...sv}><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5" /></svg>,
   plus: <svg {...sv}><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></svg>,
   search: <svg {...sv}><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>,
+  mail: <svg {...sv}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>,
   users: <svg {...sv}><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.3 2.9-6 6.5-6s6.5 2.7 6.5 6M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20c0-2.6-1.6-4.8-4-5.6" /></svg>,
 };

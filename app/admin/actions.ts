@@ -8,7 +8,7 @@ const errMsg = (data: any, fallback: string) =>
   (Array.isArray(data?.message) ? data.message[0] : data?.message)
   || (Array.isArray(data?.error?.message) ? data.error.message[0] : data?.error?.message) || fallback;
 
-export type FieldType = "bool" | "number" | "text" | "textarea" | "url" | "image" | "enum" | "multi";
+export type FieldType = "bool" | "number" | "text" | "textarea" | "url" | "image" | "enum" | "multi" | "color" | "html" | "emails";
 
 export interface SettingField {
   key: string; label: string; help?: string; type: FieldType;
@@ -18,12 +18,18 @@ export interface SettingField {
   public?: boolean; group?: string;
 }
 
-export interface SettingSection { id: string; label: string; icon: string; description?: string; fields: SettingField[] }
+export interface SettingSection {
+  id: string; label: string; icon: string; description?: string; fields: SettingField[];
+  /** Sous-rubrique (modèles d'e-mails sous « Gestion des emails »). */
+  parent?: string;
+  email?: { placeholders: string[]; sample: Record<string, string>; admin: boolean };
+}
 
 export interface AdminSettings {
   schema: SettingSection[];
   values: Record<string, Record<string, unknown>>;
   updated: { section: string; updatedAt: string; updatedBy: string | null }[];
+  smtpConfigured?: boolean;
 }
 
 export async function getAdminSettings(): Promise<AdminSettings | null> {
@@ -76,4 +82,26 @@ export async function removeAdminAction(id: string): Promise<{ ok: boolean; erro
   const { ok, data } = await authedFetch(`/site/admin/admins/${encodeURIComponent(id)}`, { method: "DELETE" });
   if (ok) revalidatePath("/admin/administrateurs");
   return ok ? { ok: true } : { ok: false, error: errMsg(data, "Retrait impossible.") };
+}
+
+/* ─── Gestion des emails : aperçu et test ──────────────────────────────── */
+
+export interface EmailPreviewInput {
+  template: string;
+  audience: "user" | "admin";
+  section?: Record<string, unknown>;   // modèle en cours de modification
+  emails?: Record<string, unknown>;    // mise en page en cours de modification
+  to?: string;
+}
+
+export async function previewEmailAction(input: EmailPreviewInput): Promise<{ ok: boolean; subject?: string; html?: string; configured?: boolean; error?: string }> {
+  const { ok, data } = await authedFetch("/site/admin/emails/preview", { method: "POST", body: JSON.stringify(input) });
+  return ok ? { ok: true, subject: data.subject, html: data.html, configured: data.configured } : { ok: false, error: errMsg(data, "Aperçu indisponible.") };
+}
+
+export async function testEmailAction(input: EmailPreviewInput): Promise<{ ok: boolean; message: string }> {
+  const { ok, data } = await authedFetch("/site/admin/emails/test", { method: "POST", body: JSON.stringify(input) });
+  if (!ok) return { ok: false, message: errMsg(data, "Envoi impossible.") };
+  if (!data?.configured) return { ok: false, message: data?.message || "Serveur d’e-mails non configuré." };
+  return data.sent ? { ok: true, message: `E-mail de test envoyé à ${data.to}.` } : { ok: false, message: `L’envoi à ${data.to} a échoué (voir les journaux de l’API).` };
 }

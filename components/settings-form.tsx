@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { resetSectionAction, saveSettingsAction, type SettingField, type SettingSection } from "@/app/admin/actions";
 import { uploadImageAction } from "@/app/mon-espace/actions";
+import { EmailPreview } from "./email-preview";
 
 type Values = Record<string, unknown>;
 
@@ -34,7 +35,14 @@ function Toggle({ value, onChange, yes = "Oui", no = "Non" }: { value: boolean; 
   );
 }
 
-function Field({ f, value, onChange }: { f: SettingField; value: unknown; onChange: (v: unknown) => void }) {
+type TextEl = HTMLInputElement | HTMLTextAreaElement;
+
+function Field({ f, value, onChange, onFocusText }: {
+  f: SettingField; value: unknown; onChange: (v: unknown) => void;
+  /** Champ texte actif : les variables {{…}} cliquées s'y insèrent. */
+  onFocusText?: (el: TextEl) => void;
+}) {
+  const focus = (e: React.FocusEvent<TextEl>) => onFocusText?.(e.currentTarget);
   const [uploading, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
 
@@ -85,7 +93,22 @@ function Field({ f, value, onChange }: { f: SettingField; value: unknown; onChan
       );
     }
     case "textarea":
-      return <textarea className="input min-h-[90px] max-w-xl text-sm" maxLength={f.maxLength} value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />;
+      return <textarea className="input min-h-[90px] max-w-xl text-sm" maxLength={f.maxLength} value={String(value ?? "")} onFocus={focus} onChange={(e) => onChange(e.target.value)} />;
+    case "html":
+      return (
+        <textarea className="input min-h-[220px] w-full font-mono text-[13px] leading-relaxed" spellCheck={false}
+          value={String(value ?? "")} onFocus={focus} onChange={(e) => onChange(e.target.value)} />
+      );
+    case "color": {
+      const hex = /^#[0-9a-f]{6}$/i.test(String(value)) ? String(value) : "#000000";
+      return (
+        <label className="inline-flex items-center overflow-hidden rounded-md border border-slate-300 bg-white">
+          <input type="color" value={hex} onChange={(e) => onChange(e.target.value)} className="h-10 w-12 cursor-pointer border-0 bg-transparent p-1" />
+          <input className="w-28 border-0 border-l border-slate-300 py-2 text-sm font-semibold uppercase text-ink focus:ring-0" value={String(value ?? "")}
+            onChange={(e) => onChange(e.target.value)} maxLength={7} />
+        </label>
+      );
+    }
     case "image":
       return (
         <div className="max-w-xl space-y-2">
@@ -115,13 +138,30 @@ function Field({ f, value, onChange }: { f: SettingField; value: unknown; onChan
       );
     default:
       return <input className="input max-w-xl text-sm" type={f.type === "url" ? "url" : "text"} maxLength={f.maxLength}
-        placeholder={f.type === "url" ? "https://…" : undefined} value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />;
+        placeholder={f.type === "url" ? "https://…" : f.type === "emails" ? "admin@moboo.ci, direction@moboo.ci" : undefined}
+        value={String(value ?? "")} onFocus={focus} onChange={(e) => onChange(e.target.value)} />;
   }
 }
 
 /** Une section du back-office : champs du schéma, « Enregistrer » et « Réinitialiser la section ». */
-export function SettingsForm({ section, initial, updatedAt }: { section: SettingSection; initial: Values; updatedAt?: string | null }) {
+export function SettingsForm({ section, initial, updatedAt, smtpConfigured = false }: {
+  section: SettingSection; initial: Values; updatedAt?: string | null; smtpConfigured?: boolean;
+}) {
   const [values, setValues] = useState<Values>(initial);
+  // Champ texte actif (objet / contenu) pour insérer une variable au curseur.
+  const active = useRef<{ key: string; el: TextEl } | null>(null);
+  const insertVar = (name: string) => {
+    const a = active.current;
+    const token = `{{${name}}}`;
+    if (!a) { navigator.clipboard?.writeText(token).catch(() => undefined); return; }
+    const cur = String(values[a.key] ?? "");
+    const at = a.el.selectionStart ?? cur.length;
+    const end = a.el.selectionEnd ?? at;
+    setMsg(null);
+    setValues((v) => ({ ...v, [a.key]: cur.slice(0, at) + token + cur.slice(end) }));
+    requestAnimationFrame(() => { a.el.focus(); a.el.setSelectionRange(at + token.length, at + token.length); });
+  };
+  const isEmail = !!section.email || section.id === "emails";
   const [saved, setSaved] = useState<Values>(initial);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
@@ -143,7 +183,7 @@ export function SettingsForm({ section, initial, updatedAt }: { section: Setting
   };
 
   let lastGroup: string | undefined;
-  return (
+  const form = (
     <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-6">
         <div className="min-w-0">
@@ -167,19 +207,35 @@ export function SettingsForm({ section, initial, updatedAt }: { section: Setting
       </div>
 
       <div className="px-4 pb-6 sm:px-6">
+        {section.description ? <p className="pt-4 text-sm text-muted">{section.description}</p> : null}
+        {section.email ? (
+          <div className="mt-4 rounded-md border border-sky-200 bg-sky-50 p-3">
+            <p className="text-sm font-semibold text-sky-900">Variables disponibles</p>
+            <p className="text-xs text-sky-800">Cliquez pour l’insérer dans l’objet ou le contenu (à l’endroit du curseur).</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {section.email.placeholders.map((p) => (
+                <button key={p} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertVar(p)}
+                  className="rounded bg-white px-2 py-1 font-mono text-xs text-sky-900 ring-1 ring-sky-200 hover:bg-sky-100">{`{{${p}}}`}</button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {section.fields.map((f) => {
           const header = f.group && f.group !== lastGroup ? f.group : null;
           lastGroup = f.group;
           return (
             <div key={f.key}>
-              {header ? <h2 className="mt-6 border-b border-slate-200 pb-2 font-display text-lg font-bold text-ink">{header}</h2> : null}
+              {header ? (isEmail
+                ? <h2 className="mt-6 rounded-md border border-sky-200 bg-sky-100/70 px-4 py-3 font-display text-lg font-bold text-sky-900">{header}</h2>
+                : <h2 className="mt-6 border-b border-slate-200 pb-2 font-display text-lg font-bold text-ink">{header}</h2>) : null}
               <div className={"grid gap-3 border-b border-slate-100 py-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] md:gap-8 " + (f.group ? "md:pl-6" : "")}>
                 <div>
                   <p className="font-semibold text-ink">{f.label}</p>
                   {f.help ? <p className="mt-0.5 text-sm text-muted">{f.help}</p> : null}
-                  {f.public === false ? <p className="mt-1 text-xs font-semibold text-slate-400">Réglage interne (non visible sur le site)</p> : null}
+                  {f.public === false && !isEmail ? <p className="mt-1 text-xs font-semibold text-slate-400">Réglage interne (non visible sur le site)</p> : null}
                 </div>
-                <div><Field f={f} value={values[f.key]} onChange={(v) => { setMsg(null); setValues((s) => ({ ...s, [f.key]: v })); }} /></div>
+                <div><Field f={f} value={values[f.key]} onFocusText={(el) => { active.current = { key: f.key, el }; }}
+                  onChange={(v) => { setMsg(null); setValues((s) => ({ ...s, [f.key]: v })); }} /></div>
               </div>
             </div>
           );
@@ -191,6 +247,21 @@ export function SettingsForm({ section, initial, updatedAt }: { section: Setting
             {pending ? "Enregistrement…" : "Enregistrer les modifications"}
           </button>
         </div>
+      </div>
+    </div>
+  );
+
+  if (!isEmail) return form;
+  // Gestion des emails : aperçu à côté (écran large) ou dessous.
+  return (
+    <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)]">
+      {form}
+      <div className="2xl:sticky 2xl:top-20 2xl:self-start">
+        {section.email ? (
+          <EmailPreview template={section.id.replace(/^email_/, "")} hasAdmin={section.email.admin} section={values} smtpConfigured={smtpConfigured} />
+        ) : (
+          <EmailPreview template="welcome" hasAdmin={false} emails={values} smtpConfigured={smtpConfigured} />
+        )}
       </div>
     </div>
   );

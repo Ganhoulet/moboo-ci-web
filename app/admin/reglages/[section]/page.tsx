@@ -7,5 +7,5 @@ export default async function SettingsSection({ params }: { params: { section: s
   const section = settings?.schema.find((s) => s.id === params.section);
   if (!settings || !section) notFound();
   const updated = settings.updated.find((u) => u.section === section.id);
-  return <SettingsForm key={section.id} section={section} initial={settings.values[section.id] ?? {}} updatedAt={updated?.updatedAt ?? null} />;
+  return <SettingsForm key={section.id} section={section} initial={settings.values[section.id] ?? {}} updatedAt={updated?.updatedAt ?? null} smtpConfigured={!!settings.smtpConfigured} />;
 }

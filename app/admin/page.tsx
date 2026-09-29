@@ -31,14 +31,15 @@ export default async function AdminHome() {
       <section>
         <h2 className="mb-3 font-display text-lg font-bold text-ink">Réglages</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {settings?.schema.map((s) => {
+          {settings?.schema.filter((s) => !s.parent).map((s) => {
             const u = settings.updated.find((x) => x.section === s.id);
+            const children = settings.schema.filter((c) => c.parent === s.id).length;
             return (
               <Link key={s.id} href={`/admin/reglages/${s.id}`} className="flex items-start gap-3 rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:ring-brand-400">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-brand-50 text-brand-800">{ADMIN_ICONS[s.icon] ?? ADMIN_ICONS.gauge}</span>
                 <span className="min-w-0">
                   <span className="block font-semibold text-ink">{s.label}</span>
-                  <span className="block text-xs text-muted">{s.fields.length} réglage(s) · {u ? `modifié le ${new Date(u.updatedAt).toLocaleDateString("fr-FR")}` : "valeurs par défaut"}</span>
+                  <span className="block text-xs text-muted">{children ? `${children} modèles · ` : ""}{s.fields.length} réglage(s) · {u ? `modifié le ${new Date(u.updatedAt).toLocaleDateString("fr-FR")}` : "valeurs par défaut"}</span>
                 </span>
               </Link>
             );
