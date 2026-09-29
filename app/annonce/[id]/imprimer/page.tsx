@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import QRCode from "qrcode";
 import { formatXOF, getListing } from "@/lib/api";
 import { getSiteSettings } from "@/lib/settings";
 import { MobooLogo } from "@/components/logo";
@@ -36,7 +38,13 @@ export default async function PrintListing({ params }: { params: { id: string } 
     ? { name: l.agent.name, phone: l.agent.phone || l.agent.whatsapp, email: l.agent.email, role: l.agent.kind === "agency" ? "Agence" : "Agent" }
     : { name: l.contactName || "Annonceur", phone: l.contactPhone, email: null, role: "Annonceur" };
   const logo = cfg.logoUrl || settings.branding.logoUrl;
-  const url = `https://moboo.ci/annonce/${l.id}`;
+  // Adresse publique de la fiche, sur le domaine consulté (moboo.ci, Vercel…).
+  const h = headers();
+  const host = h.get("x-forwarded-host") || h.get("host") || "moboo.ci";
+  const proto = h.get("x-forwarded-proto") || (host.startsWith("localhost") ? "http" : "https");
+  const url = `${proto}://${host}/annonce/${l.id}`;
+  // QR code généré ici (SVG), sans service extérieur : scanné, il ouvre la fiche.
+  const qr = cfg.showQr ? await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#0f172a", light: "#ffffff" } }) : null;
 
   return (
     <div className="mx-auto max-w-3xl bg-white px-6 py-8 text-ink print:max-w-none print:p-0">
@@ -60,9 +68,19 @@ export default async function PrintListing({ params }: { params: { id: string } 
         </p>
       </section>
 
-      {l.photos?.[0] ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={l.photos[0]} alt="" className="mt-4 aspect-[16/9] w-full rounded-lg object-cover print:rounded-none" />
+      {l.photos?.[0] || qr ? (
+        <div className="relative mt-4 break-inside-avoid">
+          {l.photos?.[0] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={l.photos[0]} alt="" className="aspect-[16/9] w-full rounded-lg object-cover print:rounded-none" />
+          ) : <div className="h-40" />}
+          {qr ? (
+            <div className="absolute bottom-3 right-3 w-32 rounded-lg bg-white p-2 text-center shadow-md ring-1 ring-slate-200 print:shadow-none">
+              <div className="[&>svg]:h-auto [&>svg]:w-full" dangerouslySetInnerHTML={{ __html: qr }} />
+              <p className="mt-1 text-[10px] font-semibold leading-tight text-slate-700">Scannez pour voir l’annonce</p>
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       {cfg.showDetails ? (

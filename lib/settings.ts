@@ -33,7 +33,7 @@ export interface SiteSettings {
   search: { perPage: number; headerSearch: "none" | "simple" | "filters"; headerSearchPages: "details" | "all" };
   print: {
     enabled: boolean; logoUrl: string; showAgent: boolean; showDescription: boolean;
-    showDetails: boolean; showFeatures: boolean; showGallery: boolean; footerText: string;
+    showDetails: boolean; showFeatures: boolean; showGallery: boolean; showQr: boolean; footerText: string;
   };
 }
 
@@ -72,7 +72,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   search: { perPage: 24, headerSearch: "none", headerSearchPages: "details" },
   print: {
     enabled: true, logoUrl: "", showAgent: true, showDescription: true, showDetails: true, showFeatures: true,
-    showGallery: false, footerText: "Fiche imprimée depuis Moboo.ci — l’immobilier en Côte d’Ivoire.",
+    showGallery: false, showQr: true, footerText: "Fiche imprimée depuis Moboo.ci — l’immobilier en Côte d’Ivoire.",
   },
 };
 
