@@ -18,9 +18,13 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-export function LoginFlow() {
+/**
+ * Connexion par code reçu sur le numéro. `googleTicket` : première connexion
+ * Google, le numéro confirmé est relié au compte Google.
+ */
+export function LoginFlow({ googleTicket }: { googleTicket?: string } = {}) {
   const router = useRouter();
-  const [phoneState, sendOtp] = useFormState<OtpState, FormData>(sendOtpAction, { step: "phone" });
+  const [phoneState, sendOtp] = useFormState<OtpState, FormData>(sendOtpAction, { step: "phone", googleTicket });
   const [codeState, verifyOtp] = useFormState<OtpState, FormData>(verifyOtpAction, null);
 
   // Connexion réussie → on rafraîchit pour afficher le profil.
@@ -31,11 +35,14 @@ export function LoginFlow() {
   const onCodeStep = phoneState?.step === "code";
   const phone = onCodeStep ? phoneState.phone : "";
   const devCode = onCodeStep ? phoneState.devCode : undefined;
+  const ticket = (phoneState && "googleTicket" in phoneState ? phoneState.googleTicket : undefined) ?? googleTicket;
+  const ticketInput = ticket ? <input type="hidden" name="googleTicket" value={ticket} /> : null;
 
   if (!onCodeStep) {
     // ── Étape 1 : numéro ──
     return (
       <form action={sendOtp} className="space-y-4">
+        {ticketInput}
         <div>
           <label htmlFor="phone" className="mb-1 block text-sm font-semibold text-ink">
             Numéro de téléphone
@@ -51,7 +58,7 @@ export function LoginFlow() {
             required
           />
           <p className="mt-1 text-xs text-muted">
-            Vous recevrez un code par WhatsApp/SMS. Pas de mot de passe.
+            Vous recevrez un code par WhatsApp/SMS.
           </p>
         </div>
         {phoneState?.step === "phone" && phoneState.error ? (
@@ -66,6 +73,7 @@ export function LoginFlow() {
   return (
     <form action={verifyOtp} className="space-y-4">
       <input type="hidden" name="phone" value={phone} />
+      {ticketInput}
       <div>
         <label htmlFor="code" className="mb-1 block text-sm font-semibold text-ink">
           Code de vérification

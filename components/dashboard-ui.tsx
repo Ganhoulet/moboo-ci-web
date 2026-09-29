@@ -33,7 +33,7 @@ export function StatCard({ label, value, hint, tone = "brand", href }: {
 }
 
 /** Histogramme des vues par jour (+ points = demandes), en SVG pur. */
-export function ViewsChart({ series }: { series: { day: string; views: number; inquiries: number }[] }) {
+export function ViewsChart({ series }: { series: { day: string; views: number; inquiries: number; calls?: number; whatsapp?: number }[] }) {
   const W = 700, H = 180, pad = 24;
   const max = Math.max(4, ...series.map((s) => s.views));
   const bw = (W - pad * 2) / Math.max(1, series.length);
@@ -43,20 +43,23 @@ export function ViewsChart({ series }: { series: { day: string; views: number; i
       <div className="mb-2 flex items-center gap-4 text-xs text-muted">
         <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-brand-600" /> Vues</span>
         <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-accent-600" /> Demandes</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Appels / WhatsApp</span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H + 22}`} className="h-auto w-full" role="img" aria-label="Vues et demandes par jour">
+      <svg viewBox={`0 0 ${W} ${H + 22}`} className="h-auto w-full" role="img" aria-label="Vues, demandes et clics de contact par jour">
         {[0.25, 0.5, 0.75, 1].map((f) => (
           <line key={f} x1={pad} x2={W - pad} y1={H - (H - 10) * f} y2={H - (H - 10) * f} stroke="#e2e8f0" strokeDasharray="3 4" />
         ))}
         {series.map((s, i) => {
           const h = (s.views / max) * (H - 10);
           const x = pad + i * bw;
+          const direct = (s.calls ?? 0) + (s.whatsapp ?? 0);
           return (
             <g key={s.day}>
               <rect x={x + bw * 0.15} y={H - h} width={bw * 0.7} height={Math.max(h, s.views ? 2 : 0)} rx={Math.min(3, bw * 0.3)} className="fill-brand-600">
-                <title>{`${fmt(s.day)} : ${s.views} vue(s), ${s.inquiries} demande(s)`}</title>
+                <title>{`${fmt(s.day)} : ${s.views} vue(s), ${s.inquiries} demande(s), ${s.calls ?? 0} appel(s), ${s.whatsapp ?? 0} WhatsApp`}</title>
               </rect>
               {s.inquiries ? <circle cx={x + bw / 2} cy={H - h - 7} r={3.5} className="fill-accent-600" /> : null}
+              {direct ? <circle cx={x + bw / 2} cy={H - h - (s.inquiries ? 16 : 7)} r={3.5} className="fill-emerald-500" /> : null}
             </g>
           );
         })}

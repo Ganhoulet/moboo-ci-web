@@ -34,7 +34,7 @@ export default async function AgentDashboard() {
   const agent = getAgent();
   if (!agent) redirect("/agent/login");
 
-  const listingsData = await agentGet<{ totalListings: number; totalViews: number; items: AgentListing[] }>(
+  const listingsData = await agentGet<{ totalListings: number; totalViews: number; totalCalls?: number; totalWhatsapp?: number; items: AgentListing[] }>(
     "/marketplace/agent/listings",
   );
   const inquiriesData = await agentGet<{ items: Inquiry[] }>("/marketplace/agent/inquiries");
@@ -63,10 +63,11 @@ export default async function AgentDashboard() {
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Kpi label="Mes annonces" value={listingsData?.totalListings ?? 0} />
         <Kpi label="Vues totales" value={(listingsData?.totalViews ?? 0).toLocaleString("fr-FR")} accent />
         <Kpi label="Demandes reçues" value={inquiries.length} />
+        <Kpi label="Clics Appeler · WhatsApp" value={`${listingsData?.totalCalls ?? 0} · ${listingsData?.totalWhatsapp ?? 0}`} />
       </div>
 
       {/* Mes annonces */}

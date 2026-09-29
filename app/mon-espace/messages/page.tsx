@@ -3,6 +3,7 @@ import { EmptyState, PageHeader } from "@/components/dashboard-ui";
 import { getSession } from "@/lib/session";
 import { isPublisher } from "@/lib/accounts";
 import { listConversations, type ConversationSummary } from "../actions";
+import { NotificationPermission } from "@/components/live-notifications";
 
 function when(iso: string) {
   const d = new Date(iso);
@@ -57,6 +58,7 @@ export default async function Messages() {
         sub={publisher
           ? "Échangez avec les personnes intéressées par vos annonces, et avec les annonceurs que vous avez contactés."
           : "Vos échanges avec les annonceurs que vous avez contactés depuis une annonce."}
+        action={<NotificationPermission />}
       />
       {items.length ? (
         <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white shadow-card">

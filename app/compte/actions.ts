@@ -1,30 +1,36 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { siteRequestOtp, siteVerifyOtp, siteLogout } from "@/lib/api";
+import { siteRequestOtp, siteVerifyOtp, siteLogout, sitePasswordLogin, siteGoogleLogin } from "@/lib/api";
 import { setSession, clearSession, getRefreshToken } from "@/lib/session";
+import { setAgentSession, type AgentProfile } from "@/lib/agent";
+
+const errMsg = (data: any, fallback: string) =>
+  (Array.isArray(data?.message) ? data.message[0] : data?.message)
+  || (Array.isArray(data?.error?.message) ? data.error.message[0] : data?.error?.message) || fallback;
 
 export type OtpState =
-  | { step: "phone"; error?: string }
-  | { step: "code"; phone: string; error?: string; devCode?: string }
+  | { step: "phone"; error?: string; googleTicket?: string }
+  | { step: "code"; phone: string; error?: string; devCode?: string; googleTicket?: string }
   | { step: "done" }
   | null;
 
 /** Étape 1 : envoyer le code OTP au numéro saisi. */
 export async function sendOtpAction(_prev: OtpState, formData: FormData): Promise<OtpState> {
   const phone = String(formData.get("phone") || "").trim();
+  const googleTicket = String(formData.get("googleTicket") || "") || undefined;
   if (phone.replace(/[^0-9]/g, "").length < 8) {
-    return { step: "phone", error: "Entrez un numéro de téléphone valide." };
+    return { step: "phone", error: "Entrez un numéro de téléphone valide.", googleTicket };
   }
   try {
     const { ok, data } = await siteRequestOtp(phone);
     if (!ok) {
-      return { step: "phone", error: data?.message || "Envoi impossible. Réessayez." };
+      return { step: "phone", error: errMsg(data, "Envoi impossible. Réessayez."), googleTicket };
     }
     // devCode renvoyé uniquement en dev/staging (pas de SMS configuré).
-    return { step: "code", phone, devCode: data?.devCode };
+    return { step: "code", phone, devCode: data?.devCode, googleTicket };
   } catch {
-    return { step: "phone", error: "Service indisponible. Réessayez plus tard." };
+    return { step: "phone", error: "Service indisponible. Réessayez plus tard.", googleTicket };
   }
 }
 
@@ -33,20 +39,70 @@ export async function verifyOtpAction(_prev: OtpState, formData: FormData): Prom
   const phone = String(formData.get("phone") || "").trim();
   const code = String(formData.get("code") || "").trim();
   const firstName = String(formData.get("firstName") || "").trim() || undefined;
+  const googleTicket = String(formData.get("googleTicket") || "") || undefined;
 
   if (!phone || code.replace(/[^0-9]/g, "").length < 4) {
-    return { step: "code", phone, error: "Entrez le code reçu par message." };
+    return { step: "code", phone, error: "Entrez le code reçu par message.", googleTicket };
   }
   try {
-    const { ok, data } = await siteVerifyOtp({ phone, code, firstName });
+    const { ok, data } = await siteVerifyOtp({ phone, code, firstName, googleTicket });
     if (!ok || !data?.accessToken || !data?.account) {
-      return { step: "code", phone, error: data?.message || "Code incorrect ou expiré." };
+      return { step: "code", phone, error: errMsg(data, "Code incorrect ou expiré."), googleTicket };
     }
     setSession(data, data.account);
     revalidatePath("/", "layout");
     return { step: "done" };
   } catch {
     return { step: "code", phone, error: "Service indisponible. Réessayez plus tard." };
+  }
+}
+
+/* ─── Connexion par identifiant + mot de passe ────────────────────────── */
+
+export type PasswordState = { error?: string; redirectTo?: string } | null;
+
+export async function passwordLoginAction(_prev: PasswordState, formData: FormData): Promise<PasswordState> {
+  const identifier = String(formData.get("identifier") || "").trim();
+  const password = String(formData.get("password") || "");
+  if (identifier.length < 3 || !password) return { error: "Entrez votre identifiant et votre mot de passe." };
+  try {
+    const { ok, data } = await sitePasswordLogin(identifier, password);
+    if (!ok) return { error: errMsg(data, "Identifiant ou mot de passe incorrect.") };
+    if (data?.kind === "agent" && data.accessToken) {
+      // Identifiants moboo.ci d'un agent de la reprise : son espace agent.
+      setAgentSession(data.accessToken, data.agent as AgentProfile);
+      return { redirectTo: "/agent" };
+    }
+    if (!data?.accessToken || !data?.account) return { error: "Connexion impossible. Réessayez." };
+    setSession(data, data.account);
+    revalidatePath("/", "layout");
+    return { redirectTo: data.account.onboarded ? "/mon-espace" : "/inscription" };
+  } catch {
+    return { error: "Service indisponible. Réessayez plus tard." };
+  }
+}
+
+/* ─── Google ───────────────────────────────────────────────────────────── */
+
+export type GoogleResult =
+  | { status: "ok"; redirectTo: string }
+  | { status: "need_phone"; googleTicket: string; email?: string | null; firstName?: string | null }
+  | { status: "error"; error: string };
+
+/** Jeton d'identité reçu du bouton Google → connexion, ou numéro à confirmer une fois. */
+export async function googleLoginAction(credential: string): Promise<GoogleResult> {
+  try {
+    const { ok, data } = await siteGoogleLogin(credential);
+    if (!ok) return { status: "error", error: errMsg(data, "Connexion Google impossible.") };
+    if (data?.status === "need_phone" && data.googleTicket) {
+      return { status: "need_phone", googleTicket: data.googleTicket, email: data.email, firstName: data.firstName };
+    }
+    if (!data?.accessToken || !data?.account) return { status: "error", error: "Connexion Google impossible." };
+    setSession(data, data.account);
+    revalidatePath("/", "layout");
+    return { status: "ok", redirectTo: data.account.onboarded ? "/mon-espace" : "/inscription" };
+  } catch {
+    return { status: "error", error: "Service indisponible. Réessayez plus tard." };
   }
 }
 

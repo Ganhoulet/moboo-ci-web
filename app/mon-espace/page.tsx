@@ -55,10 +55,12 @@ async function PublisherHome() {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard label="En ligne" value={mine?.activeListings ?? 0} hint={`${mine?.totalListings ?? 0} annonce(s) au total`} href="/mon-espace/annonces" />
         <StatCard label="Vues · 30 j" value={stats?.totals.views ?? 0} hint={`${mine?.totalViews ?? 0} depuis le début`} tone="violet" href="/mon-espace/statistiques" />
         <StatCard label="Demandes · 30 j" value={stats?.totals.inquiries ?? 0} hint={`${fresh.length} nouvelle(s) à traiter`} tone="accent" href="/mon-espace/demandes" />
+        <StatCard label="Appels · WhatsApp" value={(stats?.totals.calls ?? 0) + (stats?.totals.whatsapp ?? 0)}
+          hint={`${stats?.totals.calls ?? 0} appel(s) · ${stats?.totals.whatsapp ?? 0} WhatsApp · 30 j`} tone="brand" href="/mon-espace/statistiques" />
         <StatCard label="Conclues" value={won} hint="ventes / locations suivies" tone="emerald" href="/mon-espace/demandes" />
       </div>
 

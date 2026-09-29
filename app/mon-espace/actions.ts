@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { authedFetch } from "@/lib/server-api";
 import { getSession, setProfile } from "@/lib/session";
+import { siteRequestOtp } from "@/lib/api";
 import type { Property } from "@/lib/property";
 
 const errMsg = (data: any, fallback: string) =>
-  (Array.isArray(data?.message) ? data.message[0] : data?.message) || fallback;
+  (Array.isArray(data?.message) ? data.message[0] : data?.message)
+  || (Array.isArray(data?.error?.message) ? data.error.message[0] : data?.error?.message) || fallback;
 
 /* ─── Mes annonces ─────────────────────────────────────────────────────── */
 
@@ -21,6 +23,8 @@ export interface MyListing {
   status: string;
   views: number;
   inquiries: number;
+  callClicks: number;
+  whatsappClicks: number;
   photo: string | null;
   photoCount: number;
   createdAt: string;
@@ -31,6 +35,8 @@ export interface MyListings {
   totalListings: number;
   activeListings: number;
   totalViews: number;
+  totalCalls: number;
+  totalWhatsapp: number;
   totalInquiries: number;
   items: MyListing[];
 }
@@ -85,11 +91,16 @@ export async function uploadImageAction(image: string, kind: "annonce" | "avatar
 
 /* ─── Statistiques ─────────────────────────────────────────────────────── */
 
+export interface StatPoint { day: string; views: number; inquiries: number; calls: number; whatsapp: number }
+
 export interface Stats {
   days: number;
-  totals: { views: number; inquiries: number };
-  series: { day: string; views: number; inquiries: number }[];
-  top: { id: string; title: string; status: string; totalViews: number; views: number; inquiries: number }[];
+  totals: { views: number; inquiries: number; calls: number; whatsapp: number };
+  series: StatPoint[];
+  top: {
+    id: string; title: string; status: string; totalViews: number; totalCalls: number; totalWhatsapp: number;
+    views: number; inquiries: number; calls: number; whatsapp: number;
+  }[];
 }
 
 export async function getStats(days = 30): Promise<Stats | null> {
@@ -225,4 +236,37 @@ export async function saveProfileAction(payload: Record<string, string>): Promis
   setProfile(data);
   revalidatePath("/", "layout");
   return { ok: true };
+}
+
+/* ─── Connexion & sécurité ─────────────────────────────────────────────── */
+
+export async function setPasswordAction(input: { newPassword: string; currentPassword?: string; code?: string }): Promise<{ ok: boolean; error?: string }> {
+  if (!getSession()) return { ok: false, error: "Connectez-vous d'abord." };
+  const { ok, data } = await authedFetch("/site/auth/password", { method: "POST", body: JSON.stringify(input) });
+  if (!ok) return { ok: false, error: errMsg(data, "Enregistrement impossible.") };
+  setProfile(data);
+  revalidatePath("/mon-espace/profil");
+  return { ok: true };
+}
+
+/** Mot de passe oublié : code envoyé sur le numéro du compte. */
+export async function sendPasswordCodeAction(): Promise<{ ok: boolean; error?: string; devCode?: string }> {
+  const account = getSession();
+  if (!account) return { ok: false, error: "Connectez-vous d'abord." };
+  const { ok, data } = await siteRequestOtp(account.phone);
+  return ok ? { ok: true, devCode: data?.devCode } : { ok: false, error: errMsg(data, "Envoi impossible. Réessayez.") };
+}
+
+export async function linkGoogleAction(credential: string): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await authedFetch("/site/auth/google/link", { method: "POST", body: JSON.stringify({ credential }) });
+  if (!ok) return { ok: false, error: errMsg(data, "Liaison Google impossible.") };
+  setProfile(data);
+  revalidatePath("/mon-espace/profil");
+  return { ok: true };
+}
+
+export async function unlinkGoogleAction(): Promise<{ ok: boolean }> {
+  const { ok, data } = await authedFetch("/site/auth/google/link", { method: "DELETE" });
+  if (ok) { setProfile(data); revalidatePath("/mon-espace/profil"); }
+  return { ok };
 }

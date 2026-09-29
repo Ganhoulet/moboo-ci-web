@@ -176,6 +176,9 @@ export interface SiteAccount {
   instagram?: string | null;
   tiktok?: string | null;
   linkedin?: string | null;
+  // Connexion au choix
+  hasPassword?: boolean;
+  googleLinked?: boolean;
 }
 
 /** Profil saisi pendant l'inscription (envoyé à la vérification du code). */
@@ -226,8 +229,22 @@ export function siteVerifyOtp(input: {
   phone: string;
   code: string;
   deviceId?: string;
+  googleTicket?: string;
 } & SignupProfile) {
   return apiPost<SiteTokens>("/site/auth/verify-otp", input);
+}
+
+/**
+ * Connexion par identifiant (nom d'utilisateur, e-mail ou numéro) + mot de
+ * passe. kind « agent » : identifiants moboo.ci d'un agent de la reprise WP.
+ */
+export function sitePasswordLogin(identifier: string, password: string) {
+  return apiPost<any>("/site/auth/login", { identifier, password });
+}
+
+/** « Continuer avec Google » : connexion, ou numéro à confirmer une fois (need_phone). */
+export function siteGoogleLogin(credential: string) {
+  return apiPost<any>("/site/auth/google", { credential });
 }
 
 /** Inscription : nom d'utilisateur / e-mail disponibles ? numéro déjà inscrit ? */

@@ -12,6 +12,7 @@ import { PropertyCard } from "@/components/property-card";
 import { InquiryForm } from "@/components/inquiry-form";
 import { VisitForm } from "@/components/visit-form";
 import { MobileContactBar } from "@/components/mobile-contact-bar";
+import { ContactLink } from "@/components/contact-link";
 import { ListingReservation } from "@/components/listing-reservation";
 
 export const revalidate = 60;
@@ -229,8 +230,8 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
               {/* Coordonnées de l'agent si rattaché, sinon de l'annonceur. */}
               {phoneDigits ? (
                 <div className="mt-4 grid gap-2">
-                  <a href={`tel:${barPhone}`} className="btn-primary w-full bg-brand-800 hover:bg-brand-900">Appeler</a>
-                  <a href={`https://wa.me/${phoneDigits}`} className="btn-ghost w-full" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                  <ContactLink listingId={l.id} channel="call" href={`tel:${barPhone}`} className="btn-primary w-full bg-brand-800 hover:bg-brand-900">Appeler</ContactLink>
+                  <ContactLink listingId={l.id} channel="whatsapp" href={`https://wa.me/${phoneDigits}`} className="btn-ghost w-full" target="_blank" rel="noopener noreferrer">WhatsApp</ContactLink>
                 </div>
               ) : (
                 <p className="mt-3 text-sm text-muted">Contact communiqué par l'annonceur.</p>
@@ -263,7 +264,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
         </section>
       ) : null}
 
-      <MobileContactBar price={l.price} transaction={l.transaction} phone={barPhone} whatsapp={barWhatsapp} />
+      <MobileContactBar listingId={l.id} price={l.price} transaction={l.transaction} phone={barPhone} whatsapp={barWhatsapp} />
     </div>
   );
 }

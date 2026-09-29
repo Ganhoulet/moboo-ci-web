@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MobooLogo } from "./logo";
 import { FavoritesNavButton } from "./favorites-nav-button";
+import { LiveNotifications } from "./live-notifications";
 import { getSession, initials } from "@/lib/session";
 
 const NAV = [
@@ -38,6 +39,7 @@ export function SiteHeader() {
             Publier
           </Link>
           <FavoritesNavButton />
+          {account ? <LiveNotifications /> : null}
           {account ? (
             <Link
               href="/mon-espace"

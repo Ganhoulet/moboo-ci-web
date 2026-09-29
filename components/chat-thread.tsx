@@ -8,9 +8,9 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString("fr-FR", { hour: 
 const day = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
 /**
- * Fil de discussion : bulles, envoi optimiste, rafraîchissement toutes les
- * 10 s tant que l'onglet est visible (router.refresh met aussi à jour la
- * pastille « Messages » du menu).
+ * Fil de discussion : bulles, envoi optimiste. Les nouveaux messages arrivent
+ * en temps réel (la cloche de l'en-tête rafraîchit la page) ; filet de
+ * sécurité : rafraîchissement toutes les 30 s tant que l'onglet est visible.
  */
 export function ChatThread({ conversationId, messages }: { conversationId: string; messages: ChatMessage[] }) {
   const router = useRouter();
@@ -26,7 +26,7 @@ export function ChatThread({ conversationId, messages }: { conversationId: strin
 
   useEffect(() => {
     router.refresh(); // le fil vient d'être lu : pastille du menu à jour
-    const t = setInterval(() => { if (document.visibilityState === "visible") router.refresh(); }, 10000);
+    const t = setInterval(() => { if (document.visibilityState === "visible") router.refresh(); }, 30000);
     return () => clearInterval(t);
   }, [router]);
 

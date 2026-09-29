@@ -31,7 +31,7 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
     <div>
       <PageHeader
         title="Mes annonces"
-        sub={`${mine?.activeListings ?? 0} en ligne · ${mine?.totalViews ?? 0} vues · ${mine?.totalInquiries ?? 0} demandes`}
+        sub={`${mine?.activeListings ?? 0} en ligne · ${mine?.totalViews ?? 0} vues · ${mine?.totalInquiries ?? 0} demandes · ${(mine?.totalCalls ?? 0) + (mine?.totalWhatsapp ?? 0)} appels / WhatsApp`}
         action={<Link href="/mon-espace/annonces/nouvelle" className="btn-primary bg-accent-600 hover:bg-accent-700">+ Publier une annonce</Link>}
       />
 
@@ -86,7 +86,7 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
                   <Link href={`/mon-espace/annonces/${l.id}`} className="mt-1 block truncate font-semibold text-ink hover:text-brand-800">{l.title}</Link>
                   <p className="truncate text-sm font-bold text-ink">{fmtXOF(l.price)}{l.transaction === "rent" ? <span className="font-medium text-muted"> / mois</span> : null}</p>
                   <p className="truncate text-xs text-muted">
-                    {[l.commune, l.city].filter(Boolean).join(", ")} · 👁 {l.views} · 💬 {l.inquiries} · modifiée le {new Date(l.updatedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                    {[l.commune, l.city].filter(Boolean).join(", ")} · 👁 {l.views} · 💬 {l.inquiries} · 📞 {l.callClicks ?? 0} · WhatsApp {l.whatsappClicks ?? 0} · modifiée le {new Date(l.updatedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
                   </p>
                 </div>
                 <ListingRowActions id={l.id} status={l.status} transaction={l.transaction} />

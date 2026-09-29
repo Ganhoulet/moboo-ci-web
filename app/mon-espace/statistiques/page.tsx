@@ -12,12 +12,14 @@ export default async function Statistiques({ searchParams }: { searchParams: { j
   if (!canAccess(account.accountType, "statistiques")) redirect("/mon-espace");
   const days = PERIODS.includes(Number(searchParams.jours)) ? Number(searchParams.jours) : 30;
   const stats = await getStats(days);
+  const contacts = stats ? stats.totals.inquiries + stats.totals.calls + stats.totals.whatsapp : 0;
+  const contactRate = stats?.totals.views ? `${((contacts / stats.totals.views) * 100).toFixed(1)} %` : "—";
 
   return (
     <div>
       <PageHeader
         title="Statistiques"
-        sub="Vues de vos annonces et demandes reçues, jour par jour."
+        sub="Vues de vos annonces, demandes reçues et clics sur « Appeler » / « WhatsApp », jour par jour."
         action={
           <div className="flex rounded-full bg-white p-1 shadow-sm">
             {PERIODS.map((p) => (
@@ -33,22 +35,26 @@ export default async function Statistiques({ searchParams }: { searchParams: { j
         <EmptyState title="Pas encore de statistiques" text="Publiez une annonce : chaque visite de sa page est comptée ici." />
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard label={`Vues · ${days} j`} value={stats.totals.views} tone="violet" />
-            <StatCard label={`Demandes · ${days} j`} value={stats.totals.inquiries} tone="accent" />
-            <StatCard label="Taux de contact" value={stats.totals.views ? `${((stats.totals.inquiries / stats.totals.views) * 100).toFixed(1)} %` : "—"} hint="demandes / vues" tone="emerald" />
-            <StatCard label="Vues / jour" value={(stats.totals.views / days).toFixed(1)} hint="en moyenne" />
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+            <StatCard label={`Vues · ${days} j`} value={stats.totals.views} hint={`${(stats.totals.views / days).toFixed(1)} par jour`} tone="violet" />
+            <StatCard label={`Demandes · ${days} j`} value={stats.totals.inquiries} hint="formulaires de contact / visite" tone="accent" />
+            <StatCard label={`Taux de contact`} value={contactRate} hint="(demandes + appels + WhatsApp) / vues" tone="emerald" />
+            <StatCard label={`Clics « Appeler » · ${days} j`} value={stats.totals.calls} hint="clics sur le bouton « Appeler »" />
+            <StatCard label={`Clics « WhatsApp » · ${days} j`} value={stats.totals.whatsapp} hint="clics sur le bouton « WhatsApp »" tone="emerald" />
+            <StatCard label="Contacts directs" value={stats.totals.calls + stats.totals.whatsapp} hint="appels + WhatsApp" tone="brand" />
           </div>
           <ViewsChart series={stats.series} />
           <section>
             <h2 className="mb-3 font-display text-lg font-bold text-ink">Par annonce</h2>
             <div className="overflow-x-auto rounded-2xl bg-white shadow-card">
-              <table className="w-full min-w-[34rem] text-sm">
+              <table className="w-full min-w-[42rem] text-sm">
                 <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-muted">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Annonce</th>
                     <th className="px-4 py-3 text-right font-semibold">Vues ({days} j)</th>
                     <th className="px-4 py-3 text-right font-semibold">Demandes</th>
+                    <th className="px-4 py-3 text-right font-semibold">Appeler</th>
+                    <th className="px-4 py-3 text-right font-semibold">WhatsApp</th>
                     <th className="px-4 py-3 text-right font-semibold">Vues totales</th>
                   </tr>
                 </thead>
@@ -63,6 +69,8 @@ export default async function Statistiques({ searchParams }: { searchParams: { j
                         </td>
                         <td className="px-4 py-3 text-right font-bold text-ink">{l.views}</td>
                         <td className="px-4 py-3 text-right">{l.inquiries}</td>
+                        <td className="px-4 py-3 text-right" title={`${l.totalCalls} depuis le début`}>{l.calls}</td>
+                        <td className="px-4 py-3 text-right" title={`${l.totalWhatsapp} depuis le début`}>{l.whatsapp}</td>
                         <td className="px-4 py-3 text-right text-muted">{l.totalViews}</td>
                       </tr>
                     );
