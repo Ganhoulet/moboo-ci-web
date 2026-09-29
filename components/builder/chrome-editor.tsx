@@ -231,7 +231,7 @@ export function ChromeEditor({ initial, types = [], cities = [] }: { initial: Ch
 
   return (
     <div className="space-y-4">
-      <div className="sticky top-0 z-30 -mx-3 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-100/95 px-3 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky top-16 z-30 -mx-3 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-100/95 px-3 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-ink">Menus et pied de page</h1>
           <p className="text-sm text-muted">Comme dans WordPress : créez vos menus, placez-les, ajoutez des sous-menus et des méga menus.</p>

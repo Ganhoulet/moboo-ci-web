@@ -112,6 +112,15 @@ export const BLOCKS: BlockDef[] = [
     defaults: { title: "Explorer par type de bien", subtitle: "", mode: "auto", types: [], items: [], showCount: true, background: "white" },
   },
   {
+    type: "marketing", label: "Bannières marketing", icon: "📣",
+    description: "Campagnes en cours de la zone Marketing (emplacement « Site — bannière »). Rien ne s’affiche s’il n’y en a pas.",
+    fields: [
+      { key: "title", label: "Titre (facultatif)", type: "text" },
+      ...common,
+    ],
+    defaults: { title: "", background: "white" },
+  },
+  {
     type: "quickStart", label: "Par où commencer ?", icon: "🧭",
     description: "Tuiles d’entrée : acheter, louer, investir, publier…",
     fields: [
@@ -331,6 +340,7 @@ export const DEFAULT_HOME: PageContent = {
   sections: [
     def("hero", "hero-main"),
     def("categories", "categories-main"),
+    def("marketing", "marketing-main"),
     def("listings", "listings-featured"),
     def("quickStart", "quickstart-main"),
     def("listings", "listings-rent", { title: "Nouveautés à louer", subtitle: "Les dernières annonces publiées", transaction: "rent", featuredOnly: false, sort: "newest", background: "white" }),

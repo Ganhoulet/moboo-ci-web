@@ -22,4 +22,5 @@ export const ADMIN_ICONS: Record<string, React.ReactNode> = {
   tag: <svg {...sv}><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9Z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>,
   handshake: <svg {...sv}><path d="m11 17 2 2a1.4 1.4 0 0 0 2-2M14 14l2.5 2.5a1.4 1.4 0 0 0 2-2l-3.9-3.9a2 2 0 0 0-2.8 0l-.9.9a1.4 1.4 0 0 1-2-2l2.8-2.8a4 4 0 0 1 4.6-.7l.6.3a2 2 0 0 0 1.5.1L21 6M3 6l3.5 1.2M3 13h2l3.5 3.5a1.4 1.4 0 0 0 2-2" /></svg>,
   receipt: <svg {...sv}><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2ZM9 8h6M9 12h6M9 16h3" /></svg>,
+  megaphone: <svg {...sv}><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1ZM15 8a5 5 0 0 1 0 8M18 5a9 9 0 0 1 0 14" /></svg>,
 };

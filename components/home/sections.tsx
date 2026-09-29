@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getCampaigns } from "@/lib/marketing";
+import { SiteBanners } from "@/components/marketing/site-banners";
 import { blockDef, type Section } from "@/lib/page-blocks";
 import { listListingsPage, residencesPage, espacesPage, type Property } from "@/lib/property";
 import { getPartners } from "@/lib/community";
@@ -341,6 +343,17 @@ function Pros({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean })
 }
 
 /** Vrais chiffres de la plateforme (les catégories à zéro sont masquées). */
+async function Marketing({ s, edit }: { s: Section; edit?: boolean }) {
+  const items = await getCampaigns("site_banner");
+  if (!items.length) return null;
+  return (
+    <Shell s={s} pad="py-8" edit={edit}>
+      <Head title={s.props.title} dark={s.props.background === "brand"} />
+      <SiteBanners items={items} />
+    </Shell>
+  );
+}
+
 function liveCounts(data: HomeData, short: boolean) {
   const t = data.totals;
   const n = (v?: number) => (v ?? 0).toLocaleString("fr-FR");
@@ -499,6 +512,7 @@ export async function HomeSection({ s, data, edit }: { s: Section; data: HomeDat
     case "banner": return <Banner s={s} edit={edit} />;
     case "steps": return <Steps s={s} edit={edit} />;
     case "pros": return <Pros s={s} data={data} edit={edit} />;
+    case "marketing": return <Marketing s={s} edit={edit} />;
     case "stats": return <Stats s={s} data={data} edit={edit} />;
     case "calculator":
       return (

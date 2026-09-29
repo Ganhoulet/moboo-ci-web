@@ -53,6 +53,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Apparence : constructeur de la page d'accueil, menu et pied de page.
     { href: "/admin/accueil", label: "Page d’accueil", icon: "layout", group: "apparence" },
     { href: "/admin/accueil/menu", label: "Menus et pied de page", icon: "layout", child: true, group: "apparence" },
+    // Marketing : bannières, flyers et pop-ups (application mobile + site).
+    { href: "/admin/marketing", label: "Marketing", icon: "megaphone", group: "marketing" },
+    { href: "/admin/marketing/nouvelle", label: "Nouvelle campagne", icon: "megaphone", child: true, group: "marketing" },
     // Immobilier (façon Houzez « Real Estate ») : annonces, listes, agences et agents.
     { href: "/admin/immobilier", label: "Immobilier", icon: "building", group: "immobilier" },
     ...[

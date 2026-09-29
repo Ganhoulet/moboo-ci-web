@@ -12,6 +12,8 @@ import { getTaxonomies } from "@/lib/taxonomies";
 import { getChrome } from "@/lib/pages";
 import { SiteFooter } from "@/components/site-footer";
 import { menuAt } from "@/lib/menus";
+import { getCampaigns } from "@/lib/marketing";
+import { SitePopup } from "@/components/marketing/site-popup";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const poppins = Poppins({
@@ -51,6 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main>{children}</main>
         <SiteFooter chrome={chrome} settings={settings} />
         {general.backToTop ? <BackToTop /> : null}
+        <SitePopup items={await getCampaigns("site_popup")} loggedIn={!!getSession()} />
         {/* Temps réel : une seule connexion par onglet (les cloches lisent son compteur). */}
         {getSession() ? <LiveNotifications /> : null}
       </body>
