@@ -34,9 +34,12 @@ export default async function PrintListing({ params }: { params: { id: string } 
     ...(l.garage ? [["Garage", String(l.garage)] as [string, string]] : []),
     ...(l.reference ? [["Référence", String(l.reference)] as [string, string]] : []),
   ];
+  // Annonceur : agent / agence (reprise WP), sinon compte du site, sinon contact saisi.
   const contact = l.agent
-    ? { name: l.agent.name, phone: l.agent.phone || l.agent.whatsapp, email: l.agent.email, role: l.agent.kind === "agency" ? "Agence" : "Agent" }
-    : { name: l.contactName || "Annonceur", phone: l.contactPhone, email: null, role: "Annonceur" };
+    ? { name: l.agent.name, phone: l.agent.phone, whatsapp: l.agent.whatsapp, email: l.agent.email, photo: l.agent.photoUrl, role: l.agent.kind === "agency" ? "Agence" : "Agent" }
+    : l.owner
+      ? { name: l.owner.name, phone: l.owner.phone, whatsapp: l.owner.whatsapp, email: l.owner.email, photo: l.owner.photoUrl, role: "Annonceur" }
+      : { name: l.contactName || "Annonceur", phone: l.contactPhone, whatsapp: null, email: null, photo: null, role: "Annonceur" };
   const logo = cfg.logoUrl || settings.branding.logoUrl;
   // Adresse publique de la fiche, sur le domaine consulté (moboo.ci, Vercel…).
   const h = headers();
@@ -47,7 +50,9 @@ export default async function PrintListing({ params }: { params: { id: string } 
   const qr = cfg.showQr ? await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#0f172a", light: "#ffffff" } }) : null;
 
   return (
-    <div className="mx-auto max-w-3xl bg-white px-6 py-8 text-ink print:max-w-none print:p-0">
+    <div className="mx-auto max-w-3xl bg-white px-6 py-8 text-ink print:max-w-none print:px-0 print:py-0">
+      {/* Feuille A4 avec de vraies marges : rien ne touche les bords à l'impression / en PDF. */}
+      <style>{`@page { size: A4; margin: 16mm 14mm; } @media print { html, body { background: #fff !important; } }`}</style>
       <div className="mb-6 flex items-center justify-between gap-3 print:hidden">
         <Link href={`/annonce/${l.id}`} className="text-sm font-semibold text-brand-800 hover:underline">← Retour à l’annonce</Link>
         <PrintButton />
@@ -81,6 +86,28 @@ export default async function PrintListing({ params }: { params: { id: string } 
             </div>
           ) : null}
         </div>
+      ) : null}
+
+      {cfg.showAgent ? (
+        <section className="mt-4 flex break-inside-avoid items-center gap-4 rounded-lg border border-slate-200 p-4">
+          {contact.photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={contact.photo} alt="" className="h-16 w-16 shrink-0 rounded-md object-cover" />
+          ) : (
+            <span className="grid h-16 w-16 shrink-0 place-items-center rounded-md bg-brand-800 text-xl font-bold text-white">{(contact.name || "?").charAt(0).toUpperCase()}</span>
+          )}
+          <div className="min-w-0 space-y-0.5 text-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{contact.role}</p>
+            <p className="flex items-center gap-2 font-bold text-ink"><span aria-hidden>👤</span>{contact.name}</p>
+            {contact.phone || contact.whatsapp ? (
+              <p className="flex flex-wrap items-center gap-x-4 gap-y-0.5 font-semibold">
+                {contact.phone ? <span><span aria-hidden>📞</span> {contact.phone}</span> : null}
+                {contact.whatsapp && contact.whatsapp !== contact.phone ? <span>WhatsApp : {contact.whatsapp}</span> : contact.whatsapp ? <span className="text-slate-500">(WhatsApp)</span> : null}
+              </p>
+            ) : null}
+            {contact.email ? <p><span aria-hidden>✉️</span> {contact.email}</p> : null}
+          </div>
+        </section>
       ) : null}
 
       {cfg.showDetails ? (
@@ -122,13 +149,6 @@ export default async function PrintListing({ params }: { params: { id: string } 
         </section>
       ) : null}
 
-      {cfg.showAgent ? (
-        <section className="mt-6 break-inside-avoid rounded-lg border border-slate-200 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{contact.role}</p>
-          <p className="mt-0.5 font-semibold">{contact.name}</p>
-          <p className="text-sm text-slate-700">{[contact.phone, contact.email].filter(Boolean).join(" · ")}</p>
-        </section>
-      ) : null}
 
       <footer className="mt-8 border-t border-slate-200 pt-3 text-center text-xs text-slate-500">{cfg.footerText}</footer>
     </div>

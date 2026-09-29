@@ -154,4 +154,9 @@ export interface ListingItem {
     company?: string | null;
     serviceArea?: string | null;
   } | null;
+  /** Annonceur (compte du site) : coordonnées publiques. */
+  owner?: {
+    name: string; kind: string; photoUrl: string | null; username: string | null;
+    phone: string | null; whatsapp: string | null; email: string | null;
+  } | null;
 }
