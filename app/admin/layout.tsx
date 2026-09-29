@@ -46,8 +46,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/immobilier/forfaits", "Forfaits"],
       ["/admin/immobilier/factures", "Factures"],
     ].map(([href, label]) => ({ href, label, icon: "building", child: true, group: "immobilier" })),
+    // Application mobile Moboo.ci : statistiques, passerelle Houzi, push, contacts.
+    { href: "/admin/application", label: "Application mobile", icon: "phone", group: "application" },
+    ...[
+      ["/admin/application/reglages", "Réglages"],
+      ["/admin/application/passerelle", "Passerelle Houzi"],
+      ["/admin/application/push", "Notifications push"],
+      ["/admin/application/contacts", "Contacts"],
+      ["/admin/application/appareils", "Appareils"],
+    ].map(([href, label]) => ({ href, label, icon: "phone", child: true, group: "application" })),
     // Rubriques, chacune suivie de ses sous-rubriques (ex. modèles d'e-mails).
-    ...(settings?.schema ?? []).filter((s) => !s.parent).flatMap((s) => {
+    ...(settings?.schema ?? []).filter((s) => !s.parent && !s.hidden).flatMap((s) => {
       const children = (settings?.schema ?? []).filter((c) => c.parent === s.id);
       return [
         { href: `/admin/reglages/${s.id}`, label: s.label, icon: s.icon, group: children.length ? s.id : undefined },

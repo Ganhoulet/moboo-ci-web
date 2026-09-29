@@ -108,6 +108,21 @@ function Field({ f, value, onChange, onFocusText }: {
     }
     case "textarea":
       return <textarea className="input min-h-[90px] max-w-xl text-sm" maxLength={f.maxLength} value={String(value ?? "")} onFocus={focus} onChange={(e) => onChange(e.target.value)} />;
+    case "json": {
+      const text = String(value ?? "");
+      let valid = true;
+      try { if (text.trim()) JSON.parse(text); } catch { valid = false; }
+      return (
+        <div className="space-y-2">
+          <textarea className={"input min-h-[320px] w-full font-mono text-[12px] leading-relaxed " + (valid ? "" : "border-red-400")} spellCheck={false}
+            value={text} placeholder="{ … }" onFocus={focus} onChange={(e) => onChange(e.target.value)} />
+          <div className="flex gap-3 text-xs">
+            {valid ? <span className="text-emerald-700">JSON valide</span> : <span className="font-semibold text-red-600">JSON invalide</span>}
+            {valid && text.trim() ? <button type="button" className="font-semibold text-brand-800 hover:underline" onClick={() => onChange(JSON.stringify(JSON.parse(text), null, 2))}>Mettre en forme</button> : null}
+          </div>
+        </div>
+      );
+    }
     case "html":
       return (
         <textarea className="input min-h-[220px] w-full font-mono text-[13px] leading-relaxed" spellCheck={false}

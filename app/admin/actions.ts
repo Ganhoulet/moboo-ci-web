@@ -8,7 +8,7 @@ const errMsg = (data: any, fallback: string) =>
   (Array.isArray(data?.message) ? data.message[0] : data?.message)
   || (Array.isArray(data?.error?.message) ? data.error.message[0] : data?.error?.message) || fallback;
 
-export type FieldType = "bool" | "number" | "text" | "textarea" | "url" | "image" | "enum" | "multi" | "color" | "html" | "emails" | "visual";
+export type FieldType = "bool" | "number" | "text" | "textarea" | "url" | "image" | "enum" | "multi" | "color" | "html" | "emails" | "visual" | "json";
 
 export interface SettingField {
   key: string; label: string; help?: string; type: FieldType;
@@ -22,6 +22,8 @@ export interface SettingSection {
   id: string; label: string; icon: string; description?: string; fields: SettingField[];
   /** Sous-rubrique (modèles d'e-mails sous « Gestion des emails »). */
   parent?: string;
+  /** Réglée depuis une page dédiée (pas de rubrique dans le menu). */
+  hidden?: boolean;
   email?: { placeholders: string[]; sample: Record<string, string>; admin: boolean };
 }
 
