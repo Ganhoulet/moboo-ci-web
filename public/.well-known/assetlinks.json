@@ -1,16 +1,21 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.moboo.ci.app",
       "sha256_cert_fingerprints": [
-        "D0:3C:1C:4E:0B:57:95:8F:B6:7A:44:B4:00:A3:1C:2F:18:86:17:AB:69:83:F8:EE:DA:FB:F6:6A:3A:05:67:59"
+        "D0:3C:1C:4E:0B:57:95:8F:B6:7A:44:B4:00:A3:1C:2F:18:86:17:AB:69:83:F8:EE:DA:FB:F6:6A:3A:05:67:59",
+        "42:41:E8:A8:65:1A:3D:B5:62:4B:EB:B0:6E:1A:FB:58:F4:37:19:84:8D:33:AF:F5:B1:09:6E:7B:D9:35:8F:3D"
       ]
     }
   },
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "ci.moboo.moboo_pro",
