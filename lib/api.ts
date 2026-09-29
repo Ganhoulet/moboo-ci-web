@@ -31,8 +31,13 @@ export async function listResidences(params?: {
   q?: string;
   page?: number;
   perPage?: number;
+  /** Disponibilité : dates AAAA-MM-JJ, voyageurs, prix max par nuit. */
+  checkIn?: string; checkOut?: string; guests?: number; priceMax?: number;
 }): Promise<Paginated<Residence>> {
   const q = new URLSearchParams();
+  if (params?.checkIn && params?.checkOut) { q.set("checkIn", params.checkIn); q.set("checkOut", params.checkOut); }
+  if (params?.guests) q.set("guests", String(params.guests));
+  if (params?.priceMax) q.set("priceMax", String(params.priceMax));
   if (params?.city) q.set("city", params.city);
   if (params?.q) q.set("q", params.q);
   if (params?.page) q.set("page", String(params.page));
@@ -51,8 +56,13 @@ export async function listEspaces(params?: {
   q?: string;
   page?: number;
   perPage?: number;
+  /** Disponibilité : date AAAA-MM-JJ + nombre de jours, invités, prix max par jour. */
+  date?: string; days?: number; guests?: number; priceMax?: number;
 }): Promise<Paginated<Espace>> {
   const q = new URLSearchParams();
+  if (params?.date) { q.set("date", params.date); q.set("days", String(params.days ?? 1)); }
+  if (params?.guests) q.set("guests", String(params.guests));
+  if (params?.priceMax) q.set("priceMax", String(params.priceMax));
   if (params?.commune) q.set("commune", params.commune);
   if (params?.type) q.set("type", params.type);
   if (params?.q) q.set("q", params.q);
@@ -80,12 +90,15 @@ export async function listListings(params?: {
   bbox?: string;
   map?: boolean;
   featured?: boolean;
+  /** Agence / agent de la reprise (mobooId). */
+  agent?: string;
 }): Promise<Paginated<ListingItem>> {
   const q = new URLSearchParams();
   if (params?.sort) q.set("sort", params.sort);
   if (params?.bbox) q.set("bbox", params.bbox);
   if (params?.map) q.set("map", "1");
   if (params?.featured) q.set("featured", "1");
+  if (params?.agent) q.set("agent", params.agent);
   if (params?.transaction) q.set("transaction", params.transaction);
   if (params?.city) q.set("city", params.city);
   if (params?.q) q.set("q", params.q);
@@ -216,7 +229,7 @@ export interface SiteTokens {
   account?: SiteAccount;
 }
 
-async function apiPost<T>(path: string, body: unknown, token?: string): Promise<{ ok: boolean; status: number; data: any }> {
+export async function apiPost<T>(path: string, body: unknown, token?: string): Promise<{ ok: boolean; status: number; data: any }> {
   const res = await fetch(`${API_URL}${path}`, {
     method: "POST",
     headers: {

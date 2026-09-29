@@ -67,7 +67,7 @@ export async function resetSectionAction(section: string): Promise<{ ok: boolean
   return { ok: true, values: data };
 }
 
-export interface AdminUser { id: string; phone: string; firstName: string | null; lastName: string | null; email: string | null; fixed: boolean }
+export interface AdminUser { id: string; phone: string; firstName: string | null; lastName: string | null; email: string | null; fixed: boolean; twoFactor?: string[]; lastLoginAt?: string | null }
 
 export async function listAdmins(): Promise<{ items: AdminUser[]; pendingPhones: string[] } | null> {
   const { ok, data } = await authedFetch("/site/admin/admins", { method: "GET" });
@@ -84,6 +84,12 @@ export async function removeAdminAction(id: string): Promise<{ ok: boolean; erro
   const { ok, data } = await authedFetch(`/site/admin/admins/${encodeURIComponent(id)}`, { method: "DELETE" });
   if (ok) revalidatePath("/admin/administrateurs");
   return ok ? { ok: true } : { ok: false, error: errMsg(data, "Retrait impossible.") };
+}
+
+export async function resetTwoFactorAction(id: string): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await authedFetch(`/site/admin/admins/${encodeURIComponent(id)}/2fa`, { method: "DELETE" });
+  if (ok) revalidatePath("/admin/administrateurs");
+  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Réinitialisation impossible.") };
 }
 
 /* ─── Gestion des emails : aperçu et test ──────────────────────────────── */

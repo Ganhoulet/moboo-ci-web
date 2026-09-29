@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { siteRequestOtp, siteVerifyOtp, siteLogout, sitePasswordLogin, siteGoogleLogin } from "@/lib/api";
 import { setSession, clearSession, getRefreshToken } from "@/lib/session";
 import { setAgentSession, type AgentProfile } from "@/lib/agent";
+import { safeNext, startTwoFactor } from "@/lib/two-factor";
 
 const errMsg = (data: any, fallback: string) =>
   (Array.isArray(data?.message) ? data.message[0] : data?.message)
@@ -12,7 +13,7 @@ const errMsg = (data: any, fallback: string) =>
 export type OtpState =
   | { step: "phone"; error?: string; googleTicket?: string }
   | { step: "code"; phone: string; error?: string; devCode?: string; googleTicket?: string }
-  | { step: "done" }
+  | { step: "done"; redirectTo?: string }
   | null;
 
 /** Étape 1 : envoyer le code OTP au numéro saisi. */
@@ -46,6 +47,7 @@ export async function verifyOtpAction(_prev: OtpState, formData: FormData): Prom
   }
   try {
     const { ok, data } = await siteVerifyOtp({ phone, code, firstName, googleTicket });
+    if (ok && (data as any)?.twoFactor) return { step: "done", redirectTo: startTwoFactor(data, safeNext(formData.get("next"))) };
     if (!ok || !data?.accessToken || !data?.account) {
       return { step: "code", phone, error: errMsg(data, "Code incorrect ou expiré."), googleTicket };
     }
@@ -68,6 +70,8 @@ export async function passwordLoginAction(_prev: PasswordState, formData: FormDa
   try {
     const { ok, data } = await sitePasswordLogin(identifier, password);
     if (!ok) return { error: errMsg(data, "Identifiant ou mot de passe incorrect.") };
+    const next = formData.get("next") ? safeNext(formData.get("next")) : null;
+    if (data?.twoFactor) return { redirectTo: startTwoFactor(data, next ?? "/mon-espace") };
     if (data?.kind === "agent" && data.accessToken) {
       // Identifiants moboo.ci d'un agent de la reprise : son espace agent.
       setAgentSession(data.accessToken, data.agent as AgentProfile);
@@ -76,7 +80,7 @@ export async function passwordLoginAction(_prev: PasswordState, formData: FormDa
     if (!data?.accessToken || !data?.account) return { error: "Connexion impossible. Réessayez." };
     setSession(data, data.account);
     revalidatePath("/", "layout");
-    return { redirectTo: data.account.onboarded ? "/mon-espace" : "/inscription" };
+    return { redirectTo: next ?? (data.account.onboarded ? "/mon-espace" : "/inscription") };
   } catch {
     return { error: "Service indisponible. Réessayez plus tard." };
   }
@@ -90,17 +94,19 @@ export type GoogleResult =
   | { status: "error"; error: string };
 
 /** Jeton d'identité reçu du bouton Google → connexion, ou numéro à confirmer une fois. */
-export async function googleLoginAction(credential: string): Promise<GoogleResult> {
+export async function googleLoginAction(credential: string, nextPath?: string): Promise<GoogleResult> {
   try {
     const { ok, data } = await siteGoogleLogin(credential);
     if (!ok) return { status: "error", error: errMsg(data, "Connexion Google impossible.") };
+    const next = nextPath ? safeNext(nextPath) : null;
+    if (data?.twoFactor) return { status: "ok", redirectTo: startTwoFactor(data, next ?? "/mon-espace") };
     if (data?.status === "need_phone" && data.googleTicket) {
       return { status: "need_phone", googleTicket: data.googleTicket, email: data.email, firstName: data.firstName };
     }
     if (!data?.accessToken || !data?.account) return { status: "error", error: "Connexion Google impossible." };
     setSession(data, data.account);
     revalidatePath("/", "layout");
-    return { status: "ok", redirectTo: data.account.onboarded ? "/mon-espace" : "/inscription" };
+    return { status: "ok", redirectTo: next ?? (data.account.onboarded ? "/mon-espace" : "/inscription") };
   } catch {
     return { status: "error", error: "Service indisponible. Réessayez plus tard." };
   }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MobooLogo } from "./logo";
 import type { ChromeContent } from "@/lib/page-blocks";
 import type { SiteSettings } from "@/lib/settings";
+import { menuAt, safeHref } from "@/lib/menus";
 
 const isExternal = (h: string) => /^https?:\/\//.test(h);
 const A = ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) =>
@@ -36,14 +37,27 @@ export function SiteFooter({ chrome, settings }: { chrome: ChromeContent; settin
             <div key={i}>
               <p className="text-sm font-semibold text-ink">{c.title}</p>
               <ul className="mt-3 space-y-2">
-                {c.links.filter((l) => l.label && l.href).map((l, j) => <li key={j}><A href={l.href} className="text-sm text-slate-600 hover:text-ink hover:underline">{l.label}</A></li>)}
+                {c.links.filter((l) => l.label && l.href).map((l, j) => <li key={j}><A href={safeHref(l.href)} className="text-sm text-slate-600 hover:text-ink hover:underline">{l.label}</A></li>)}
               </ul>
             </div>
           ))}
         </div>
       </div>
       <div className="border-t border-slate-200">
-        <div className="container-page py-5 text-xs text-slate-500">{footer.bottomText.replace("{year}", String(new Date().getFullYear()))}</div>
+        <div className="container-page flex flex-wrap items-center justify-between gap-3 py-5 text-xs text-slate-500">
+          <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>{footer.bottomText.replace("{year}", String(new Date().getFullYear()))}</span>
+            {menuAt(chrome.menus, chrome.locations, "footerBottom").map((l) => (
+              <A key={l.id} href={safeHref(l.href)} className="hover:text-ink hover:underline">{l.label}</A>
+            ))}
+          </span>
+          {settings.auth.adminLoginLink ? (
+            <Link href="/administration" className="inline-flex items-center gap-1 font-semibold hover:text-ink">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+              Espace administrateur
+            </Link>
+          ) : null}
+        </div>
       </div>
     </footer>
   );

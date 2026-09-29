@@ -22,21 +22,27 @@ function SubmitButton({ label }: { label: string }) {
  * Connexion par code reçu sur le numéro. `googleTicket` : première connexion
  * Google, le numéro confirmé est relié au compte Google.
  */
-export function LoginFlow({ googleTicket }: { googleTicket?: string } = {}) {
+export function LoginFlow({ googleTicket, next }: { googleTicket?: string; next?: string } = {}) {
   const router = useRouter();
   const [phoneState, sendOtp] = useFormState<OtpState, FormData>(sendOtpAction, { step: "phone", googleTicket });
   const [codeState, verifyOtp] = useFormState<OtpState, FormData>(verifyOtpAction, null);
 
   // Connexion réussie → on rafraîchit pour afficher le profil.
   useEffect(() => {
-    if (codeState?.step === "done") router.refresh();
+    if (codeState?.step !== "done") return;
+    // Double authentification : étape « code de sécurité ».
+    if (codeState.redirectTo) window.location.assign(codeState.redirectTo);
+    else router.refresh();
   }, [codeState, router]);
 
   const onCodeStep = phoneState?.step === "code";
   const phone = onCodeStep ? phoneState.phone : "";
   const devCode = onCodeStep ? phoneState.devCode : undefined;
   const ticket = (phoneState && "googleTicket" in phoneState ? phoneState.googleTicket : undefined) ?? googleTicket;
-  const ticketInput = ticket ? <input type="hidden" name="googleTicket" value={ticket} /> : null;
+  const ticketInput = <>
+    {ticket ? <input type="hidden" name="googleTicket" value={ticket} /> : null}
+    {next ? <input type="hidden" name="next" value={next} /> : null}
+  </>;
 
   if (!onCodeStep) {
     // ── Étape 1 : numéro ──

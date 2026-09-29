@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addAdminAction, removeAdminAction, type AdminUser } from "@/app/admin/actions";
+import { addAdminAction, removeAdminAction, resetTwoFactorAction, type AdminUser } from "@/app/admin/actions";
 
 export function AdminUsers({ items, pendingPhones }: { items: AdminUser[]; pendingPhones: string[] }) {
   const [phone, setPhone] = useState("");
@@ -16,6 +16,18 @@ export function AdminUsers({ items, pendingPhones }: { items: AdminUser[]; pendi
             <div className="min-w-0">
               <p className="truncate font-semibold text-ink">{[a.firstName, a.lastName].filter(Boolean).join(" ") || a.phone}</p>
               <p className="truncate text-sm text-muted">{a.phone}{a.email ? ` · ${a.email}` : ""}</p>
+              <p className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                {a.twoFactor?.length
+                  ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">2FA : {a.twoFactor.join(" + ")}</span>
+                  : <span className="rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-800">2FA non activée</span>}
+                {a.twoFactor?.length ? (
+                  <button type="button" disabled={pending} className="font-semibold text-slate-500 hover:text-red-600"
+                    onClick={() => window.confirm("Réinitialiser la double authentification de cet administrateur ? (téléphone perdu) Il devra la reconfigurer à sa prochaine connexion.") && start(async () => {
+                      const r = await resetTwoFactorAction(a.id);
+                      setMsg(r.ok ? { ok: true, text: "Double authentification réinitialisée." } : { ok: false, text: r.error ?? "Impossible." });
+                    })}>Réinitialiser</button>
+                ) : null}
+              </p>
             </div>
             {a.fixed ? (
               <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600" title="Défini par le serveur (SITE_ADMIN_PHONES)">Principal</span>

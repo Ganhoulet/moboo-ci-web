@@ -64,13 +64,14 @@ function Submit({ label }: { label: string }) {
   );
 }
 
-function PasswordForm({ onForgot }: { onForgot: () => void }) {
+function PasswordForm({ onForgot, next }: { onForgot: () => void; next?: string }) {
   const [state, action] = useFormState<PasswordState, FormData>(passwordLoginAction, null);
   const [show, setShow] = useState(false);
   useEffect(() => { if (state?.redirectTo) window.location.assign(state.redirectTo); }, [state]);
 
   return (
     <form action={action} className="space-y-4">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <div>
         <label htmlFor="identifier" className="mb-1 block text-sm font-semibold text-ink">Identifiant</label>
         <input id="identifier" name="identifier" autoComplete="username" autoCapitalize="none" spellCheck={false}
@@ -103,8 +104,10 @@ function PasswordForm({ onForgot }: { onForgot: () => void }) {
  * Connexion au choix : code reçu sur le numéro, identifiant + mot de passe,
  * ou Google (client OAuth : lib/google).
  */
-export function LoginPanel({ initialMode = "telephone", googleClientId, methods = { phone: true, password: true } }: {
+export function LoginPanel({ initialMode = "telephone", googleClientId, methods = { phone: true, password: true }, next }: {
   initialMode?: Mode; googleClientId?: string;
+  /** Page à ouvrir après la connexion (ex. /admin pour l'espace administrateur). */
+  next?: string;
   /** Méthodes activées dans le back-office (Connexion et inscription). */
   methods?: { phone: boolean; password: boolean };
 }) {
@@ -119,7 +122,7 @@ export function LoginPanel({ initialMode = "telephone", googleClientId, methods 
 
   const onCredential = async (credential: string) => {
     setBusy(true); setGoogleError(null);
-    const r = await googleLoginAction(credential);
+    const r = await googleLoginAction(credential, next);
     if (r.status === "ok") { window.location.assign(r.redirectTo); return; }
     setBusy(false);
     if (r.status === "need_phone") { setGoogle({ ticket: r.googleTicket, email: r.email }); setMode("telephone"); }
@@ -136,7 +139,7 @@ export function LoginPanel({ initialMode = "telephone", googleClientId, methods 
             Ensuite, le bouton Google suffira.
           </p>
         </div>
-        <LoginFlow googleTicket={google.ticket} />
+        <LoginFlow googleTicket={google.ticket} next={next} />
         <button type="button" onClick={() => setGoogle(null)} className="w-full text-center text-sm font-semibold text-muted hover:text-ink">
           Annuler
         </button>
@@ -165,7 +168,7 @@ export function LoginPanel({ initialMode = "telephone", googleClientId, methods 
         ))}
       </div> : null}
 
-      {mode === "telephone" ? <LoginFlow /> : <PasswordForm onForgot={() => setMode("telephone")} />}
+      {mode === "telephone" ? <LoginFlow next={next} /> : <PasswordForm next={next} onForgot={() => setMode("telephone")} />}
     </div>
   );
 }

@@ -37,6 +37,12 @@ export default async function AnnoncesPage({
     propertyType?: string;
     page?: string;
     sort?: string;
+    agent?: string;
+    checkIn?: string;
+    checkOut?: string;
+    guests?: string;
+    date?: string;
+    days?: string;
   };
 }) {
   // Back-office → Recherche et résultats : nombre par page, présentation, demi-carte, ordre.
@@ -51,8 +57,16 @@ export default async function AnnoncesPage({
   const priceMax = Number(searchParams.priceMax) > 0 ? Number(searchParams.priceMax) : undefined;
   const propertyType = (searchParams.propertyType ?? "").trim();
   const page = Math.max(1, Number(searchParams.page) || 1);
+  const agent = /^\d{1,10}$/.test(searchParams.agent ?? "") ? searchParams.agent : undefined;
 
   const isReservableTab = active === "furnished" || active === "event";
+  // Recherche de disponibilités (barre hybride de l'accueil).
+  const DAY = /^\d{4}-\d{2}-\d{2}$/;
+  const guests = Math.max(0, Math.floor(Number(searchParams.guests) || 0)) || undefined;
+  const stay = DAY.test(searchParams.checkIn ?? "") && DAY.test(searchParams.checkOut ?? "") && searchParams.checkOut! > searchParams.checkIn!
+    ? { checkIn: searchParams.checkIn!, checkOut: searchParams.checkOut!, guests } : { guests };
+  const event = DAY.test(searchParams.date ?? "")
+    ? { date: searchParams.date!, days: Math.min(30, Math.max(1, Number(searchParams.days) || 1)), guests } : { guests };
 
   let items: Property[] = [];
   let total = 0;
@@ -61,14 +75,14 @@ export default async function AnnoncesPage({
     // Meublés / espaces = l'inventaire réservable publié depuis Moboo Resi /
     // Moboo Event (feuille de route §4 : Moboo.ci n'en est que la vitrine).
     const res = active === "furnished"
-      ? await residencesPage({ q, page, perPage: PER_PAGE })
-      : await espacesPage({ q, page, perPage: PER_PAGE });
+      ? await residencesPage({ q, page, perPage: PER_PAGE, ...stay, priceMax })
+      : await espacesPage({ q, page, perPage: PER_PAGE, ...event, priceMax });
     items = res.items;
     total = res.total;
   } else {
     // Tout / à louer / à vendre → pagination + filtres serveur (des milliers de biens).
     const tx = active === "rent" || active === "sale" ? active : undefined;
-    const res = await listListingsPage({ transaction: tx, q, priceMin, priceMax, propertyType, page, perPage: PER_PAGE, sort });
+    const res = await listListingsPage({ transaction: tx, q, priceMin, priceMax, propertyType, page, perPage: PER_PAGE, sort, agent });
     items = res.items;
     total = res.total;
   }
@@ -105,6 +119,16 @@ export default async function AnnoncesPage({
           {total > PER_PAGE ? ` · ${rangeFrom}–${rangeTo} affichés` : ""}
           {q ? ` · « ${q} »` : ""}
         </p>
+        {isReservableTab && ("checkIn" in stay || "date" in event || guests) ? (
+          <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+            ✓ Disponibles
+            {active === "furnished" && "checkIn" in stay ? ` du ${new Date(stay.checkIn!).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} au ${new Date(stay.checkOut!).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}` : ""}
+            {active === "event" && "date" in event ? ` le ${new Date(event.date!).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}${event.days! > 1 ? ` (${event.days} jours)` : ""}` : ""}
+            {guests ? ` · ${guests} ${active === "event" ? "invités" : "voyageur(s)"}` : ""}
+            {priceMax ? ` · ≤ ${priceMax.toLocaleString("fr-FR")} FCFA ${active === "event" ? "/ jour" : "/ nuit"}` : ""}
+            <Link href="/" className="underline">Modifier</Link>
+          </p>
+        ) : null}
         </div>
         {!isReservableTab ? <SortSelect value={sort} /> : null}
       </div>
@@ -140,6 +164,9 @@ export default async function AnnoncesPage({
               priceMin: priceMin ? String(priceMin) : undefined,
               priceMax: priceMax ? String(priceMax) : undefined,
               propertyType: propertyType || undefined,
+              agent,
+              checkIn: searchParams.checkIn, checkOut: searchParams.checkOut, guests: searchParams.guests,
+              date: searchParams.date, days: searchParams.days,
               sort: searchParams.sort || undefined,
             }}
           />

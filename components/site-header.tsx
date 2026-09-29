@@ -4,31 +4,16 @@ import { FavoritesNavButton } from "./favorites-nav-button";
 import { MessagesBell } from "./live-notifications";
 import { getSession, initials } from "@/lib/session";
 import type { SiteSettings } from "@/lib/settings";
-
-const NAV = [
-  { href: "/annonces?transaction=rent", label: "Louer" },
-  { href: "/annonces?transaction=sale", label: "Acheter" },
-  { href: "/annonces?transaction=furnished", label: "Meublés" },
-  { href: "/annonces?transaction=event", label: "Espaces" },
-];
+import type { MenuItem, MenuStyle } from "@/lib/menus";
+import { MobileMenu, NavMenu } from "./nav-menu";
 
 type Tone = "light" | "dark";
-const ALIGN = { left: "justify-start", center: "justify-center", right: "justify-end" } as const;
 
-function Nav({ tone, align, className = "", menu }: { tone: Tone; align: keyof typeof ALIGN; className?: string; menu?: { label: string; href: string }[] }) {
-  return (
-    <nav className={`flex flex-1 items-center gap-7 text-sm font-semibold ${ALIGN[align]} ${className}`}>
-      {(menu?.length ? menu : NAV).map((n) => (
-        <Link key={n.href} href={n.href} className={tone === "dark" ? "text-white/85 transition hover:text-white" : "text-slate-600 transition hover:text-brand-800"}>
-          {n.label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
+/** Menus composés dans le back-office (Apparence → Menus). */
+export interface HeaderNav { items: MenuItem[]; mobile: MenuItem[]; style: MenuStyle }
 
 /** Boutons de droite : Publier, favoris, messages, compte / connexion. */
-function Actions({ settings, tone }: { settings: SiteSettings; tone: Tone }) {
+function Actions({ settings, tone, mobile }: { settings: SiteSettings; tone: Tone; mobile?: MenuItem[] }) {
   const { header, auth } = settings;
   const account = getSession();
   const ghost = tone === "dark" ? "border-white/25 text-white hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-50";
@@ -42,6 +27,12 @@ function Actions({ settings, tone }: { settings: SiteSettings; tone: Tone }) {
       ) : null}
       <FavoritesNavButton tone={tone} />
       {account ? <MessagesBell tone={tone} /> : null}
+      {account?.isAdmin ? (
+        <Link href="/admin" title="Back-office" className={"hidden items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-bold transition lg:inline-flex " + ghost}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></svg>
+          Back-office
+        </Link>
+      ) : null}
       {account ? (
         <Link href="/mon-espace" aria-label="Mon espace"
           className={"grid h-10 w-10 place-items-center rounded-full text-sm font-bold transition " + (tone === "dark" ? "bg-white text-brand-900 hover:bg-brand-50" : "bg-brand-800 text-white hover:bg-brand-900")}>
@@ -59,6 +50,7 @@ function Actions({ settings, tone }: { settings: SiteSettings; tone: Tone }) {
           </Link>
         </>
       )}
+      {mobile ? <MobileMenu items={mobile} tone={tone} /> : null}
     </div>
   );
 }
@@ -78,7 +70,7 @@ const ic = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: 
  * En-tête du site. Style, largeur et alignement du menu : back-office → « En-têtes
  * et barre du haut ». Sur téléphone, toujours la version compacte (logo + boutons).
  */
-export function SiteHeader({ settings, menu }: { settings: SiteSettings; menu?: { label: string; href: string }[] }) {
+export function SiteHeader({ settings, nav }: { settings: SiteSettings; nav: HeaderNav }) {
   const { header, branding } = settings;
   const style = header.headerStyle;
   const wrap = header.headerLayout === "full" ? "w-full px-4 sm:px-6 lg:px-8" : "container-page";
@@ -98,7 +90,7 @@ export function SiteHeader({ settings, menu }: { settings: SiteSettings; menu?: 
       <>
         {/* Téléphone : compact */}
         <header className="print:hidden sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur md:hidden">
-          <div className={`${wrap} flex h-16 items-center justify-between`}>{logo("light")}<Actions settings={settings} tone="light" /></div>
+          <div className={`${wrap} flex h-16 items-center justify-between`}>{logo("light")}<Actions settings={settings} tone="light" mobile={nav.mobile} /></div>
         </header>
         <div className="hidden bg-white md:block print:hidden">
           <div className={`${wrap} flex h-20 items-center gap-6 ${style === "centered" ? "justify-between" : ""}`}>
@@ -128,7 +120,7 @@ export function SiteHeader({ settings, menu }: { settings: SiteSettings; menu?: 
         </div>
         <header className="print:hidden sticky top-0 z-40 hidden bg-brand-900 md:block">
           <div className={`${wrap} flex h-14 items-center gap-6`}>
-            <Nav tone="dark" align={style === "centered" ? "center" : header.navAlign} menu={menu} />
+            <NavMenu items={nav.items} style={nav.style} tone="dark" align={style === "centered" ? "center" : header.navAlign} />
             <Actions settings={{ ...settings, header: { ...header, showPublishButton: style === "centered" ? false : header.showPublishButton } }} tone="dark" />
           </div>
         </header>
@@ -142,8 +134,8 @@ export function SiteHeader({ settings, menu }: { settings: SiteSettings; menu?: 
     <header className={"print:hidden sticky top-0 z-40 " + (tone === "dark" ? "bg-brand-900" : "border-b border-slate-200/70 bg-white/90 backdrop-blur")}>
       <div className={`${wrap} flex h-16 items-center justify-between gap-6`}>
         {logo(tone)}
-        <Nav tone={tone} align={header.navAlign} className="hidden md:flex" menu={menu} />
-        <Actions settings={settings} tone={tone} />
+        <NavMenu items={nav.items} style={nav.style} tone={tone} align={header.navAlign} className="hidden md:flex" />
+        <Actions settings={settings} tone={tone} mobile={nav.mobile} />
       </div>
     </header>
   );

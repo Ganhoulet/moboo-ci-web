@@ -42,6 +42,7 @@ export async function verifySignupAction(input: { phone: string; code: string } 
   if (input.code.replace(/[^0-9]/g, "").length < 4) return { ok: false, error: "Entrez le code reçu par message." };
   try {
     const { ok, data } = await siteVerifyOtp(input);
+    if (ok && (data as any)?.twoFactor) return { ok: false, error: "Ce compte est protégé par la double authentification : connectez-vous depuis « Se connecter »." };
     if (!ok || !data?.accessToken || !data?.account) {
       const m = Array.isArray(data?.message) ? data.message[0] : data?.message;
       return { ok: false, error: m || "Code incorrect ou expiré." };

@@ -23,11 +23,15 @@ export async function getChrome(): Promise<ChromeContent> {
 }
 
 export interface HomeData {
-  totals: { listings: number; pros: number; cities: number };
+  totals: {
+    listings: number; pros: number; cities: number;
+    /** Détail des professionnels (comptes du site + reprise moboo.ci) et bureaux en ligne. */
+    agencies?: number; agents?: number; promoters?: number; hosts?: number; owners?: number; offices?: number;
+  };
   types: { slug: string; label: string; count: number }[];
   cities: { label: string; count: number }[];
   areas: { label: string; city: string; count: number }[];
-  pros: { username: string; name: string; accountType: string; avatarUrl: string | null; city: string; verified: boolean; listings: number }[];
+  pros: { username: string | null; href?: string; name: string; accountType: string; avatarUrl: string | null; city: string; verified: boolean; listings: number }[];
 }
 
 export async function getHomeData(): Promise<HomeData> {

@@ -69,7 +69,7 @@ async function Hero({ s, data }: { s: Section; data: HomeData }) {
   const img = (p.images as { url: string }[] | undefined)?.find((x) => x?.url)?.url;
   const types = data.types.length ? data.types : [];
   return (
-    <section id={`section-${s.id}`} className="relative isolate overflow-hidden">
+    <section id={`section-${s.id}`} className="relative isolate z-20">
       {img ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={img} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
@@ -80,7 +80,7 @@ async function Hero({ s, data }: { s: Section; data: HomeData }) {
       <div className="container-page flex min-h-[480px] flex-col items-center justify-center py-16 text-center text-white sm:min-h-[560px]">
         <h1 className="max-w-3xl font-display text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl">{p.title}</h1>
         {p.subtitle ? <p className="mt-4 max-w-2xl text-base text-white/90 sm:text-lg">{p.subtitle}</p> : null}
-        <div className="mt-8 w-full"><HeroSearch tabs={p.tabs ?? []} placeholder={p.placeholder ?? ""} types={types.map((t) => ({ slug: t.slug, label: t.label }))} /></div>
+        <div className="mt-8 w-full"><HeroSearch tabs={p.tabs ?? []} placeholder={p.placeholder ?? ""} types={types.map((t) => ({ slug: t.slug, label: t.label }))} places={Array.from(new Set([...data.areas.map((a) => a.label), ...data.cities.map((c) => c.label)])).slice(0, 12)} /></div>
         {(p.chips as { label: string; href: string }[] | undefined)?.length ? (
           <div className="mt-5 flex max-w-3xl flex-wrap justify-center gap-2">
             {(p.chips as { label: string; href: string }[]).filter((c) => c.label && c.href).map((c) => (
@@ -90,9 +90,9 @@ async function Hero({ s, data }: { s: Section; data: HomeData }) {
         ) : null}
         {p.showStats && data.totals.listings ? (
           <div className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-white/85">
-            <span><strong className="text-white">{data.totals.listings.toLocaleString("fr-FR")}</strong> annonces en ligne</span>
-            <span><strong className="text-white">{data.totals.pros.toLocaleString("fr-FR")}</strong> professionnels</span>
-            <span><strong className="text-white">{data.totals.cities}</strong> villes</span>
+            {liveCounts(data, true).map((c) => (
+              <span key={c.label}><strong className="text-white">{c.value}</strong> {c.label}</span>
+            ))}
           </div>
         ) : null}
       </div>
@@ -100,20 +100,57 @@ async function Hero({ s, data }: { s: Section; data: HomeData }) {
   );
 }
 
+const TYPE_NAME: Record<string, string> = {
+  appartement: "Appartements", maison: "Maisons", villa: "Villas", studio: "Studios", duplex: "Duplex", terrain: "Terrains",
+  bureau: "Bureaux", magasin: "Magasins", entrepot: "Entrepôts", immeuble: "Immeubles", autre: "Autres biens",
+};
+const niceLabel = (slug: string, label: string) =>
+  label && label !== slug ? label : TYPE_NAME[slug] ?? (slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "));
+
+/**
+ * Bande des types de bien : grandes cartes quand il y en a peu, qui se
+ * resserrent sur une ligne à mesure qu'on en ajoute (défilement au-delà).
+ * Automatique (types du back-office) ou liste composée à la main.
+ */
 function Categories({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
-  const want: string[] = s.props.types ?? [];
-  const items = (want.length ? data.types.filter((t) => want.includes(t.slug)) : data.types).filter((t) => t.count > 0);
+  const p: P = s.props;
+  const count = new Map(data.types.map((t) => [t.slug, t] as const));
+  const want: string[] = p.types ?? [];
+  const manual = p.mode === "manual" && Array.isArray(p.items) && p.items.length;
+  const items = manual
+    ? (p.items as P[]).filter((x) => x.type || x.href).map((x) => ({
+        key: `${x.type}-${x.label}`, label: x.label || niceLabel(x.type, count.get(x.type)?.label ?? ""),
+        icon: x.icon || TYPE_ICON[x.type] || "🏠", image: x.image as string | undefined,
+        count: count.get(x.type)?.count ?? 0, href: x.href || `/annonces?propertyType=${encodeURIComponent(x.type)}`,
+      }))
+    : (want.length ? want.map((w) => count.get(w)).filter(Boolean) as HomeData["types"] : data.types).filter((t) => t.count > 0).map((t) => ({
+        key: t.slug, label: niceLabel(t.slug, t.label), icon: TYPE_ICON[t.slug] ?? "🏠", image: undefined as string | undefined,
+        count: t.count, href: `/annonces?propertyType=${encodeURIComponent(t.slug)}`,
+      }));
   if (!items.length) return null;
+  const n = items.length;
+  const size = n <= 4 ? "lg" : n <= 7 ? "md" : "sm";
+  const dark = p.background === "brand";
   return (
-    <Shell s={s} pad="py-5" edit={edit}>
-      {s.props.title ? <h2 className="mb-3 font-semibold text-ink">{s.props.title}</h2> : null}
-      <div className="flex gap-8 overflow-x-auto border-b border-slate-200 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <Shell s={s} pad="py-8" edit={edit}>
+      <Head title={p.title} subtitle={p.subtitle} dark={dark} />
+      <div className={"flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] sm:gap-4 [&::-webkit-scrollbar]:hidden " + "[justify-content:safe_center]"}>
         {items.map((t) => (
-          <Link key={t.slug} href={`/annonces?propertyType=${encodeURIComponent(t.slug)}`}
-            className="group flex shrink-0 flex-col items-center gap-1.5 border-b-2 border-transparent pb-2 text-slate-500 transition hover:border-slate-300 hover:text-ink">
-            <span className="text-2xl opacity-80 grayscale transition group-hover:opacity-100 group-hover:grayscale-0">{TYPE_ICON[t.slug] ?? "🏠"}</span>
-            <span className="text-xs font-semibold">{t.label}</span>
-            <span className="text-[10px] text-slate-400">{t.count}</span>
+          <Link key={t.key} href={t.href}
+            className={"group relative flex shrink-0 flex-col items-center justify-center overflow-hidden rounded-2xl border text-center transition duration-200 hover:-translate-y-1 hover:shadow-card-hover sm:flex-1 sm:basis-0 " +
+              (dark ? "border-white/15 bg-white/10 hover:bg-white/15 " : "border-slate-200 bg-white hover:border-slate-300 ") +
+              ({ lg: "min-w-[150px] max-w-[260px] px-6 py-7", md: "min-w-[130px] max-w-[200px] px-4 py-5", sm: "min-w-[112px] max-w-[160px] px-3 py-4" } as const)[size]}>
+            {t.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={t.image} alt="" className={"rounded-2xl object-cover " + ({ lg: "h-20 w-20", md: "h-14 w-14", sm: "h-11 w-11" } as const)[size]} />
+            ) : (
+              <span className={"grid place-items-center rounded-2xl transition group-hover:scale-110 " + (dark ? "bg-white/15 " : "bg-slate-50 group-hover:bg-brand-50 ") +
+                ({ lg: "h-20 w-20 text-4xl", md: "h-14 w-14 text-3xl", sm: "h-11 w-11 text-2xl" } as const)[size]}>{t.icon}</span>
+            )}
+            <span className={"mt-3 w-full truncate font-semibold " + (dark ? "text-white " : "text-ink ") + ({ lg: "text-base", md: "text-sm", sm: "text-[13px]" } as const)[size]}>{t.label}</span>
+            {p.showCount !== false && t.count ? (
+              <span className={"mt-0.5 text-xs " + (dark ? "text-white/70" : "text-muted")}>{t.count.toLocaleString("fr-FR")} annonce{t.count > 1 ? "s" : ""}</span>
+            ) : null}
           </Link>
         ))}
       </div>
@@ -288,13 +325,13 @@ function Pros({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean })
       <Head title={p.title} subtitle={p.subtitle} dark={p.background === "brand"} />
       <Carousel label={p.title || "Professionnels"}>
         {items.map((x) => (
-          <Link key={x.username} href={`/pro/${x.username}`} className="w-[70%] shrink-0 snap-start rounded-2xl border border-slate-200 bg-white p-5 text-center transition hover:shadow-card-hover sm:w-[40%] lg:w-[calc(20%-16px)]">
+          <Link key={x.href ?? x.username} href={x.href ?? `/pro/${x.username}`} className="w-[70%] shrink-0 snap-start rounded-2xl border border-slate-200 bg-white p-5 text-center transition hover:shadow-card-hover sm:w-[40%] lg:w-[calc(20%-16px)]">
             {x.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={x.avatarUrl} alt="" className="mx-auto h-20 w-20 rounded-full object-cover" />
             ) : <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-brand-800 font-display text-2xl font-bold text-white">{x.name.charAt(0).toUpperCase()}</span>}
             <p className="mt-3 truncate font-semibold text-ink">{x.name}</p>
-            <p className="truncate text-xs text-muted">{x.city || "Côte d’Ivoire"}</p>
+            <p className="truncate text-xs text-muted">{x.accountType === "entreprise" ? "Agence" : "Agent"} · {x.city || "Côte d’Ivoire"}</p>
             <p className="mt-2 text-xs font-semibold text-slate-600">{x.listings} annonce{x.listings > 1 ? "s" : ""}{x.verified ? <span className="ml-1 text-emerald-700">· ✓ Vérifié</span> : null}</p>
           </Link>
         ))}
@@ -303,18 +340,35 @@ function Pros({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean })
   );
 }
 
+/** Vrais chiffres de la plateforme (les catégories à zéro sont masquées). */
+function liveCounts(data: HomeData, short: boolean) {
+  const t = data.totals;
+  const n = (v?: number) => (v ?? 0).toLocaleString("fr-FR");
+  const plural = (v: number | undefined, one: string, many: string) => ((v ?? 0) > 1 ? many : one);
+  const rows: { v?: number; value: string; label: string }[] = [
+    { v: t.listings, value: n(t.listings), label: short ? "annonces en ligne" : "annonces en ligne" },
+    { v: t.agencies, value: n(t.agencies), label: plural(t.agencies, "agence immobilière", "agences immobilières") },
+    { v: t.agents, value: n(t.agents), label: plural(t.agents, "agent immobilier", "agents immobiliers") },
+    { v: t.promoters, value: n(t.promoters), label: plural(t.promoters, "promoteur", "promoteurs") },
+    { v: t.hosts, value: n(t.hosts), label: plural(t.hosts, "résidence / espace", "résidences et espaces") },
+    { v: t.offices, value: n(t.offices), label: plural(t.offices, "bureau ou commerce disponible", "bureaux et commerces disponibles") },
+    { v: t.cities, value: n(t.cities), label: short ? "villes" : "villes couvertes" },
+  ];
+  // Ancienne API (sans détail) : total des professionnels.
+  if (t.agencies === undefined && t.pros) rows.splice(1, 0, { v: t.pros, value: n(t.pros), label: "professionnels" });
+  return rows.filter((r) => (r.v ?? 0) > 0).slice(0, short ? 5 : 5).map(({ value, label }) => ({ value, label }));
+}
+
 function Stats({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
   const p: P = s.props;
   const items = p.mode === "manual" && (p.items as P[])?.length ? (p.items as P[]) : [
-    { value: data.totals.listings.toLocaleString("fr-FR"), label: "annonces en ligne" },
-    { value: data.totals.pros.toLocaleString("fr-FR"), label: "professionnels" },
-    { value: String(data.totals.cities), label: "villes couvertes" },
+    ...liveCounts(data, false),
     { value: "0 %", label: "de commission sur les annonces classiques" },
   ];
   const dark = p.background === "brand";
   return (
     <Shell s={s} pad="py-10" edit={edit}>
-      <div className="grid grid-cols-2 gap-6 text-center lg:grid-cols-4">
+      <div className={"grid grid-cols-2 gap-6 text-center " + (items.length > 4 ? "sm:grid-cols-3 lg:grid-cols-6" : "lg:grid-cols-4")}>
         {items.map((x, i) => (
           <div key={i}>
             <p className={"font-display text-3xl font-black sm:text-4xl " + (dark ? "text-white" : "text-ink")}>{x.value}</p>

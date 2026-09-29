@@ -22,6 +22,7 @@ export interface SiteSettings {
   auth: {
     loginPhone: boolean; loginPassword: boolean; loginGoogle: boolean; loginIntro: string;
     signupEnabled: boolean; signupAccountTypes: string[]; signupRoleSelect: boolean; profileRoleChange: boolean;
+    twoFactorOffer: boolean; twoFactorAdminRequired: boolean; twoFactorTotp: boolean; twoFactorEmail: boolean; adminLoginLink: boolean;
     roleLabel_particulier: string; roleLabel_proprietaire: string; roleLabel_agent: string; roleLabel_entreprise: string; roleLabel_etablissement: string;
   };
   notifications: { inquirySuccessText: string; visitSuccessText: string; reservationSuccessText: string };
@@ -77,6 +78,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     loginIntro: "Au choix : votre numéro de téléphone, votre identifiant ou votre compte Google. Retrouvez vos favoris, vos annonces, vos messages et vos alertes.",
     signupEnabled: true, signupAccountTypes: ["particulier", "proprietaire", "agent", "entreprise", "etablissement"],
     signupRoleSelect: true, profileRoleChange: false,
+    twoFactorOffer: true, twoFactorAdminRequired: true, twoFactorTotp: true, twoFactorEmail: true, adminLoginLink: true,
     roleLabel_particulier: "Particulier", roleLabel_proprietaire: "Propriétaire", roleLabel_agent: "Agent immobilier",
     roleLabel_entreprise: "Agence / promoteur", roleLabel_etablissement: "Résidences / espaces",
   },

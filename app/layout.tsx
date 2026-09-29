@@ -11,6 +11,7 @@ import { SearchStrip } from "@/components/search-strip";
 import { getTaxonomies } from "@/lib/taxonomies";
 import { getChrome } from "@/lib/pages";
 import { SiteFooter } from "@/components/site-footer";
+import { menuAt } from "@/lib/menus";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const poppins = Poppins({
@@ -45,7 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen font-sans" style={{ ["--container-max" as string]: `${general.containerWidth}px` }}>
         <ClientSettings favoritesLoginRequired={general.favoritesLoginRequired} loggedIn={!!getSession()} />
         {header.topBarEnabled && (header.topBarText || header.topBarPhone || header.topBarEmail) ? <TopBar h={header} /> : null}
-        <SiteHeader settings={settings} menu={chrome.menu} />
+        <SiteHeader settings={settings} nav={{ items: menuAt(chrome.menus, chrome.locations, "header"), mobile: menuAt(chrome.menus, chrome.locations, "mobile"), style: chrome.menuStyle }} />
         {settings.search.headerSearch !== "none" ? <SearchStrip variant={settings.search.headerSearch} pages={settings.search.headerSearchPages} types={(await getTaxonomies()).type} /> : null}
         <main>{children}</main>
         <SiteFooter chrome={chrome} settings={settings} />

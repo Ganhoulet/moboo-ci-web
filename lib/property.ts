@@ -105,14 +105,14 @@ export function mapEspace(e: import("./types").Espace): Property {
 }
 
 /** Résidences meublées réservables (publiées depuis Moboo Resi), paginées. */
-export async function residencesPage(opts: { q?: string; page?: number; perPage?: number }): Promise<PagedProperties> {
-  const { items, total, page, perPage } = await listResidences({ q: opts.q, page: opts.page ?? 1, perPage: opts.perPage ?? 24 });
+export async function residencesPage(opts: { q?: string; page?: number; perPage?: number; checkIn?: string; checkOut?: string; guests?: number; priceMax?: number }): Promise<PagedProperties> {
+  const { items, total, page, perPage } = await listResidences({ ...opts, page: opts.page ?? 1, perPage: opts.perPage ?? 24 });
   return { items: items.map(mapResidence), total, page, perPage };
 }
 
 /** Espaces événementiels réservables (publiés depuis Moboo Event), paginés. */
-export async function espacesPage(opts: { q?: string; page?: number; perPage?: number }): Promise<PagedProperties> {
-  const { items, total, page, perPage } = await listEspaces({ q: opts.q, page: opts.page ?? 1, perPage: opts.perPage ?? 24 });
+export async function espacesPage(opts: { q?: string; page?: number; perPage?: number; date?: string; days?: number; guests?: number; priceMax?: number }): Promise<PagedProperties> {
+  const { items, total, page, perPage } = await listEspaces({ ...opts, page: opts.page ?? 1, perPage: opts.perPage ?? 24 });
   return { items: items.map(mapEspace), total, page, perPage };
 }
 
@@ -191,12 +191,14 @@ export async function listListingsPage(opts: {
   bbox?: string;
   map?: boolean;
   featured?: boolean;
+  agent?: string;
 }): Promise<PagedProperties> {
   const { items, total, page, perPage } = await listListings({
     sort: opts.sort,
     bbox: opts.bbox,
     map: opts.map,
     featured: opts.featured,
+    agent: opts.agent,
     transaction: opts.transaction,
     q: opts.q,
     priceMin: opts.priceMin,

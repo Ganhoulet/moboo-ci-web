@@ -6,6 +6,7 @@ import type { SiteAccount } from "@/lib/api";
 import { PageHeader } from "@/components/dashboard-ui";
 import { ProfileForm } from "@/components/profile-form";
 import { SecuritySettings } from "@/components/security-settings";
+import { TwoFactorSettings } from "@/components/two-factor-settings";
 import { GOOGLE_CLIENT_ID } from "@/lib/google";
 import { getSiteSettings, roleNames } from "@/lib/settings";
 
@@ -14,6 +15,7 @@ export default async function Profil() {
   const me = await authedFetch("/site/auth/me", { method: "GET" });
   const a: SiteAccount = me.ok ? me.data : getSession()!;
   const settings = await getSiteSettings();
+  const tf = await authedFetch("/site/auth/2fa", { method: "GET" });
   return (
     <div className="max-w-3xl">
       <PageHeader
@@ -30,6 +32,7 @@ export default async function Profil() {
         phone={a.phone}
         googleClientId={GOOGLE_CLIENT_ID}
       />
+      {tf.ok ? <div id="2fa"><TwoFactorSettings initial={tf.data} /></div> : null}
     </div>
   );
 }

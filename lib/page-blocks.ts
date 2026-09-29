@@ -2,6 +2,8 @@
 // serveur + éditeur du back-office). Inspiré des grands portails immobiliers
 // (recherche à onglets, carrousels, quartiers, outils), présentation épurée.
 
+import { DEFAULT_LOCATIONS, DEFAULT_MENU_STYLE, normalizeMenus, type MenuLocation, type MenuStyle, type SiteMenu } from "./menus";
+
 export type FieldType = "text" | "textarea" | "html" | "image" | "url" | "number" | "bool" | "select" | "multi" | "list";
 
 export interface BlockField {
@@ -32,7 +34,11 @@ export interface PageContent { sections: Section[] }
 
 export interface MenuLink { label: string; href: string }
 export interface ChromeContent {
-  menu: MenuLink[];
+  /** Ancien format (liste de liens) : repris dans `menus` à la lecture. */
+  menu?: MenuLink[];
+  menus: SiteMenu[];
+  locations: Record<MenuLocation, string>;
+  menuStyle: MenuStyle;
   footer: {
     about: string;
     columns: { title: string; links: { label: string; href: string }[] }[];
@@ -86,13 +92,24 @@ export const BLOCKS: BlockDef[] = [
     },
   },
   {
-    type: "categories", label: "Barre de catégories", icon: "🏷️",
-    description: "Types de bien en pastilles défilantes (style Airbnb), avec le nombre d’annonces.",
+    type: "categories", label: "Types de bien", icon: "🏷️",
+    description: "Cartes des types de bien avec le nombre d’annonces : grandes quand il y en a peu, resserrées sur une ligne quand il y en a plus.",
     fields: [
       { key: "title", label: "Titre (facultatif)", type: "text" },
-      { key: "types", label: "Types affichés (vide : tous)", type: "multi", options: "types" },
+      { key: "subtitle", label: "Sous-titre (facultatif)", type: "text" },
+      { key: "mode", label: "Contenu", type: "select", options: [{ value: "auto", label: "Automatique (types du back-office)" }, { value: "manual", label: "Composé à la main" }] },
+      { key: "types", label: "Automatique : types affichés, dans cet ordre (vide : tous)", type: "multi", options: "types" },
+      { key: "items", label: "Composé à la main : cartes", type: "list", itemLabel: "Carte", fields: [
+        { key: "type", label: "Type de bien", type: "select", options: "types" },
+        { key: "label", label: "Libellé (vide : nom du type)", type: "text" },
+        { key: "icon", label: "Émoji / icône", type: "text" },
+        { key: "image", label: "Image (remplace l’icône)", type: "image" },
+        { key: "href", label: "Lien (vide : annonces de ce type)", type: "url" },
+      ] },
+      { key: "showCount", label: "Afficher le nombre d’annonces", type: "bool" },
+      ...common,
     ],
-    defaults: { title: "", types: [] },
+    defaults: { title: "Explorer par type de bien", subtitle: "", mode: "auto", types: [], items: [], showCount: true, background: "white" },
   },
   {
     type: "quickStart", label: "Par où commencer ?", icon: "🧭",
@@ -335,12 +352,9 @@ export const DEFAULT_HOME: PageContent = {
 };
 
 export const DEFAULT_CHROME: ChromeContent = {
-  menu: [
-    { label: "Louer", href: "/annonces?transaction=rent" },
-    { label: "Acheter", href: "/annonces?transaction=sale" },
-    { label: "Meublés", href: "/annonces?transaction=furnished" },
-    { label: "Espaces", href: "/annonces?transaction=event" },
-  ],
+  menus: normalizeMenus(null),
+  locations: DEFAULT_LOCATIONS,
+  menuStyle: DEFAULT_MENU_STYLE,
   footer: {
     about: "Louer, acheter, réserver — l’immobilier en Côte d’Ivoire, en contact direct.",
     columns: [
@@ -379,7 +393,9 @@ export function normalizeHome(c: PageContent | null | undefined): PageContent {
 
 export function normalizeChrome(c: Partial<ChromeContent> | null | undefined): ChromeContent {
   return {
-    menu: Array.isArray(c?.menu) && c!.menu.length ? c!.menu : DEFAULT_CHROME.menu,
+    menus: normalizeMenus(c?.menus, c?.menu),
+    locations: { ...DEFAULT_LOCATIONS, ...(c?.locations ?? {}) },
+    menuStyle: { ...DEFAULT_MENU_STYLE, ...(c?.menuStyle ?? {}) },
     footer: { ...DEFAULT_CHROME.footer, ...(c?.footer ?? {}) },
   };
 }

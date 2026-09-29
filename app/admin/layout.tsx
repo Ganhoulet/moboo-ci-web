@@ -6,15 +6,16 @@ import { authedFetch } from "@/lib/server-api";
 import type { SiteAccount } from "@/lib/api";
 import { AdminNav } from "@/components/admin-nav";
 import { getAdminSettings } from "./actions";
+import { TwoFactorSettings } from "@/components/two-factor-settings";
 
 export const metadata: Metadata = { title: "Back-office", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 /** Back-office du site (réglages façon « Houzez Options »), réservé aux administrateurs. */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  if (!getSession()) redirect("/compte");
+  if (!getSession()) redirect("/administration");
   const me = await authedFetch("/site/auth/me", { method: "GET" });
-  if (me.status === 401) redirect("/compte/deconnexion");
+  if (me.status === 401) redirect("/compte/deconnexion?next=/administration");
   const account = me.data as SiteAccount;
   if (!me.ok || !account?.isAdmin) {
     return (
@@ -26,12 +27,32 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     );
   }
 
+  // Double authentification obligatoire pour les administrateurs : configuration d'abord.
+  const tf = await authedFetch("/site/auth/2fa", { method: "GET" });
+  if (tf.ok && tf.data?.required && !tf.data?.enabled) {
+    return (
+      <div className="bg-slate-50 py-12">
+        <div className="mx-auto max-w-2xl px-4">
+          <div className="mb-6 grid h-14 w-14 place-items-center rounded-2xl bg-ink text-2xl text-white">🔐</div>
+          <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">Sécurisez votre accès administrateur</h1>
+          <p className="mt-2 text-muted">
+            Bonjour {displayName(account)}. La double authentification est obligatoire pour ouvrir le back-office :
+            choisissez une méthode ci-dessous (l’application d’authentification est la plus sûre).
+          </p>
+          <div className="mt-6 rounded-2xl bg-white p-5 shadow-card sm:p-6">
+            <TwoFactorSettings initial={tf.data} required />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const settings = await getAdminSettings();
   const items = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
     // Apparence : constructeur de la page d'accueil, menu et pied de page.
     { href: "/admin/accueil", label: "Page d’accueil", icon: "layout", group: "apparence" },
-    { href: "/admin/accueil/menu", label: "Menu et pied de page", icon: "layout", child: true, group: "apparence" },
+    { href: "/admin/accueil/menu", label: "Menus et pied de page", icon: "layout", child: true, group: "apparence" },
     // Immobilier (façon Houzez « Real Estate ») : annonces, listes, agences et agents.
     { href: "/admin/immobilier", label: "Immobilier", icon: "building", group: "immobilier" },
     ...[
@@ -70,6 +91,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ];
     }),
     { href: "/admin/administrateurs", label: "Administrateurs", icon: "users" },
+    { href: "/admin/securite", label: "Ma sécurité (2FA)", icon: "shield" },
   ];
 
   return (
