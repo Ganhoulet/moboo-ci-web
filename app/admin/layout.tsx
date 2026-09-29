@@ -46,6 +46,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/immobilier/forfaits", "Forfaits"],
       ["/admin/immobilier/factures", "Factures"],
     ].map(([href, label]) => ({ href, label, icon: "building", child: true, group: "immobilier" })),
+    // Vérification des comptes (demandes + réglages).
+    { href: "/admin/verifications", label: "Vérification des comptes", icon: "shield", group: "verifications" },
+    { href: "/admin/verifications/reglages", label: "Réglages", icon: "shield", child: true, group: "verifications" },
     // Application mobile Moboo.ci : statistiques, passerelle Houzi, push, contacts.
     { href: "/admin/application", label: "Application mobile", icon: "phone", group: "application" },
     ...[

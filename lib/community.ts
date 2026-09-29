@@ -17,7 +17,10 @@ export interface Package {
   /** -1 = illimité */
   listings: number; featured: number; popular: boolean;
 }
-export interface PackageList { enabled: boolean; requirePackage: boolean; freeListings: number; items: Package[] }
+export interface PackageList {
+  enabled: boolean; submissionMode?: "free" | "membership" | "per_listing"; requirePackage: boolean; freeListings: number;
+  listingPrice?: number; featuredPrice?: number; termsUrl?: string; items: Package[];
+}
 
 async function get<T>(path: string, init: RequestInit & { next?: { revalidate?: number; tags?: string[] } }): Promise<T | null> {
   try {

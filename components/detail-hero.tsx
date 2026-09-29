@@ -9,6 +9,8 @@ export type HeroPerson = {
   name: string;
   photoUrl?: string | null;
   sub?: string | null;
+  /** Compte vérifié (badge). */
+  verified?: boolean;
 };
 
 /**
@@ -113,7 +115,7 @@ export function PersonRow({ person, className = "" }: { person: HeroPerson; clas
       )}
       <div className="min-w-0">
         <p className="truncate font-semibold text-ink">
-          {person.role} : {person.name}
+          {person.role} : {person.name}{person.verified ? <span className="ml-1.5 inline-flex rounded-full bg-emerald-50 px-1.5 py-0.5 align-middle text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">✓ Vérifié</span> : null}
         </p>
         {person.sub ? <p className="truncate text-sm text-muted">{person.sub}</p> : null}
       </div>

@@ -40,3 +40,13 @@
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
+
+/* Étiquettes de prix sur les cartes (Leaflet) */
+.moboo-price-pin {
+  display: inline-block; transform: translate(0, 0); white-space: nowrap;
+  background: #1e3a8a; color: #fff; font: 700 11px/1 system-ui, sans-serif;
+  padding: 6px 8px; border-radius: 999px; border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgb(15 23 42 / .35); cursor: pointer;
+}
+.moboo-price-pin.is-active { background: #ea580c; transform: scale(1.12); }
+.leaflet-container { font: inherit; }

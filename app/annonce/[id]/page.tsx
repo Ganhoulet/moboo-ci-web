@@ -85,9 +85,11 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
         photoUrl: l.agent.photoUrl,
         sub: [l.agent.position, l.agent.company].filter(Boolean).join(" · ") || l.agent.serviceArea || "Agent immobilier Moboo.ci",
       }
-    : l.contactName
-      ? { role: "Annonceur", name: displayName(l.contactName), sub: "Contact direct, sans commission" }
-      : null;
+    : l.owner
+      ? { role: "Annonceur", name: l.owner.name, photoUrl: l.owner.photoUrl, sub: "Contact direct, sans commission", verified: !!l.owner.verified }
+      : l.contactName
+        ? { role: "Annonceur", name: displayName(l.contactName), sub: "Contact direct, sans commission" }
+        : null;
 
   // Phrase de résumé : « À vendre : villa · 3 chambres · 2 salles de bain · 250 m² ».
   // (Sur mobile les badges portent déjà la transaction : on n'y reprend que les chiffres.)

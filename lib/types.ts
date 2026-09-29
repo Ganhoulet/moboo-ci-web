@@ -163,5 +163,6 @@ export interface ListingItem {
   owner?: {
     name: string; kind: string; photoUrl: string | null; username: string | null;
     phone: string | null; whatsapp: string | null; email: string | null;
+    verified?: boolean;
   } | null;
 }

@@ -54,7 +54,13 @@ export function SignupWizard({
   mode = "signup",
   initial,
   allowedTypes,
+  roleSelect = true,
+  roleLabels,
 }: {
+  /** Choix du rôle à l'inscription (back-office) ; sinon « Particulier ». */
+  roleSelect?: boolean;
+  /** Noms des rôles renommés dans le back-office. */
+  roleLabels?: Record<string, string>;
   /** Types de compte proposés (back-office → Connexion et inscription). */
   allowedTypes?: string[];
   /** signup = création ; complete = compte connecté qui choisit / change son type. */
@@ -63,13 +69,16 @@ export function SignupWizard({
 }) {
   const router = useRouter();
   const steps = mode === "signup" ? STEPS_SIGNUP : STEPS_COMPLETE;
-  const [step, setStep] = useState(0);
+  // Sans choix du rôle : on commence directement par « Que recherchez-vous ? » (particulier).
+  const minStep = roleSelect || initial?.accountType ? 0 : 1;
+  const [step, setStep] = useState(minStep);
   const [error, setError] = useState<string | null>(null);
   const [devCode, setDevCode] = useState<string | undefined>();
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [pending, startTransition] = useTransition();
   const [d, setD] = useState<Data>({
     companyName: "", commune: "", firstName: "", lastName: "", username: "", email: "", phone: "", code: "",
+    ...(minStep ? { accountType: "particulier" as AccountType } : {}),
     ...initial,
   });
   const set = (patch: Partial<Data>) => { setD((p) => ({ ...p, ...patch })); setError(null); };
@@ -201,6 +210,7 @@ export function SignupWizard({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-display font-bold text-ink">{t.title}</span>
+                      {roleLabels?.[t.key] ? <span className="block text-xs font-semibold text-accent-700">{roleLabels[t.key]}</span> : null}
                       <span className="block text-sm text-muted">{t.tagline}</span>
                     </span>
                     <span className={"grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 transition " + (on ? "border-accent-600 bg-accent-600 text-white" : "border-slate-300")}>
@@ -326,7 +336,7 @@ export function SignupWizard({
       {error ? <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
 
       <div className="mt-6 flex gap-3">
-        {step > 0 ? (
+        {step > minStep ? (
           <button type="button" onClick={() => { setStep((s) => s - 1); setError(null); }} disabled={pending} className="btn-ghost">
             Retour
           </button>

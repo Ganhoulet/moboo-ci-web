@@ -21,7 +21,8 @@ export interface SiteSettings {
   };
   auth: {
     loginPhone: boolean; loginPassword: boolean; loginGoogle: boolean; loginIntro: string;
-    signupEnabled: boolean; signupAccountTypes: string[];
+    signupEnabled: boolean; signupAccountTypes: string[]; signupRoleSelect: boolean; profileRoleChange: boolean;
+    roleLabel_particulier: string; roleLabel_proprietaire: string; roleLabel_agent: string; roleLabel_entreprise: string; roleLabel_etablissement: string;
   };
   notifications: { inquirySuccessText: string; visitSuccessText: string; reservationSuccessText: string };
   listing: {
@@ -30,16 +31,30 @@ export interface SiteSettings {
     showContactForm: boolean; showSimilar: boolean; similarCount: number; contactNotice: string;
   };
   submit: { maxPhotos: number; submitIntro: string };
-  search: { perPage: number; headerSearch: "none" | "simple" | "filters"; headerSearchPages: "details" | "all" };
+  search: {
+    perPage: number; headerSearch: "none" | "simple" | "filters"; headerSearchPages: "details" | "all";
+    resultsView: "standard" | "halfmap"; resultsLayout: "grid" | "list";
+    defaultOrder: "featured" | "newest" | "oldest" | "price_asc" | "price_desc"; mapAutoLoad: boolean; mapInitialCount: number;
+  };
+  maps: MapSettings;
   print: {
     enabled: boolean; logoUrl: string; showAgent: boolean; showDescription: boolean;
     showDetails: boolean; showFeatures: boolean; showGallery: boolean; showQr: boolean; footerText: string;
   };
   reviews: { enabled: boolean; onListings: boolean; onPros: boolean; moderation: boolean; intro: string };
   packages: {
-    enabled: boolean; requirePackage: boolean; freeListings: number; pageTitle: string; pageIntro: string;
+    enabled: boolean; submissionMode: "free" | "membership" | "per_listing"; freeListings: number; listingPrice: number;
+    featuredPrice: number; featuredTax: number; expireDays: number; autoDeleteExpired: boolean; restoreQuotaOnDelete: boolean; termsUrl: string;
+    pageTitle: string; pageIntro: string;
     companyName: string; companyAddress: string; companyTaxId: string; invoiceNote: string;
   };
+  verification: { enabled: boolean; types: string[]; requiredForListings: boolean; docTypes: string; intro: string };
+}
+
+export interface MapSettings {
+  provider: "osm" | "mapbox" | "google"; googleApiKey: string; mapboxToken: string;
+  mapType: "roadmap" | "satellite" | "hybrid" | "terrain"; markerType: "price" | "pin";
+  defaultZoom: number; maxZoom: number; fallbackLat: string; fallbackLng: string; limitCountry: boolean; country: string;
 }
 
 /** Valeurs de secours (API injoignable) — les mêmes que le schéma de l'API. */
@@ -61,6 +76,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     loginPhone: true, loginPassword: true, loginGoogle: true,
     loginIntro: "Au choix : votre numéro de téléphone, votre identifiant ou votre compte Google. Retrouvez vos favoris, vos annonces, vos messages et vos alertes.",
     signupEnabled: true, signupAccountTypes: ["particulier", "proprietaire", "agent", "entreprise", "etablissement"],
+    signupRoleSelect: true, profileRoleChange: false,
+    roleLabel_particulier: "Particulier", roleLabel_proprietaire: "Propriétaire", roleLabel_agent: "Agent immobilier",
+    roleLabel_entreprise: "Agence / promoteur", roleLabel_etablissement: "Résidences / espaces",
   },
   notifications: {
     inquirySuccessText: "Demande envoyée ! L’annonceur vous recontactera bientôt.",
@@ -74,18 +92,35 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     contactNotice: "Mise en relation directe avec l’annonceur — Moboo ne prend pas de commission sur les ventes et locations classiques.",
   },
   submit: { maxPhotos: 12, submitIntro: "Publiez votre bien en quelques minutes : les intéressés vous contactent directement, sans commission." },
-  search: { perPage: 24, headerSearch: "none", headerSearchPages: "details" },
+  search: {
+    perPage: 24, headerSearch: "none", headerSearchPages: "details",
+    resultsView: "standard", resultsLayout: "grid", defaultOrder: "featured", mapAutoLoad: true, mapInitialCount: 100,
+  },
+  maps: {
+    provider: "osm", googleApiKey: "", mapboxToken: "", mapType: "roadmap", markerType: "price",
+    defaultZoom: 12, maxZoom: 18, fallbackLat: "5.3600", fallbackLng: "-4.0083", limitCountry: true, country: "ci",
+  },
   print: {
     enabled: true, logoUrl: "", showAgent: true, showDescription: true, showDetails: true, showFeatures: true,
     showGallery: false, showQr: true, footerText: "Fiche imprimée depuis Moboo.ci — l’immobilier en Côte d’Ivoire.",
   },
   reviews: { enabled: true, onListings: true, onPros: true, moderation: true, intro: "Partagez votre expérience : votre avis aide les autres visiteurs." },
   packages: {
-    enabled: true, requirePackage: false, freeListings: 3, pageTitle: "Choisissez votre forfait",
+    enabled: true, submissionMode: "free", freeListings: 3, listingPrice: 2000, featuredPrice: 0, featuredTax: 0, expireDays: 0,
+    autoDeleteExpired: false, restoreQuotaOnDelete: true, termsUrl: "", pageTitle: "Choisissez votre forfait",
     pageIntro: "Publiez plus d’annonces et mettez vos biens en vedette. Paiement par Wave, Orange Money, MTN, Moov ou carte.",
     companyName: "Moboo.ci", companyAddress: "Abidjan, Côte d’Ivoire", companyTaxId: "", invoiceNote: "Merci pour votre confiance.",
   },
+  verification: {
+    enabled: false, types: ["agent", "entreprise"], requiredForListings: false,
+    docTypes: "Carte nationale d’identité, Passeport, Registre du commerce (RCCM), Carte professionnelle",
+    intro: "Faites vérifier votre compte : les visiteurs font davantage confiance aux professionnels vérifiés. Vos documents ne sont jamais publiés.",
+  },
 };
+
+/** Nom d'un rôle (type de compte), renommable dans le back-office. */
+export const roleName = (s: SiteSettings, type?: string | null) =>
+  (s.auth as unknown as Record<string, string>)[`roleLabel_${type || "particulier"}`] || type || "";
 
 export const SETTINGS_TAG = "site-settings";
 
@@ -104,3 +139,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     return DEFAULT_SETTINGS;
   }
 }
+
+/** Tous les noms de rôles (pour accountLabel). */
+export const roleNames = (s: SiteSettings): Record<string, string> =>
+  Object.fromEntries(["particulier", "proprietaire", "agent", "entreprise", "etablissement"].map((k) => [k, roleName(s, k)]));

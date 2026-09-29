@@ -29,6 +29,8 @@ export interface MyListing {
   photo: string | null;
   photoCount: number;
   featured?: boolean;
+  awaitingPayment?: boolean;
+  expiresAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,7 +57,7 @@ export async function getMyListing(id: string): Promise<Record<string, any> | nu
   return ok ? data : null;
 }
 
-export type SaveResult = { ok: boolean; id?: string; error?: string };
+export type SaveResult = { ok: boolean; id?: string; error?: string; paymentUrl?: string | null };
 
 /** Création (id absent) ou modification d'une annonce. */
 export async function saveListingAction(id: string | null, payload: Record<string, any>): Promise<SaveResult> {
@@ -66,7 +68,18 @@ export async function saveListingAction(id: string | null, payload: Record<strin
   });
   if (!ok) return { ok: false, error: errMsg(data, "Enregistrement impossible. Réessayez.") };
   revalidatePath("/mon-espace", "layout");
+  // Publication payante : paiement Money Fusion (ou facture réglée d'office si gratuit).
+  const pay = data?.payment;
+  if (pay && !pay.paid) return { ok: true, id: data?.id, paymentUrl: pay.paymentUrl ?? `/mon-espace/annonces?facture=${pay.invoiceId}` };
   return { ok: true, id: data?.id ?? id ?? undefined };
+}
+
+/** Payer la publication d'une annonce en attente (mode « payante à l'annonce »). */
+export async function payListingAction(id: string): Promise<{ ok: boolean; paymentUrl?: string | null; error?: string }> {
+  const { ok, data } = await authedFetch(`/site/me/listings/${encodeURIComponent(id)}/pay`, { method: "POST" });
+  if (!ok) return { ok: false, error: errMsg(data, "Paiement impossible pour le moment.") };
+  revalidatePath("/mon-espace", "layout");
+  return { ok: true, paymentUrl: data.paid ? null : data.paymentUrl ?? `/mon-espace/annonces?facture=${data.invoiceId}` };
 }
 
 export async function setListingStatusAction(id: string, status: string): Promise<{ ok: boolean; error?: string }> {
@@ -76,16 +89,19 @@ export async function setListingStatusAction(id: string, status: string): Promis
 }
 
 /** Mettre en vedette (crédit du forfait) ou retirer. */
-export async function featureListingAction(id: string, on: boolean): Promise<{ ok: boolean; error?: string }> {
-  const { ok, data } = await authedFetch(`/site/me/listings/${encodeURIComponent(id)}/feature`, { method: "POST", body: JSON.stringify({ on }) });
+export async function featureListingAction(id: string, on: boolean, pay = false): Promise<{ ok: boolean; error?: string; paymentUrl?: string | null }> {
+  const { ok, data } = await authedFetch(`/site/me/listings/${encodeURIComponent(id)}/feature`, { method: "POST", body: JSON.stringify({ on, pay }) });
   revalidatePath("/", "layout");
-  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Action impossible.") };
+  if (!ok) return { ok: false, error: errMsg(data, "Action impossible.") };
+  const p = data?.payment;
+  return { ok: true, paymentUrl: p && !p.paid ? p.paymentUrl ?? `/mon-espace/annonces?facture=${p.invoiceId}` : null };
 }
 
 /* ─── Forfait et factures ──────────────────────────────────────────────── */
 
 export interface MySubscription {
-  enabled: boolean; requirePackage: boolean; freeListings: number; limit: number; used: number; remaining: number;
+  enabled: boolean; submissionMode: "free" | "membership" | "per_listing"; requirePackage: boolean; freeListings: number;
+  listingPrice: number; featuredPrice: number; limit: number; used: number; remaining: number;
   subscription: { id: string; packageName: string; listings: number; featured: number; featuredUsed: number; featuredLeft: number; startsAt: string; endsAt: string } | null;
 }
 
@@ -313,4 +329,24 @@ export async function unlinkGoogleAction(): Promise<{ ok: boolean }> {
   const { ok, data } = await authedFetch("/site/auth/google/link", { method: "DELETE" });
   if (ok) { setProfile(data); revalidatePath("/mon-espace/profil"); }
   return { ok };
+}
+
+/* ─── Vérification du compte ───────────────────────────────────────────── */
+
+export interface MyVerification {
+  enabled: boolean; concerned: boolean; required: boolean; verified: boolean; verifiedAt: string | null;
+  docTypes: string[]; intro: string;
+  last: { id: string; docType: string; fullName: string; status: string; statusLabel: string; adminNote: string | null; createdAt: string } | null;
+}
+
+export async function getMyVerification(): Promise<MyVerification | null> {
+  if (!getSession()) return null;
+  const { ok, data } = await authedFetch("/site/me/verification", { method: "GET" });
+  return ok ? data : null;
+}
+
+export async function submitVerificationAction(input: { docType: string; fullName: string; front: string; back?: string; note?: string }): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await authedFetch("/site/me/verification", { method: "POST", body: JSON.stringify(input) });
+  revalidatePath("/mon-espace/verification");
+  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Envoi impossible.") };
 }

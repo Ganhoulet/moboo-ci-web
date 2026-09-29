@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { canAccess, PROPERTY_TYPES } from "@/lib/accounts";
 import { EmptyState, PageHeader, STATUS_LABEL, fmtXOF } from "@/components/dashboard-ui";
 import { ListingRowActions } from "@/components/listing-row-actions";
-import { getMySubscription, listMyListings } from "../actions";
+import { getMyInvoice, getMySubscription, listMyListings } from "../actions";
 import { getTaxonomies } from "@/lib/taxonomies";
 
 const TABS = [
@@ -14,10 +14,12 @@ const TABS = [
   { key: "DISABLED", label: "Masquées" },
 ];
 
-export default async function MesAnnonces({ searchParams }: { searchParams: { statut?: string; q?: string; publiee?: string } }) {
+export default async function MesAnnonces({ searchParams }: { searchParams: { statut?: string; q?: string; publiee?: string; facture?: string } }) {
   const account = getSession()!;
   if (!canAccess(account.accountType, "annonces")) redirect("/mon-espace");
 
+  // Retour de paiement (publication / vedette) : la facture est re-vérifiée auprès de Money Fusion.
+  const invoice = searchParams.facture ? await getMyInvoice(searchParams.facture) : null;
   const [mine, plan] = await Promise.all([listMyListings(), getMySubscription()]);
   const all = mine?.items ?? [];
   const tab = searchParams.statut ?? "";
@@ -36,6 +38,13 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
         sub={`${mine?.activeListings ?? 0} en ligne · ${mine?.totalViews ?? 0} vues · ${mine?.totalInquiries ?? 0} demandes · ${(mine?.totalCalls ?? 0) + (mine?.totalWhatsapp ?? 0)} appels / WhatsApp`}
         action={<Link href="/mon-espace/annonces/nouvelle" className="btn-primary bg-accent-600 hover:bg-accent-700">+ Publier une annonce</Link>}
       />
+
+      {invoice ? (
+        <div className={"mb-4 rounded-2xl p-4 text-sm " + (invoice.status === "paid" ? "bg-emerald-50 text-emerald-800" : invoice.status === "pending" ? "bg-amber-50 text-amber-800" : "bg-red-50 text-red-700")}>
+          {invoice.status === "paid" ? <>✅ Paiement confirmé : {invoice.label}.</> : invoice.status === "pending" ? <>⏳ Paiement en attente de confirmation ({invoice.number}) : actualisez dans quelques instants.</> : <>Le paiement n’a pas abouti ({invoice.number}) : réessayez depuis le menu « ⋯ » de l’annonce.</>}
+          {" "}<Link href={`/mon-espace/factures/${invoice.id}`} className="font-bold underline">Voir la facture</Link>
+        </div>
+      ) : null}
 
       {searchParams.publiee ? (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-800">
@@ -95,6 +104,8 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
                     {l.featured ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">★ En vedette</span> : null}
+                    {l.awaitingPayment ? <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">En attente de paiement</span> : null}
+                    {l.expiresAt ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">{new Date(l.expiresAt) < new Date() ? "Expirée" : `Expire le ${new Date(l.expiresAt).toLocaleDateString("fr-FR")}`}</span> : null}
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{l.transaction === "sale" ? "Vente" : "Location"} · {typeLabel(l.propertyType)}</span>
                   </div>
                   <Link href={`/mon-espace/annonces/${l.id}`} className="mt-1 block truncate font-semibold text-ink hover:text-brand-800">{l.title}</Link>
@@ -103,7 +114,7 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
                     {[l.commune, l.city].filter(Boolean).join(", ")} · 👁 {l.views} · 💬 {l.inquiries} · 📞 {l.callClicks ?? 0} · WhatsApp {l.whatsappClicks ?? 0} · modifiée le {new Date(l.updatedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
                   </p>
                 </div>
-                <ListingRowActions id={l.id} status={l.status} transaction={l.transaction} featured={l.featured} />
+                <ListingRowActions id={l.id} status={l.status} transaction={l.transaction} featured={l.featured} awaitingPayment={l.awaitingPayment} featuredPrice={plan?.featuredPrice ?? 0} />
               </div>
             );
           })}

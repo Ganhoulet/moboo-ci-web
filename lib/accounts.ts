@@ -103,11 +103,12 @@ export function accountTypeDef(key?: string | null): AccountTypeDef {
 }
 
 /** « Entreprise · Promoteur immobilier » */
-export function accountLabel(a: { accountType?: string | null; accountSubtype?: string | null; accountRole?: string | null }) {
+export function accountLabel(a: { accountType?: string | null; accountSubtype?: string | null; accountRole?: string | null }, roleNames?: Record<string, string>) {
   const def = accountTypeDef(a.accountType);
   const sub = def.subtypes.find((s) => s.key === a.accountSubtype)?.label;
   const role = def.roles?.find((r) => r.key === a.accountRole)?.label.replace(/^J'en suis (le )?/, "");
-  const main = def.key === "particulier" ? "Particulier" : def.title;
+  // Nom du rôle renommé dans le back-office (Connexion et inscription → Rôles).
+  const main = roleNames?.[def.key] || (def.key === "particulier" ? "Particulier" : def.title);
   return [main, sub, role].filter(Boolean).join(" · ");
 }
 
@@ -165,7 +166,7 @@ export const WELCOME_NEXT: Record<AccountType, { text: string; cta?: { href: str
 
 export type DashKey =
   | "tableau" | "annonces" | "nouvelle" | "statistiques" | "demandes"
-  | "messages" | "favoris" | "recherches" | "profil" | "forfait" | "factures";
+  | "messages" | "favoris" | "recherches" | "profil" | "forfait" | "factures" | "verification";
 
 export interface DashItem {
   key: DashKey;
@@ -188,6 +189,7 @@ export const DASH_MENU: DashItem[] = [
   { key: "recherches", href: "/mon-espace/recherches", label: "Recherches & alertes", types: "all" },
   { key: "forfait", href: "/mon-espace/forfait", label: "Mon forfait", types: PUB },
   { key: "factures", href: "/mon-espace/factures", label: "Factures", types: PUB },
+  { key: "verification", href: "/mon-espace/verification", label: "Vérification", types: "all" },
   { key: "profil", href: "/mon-espace/profil", label: "Mon profil", types: "all" },
 ];
 

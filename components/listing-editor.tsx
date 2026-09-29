@@ -65,7 +65,7 @@ function parseCoords(s: string): [number, number] | null {
   return null;
 }
 
-export type EditorSave = (id: string | null, payload: Record<string, any>) => Promise<{ ok: boolean; id?: string; error?: string }>;
+export type EditorSave = (id: string | null, payload: Record<string, any>) => Promise<{ ok: boolean; id?: string; error?: string; paymentUrl?: string | null }>;
 
 export function ListingEditor({
   id, initial, maxPhotos: MAX_PHOTOS = 12,
@@ -130,6 +130,8 @@ export function ListingEditor({
       const r = await saveAction(id ?? null, payload());
       if (!r.ok) return setError(r.error ?? "Erreur.");
       if (edit) { setSaved(true); router.refresh(); }
+      // Soumission payante à l'annonce : paiement, puis mise en ligne automatique.
+      else if (r.paymentUrl) window.location.href = r.paymentUrl;
       else router.push(createdHref.replace("{id}", encodeURIComponent(r.id!)));
     });
   }
@@ -263,6 +265,7 @@ export function ListingEditor({
               <Field label="Quartier"><input className="input" value={d.quartier} placeholder="Ex. Riviera 2, Zone 4…" onChange={(e) => set({ quartier: e.target.value })} /></Field>
               <Field label="Adresse (non affichée)"><input className="input" value={d.address} placeholder="Rue, repère…" onChange={(e) => set({ address: e.target.value })} /></Field>
             </div>
+            <AddressSearch onPick={(h) => { set({ latitude: h.lat, longitude: h.lng }); setMapsLink(`${h.lat.toFixed(6)}, ${h.lng.toFixed(6)}`); }} />
             <Field label="Position sur la carte (recommandé)">
               <input className="input" value={mapsLink} placeholder="Collez un lien Google Maps ou « latitude, longitude »"
                 onChange={(e) => { setMapsLink(e.target.value); const p = parseCoords(e.target.value); if (p) set({ latitude: p[0], longitude: p[1] }); }} />
@@ -384,5 +387,39 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
       className={"rounded-full border px-3 py-1.5 text-sm font-semibold transition " + (on ? "border-accent-600 bg-accent-50 text-accent-700" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300")}>
       {children}
     </button>
+  );
+}
+
+/** Recherche d'adresse (système de carte et pays du back-office → Cartes). */
+function AddressSearch({ onPick }: { onPick: (h: { label: string; lat: number; lng: number }) => void }) {
+  const [q, setQ] = useState("");
+  const [hits, setHits] = useState<{ label: string; lat: number; lng: number }[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const search = async () => {
+    if (q.trim().length < 3) return;
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+      const d = await r.json();
+      setHits(Array.isArray(d) ? d : []);
+    } catch { setHits([]); } finally { setBusy(false); }
+  };
+  return (
+    <Field label="Rechercher l’adresse">
+      <div className="flex gap-2">
+        <input className="input flex-1" value={q} placeholder="Ex. Cocody Riviera 2, Abidjan" onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); search(); } }} />
+        <button type="button" onClick={search} disabled={busy} className="rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-ink hover:bg-slate-50 disabled:opacity-50">{busy ? "…" : "Chercher"}</button>
+      </div>
+      {hits ? (
+        hits.length ? (
+          <ul className="mt-1 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white text-sm">
+            {hits.map((h) => (
+              <li key={`${h.lat},${h.lng}`}><button type="button" className="w-full px-3 py-2 text-left hover:bg-slate-50" onClick={() => { onPick(h); setHits(null); }}>{h.label}</button></li>
+            ))}
+          </ul>
+        ) : <p className="mt-1 text-xs text-muted">Aucun résultat : précisez le quartier et la ville.</p>
+      ) : null}
+    </Field>
   );
 }

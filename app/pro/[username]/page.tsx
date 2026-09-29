@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPro } from "@/lib/api";
 import { accountLabel } from "@/lib/accounts";
+import { getSiteSettings, roleNames } from "@/lib/settings";
+import { VerifiedBadge } from "@/components/verified-badge";
 import { mapListing } from "@/lib/property";
 import { PropertyCard } from "@/components/property-card";
 
@@ -11,13 +13,14 @@ export const revalidate = 60;
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
   const p = await getPro(params.username);
   if (!p) return { title: "Profil" };
-  const description = `${p.name} — ${accountLabel(p)} sur Moboo.ci. ${p.listings.length} annonce(s) en ligne.`;
+  const description = `${p.name} — ${accountLabel(p, roleNames(await getSiteSettings()))} sur Moboo.ci. ${p.listings.length} annonce(s) en ligne.`;
   return { title: p.name, description, openGraph: { title: p.name, description, images: p.avatarUrl ? [p.avatarUrl] : undefined } };
 }
 
 export default async function ProPage({ params }: { params: { username: string } }) {
   const p = await getPro(params.username);
   if (!p) notFound();
+  const names = roleNames(await getSiteSettings());
   const wa = (p.whatsapp || "").replace(/[^0-9]/g, "");
   const waLink = wa ? `https://wa.me/${wa.startsWith("225") ? wa : "225" + wa}` : null;
   const socials = [
@@ -38,8 +41,8 @@ export default async function ProPage({ params }: { params: { username: string }
             <span className="grid h-24 w-24 place-items-center rounded-full bg-white/15 font-display text-4xl font-extrabold">{p.name.charAt(0).toUpperCase()}</span>
           )}
           <div className="min-w-0 flex-1">
-            <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">{accountLabel(p)}</span>
-            <h1 className="mt-2 font-display text-3xl font-extrabold">{p.name}</h1>
+            <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">{accountLabel(p, names)}</span>
+            <h1 className="mt-2 flex flex-wrap items-center gap-2 font-display text-3xl font-extrabold">{p.name}{p.verified ? <VerifiedBadge tone="dark" /> : null}</h1>
             <p className="mt-1 text-sm text-white/80">
               {[p.commune, p.city].filter(Boolean).join(", ") || "Côte d'Ivoire"} · Membre depuis {new Date(p.memberSince).getFullYear()}
               {" · "}{p.listings.length} annonce(s){rent ? ` dont ${rent} en location` : ""}

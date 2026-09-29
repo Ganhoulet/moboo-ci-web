@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { SignupWizard } from "@/components/signup-wizard";
 import type { AccountType } from "@/lib/accounts";
 import Link from "next/link";
-import { getSiteSettings } from "@/lib/settings";
+import { getSiteSettings, roleName } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Créer un compte",
@@ -20,7 +20,8 @@ export default async function InscriptionPage({ searchParams }: { searchParams: 
   if (account?.onboarded && searchParams.profil !== "modifier") redirect("/mon-espace");
 
   const mode = account ? "complete" : "signup";
-  const { auth } = await getSiteSettings();
+  const settings = await getSiteSettings();
+  const { auth } = settings;
   if (mode === "signup" && !auth.signupEnabled) {
     return (
       <div className="container-page py-16 text-center">
@@ -64,7 +65,11 @@ export default async function InscriptionPage({ searchParams }: { searchParams: 
               : "Dites-nous qui vous êtes : votre espace Moboo.ci s'adapte à votre activité."}
           </p>
           <div className="mt-6 rounded-3xl bg-white p-6 shadow-card sm:p-8">
-            <SignupWizard mode={mode} initial={initial} allowedTypes={auth.signupAccountTypes} />
+            <SignupWizard mode={mode} initial={initial}
+              // Changement de rôle après l'inscription : seulement si le back-office l'autorise.
+              allowedTypes={account?.onboarded && !auth.profileRoleChange ? [account.accountType ?? "particulier"] : auth.signupAccountTypes}
+              roleSelect={mode === "complete" || auth.signupRoleSelect}
+              roleLabels={Object.fromEntries(["particulier", "proprietaire", "agent", "entreprise", "etablissement"].map((k) => [k, roleName(settings, k)]))} />
           </div>
         </div>
       </div>

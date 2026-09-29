@@ -2,10 +2,16 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { deleteListingAction, duplicateListingAction, featureListingAction, setListingStatusAction } from "@/app/mon-espace/actions";
+import { deleteListingAction, duplicateListingAction, featureListingAction, payListingAction, setListingStatusAction } from "@/app/mon-espace/actions";
 
 /** Menu « ⋯ » d'une annonce : modifier, voir, vendu/loué, masquer, dupliquer, supprimer. */
-export function ListingRowActions({ id, status, transaction, featured }: { id: string; status: string; transaction: "rent" | "sale"; featured?: boolean }) {
+export function ListingRowActions({ id, status, transaction, featured, awaitingPayment, featuredPrice = 0 }: {
+  id: string; status: string; transaction: "rent" | "sale"; featured?: boolean;
+  /** Publication payante pas encore réglée. */
+  awaitingPayment?: boolean;
+  /** Prix TTC d'une mise en vedette à l'unité (0 : crédits de forfait uniquement). */
+  featuredPrice?: number;
+}) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const ref = useRef<HTMLDivElement>(null);
@@ -17,13 +23,21 @@ export function ListingRowActions({ id, status, transaction, featured }: { id: s
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
-  const run = (fn: () => Promise<void | { ok: boolean; error?: string }>) => {
+  const run = (fn: () => Promise<void | { ok: boolean; error?: string; paymentUrl?: string | null }>) => {
     setOpen(false);
     start(async () => {
       const r = await fn();
       if (r && !r.ok && r.error) window.alert(r.error);
+      if (r && r.ok && r.paymentUrl) window.location.href = r.paymentUrl;
     });
   };
+  /** Vedette : crédit du forfait, sinon proposition d'achat à l'unité. */
+  const feature = () => run(async () => {
+    const r = await featureListingAction(id, true);
+    if (r.ok || !featuredPrice) return r;
+    if (!window.confirm(`Aucun crédit « vedette » disponible. Mettre cette annonce en vedette pour ${featuredPrice.toLocaleString("fr-FR")} FCFA ?`)) return { ok: true };
+    return featureListingAction(id, true, true);
+  });
   const closed = transaction === "sale" ? "SOLD" : "RENTED";
   const item = "flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink hover:bg-slate-50";
 
@@ -50,8 +64,10 @@ export function ListingRowActions({ id, status, transaction, featured }: { id: s
                 ✅ {transaction === "sale" ? "Marquer vendu" : "Marquer loué"}
               </button>
               <button type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "DISABLED"))}>🙈 Masquer du site</button>
-              <button type="button" className={item} onClick={() => run(() => featureListingAction(id, !featured))}>{featured ? "☆ Retirer de la vedette" : "⭐ Mettre en vedette"}</button>
+              <button type="button" className={item} onClick={() => (featured ? run(() => featureListingAction(id, false)) : feature())}>{featured ? "☆ Retirer de la vedette" : "⭐ Mettre en vedette"}</button>
             </>
+          ) : awaitingPayment ? (
+            <button type="button" className={item} onClick={() => run(() => payListingAction(id))}>💳 Payer la publication</button>
           ) : (
             <button type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "ACTIVE"))}>🚀 Remettre en ligne</button>
           )}

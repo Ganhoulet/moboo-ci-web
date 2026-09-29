@@ -76,8 +76,14 @@ export async function listListings(params?: {
   listingKind?: string;
   page?: number;
   perPage?: number;
+  sort?: string;
+  bbox?: string;
+  map?: boolean;
 }): Promise<Paginated<ListingItem>> {
   const q = new URLSearchParams();
+  if (params?.sort) q.set("sort", params.sort);
+  if (params?.bbox) q.set("bbox", params.bbox);
+  if (params?.map) q.set("map", "1");
   if (params?.transaction) q.set("transaction", params.transaction);
   if (params?.city) q.set("city", params.city);
   if (params?.q) q.set("q", params.q);
@@ -122,6 +128,7 @@ export interface ProProfile {
   tiktok: string | null;
   linkedin: string | null;
   memberSince: string;
+  verified?: boolean;
   listings: ListingItem[];
 }
 
@@ -182,6 +189,7 @@ export interface SiteAccount {
   hasPassword?: boolean;
   googleLinked?: boolean;
   isAdmin?: boolean;       // accès au back-office (/admin)
+  verified?: boolean;      // compte vérifié (badge)
 }
 
 /** Profil saisi pendant l'inscription (envoyé à la vérification du code). */

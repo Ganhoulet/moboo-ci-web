@@ -8,7 +8,7 @@ import { FavoritesSync } from "@/components/favorites-sync";
 import { logoutAction } from "@/app/compte/actions";
 import { listMyInquiries, unreadMessages } from "./actions";
 import { authedFetch } from "@/lib/server-api";
-import { getSiteSettings } from "@/lib/settings";
+import { getSiteSettings, roleNames } from "@/lib/settings";
 import type { SiteAccount } from "@/lib/api";
 
 export const metadata: Metadata = { title: "Mon espace", robots: { index: false } };
@@ -27,7 +27,10 @@ export default async function EspaceLayout({ children }: { children: React.React
 
   const type = account.accountType ?? "particulier";
   const settings = await getSiteSettings();
-  const items = menuFor(type).filter((i) => settings.packages.enabled || (i.key !== "forfait" && i.key !== "factures"));
+  const items = menuFor(type)
+    .filter((i) => settings.packages.enabled || (i.key !== "forfait" && i.key !== "factures"))
+    // Vérification : seulement si activée pour ce type de compte (back-office).
+    .filter((i) => i.key !== "verification" || (settings.verification.enabled && settings.verification.types.includes(type)));
   const publisher = isPublisher(type);
   const [newInquiries, unread] = await Promise.all([
     publisher ? listMyInquiries().then((xs) => xs.filter((q) => q.status === "new").length) : 0,
@@ -53,7 +56,7 @@ export default async function EspaceLayout({ children }: { children: React.React
                 )}
                 <div className="min-w-0">
                   <p className="truncate font-display font-bold text-ink">{name}</p>
-                  <p className="truncate text-xs text-muted">{accountLabel(account)}</p>
+                  <p className="truncate text-xs text-muted">{accountLabel(account, roleNames(settings))}</p>
                 </div>
               </div>
               {publisher && account.username ? (

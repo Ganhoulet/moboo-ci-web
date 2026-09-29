@@ -7,7 +7,9 @@ import {
   type Transaction,
   type Property,
 } from "@/lib/property";
-import { PropertyCard } from "@/components/property-card";
+import { ResultsView } from "@/components/results-view";
+import { SortSelect } from "@/components/sort-select";
+import { SORTS } from "@/lib/sorts";
 import { FilterBar } from "@/components/filter-bar";
 import { Pagination } from "@/components/pagination";
 import { SaveSearchButton } from "@/components/save-search-button";
@@ -34,10 +36,14 @@ export default async function AnnoncesPage({
     priceMax?: string;
     propertyType?: string;
     page?: string;
+    sort?: string;
   };
 }) {
-  // Nombre d'annonces par page : back-office → Recherche et résultats.
-  const PER_PAGE = (await getSiteSettings()).search.perPage;
+  // Back-office → Recherche et résultats : nombre par page, présentation, demi-carte, ordre.
+  const settings = await getSiteSettings();
+  const cfg = settings.search;
+  const PER_PAGE = cfg.perPage;
+  const sort = SORTS.some(([k]) => k === searchParams.sort) ? searchParams.sort! : cfg.defaultOrder;
   const reservable = searchParams.reservable === "1";
   const active = (reservable ? "all" : (searchParams.transaction as Transaction | "all")) ?? "all";
   const q = (searchParams.q ?? "").trim();
@@ -62,10 +68,18 @@ export default async function AnnoncesPage({
   } else {
     // Tout / à louer / à vendre → pagination + filtres serveur (des milliers de biens).
     const tx = active === "rent" || active === "sale" ? active : undefined;
-    const res = await listListingsPage({ transaction: tx, q, priceMin, priceMax, propertyType, page, perPage: PER_PAGE });
+    const res = await listListingsPage({ transaction: tx, q, priceMin, priceMax, propertyType, page, perPage: PER_PAGE, sort });
     items = res.items;
     total = res.total;
   }
+  // Demi-carte : biens localisés des mêmes filtres (annonces à louer / à vendre).
+  const halfMap = cfg.resultsView === "halfmap" && !isReservableTab;
+  const tx2 = active === "rent" || active === "sale" ? active : undefined;
+  const mapItems = halfMap
+    ? (await listListingsPage({ transaction: tx2, q, priceMin, priceMax, propertyType, perPage: cfg.mapInitialCount, sort, map: true, listingKind: "classic" })).items
+    : [];
+  const query = new URLSearchParams(Object.entries({ transaction: tx2, q: q || undefined, priceMin: priceMin ? String(priceMin) : undefined, priceMax: priceMax ? String(priceMax) : undefined, propertyType: propertyType || undefined, sort })
+    .filter(([, v]) => v) as [string, string][]).toString();
 
   const hasFilters = !!(q || priceMin || priceMax || propertyType || active !== "all");
   const loggedIn = !!getSession();
@@ -80,8 +94,9 @@ export default async function AnnoncesPage({
   const rangeTo = Math.min(rangeFrom - 1 + items.length, total);
 
   return (
-    <div className="container-page py-8 sm:py-10">
-      <div>
+    <div className={(halfMap ? "mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8" : "container-page") + " py-8 sm:py-10"}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
         <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">
           {reservable ? "Biens réservables" : "Annonces"}
         </h1>
@@ -90,6 +105,8 @@ export default async function AnnoncesPage({
           {total > PER_PAGE ? ` · ${rangeFrom}–${rangeTo} affichés` : ""}
           {q ? ` · « ${q} »` : ""}
         </p>
+        </div>
+        {!isReservableTab ? <SortSelect value={sort} /> : null}
       </div>
 
       <div className="mt-5">
@@ -112,11 +129,7 @@ export default async function AnnoncesPage({
 
       {items.length > 0 ? (
         <>
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {items.map((p) => (
-              <PropertyCard key={p.id} p={p} />
-            ))}
-          </div>
+          <ResultsView items={items} layout={cfg.resultsLayout} halfMap={halfMap} mapSettings={settings.maps} mapItems={mapItems} autoLoad={cfg.mapAutoLoad} query={query} />
           <Pagination
             page={page}
             perPage={PER_PAGE}
@@ -127,6 +140,7 @@ export default async function AnnoncesPage({
               priceMin: priceMin ? String(priceMin) : undefined,
               priceMax: priceMax ? String(priceMax) : undefined,
               propertyType: propertyType || undefined,
+              sort: searchParams.sort || undefined,
             }}
           />
         </>

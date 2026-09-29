@@ -32,6 +32,9 @@ export interface Property {
   labels?: { slug: string; label: string; color: string | null }[];
   /** Statut (back-office → Statuts) : remplace le badge de transaction s'il est défini. */
   status?: { label: string; color: string | null } | null;
+  /** Coordonnées (carte des résultats). */
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export const TRANSACTION_BADGE: Record<Transaction, string> = {
@@ -166,6 +169,8 @@ export function mapListing(l: import("./types").ListingItem): Property {
     featured: !!l.featured,
     labels: l.labels ?? [],
     status: kind === "classic" && l.statusLabel ? { label: l.statusLabel.label, color: l.statusLabel.color } : null,
+    lat: l.latitude ?? null,
+    lng: l.longitude ?? null,
   };
 }
 
@@ -182,8 +187,14 @@ export async function listListingsPage(opts: {
   listingKind?: string;
   page?: number;
   perPage?: number;
+  sort?: string;
+  bbox?: string;
+  map?: boolean;
 }): Promise<PagedProperties> {
   const { items, total, page, perPage } = await listListings({
+    sort: opts.sort,
+    bbox: opts.bbox,
+    map: opts.map,
     transaction: opts.transaction,
     q: opts.q,
     priceMin: opts.priceMin,

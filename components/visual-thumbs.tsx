@@ -74,8 +74,40 @@ function search(v: string) {
   );
 }
 
+function results(field: string, v: string) {
+  const head = (<><rect width={W} height={18} fill="#fff" stroke={SOFT} /><Logo x={10} y={5} /><Dots x={90} y={8} /></>);
+  const card = (x: number, y: number, w: number, h: number) => (<g key={`${x}-${y}`}><Photo x={x} y={y} w={w} h={h * 0.62} /><rect x={x} y={y + h * 0.68} width={w * 0.8} height={4} rx={2} fill={LINE} /><rect x={x} y={y + h * 0.84} width={w * 0.5} height={4} rx={2} fill={ORANGE} /></g>);
+  const row = (y: number, w: number) => (<g key={y}><Photo x={10} y={y} w={46} h={28} /><rect x={62} y={y + 4} width={w} height={5} rx={2} fill={LINE} /><rect x={62} y={y + 14} width={w * 0.6} height={4} rx={2} fill={SOFT} /><rect x={62} y={y + 22} width={34} height={4} rx={2} fill={ORANGE} /></g>);
+  const map = (<><rect x={134} y={24} width={96} height={100} rx={4} fill="#dbeafe" /><path d="M134 70 Q160 55 180 72 T230 60" stroke="#93c5fd" strokeWidth={6} fill="none" />
+    {[[150, 44], [190, 52], [170, 90], [206, 100], [156, 108]].map(([x, y]) => <rect key={x + "" + y} x={x} y={y} width={20} height={9} rx={4.5} fill={BLUE} stroke="#fff" />)}</>);
+  if (field === "resultsLayout") {
+    return v === "list"
+      ? (<>{head}{[26, 60, 94].map((y) => row(y, 150))}</>)
+      : (<>{head}{[10, 66, 122, 178].map((x) => card(x, 26, 50, 46))}{[10, 66, 122, 178].map((x) => card(x, 78, 50, 46))}</>);
+  }
+  return v === "halfmap"
+    ? (<>{head}{card(10, 24, 56, 48)}{card(72, 24, 56, 48)}{card(10, 76, 56, 48)}{card(72, 76, 56, 48)}{map}</>)
+    : (<>{head}{[10, 66, 122, 178].map((x) => card(x, 26, 50, 46))}{[10, 66, 122, 178].map((x) => card(x, 78, 50, 46))}</>);
+}
+
+function provider(v: string) {
+  const color = v === "google" ? "#4285f4" : v === "mapbox" ? "#111827" : "#7ebc6f";
+  return (
+    <>
+      <rect width={W} height={H} fill={v === "mapbox" ? "#e5e7eb" : "#eef6e8"} />
+      <path d="M0 80 Q60 50 120 78 T240 64" stroke={v === "google" ? "#fbbf24" : "#fff"} strokeWidth={9} fill="none" />
+      <path d="M70 0 L90 130" stroke="#fff" strokeWidth={6} />
+      <rect x={150} y={20} width={60} height={34} rx={4} fill={v === "mapbox" ? "#cbd5e1" : "#d9f0cf"} />
+      <path d="M120 40c-9 0-15 7-15 15 0 11 15 26 15 26s15-15 15-26c0-8-6-15-15-15Z" fill={color} />
+      <circle cx={120} cy={55} r={5} fill="#fff" />
+      <text x={W / 2} y={H - 12} textAnchor="middle" fontSize={13} fontWeight={700} fill="#0f172a" fontFamily="Arial">{v === "google" ? "Google Maps" : v === "mapbox" ? "Mapbox" : "OpenStreetMap"}</text>
+    </>
+  );
+}
+
 export function VisualThumb({ field, value }: { field: string; value: string }) {
-  const draw = field === "headerStyle" ? header(value) : field === "bannerStyle" ? banner(value) : field === "headerSearch" ? search(value) : null;
+  const draw = field === "headerStyle" ? header(value) : field === "bannerStyle" ? banner(value) : field === "headerSearch" ? search(value)
+    : field === "resultsView" || field === "resultsLayout" ? results(field, value) : field === "provider" ? provider(value) : null;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full rounded bg-white" aria-hidden="true">
       {draw}
