@@ -1,3 +1,4 @@
+import { ReviewsSection } from "@/components/reviews";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { formatXOF, getListing } from "@/lib/api";
@@ -132,8 +133,9 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
         ]}
         badges={
           <>
-            <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-              {l.listingKind === "furnished" ? "Meublé" : l.listingKind === "event" ? "Événementiel" : TX_LABEL[l.transaction] ?? l.transaction}
+            <span className="rounded-md bg-ink/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white"
+              style={l.listingKind === "classic" && l.statusLabel?.color ? { background: l.statusLabel.color } : undefined}>
+              {l.listingKind === "furnished" ? "Meublé" : l.listingKind === "event" ? "Événementiel" : l.statusLabel?.label ?? TX_LABEL[l.transaction] ?? l.transaction}
             </span>
             <span className="chip">{TYPE(l.propertyType)}</span>
             {l.featured ? <span className="rounded-md bg-amber-500 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">★ En vedette</span> : null}
@@ -203,6 +205,8 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
               <LocationMap lat={l.latitude} lng={l.longitude} label={zone} />
             </Section>
           ) : null}
+
+          {l.listingKind === "classic" || !l.listingKind ? <ReviewsSection type="listing" id={l.id} path={`/annonce/${l.id}`} /> : null}
 
           {!isReservable ? (
             <Section title="Conseils avant de vous engager">

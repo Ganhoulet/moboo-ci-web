@@ -9,7 +9,7 @@ import { VisualThumb } from "./visual-thumbs";
 type Values = Record<string, unknown>;
 
 /** Logo / favicon : réduit dans le navigateur (600 px), transparence gardée (PNG). */
-async function shrink(file: File): Promise<string> {
+export async function shrink(file: File): Promise<string> {
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((res, rej) => {

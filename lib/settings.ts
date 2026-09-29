@@ -35,6 +35,11 @@ export interface SiteSettings {
     enabled: boolean; logoUrl: string; showAgent: boolean; showDescription: boolean;
     showDetails: boolean; showFeatures: boolean; showGallery: boolean; showQr: boolean; footerText: string;
   };
+  reviews: { enabled: boolean; onListings: boolean; onPros: boolean; moderation: boolean; intro: string };
+  packages: {
+    enabled: boolean; requirePackage: boolean; freeListings: number; pageTitle: string; pageIntro: string;
+    companyName: string; companyAddress: string; companyTaxId: string; invoiceNote: string;
+  };
 }
 
 /** Valeurs de secours (API injoignable) — les mêmes que le schéma de l'API. */
@@ -73,6 +78,12 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   print: {
     enabled: true, logoUrl: "", showAgent: true, showDescription: true, showDetails: true, showFeatures: true,
     showGallery: false, showQr: true, footerText: "Fiche imprimée depuis Moboo.ci — l’immobilier en Côte d’Ivoire.",
+  },
+  reviews: { enabled: true, onListings: true, onPros: true, moderation: true, intro: "Partagez votre expérience : votre avis aide les autres visiteurs." },
+  packages: {
+    enabled: true, requirePackage: false, freeListings: 3, pageTitle: "Choisissez votre forfait",
+    pageIntro: "Publiez plus d’annonces et mettez vos biens en vedette. Paiement par Wave, Orange Money, MTN, Moov ou carte.",
+    companyName: "Moboo.ci", companyAddress: "Abidjan, Côte d’Ivoire", companyTaxId: "", invoiceNote: "Merci pour votre confiance.",
   },
 };
 

@@ -30,6 +30,8 @@ export interface Property {
   /** Back-office : en vedette, étiquettes (Exclusivité, Nouveau…). */
   featured?: boolean;
   labels?: { slug: string; label: string; color: string | null }[];
+  /** Statut (back-office → Statuts) : remplace le badge de transaction s'il est défini. */
+  status?: { label: string; color: string | null } | null;
 }
 
 export const TRANSACTION_BADGE: Record<Transaction, string> = {
@@ -163,6 +165,7 @@ export function mapListing(l: import("./types").ListingItem): Property {
     bedrooms: l.bedrooms,
     featured: !!l.featured,
     labels: l.labels ?? [],
+    status: kind === "classic" && l.statusLabel ? { label: l.statusLabel.label, color: l.statusLabel.color } : null,
   };
 }
 

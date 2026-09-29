@@ -34,12 +34,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ...[
       ["/admin/immobilier/nouvelle", "Nouvelle annonce"],
       ["/admin/immobilier/listes/type", "Types de bien"],
+      ["/admin/immobilier/listes/status", "Statuts"],
       ["/admin/immobilier/listes/feature", "Équipements"],
       ["/admin/immobilier/listes/label", "Étiquettes"],
       ["/admin/immobilier/listes/city", "Villes"],
       ["/admin/immobilier/listes/area", "Quartiers et communes"],
       ["/admin/immobilier/equipe/agences", "Agences"],
       ["/admin/immobilier/equipe/agents", "Agents"],
+      ["/admin/immobilier/partenaires", "Partenaires"],
+      ["/admin/immobilier/avis", "Avis"],
+      ["/admin/immobilier/forfaits", "Forfaits"],
+      ["/admin/immobilier/factures", "Factures"],
     ].map(([href, label]) => ({ href, label, icon: "building", child: true, group: "immobilier" })),
     // Rubriques, chacune suivie de ses sous-rubriques (ex. modèles d'e-mails).
     ...(settings?.schema ?? []).filter((s) => !s.parent).flatMap((s) => {
@@ -55,7 +60,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="bg-slate-100">
       <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-[1600px] flex-col lg:flex-row">
-        <aside className="shrink-0 bg-[#1f2327] lg:w-64">
+        <aside className="shrink-0 bg-[#1f2327] lg:w-64 print:hidden">
           <div className="hidden items-baseline gap-2 px-4 py-4 lg:flex">
             <span className="font-display text-lg font-black text-white">Moboo</span>
             <span className="text-xs font-semibold text-slate-400">Back-office</span>

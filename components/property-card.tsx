@@ -26,8 +26,9 @@ export function PropertyCard({ p }: { p: Property }) {
           )}
 
           {/* Badge de transaction (façon moboo.ci) */}
-          <span className="absolute right-3 top-3 rounded-md bg-ink/75 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
-            {TRANSACTION_BADGE[p.transaction]}
+          <span className="absolute right-3 top-3 rounded-md bg-ink/75 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white backdrop-blur-sm"
+            style={p.status?.color ? { background: p.status.color } : undefined}>
+            {p.status?.label ?? TRANSACTION_BADGE[p.transaction]}
           </span>
 
           {/* En vedette + étiquettes (back-office → Immobilier) */}

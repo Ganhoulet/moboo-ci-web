@@ -14,8 +14,9 @@ export function AdminTaxonomy({ kind, items, cities }: { kind: string; items: Ad
   const [draft, setDraft] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
-  const withColor = kind === "label";
+  const withColor = kind === "label" || kind === "status";
   const withParent = kind === "area";
+  const fixed = kind === "status";
 
   const run = (fn: () => Promise<{ ok: boolean; error?: string }>, ok: string) => start(async () => {
     setMsg(null);
@@ -25,7 +26,8 @@ export function AdminTaxonomy({ kind, items, cities }: { kind: string; items: Ad
   });
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+    <div className={fixed ? "space-y-3" : "grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]"}>
+      {fixed ? (msg ? <p className={"text-sm font-medium " + (msg.ok ? "text-emerald-700" : "text-red-600")}>{msg.text}</p> : null) : (
       <form className="h-fit rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200"
         onSubmit={(e) => { e.preventDefault(); if (!label.trim()) return; run(() => addTaxonomyAction(kind, { label, ...(withColor ? { color } : {}), ...(withParent ? { parent } : {}) }), "Ajouté."); setLabel(""); }}>
         <p className="font-semibold text-ink">Ajouter</p>
@@ -37,6 +39,7 @@ export function AdminTaxonomy({ kind, items, cities }: { kind: string; items: Ad
         <button disabled={pending} className="mt-4 w-full rounded-md bg-brand-700 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-50">Ajouter</button>
         {msg ? <p className={"mt-2 text-sm font-medium " + (msg.ok ? "text-emerald-700" : "text-red-600")}>{msg.text}</p> : null}
       </form>
+      )}
 
       <div className="overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
         <table className="w-full min-w-[32rem] text-sm">
@@ -73,7 +76,7 @@ export function AdminTaxonomy({ kind, items, cities }: { kind: string; items: Ad
                 <td className="px-4 py-2.5 text-right">{t.count}</td>
                 <td className="whitespace-nowrap px-4 py-2.5 text-right">
                   <button type="button" onClick={() => { setEditing(t.id); setDraft(t.label); }} className="mr-3 text-xs font-semibold text-brand-800 hover:underline">Renommer</button>
-                  <button type="button" disabled={pending} onClick={() => window.confirm(`Supprimer « ${t.label} » ?`) && run(() => removeTaxonomyAction(t.id), "Supprimé.")} className="text-xs font-semibold text-red-600 hover:underline">Supprimer</button>
+                  {fixed ? null : <button type="button" disabled={pending} onClick={() => window.confirm(`Supprimer « ${t.label} » ?`) && run(() => removeTaxonomyAction(t.id), "Supprimé.")} className="text-xs font-semibold text-red-600 hover:underline">Supprimer</button>}
                 </td>
               </tr>
             ))}

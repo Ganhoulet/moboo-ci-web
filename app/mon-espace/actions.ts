@@ -5,6 +5,7 @@ import { authedFetch } from "@/lib/server-api";
 import { getSession, setProfile } from "@/lib/session";
 import { siteRequestOtp } from "@/lib/api";
 import type { Property } from "@/lib/property";
+import type { Invoice } from "@/app/admin/immobilier/actions";
 
 const errMsg = (data: any, fallback: string) =>
   (Array.isArray(data?.message) ? data.message[0] : data?.message)
@@ -27,6 +28,7 @@ export interface MyListing {
   whatsappClicks: number;
   photo: string | null;
   photoCount: number;
+  featured?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,9 +69,51 @@ export async function saveListingAction(id: string | null, payload: Record<strin
   return { ok: true, id: data?.id ?? id ?? undefined };
 }
 
-export async function setListingStatusAction(id: string, status: string): Promise<void> {
-  await authedFetch(`/site/me/listings/${encodeURIComponent(id)}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+export async function setListingStatusAction(id: string, status: string): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await authedFetch(`/site/me/listings/${encodeURIComponent(id)}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
   revalidatePath("/mon-espace", "layout");
+  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Action impossible.") };
+}
+
+/** Mettre en vedette (crédit du forfait) ou retirer. */
+export async function featureListingAction(id: string, on: boolean): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await authedFetch(`/site/me/listings/${encodeURIComponent(id)}/feature`, { method: "POST", body: JSON.stringify({ on }) });
+  revalidatePath("/", "layout");
+  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Action impossible.") };
+}
+
+/* ─── Forfait et factures ──────────────────────────────────────────────── */
+
+export interface MySubscription {
+  enabled: boolean; requirePackage: boolean; freeListings: number; limit: number; used: number; remaining: number;
+  subscription: { id: string; packageName: string; listings: number; featured: number; featuredUsed: number; featuredLeft: number; startsAt: string; endsAt: string } | null;
+}
+
+export async function getMySubscription(): Promise<MySubscription | null> {
+  if (!getSession()) return null;
+  const { ok, data } = await authedFetch("/site/me/subscription", { method: "GET" });
+  return ok ? data : null;
+}
+
+export async function listMyInvoices(): Promise<Invoice[]> {
+  if (!getSession()) return [];
+  const { ok, data } = await authedFetch("/site/me/invoices", { method: "GET" });
+  return ok && Array.isArray(data?.items) ? data.items : [];
+}
+
+export async function getMyInvoice(id: string): Promise<Invoice | null> {
+  if (!getSession()) return null;
+  const { ok, data } = await authedFetch(`/site/me/invoices/${encodeURIComponent(id)}`, { method: "GET" });
+  return ok ? data : null;
+}
+
+/** Achat d'un forfait : lien de paiement Money Fusion (ou activation immédiate si gratuit). */
+export async function checkoutPackageAction(packageId: string): Promise<{ ok: boolean; paymentUrl?: string | null; invoiceId?: string; paid?: boolean; error?: string }> {
+  if (!getSession()) return { ok: false, error: "Connectez-vous d'abord." };
+  const { ok, data } = await authedFetch(`/site/me/packages/${encodeURIComponent(packageId)}/checkout`, { method: "POST" });
+  if (!ok) return { ok: false, error: errMsg(data, "Paiement impossible pour le moment.") };
+  revalidatePath("/mon-espace", "layout");
+  return { ok: true, paymentUrl: data.paymentUrl, invoiceId: data.invoiceId, paid: data.paid };
 }
 
 export async function duplicateListingAction(id: string): Promise<void> {

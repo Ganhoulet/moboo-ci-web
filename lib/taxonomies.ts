@@ -6,7 +6,7 @@ import { relayHeaders } from "./relay";
 import { COMMUNES, LISTING_FEATURES, PROPERTY_TYPES } from "./accounts";
 
 export interface TaxItem { slug: string; label: string; parent: string | null; color: string | null }
-export interface Taxonomies { type: TaxItem[]; feature: TaxItem[]; label: TaxItem[]; city: TaxItem[]; area: TaxItem[] }
+export interface Taxonomies { type: TaxItem[]; feature: TaxItem[]; label: TaxItem[]; city: TaxItem[]; area: TaxItem[]; status: TaxItem[] }
 
 export const TAXONOMY_TAG = "site-taxonomies";
 
@@ -15,6 +15,7 @@ const FALLBACK: Taxonomies = {
   feature: LISTING_FEATURES.map((f) => ({ slug: f, label: f, parent: null, color: null })),
   label: [],
   city: [],
+  status: [],
   area: COMMUNES.map((c) => ({ slug: c, label: c, parent: null, color: null })),
 };
 
@@ -32,6 +33,7 @@ export async function getTaxonomies(): Promise<Taxonomies> {
       label: d.label ?? [],
       city: d.city ?? [],
       area: d.area?.length ? d.area : FALLBACK.area,
+      status: d.status ?? [],
     };
   } catch {
     return FALLBACK;

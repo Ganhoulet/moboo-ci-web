@@ -8,6 +8,7 @@ const LISTS: Record<string, { title: string; help: string }> = {
   label: { title: "Étiquettes", help: "Badges de couleur posés par le back-office sur une annonce (Exclusivité, Nouveau…), visibles sur les cartes et la fiche." },
   city: { title: "Villes", help: "Villes proposées ; les quartiers / communes s’y rattachent." },
   area: { title: "Quartiers et communes", help: "Liste « Commune / quartier » de l’éditeur d’annonce." },
+  status: { title: "Statuts", help: "Badge affiché sur les cartes et la fiche selon l’annonce : à louer, à vendre, loué ou vendu. Renommez-les et choisissez leur couleur ; la liste elle-même est fixe." },
 };
 
 export default async function AdminList({ params }: { params: { kind: string } }) {

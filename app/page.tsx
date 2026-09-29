@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { listProperties } from "@/lib/property";
 import { PropertyCard } from "@/components/property-card";
+import { getPartners } from "@/lib/community";
 
 export const revalidate = 120;
 
 export default async function HomePage() {
-  const featured = (await listProperties()).slice(0, 8);
+  const [all, partners] = await Promise.all([listProperties(), getPartners()]);
+  const featured = all.slice(0, 8);
 
   return (
     <div>
@@ -140,6 +142,20 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Partenaires (back-office → Immobilier → Partenaires) */}
+      {partners.length ? (
+        <section className="container-page py-12">
+          <h2 className="text-center font-display text-xl font-extrabold text-ink">Ils nous font confiance</h2>
+          <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
+            {partners.map((p) => {
+              // eslint-disable-next-line @next/next/no-img-element
+              const logo = <img src={p.logoUrl} alt={p.name} title={p.name} loading="lazy" className="h-12 w-auto max-w-[9rem] object-contain opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0" />;
+              return <li key={p.id}>{p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer">{logo}</a> : logo}</li>;
+            })}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

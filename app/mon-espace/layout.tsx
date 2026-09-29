@@ -8,6 +8,7 @@ import { FavoritesSync } from "@/components/favorites-sync";
 import { logoutAction } from "@/app/compte/actions";
 import { listMyInquiries, unreadMessages } from "./actions";
 import { authedFetch } from "@/lib/server-api";
+import { getSiteSettings } from "@/lib/settings";
 import type { SiteAccount } from "@/lib/api";
 
 export const metadata: Metadata = { title: "Mon espace", robots: { index: false } };
@@ -25,7 +26,8 @@ export default async function EspaceLayout({ children }: { children: React.React
   if (!account.onboarded) redirect("/inscription");
 
   const type = account.accountType ?? "particulier";
-  const items = menuFor(type);
+  const settings = await getSiteSettings();
+  const items = menuFor(type).filter((i) => settings.packages.enabled || (i.key !== "forfait" && i.key !== "factures"));
   const publisher = isPublisher(type);
   const [newInquiries, unread] = await Promise.all([
     publisher ? listMyInquiries().then((xs) => xs.filter((q) => q.status === "new").length) : 0,
@@ -37,9 +39,9 @@ export default async function EspaceLayout({ children }: { children: React.React
   return (
     <div className="container-page py-6 lg:py-8">
       <FavoritesSync />
-      <div className="lg:grid lg:grid-cols-[250px_1fr] lg:gap-8">
+      <div className="lg:grid lg:grid-cols-[250px_1fr] lg:gap-8 print:block">
         {/* Barre latérale (desktop) */}
-        <aside className="hidden lg:block">
+        <aside className="hidden lg:block print:!hidden">
           <div className="sticky top-24 space-y-5">
             <div className="rounded-2xl bg-white p-4 shadow-card">
               <div className="flex items-center gap-3">
@@ -78,7 +80,7 @@ export default async function EspaceLayout({ children }: { children: React.React
 
         {/* Contenu */}
         <main className="min-w-0">
-          <div className="mb-5 lg:hidden">
+          <div className="mb-5 lg:hidden print:hidden">
             <DashboardTabs items={items} badges={badges} />
             {account.isAdmin ? (
               <Link href="/admin" className="mt-3 inline-flex rounded-full bg-[#1f2327] px-3.5 py-2 text-sm font-semibold text-white">⚙ Back-office du site</Link>

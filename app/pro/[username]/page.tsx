@@ -1,3 +1,4 @@
+import { ReviewsSection } from "@/components/reviews";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPro } from "@/lib/api";
@@ -81,6 +82,10 @@ export default async function ProPage({ params }: { params: { username: string }
         ) : (
           <p className="mt-3 text-muted">Aucune annonce en ligne pour le moment.</p>
         )}
+
+        <div className="mt-12 max-w-3xl">
+          <ReviewsSection type="pro" id={p.username} path={`/pro/${p.username}`} />
+        </div>
       </div>
     </div>
   );

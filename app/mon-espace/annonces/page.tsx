@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { canAccess, PROPERTY_TYPES } from "@/lib/accounts";
 import { EmptyState, PageHeader, STATUS_LABEL, fmtXOF } from "@/components/dashboard-ui";
 import { ListingRowActions } from "@/components/listing-row-actions";
-import { listMyListings } from "../actions";
+import { getMySubscription, listMyListings } from "../actions";
 import { getTaxonomies } from "@/lib/taxonomies";
 
 const TABS = [
@@ -18,7 +18,7 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
   const account = getSession()!;
   if (!canAccess(account.accountType, "annonces")) redirect("/mon-espace");
 
-  const mine = await listMyListings();
+  const [mine, plan] = await Promise.all([listMyListings(), getMySubscription()]);
   const all = mine?.items ?? [];
   const tab = searchParams.statut ?? "";
   const q = (searchParams.q ?? "").trim().toLowerCase();
@@ -41,6 +41,17 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-800">
           <span className="font-semibold">🎉 Votre annonce est en ligne ! Partagez-la pour obtenir vos premières demandes.</span>
           <Link href={`/annonce/${searchParams.publiee}`} target="_blank" className="font-bold underline">Voir l'annonce ↗</Link>
+        </div>
+      ) : null}
+
+      {plan?.enabled && (plan.limit >= 0 || plan.subscription) ? (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-4 text-sm shadow-card">
+          <span className="text-slate-700">
+            {plan.subscription ? <>Forfait <strong>{plan.subscription.packageName}</strong> · </> : <>Sans forfait · </>}
+            {plan.limit < 0 ? `${plan.used} annonce(s) en ligne (illimité)` : `${plan.used} / ${plan.limit} annonce(s) en ligne`}
+            {plan.subscription ? ` · ${plan.subscription.featuredLeft} mise(s) en vedette disponible(s)` : ""}
+          </span>
+          <Link href="/mon-espace/forfait" className="font-semibold text-brand-800 hover:underline">{plan.limit >= 0 && plan.remaining === 0 ? "Passer à un forfait supérieur →" : "Mon forfait →"}</Link>
         </div>
       ) : null}
 
@@ -83,6 +94,7 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
+                    {l.featured ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">★ En vedette</span> : null}
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{l.transaction === "sale" ? "Vente" : "Location"} · {typeLabel(l.propertyType)}</span>
                   </div>
                   <Link href={`/mon-espace/annonces/${l.id}`} className="mt-1 block truncate font-semibold text-ink hover:text-brand-800">{l.title}</Link>
@@ -91,7 +103,7 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
                     {[l.commune, l.city].filter(Boolean).join(", ")} · 👁 {l.views} · 💬 {l.inquiries} · 📞 {l.callClicks ?? 0} · WhatsApp {l.whatsappClicks ?? 0} · modifiée le {new Date(l.updatedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
                   </p>
                 </div>
-                <ListingRowActions id={l.id} status={l.status} transaction={l.transaction} />
+                <ListingRowActions id={l.id} status={l.status} transaction={l.transaction} featured={l.featured} />
               </div>
             );
           })}

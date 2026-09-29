@@ -58,6 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link href="/annonces?transaction=rent" className="hover:text-ink">Louer</Link>
               <Link href="/annonces?transaction=sale" className="hover:text-ink">Acheter</Link>
               <Link href="/reserver" className="hover:text-ink">Réserver</Link>
+              {settings.packages.enabled ? <Link href="/forfaits" className="hover:text-ink">Forfaits</Link> : null}
               <a href="https://moboo.ci/blog" className="hover:text-ink">Blog</a>
               <Link href="/compte?mode=identifiant" className="font-semibold text-brand-800 hover:text-brand-900">Espace pro</Link>
               <span className="text-slate-400">© {new Date().getFullYear()} Moboo</span>

@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { deleteListingAction, duplicateListingAction, setListingStatusAction } from "@/app/mon-espace/actions";
+import { deleteListingAction, duplicateListingAction, featureListingAction, setListingStatusAction } from "@/app/mon-espace/actions";
 
 /** Menu « ⋯ » d'une annonce : modifier, voir, vendu/loué, masquer, dupliquer, supprimer. */
-export function ListingRowActions({ id, status, transaction }: { id: string; status: string; transaction: "rent" | "sale" }) {
+export function ListingRowActions({ id, status, transaction, featured }: { id: string; status: string; transaction: "rent" | "sale"; featured?: boolean }) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const ref = useRef<HTMLDivElement>(null);
@@ -17,7 +17,13 @@ export function ListingRowActions({ id, status, transaction }: { id: string; sta
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
-  const run = (fn: () => Promise<void>) => { setOpen(false); start(fn); };
+  const run = (fn: () => Promise<void | { ok: boolean; error?: string }>) => {
+    setOpen(false);
+    start(async () => {
+      const r = await fn();
+      if (r && !r.ok && r.error) window.alert(r.error);
+    });
+  };
   const closed = transaction === "sale" ? "SOLD" : "RENTED";
   const item = "flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink hover:bg-slate-50";
 
@@ -44,6 +50,7 @@ export function ListingRowActions({ id, status, transaction }: { id: string; sta
                 ✅ {transaction === "sale" ? "Marquer vendu" : "Marquer loué"}
               </button>
               <button type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "DISABLED"))}>🙈 Masquer du site</button>
+              <button type="button" className={item} onClick={() => run(() => featureListingAction(id, !featured))}>{featured ? "☆ Retirer de la vedette" : "⭐ Mettre en vedette"}</button>
             </>
           ) : (
             <button type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "ACTIVE"))}>🚀 Remettre en ligne</button>

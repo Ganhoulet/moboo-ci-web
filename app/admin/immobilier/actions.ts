@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { authedFetch } from "@/lib/server-api";
 import { TAXONOMY_TAG } from "@/lib/taxonomies";
+import { PACKAGES_TAG, PARTNERS_TAG } from "@/lib/community";
 
 const BASE = "/site/admin/realestate";
 const errMsg = (data: any, fallback: string) =>
@@ -72,7 +73,7 @@ export async function listTaxonomy(kind: string): Promise<AdminTaxItem[]> {
 
 function refreshTax() {
   revalidateTag(TAXONOMY_TAG);
-  revalidatePath("/admin/immobilier", "layout");
+  revalidatePath("/", "layout"); // cartes et fiches : statuts / étiquettes renommés tout de suite
 }
 
 export async function addTaxonomyAction(kind: string, input: { label: string; parent?: string; color?: string }): Promise<{ ok: boolean; error?: string }> {
@@ -100,4 +101,93 @@ export interface AdminPerson { id: string; source: "site" | "reprise"; name: str
 export async function listPeople(kind: "agencies" | "agents", q?: string): Promise<AdminPerson[]> {
   const { ok, data } = await authedFetch(`${BASE}/people/${kind}${q ? `?q=${encodeURIComponent(q)}` : ""}`, { method: "GET" });
   return ok && Array.isArray(data?.items) ? data.items : [];
+}
+
+/* ─── Partenaires ──────────────────────────────────────────────────────── */
+
+export interface AdminPartner { id: string; name: string; logoUrl: string; url: string | null; sort: number; active: boolean }
+
+export async function listPartners(): Promise<AdminPartner[]> {
+  const { ok, data } = await authedFetch(`${BASE}/partners`, { method: "GET" });
+  return ok && Array.isArray(data?.items) ? data.items : [];
+}
+
+type R = { ok: boolean; error?: string };
+async function call(path: string, method: string, body: unknown, fallback: string, after?: () => void): Promise<R> {
+  const { ok, data } = await authedFetch(path, { method, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+  if (ok) { after?.(); revalidatePath("/admin/immobilier", "layout"); }
+  return ok ? { ok: true } : { ok: false, error: errMsg(data, fallback) };
+}
+const refreshPartners = () => revalidateTag(PARTNERS_TAG);
+
+export async function savePartnerAction(id: string | null, input: Partial<AdminPartner>): Promise<R> {
+  return call(id ? `${BASE}/partners/${encodeURIComponent(id)}` : `${BASE}/partners`, id ? "PATCH" : "POST", input, "Enregistrement impossible.", refreshPartners);
+}
+export async function removePartnerAction(id: string): Promise<R> {
+  return call(`${BASE}/partners/${encodeURIComponent(id)}`, "DELETE", undefined, "Suppression impossible.", refreshPartners);
+}
+
+/* ─── Avis ─────────────────────────────────────────────────────────────── */
+
+export interface AdminReview {
+  id: string; targetType: "listing" | "pro"; rating: number; title: string | null; comment: string; status: "pending" | "approved" | "rejected";
+  authorName: string; createdAt: string; target: { title: string; href: string | null };
+  author: { name: string; phone: string | null; email: string | null } | null;
+}
+export interface AdminReviewPage { total: number; page: number; perPage: number; counts: Record<string, number>; items: AdminReview[] }
+
+export async function listReviews(params: Record<string, string | undefined>): Promise<AdminReviewPage | null> {
+  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString();
+  const { ok, data } = await authedFetch(`${BASE}/reviews${qs ? `?${qs}` : ""}`, { method: "GET" });
+  return ok ? data : null;
+}
+export async function reviewStatusAction(id: string, status: string): Promise<R> {
+  return call(`${BASE}/reviews/${encodeURIComponent(id)}`, "PATCH", { status }, "Action impossible.", () => revalidatePath("/", "layout"));
+}
+export async function removeReviewAction(id: string): Promise<R> {
+  return call(`${BASE}/reviews/${encodeURIComponent(id)}`, "DELETE", undefined, "Suppression impossible.", () => revalidatePath("/", "layout"));
+}
+
+/* ─── Forfaits et factures ─────────────────────────────────────────────── */
+
+const BILL = "/site/admin/billing";
+
+export interface AdminPackage {
+  id: string; name: string; description: string | null; price: number; durationDays: number; listings: number; featured: number;
+  popular: boolean; active: boolean; sort: number; subscribers: number;
+}
+export async function listPackages(): Promise<AdminPackage[]> {
+  const { ok, data } = await authedFetch(`${BILL}/packages`, { method: "GET" });
+  return ok && Array.isArray(data?.items) ? data.items : [];
+}
+const refreshPackages = () => revalidateTag(PACKAGES_TAG);
+export async function savePackageAction(id: string | null, input: Partial<AdminPackage>): Promise<R> {
+  return call(id ? `${BILL}/packages/${encodeURIComponent(id)}` : `${BILL}/packages`, id ? "PATCH" : "POST", input, "Enregistrement impossible.", refreshPackages);
+}
+export async function removePackageAction(id: string): Promise<R> {
+  return call(`${BILL}/packages/${encodeURIComponent(id)}`, "DELETE", undefined, "Suppression impossible.", refreshPackages);
+}
+
+export interface Invoice {
+  id: string; number: string; label: string; amount: number; status: "pending" | "paid" | "cancelled" | "failed"; method: string | null;
+  paymentRef: string | null; billingName: string | null; billingPhone: string | null; billingEmail: string | null; createdAt: string; paidAt: string | null;
+  subscription?: { packageName: string; startsAt: string; endsAt: string } | null;
+  issuer?: { name: string; address: string; taxId: string; note: string };
+}
+export interface AdminInvoicePage { total: number; page: number; perPage: number; revenue: number; counts: Record<string, number>; items: Invoice[] }
+
+export async function listInvoices(params: Record<string, string | undefined>): Promise<AdminInvoicePage | null> {
+  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString();
+  const { ok, data } = await authedFetch(`${BILL}/invoices${qs ? `?${qs}` : ""}`, { method: "GET" });
+  return ok ? data : null;
+}
+export async function getAdminInvoice(id: string): Promise<Invoice | null> {
+  const { ok, data } = await authedFetch(`${BILL}/invoices/${encodeURIComponent(id)}`, { method: "GET" });
+  return ok ? data : null;
+}
+export async function invoiceStatusAction(id: string, status: "paid" | "cancelled", method?: string): Promise<R> {
+  return call(`${BILL}/invoices/${encodeURIComponent(id)}`, "PATCH", { status, method }, "Action impossible.");
+}
+export async function grantPackageAction(input: { phone: string; packageId: string; method?: string }): Promise<R> {
+  return call(`${BILL}/invoices`, "POST", input, "Attribution impossible.");
 }
