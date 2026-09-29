@@ -15,10 +15,10 @@ const NAV = [
 type Tone = "light" | "dark";
 const ALIGN = { left: "justify-start", center: "justify-center", right: "justify-end" } as const;
 
-function Nav({ tone, align, className = "" }: { tone: Tone; align: keyof typeof ALIGN; className?: string }) {
+function Nav({ tone, align, className = "", menu }: { tone: Tone; align: keyof typeof ALIGN; className?: string; menu?: { label: string; href: string }[] }) {
   return (
     <nav className={`flex flex-1 items-center gap-7 text-sm font-semibold ${ALIGN[align]} ${className}`}>
-      {NAV.map((n) => (
+      {(menu?.length ? menu : NAV).map((n) => (
         <Link key={n.href} href={n.href} className={tone === "dark" ? "text-white/85 transition hover:text-white" : "text-slate-600 transition hover:text-brand-800"}>
           {n.label}
         </Link>
@@ -78,7 +78,7 @@ const ic = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: 
  * En-tête du site. Style, largeur et alignement du menu : back-office → « En-têtes
  * et barre du haut ». Sur téléphone, toujours la version compacte (logo + boutons).
  */
-export function SiteHeader({ settings }: { settings: SiteSettings }) {
+export function SiteHeader({ settings, menu }: { settings: SiteSettings; menu?: { label: string; href: string }[] }) {
   const { header, branding } = settings;
   const style = header.headerStyle;
   const wrap = header.headerLayout === "full" ? "w-full px-4 sm:px-6 lg:px-8" : "container-page";
@@ -128,7 +128,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
         </div>
         <header className="print:hidden sticky top-0 z-40 hidden bg-brand-900 md:block">
           <div className={`${wrap} flex h-14 items-center gap-6`}>
-            <Nav tone="dark" align={style === "centered" ? "center" : header.navAlign} />
+            <Nav tone="dark" align={style === "centered" ? "center" : header.navAlign} menu={menu} />
             <Actions settings={{ ...settings, header: { ...header, showPublishButton: style === "centered" ? false : header.showPublishButton } }} tone="dark" />
           </div>
         </header>
@@ -142,7 +142,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
     <header className={"print:hidden sticky top-0 z-40 " + (tone === "dark" ? "bg-brand-900" : "border-b border-slate-200/70 bg-white/90 backdrop-blur")}>
       <div className={`${wrap} flex h-16 items-center justify-between gap-6`}>
         {logo(tone)}
-        <Nav tone={tone} align={header.navAlign} className="hidden md:flex" />
+        <Nav tone={tone} align={header.navAlign} className="hidden md:flex" menu={menu} />
         <Actions settings={settings} tone={tone} />
       </div>
     </header>

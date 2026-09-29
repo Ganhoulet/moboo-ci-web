@@ -79,11 +79,13 @@ export async function listListings(params?: {
   sort?: string;
   bbox?: string;
   map?: boolean;
+  featured?: boolean;
 }): Promise<Paginated<ListingItem>> {
   const q = new URLSearchParams();
   if (params?.sort) q.set("sort", params.sort);
   if (params?.bbox) q.set("bbox", params.bbox);
   if (params?.map) q.set("map", "1");
+  if (params?.featured) q.set("featured", "1");
   if (params?.transaction) q.set("transaction", params.transaction);
   if (params?.city) q.set("city", params.city);
   if (params?.q) q.set("q", params.q);

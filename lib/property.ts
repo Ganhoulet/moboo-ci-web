@@ -190,11 +190,13 @@ export async function listListingsPage(opts: {
   sort?: string;
   bbox?: string;
   map?: boolean;
+  featured?: boolean;
 }): Promise<PagedProperties> {
   const { items, total, page, perPage } = await listListings({
     sort: opts.sort,
     bbox: opts.bbox,
     map: opts.map,
+    featured: opts.featured,
     transaction: opts.transaction,
     q: opts.q,
     priceMin: opts.priceMin,

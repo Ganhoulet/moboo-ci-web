@@ -29,6 +29,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const settings = await getAdminSettings();
   const items = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
+    // Apparence : constructeur de la page d'accueil, menu et pied de page.
+    { href: "/admin/accueil", label: "Page d’accueil", icon: "layout", group: "apparence" },
+    { href: "/admin/accueil/menu", label: "Menu et pied de page", icon: "layout", child: true, group: "apparence" },
     // Immobilier (façon Houzez « Real Estate ») : annonces, listes, agences et agents.
     { href: "/admin/immobilier", label: "Immobilier", icon: "building", group: "immobilier" },
     ...[
