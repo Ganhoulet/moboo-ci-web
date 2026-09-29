@@ -8,5 +8,15 @@
         "D0:3C:1C:4E:0B:57:95:8F:B6:7A:44:B4:00:A3:1C:2F:18:86:17:AB:69:83:F8:EE:DA:FB:F6:6A:3A:05:67:59"
       ]
     }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ci.moboo.moboo_pro",
+      "sha256_cert_fingerprints": [
+        "84:FB:82:6B:73:6A:7A:0F:BA:D9:41:77:FA:3F:50:6A:72:73:52:7F:68:3A:35:FF:C4:A2:B2:DC:5C:7A:C1:EC"
+      ]
+    }
   }
 ]
