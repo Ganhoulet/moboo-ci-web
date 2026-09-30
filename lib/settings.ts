@@ -50,6 +50,7 @@ export interface SiteSettings {
     companyName: string; companyAddress: string; companyTaxId: string; invoiceNote: string;
   };
   verification: { enabled: boolean; types: string[]; requiredForListings: boolean; docTypes: string; intro: string };
+  moderation: { reportsEnabled: boolean };
 }
 
 export interface MapSettings {
@@ -118,6 +119,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     docTypes: "Carte nationale d’identité, Passeport, Registre du commerce (RCCM), Carte professionnelle",
     intro: "Faites vérifier votre compte : les visiteurs font davantage confiance aux professionnels vérifiés. Vos documents ne sont jamais publiés.",
   },
+  moderation: { reportsEnabled: true },
 };
 
 /** Nom d'un rôle (type de compte), renommable dans le back-office. */

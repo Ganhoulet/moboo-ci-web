@@ -205,6 +205,8 @@ export interface SiteAccount {
   googleLinked?: boolean;
   isAdmin?: boolean;       // accès au back-office (/admin)
   verified?: boolean;      // compte vérifié (badge)
+  adminRole?: { key: string; name: string } | null; // rôle du back-office
+  permissions?: string[];  // permissions du rôle (menu du back-office)
 }
 
 /** Profil saisi pendant l'inscription (envoyé à la vérification du code). */

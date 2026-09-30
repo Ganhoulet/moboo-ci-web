@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { formatXOF, getListing } from "@/lib/api";
 import { mapListing, similarListings } from "@/lib/property";
 import { ReadMore } from "@/components/detail-actions";
+import { ReportButton } from "@/components/report-button";
 import { AsidePerson, DetailHero, DetailIntro, type HeroPerson } from "@/components/detail-hero";
 import {
   DetailMeta, FeatureList, Icons as I, JsonLd, KeyFacts, Section, displayName, type Fact,
@@ -45,7 +46,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");
   // Sections affichées, extrait, biens similaires : back-office → Détails de la propriété.
-  const { listing: cfg, general, print } = await getSiteSettings();
+  const { listing: cfg, general, print, moderation } = await getSiteSettings();
   const tax = await getTaxonomies();
   const TYPE = (slug: string) => typeLabel(tax, slug);
   const similar = cfg.showSimilar
@@ -269,6 +270,12 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
           {cfg.showContactForm ? (
             <div className="mt-4">
               <InquiryForm listingId={l.id} title={l.title} />
+            </div>
+          ) : null}
+
+          {moderation.reportsEnabled ? (
+            <div className="mt-4 text-center">
+              <ReportButton targetType="listing" targetId={l.id} />
             </div>
           ) : null}
         </aside>

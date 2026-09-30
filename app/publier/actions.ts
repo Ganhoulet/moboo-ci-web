@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { relayHeaders } from "@/lib/relay";
 import "@/lib/client-ip";
 
-export type SubmitState = { ok: boolean; message: string; id?: string } | null;
+export type SubmitState = { ok: boolean; message: string; id?: string; pending?: boolean } | null;
 
 /** Dépose une annonce (à louer / à vendre) via le moteur (server-side). */
 export async function submitListing(
@@ -66,7 +66,10 @@ export async function submitListing(
       return {
         ok: true,
         id: data.id,
-        message: "Votre annonce est publiée ! Retrouvez-la avec ses vues et demandes dans votre espace.",
+        message: data.moderation === "pending"
+          ? "Merci ! Votre annonce est enregistrée : elle sera en ligne dès sa validation par l’équipe Moboo. Suivez-la dans votre espace."
+          : "Votre annonce est publiée ! Retrouvez-la avec ses vues et demandes dans votre espace.",
+        pending: data.moderation === "pending",
       };
     }
     const res = await fetch(`${API_URL}/marketplace/properties/submit`, {
@@ -82,7 +85,10 @@ export async function submitListing(
     return {
       ok: true,
       id: data.id,
-      message: "Votre annonce est publiée ! Elle apparaît maintenant dans le catalogue.",
+      message: data.moderation === "pending"
+        ? "Merci ! Votre annonce est enregistrée : elle sera visible dans le catalogue dès sa validation par l’équipe Moboo."
+        : "Votre annonce est publiée ! Elle apparaît maintenant dans le catalogue.",
+      pending: data.moderation === "pending",
     };
   } catch {
     return { ok: false, message: "Service indisponible pour le moment. Réessayez plus tard." };

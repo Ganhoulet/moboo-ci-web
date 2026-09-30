@@ -7,6 +7,7 @@ import { getSiteSettings, roleNames } from "@/lib/settings";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { mapListing } from "@/lib/property";
 import { PropertyCard } from "@/components/property-card";
+import { ReportButton } from "@/components/report-button";
 
 export const revalidate = 60;
 
@@ -20,7 +21,8 @@ export async function generateMetadata({ params }: { params: { username: string 
 export default async function ProPage({ params }: { params: { username: string } }) {
   const p = await getPro(params.username);
   if (!p) notFound();
-  const names = roleNames(await getSiteSettings());
+  const settings = await getSiteSettings();
+  const names = roleNames(settings);
   const wa = (p.whatsapp || "").replace(/[^0-9]/g, "");
   const waLink = wa ? `https://wa.me/${wa.startsWith("225") ? wa : "225" + wa}` : null;
   const socials = [
@@ -89,6 +91,9 @@ export default async function ProPage({ params }: { params: { username: string }
         <div className="mt-12 max-w-3xl">
           <ReviewsSection type="pro" id={p.username} path={`/pro/${p.username}`} />
         </div>
+        {settings.moderation.reportsEnabled ? (
+          <div className="mt-8"><ReportButton targetType="account" targetId={p.username} /></div>
+        ) : null}
       </div>
     </div>
   );

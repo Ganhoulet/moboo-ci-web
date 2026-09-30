@@ -67,15 +67,15 @@ export async function resetSectionAction(section: string): Promise<{ ok: boolean
   return { ok: true, values: data };
 }
 
-export interface AdminUser { id: string; phone: string; firstName: string | null; lastName: string | null; email: string | null; fixed: boolean; twoFactor?: string[]; lastLoginAt?: string | null }
+export interface AdminUser { id: string; phone: string; firstName: string | null; lastName: string | null; email: string | null; fixed: boolean; twoFactor?: string[]; lastLoginAt?: string | null; role?: string | null; roleName?: string | null }
 
-export async function listAdmins(): Promise<{ items: AdminUser[]; pendingPhones: string[] } | null> {
+export async function listAdmins(): Promise<{ items: AdminUser[]; pendingPhones: string[]; roles: { key: string; name: string }[] } | null> {
   const { ok, data } = await authedFetch("/site/admin/admins", { method: "GET" });
   return ok ? data : null;
 }
 
-export async function addAdminAction(phone: string): Promise<{ ok: boolean; error?: string }> {
-  const { ok, data } = await authedFetch("/site/admin/admins", { method: "POST", body: JSON.stringify({ phone }) });
+export async function addAdminAction(phone: string, role?: string): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await authedFetch("/site/admin/admins", { method: "POST", body: JSON.stringify({ phone, role }) });
   if (ok) revalidatePath("/admin/administrateurs");
   return ok ? { ok: true } : { ok: false, error: errMsg(data, "Ajout impossible.") };
 }

@@ -82,10 +82,10 @@ export function ListingForm({ defaults }: { defaults?: { contactName?: string; c
         <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-600 text-white">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><path d="m5 12 4 4 10-10" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </div>
-        <h2 className="mt-3 font-display text-lg font-bold text-ink">Annonce publiée</h2>
+        <h2 className="mt-3 font-display text-lg font-bold text-ink">{state.pending ? "Annonce envoyée" : "Annonce publiée"}</h2>
         <p className="mt-1 text-sm text-slate-600">{state.message}</p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          {state.id ? (
+          {state.id && !state.pending ? (
             <Link href={`/annonce/${state.id}`} className="btn-primary bg-accent-600 hover:bg-accent-700">Voir mon annonce</Link>
           ) : null}
           <Link href="/annonces" className="btn-ghost">Voir le catalogue</Link>

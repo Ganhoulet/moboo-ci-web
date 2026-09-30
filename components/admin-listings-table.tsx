@@ -83,6 +83,11 @@ function Row({ l, labels }: { l: AdminListingRow; labels: Record<string, { label
       </td>
       <td className="whitespace-nowrap px-4 py-4 text-sm">
         <span className="inline-flex items-center gap-1.5"><span className={`h-2.5 w-2.5 rounded-sm ${st.dot}`} />{st.label}</span>
+        {row.moderation && row.moderation !== "approved" ? (
+          <a href="/admin/moderation" className={"mt-1 block w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold " + (row.moderation === "pending" ? "bg-amber-100 text-amber-800" : row.moderation === "changes" ? "bg-sky-100 text-sky-800" : "bg-red-100 text-red-700")}>
+            {row.moderation === "pending" ? "À valider" : row.moderation === "changes" ? "À corriger" : row.moderation === "rejected" ? "Refusée" : "Compte suspendu"}
+          </a>
+        ) : null}
         {expired ? <p className="mt-1 text-xs font-semibold text-red-600">Expirée</p> : null}
       </td>
       <td className="px-3 py-3">

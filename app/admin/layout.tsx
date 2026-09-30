@@ -4,9 +4,12 @@ import { redirect } from "next/navigation";
 import { getSession, displayName } from "@/lib/session";
 import { authedFetch } from "@/lib/server-api";
 import type { SiteAccount } from "@/lib/api";
-import { AdminNav } from "@/components/admin-nav";
+import { AdminNav, type AdminNavItem } from "@/components/admin-nav";
 import { getAdminSettings } from "./actions";
 import { TwoFactorSettings } from "@/components/two-factor-settings";
+import { headers } from "next/headers";
+import { can, canAccess } from "@/lib/admin-perms";
+import { getModerationSummary } from "./backoffice-actions";
 
 export const metadata: Metadata = { title: "Back-office", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -47,9 +50,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     );
   }
 
-  const settings = await getAdminSettings();
-  const items = [
+  const perms = account.permissions ?? [];
+  const [settings, mod] = await Promise.all([
+    getAdminSettings(),
+    can(perms, "moderation") ? getModerationSummary() : Promise.resolve(null),
+  ]);
+  const items: AdminNavItem[] = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
+    // Utilisateurs (façon WordPress) : comptes, fiche 360°, rôles, journal.
+    { href: "/admin/utilisateurs", label: "Utilisateurs", icon: "users", group: "utilisateurs" },
+    { href: "/admin/administrateurs", label: "Administrateurs", icon: "users", child: true, group: "utilisateurs" },
+    { href: "/admin/roles", label: "Rôles et permissions", icon: "key", child: true, group: "utilisateurs" },
+    { href: "/admin/journal", label: "Journal d’activité", icon: "history", child: true, group: "utilisateurs" },
+    // Modération (façon Airbnb / Zillow) : annonces à valider, signalements.
+    { href: "/admin/moderation", label: "Modération", icon: "flag", group: "moderation", badge: (mod?.pending ?? 0) + (mod?.reports ?? 0) },
+    { href: "/admin/moderation?tab=reports", label: "Signalements", icon: "flag", child: true, group: "moderation", badge: mod?.reports ?? 0 },
+    { href: "/admin/moderation/reglages", label: "Réglages", icon: "flag", child: true, group: "moderation" },
     // Apparence : constructeur de la page d'accueil, menu et pied de page.
     { href: "/admin/accueil", label: "Page d’accueil", icon: "layout", group: "apparence" },
     { href: "/admin/accueil/menu", label: "Menus et pied de page", icon: "layout", child: true, group: "apparence" },
@@ -97,9 +113,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         ...children.map((c) => ({ href: `/admin/reglages/${c.id}`, label: c.label, icon: c.icon, child: true, group: s.id })),
       ];
     }),
-    { href: "/admin/administrateurs", label: "Administrateurs", icon: "users" },
     { href: "/admin/securite", label: "Ma sécurité (2FA)", icon: "shield" },
   ];
+  // Menu limité aux rubriques du rôle ; une adresse ouverte directement sans droit affiche « Accès refusé ».
+  const visible = items.filter((it) => canAccess(perms, it.href));
+  const path = headers().get("x-moboo-path") ?? "/admin";
+  const allowed = canAccess(perms, path);
 
   return (
     <div className="bg-slate-100">
@@ -109,10 +128,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className="font-display text-lg font-black text-white">Moboo</span>
             <span className="text-xs font-semibold text-slate-400">Back-office</span>
           </div>
-          <AdminNav items={items} />
-          <p className="hidden px-4 py-5 text-xs text-slate-500 lg:block">Connecté : {displayName(account)}</p>
+          <AdminNav items={visible} />
+          <p className="hidden px-4 py-5 text-xs text-slate-500 lg:block">
+            Connecté : {displayName(account)}
+            {account.adminRole ? <><br /><span className="text-slate-400">Rôle : {account.adminRole.name}</span></> : null}
+          </p>
         </aside>
-        <main className="min-w-0 flex-1 p-3 sm:p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-3 sm:p-6">
+          {allowed ? children : (
+            <div className="mx-auto max-w-lg rounded-lg bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
+              <p className="text-3xl">🔒</p>
+              <h1 className="mt-2 font-display text-xl font-extrabold text-ink">Accès refusé</h1>
+              <p className="mt-2 text-sm text-muted">Votre rôle ({account.adminRole?.name ?? "—"}) ne donne pas accès à cette rubrique. Demandez à un super administrateur de modifier vos permissions.</p>
+              <Link href="/admin" className="mt-5 inline-flex rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Tableau de bord</Link>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

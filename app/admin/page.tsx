@@ -11,6 +11,12 @@ const KPIS: [string, string, string][] = [
   ["messages", "Messages", "30 derniers jours"],
 ];
 
+const ALERTS: [string, string, string, string][] = [
+  ["pendingListings", "Annonces à valider", "/admin/moderation", "bg-amber-50 text-amber-900 ring-amber-200"],
+  ["openReports", "Signalements ouverts", "/admin/moderation?tab=reports", "bg-red-50 text-red-800 ring-red-200"],
+  ["blockedAccounts", "Comptes suspendus / bannis", "/admin/utilisateurs?status=suspended", "bg-slate-50 text-slate-700 ring-slate-200"],
+];
+
 export default async function AdminHome() {
   const [overview, settings] = await Promise.all([getOverview(), getAdminSettings()]);
   return (
@@ -18,6 +24,14 @@ export default async function AdminHome() {
       <div>
         <h1 className="font-display text-2xl font-extrabold text-ink">Back-office Moboo.ci</h1>
         <p className="mt-1 text-sm text-muted">Réglez le site sans toucher au code : chaque modification est en ligne dès l’enregistrement.</p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {ALERTS.map(([k, label, href, cls]) => (
+          <Link key={k} href={href} className={`flex items-center justify-between rounded-lg px-4 py-3 ring-1 transition hover:brightness-95 ${cls}`}>
+            <span className="text-sm font-semibold">{label}</span>
+            <span className="font-display text-2xl font-extrabold">{(overview?.[k] ?? 0).toLocaleString("fr-FR")}</span>
+          </Link>
+        ))}
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {KPIS.map(([k, label, hint]) => (
@@ -31,7 +45,7 @@ export default async function AdminHome() {
       <section>
         <h2 className="mb-3 font-display text-lg font-bold text-ink">Réglages</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {settings?.schema.filter((s) => !s.parent).map((s) => {
+          {settings?.schema.filter((s) => !s.parent && !s.hidden).map((s) => {
             const u = settings.updated.find((x) => x.section === s.id);
             const children = settings.schema.filter((c) => c.parent === s.id).length;
             return (

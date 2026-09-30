@@ -30,6 +30,8 @@ export interface MyListing {
   photoCount: number;
   featured?: boolean;
   awaitingPayment?: boolean;
+  moderation?: "pending" | "approved" | "rejected" | "changes" | "suspended";
+  moderationNote?: string | null;
   expiresAt?: string | null;
   createdAt: string;
   updatedAt: string;

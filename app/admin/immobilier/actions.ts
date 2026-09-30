@@ -12,7 +12,7 @@ const errMsg = (data: any, fallback: string) =>
 
 export interface AdminListingRow {
   id: string; title: string; transaction: "rent" | "sale"; propertyType: string; price: number; priceUnit: string | null;
-  city: string; commune: string | null; photo: string | null; status: string; featured: boolean; labels: string[];
+  city: string; commune: string | null; photo: string | null; status: string; featured: boolean; labels: string[]; moderation?: string;
   expiresAt: string | null; createdAt: string; reference: number | null; views: number; inquiries: number;
   owner: { kind: "site" | "agent" | "contact"; name: string; username: string | null; phone: string | null };
 }

@@ -109,6 +109,14 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{l.transaction === "sale" ? "Vente" : "Location"} · {typeLabel(l.propertyType)}</span>
                   </div>
                   <Link href={`/mon-espace/annonces/${l.id}`} className="mt-1 block truncate font-semibold text-ink hover:text-brand-800">{l.title}</Link>
+                  {l.moderation && l.moderation !== "approved" ? (
+                    <p className={"mt-1 rounded-lg px-2.5 py-1.5 text-xs " + (l.moderation === "pending" ? "bg-amber-50 text-amber-900" : l.moderation === "changes" ? "bg-sky-50 text-sky-900" : "bg-red-50 text-red-800")}>
+                      {l.moderation === "pending" ? "⏳ En cours de validation par l’équipe Moboo : elle sera visible dès qu’elle est validée."
+                        : l.moderation === "changes" ? <>✎ Corrections demandées : {l.moderationNote} <Link href={`/mon-espace/annonces/${l.id}`} className="font-semibold underline">Modifier</Link> (elle sera revérifiée).</>
+                        : l.moderation === "rejected" ? <>✕ Annonce refusée{l.moderationNote ? ` : ${l.moderationNote}` : ""}. Vous pouvez la modifier pour la soumettre à nouveau.</>
+                        : "Masquée : votre compte est suspendu."}
+                    </p>
+                  ) : null}
                   <p className="truncate text-sm font-bold text-ink">{fmtXOF(l.price)}{l.transaction === "rent" ? <span className="font-medium text-muted"> / mois</span> : null}</p>
                   <p className="truncate text-xs text-muted">
                     {[l.commune, l.city].filter(Boolean).join(", ")} · 👁 {l.views} · 💬 {l.inquiries} · 📞 {l.callClicks ?? 0} · WhatsApp {l.whatsappClicks ?? 0} · modifiée le {new Date(l.updatedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
