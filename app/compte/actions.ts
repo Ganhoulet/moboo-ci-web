@@ -61,7 +61,7 @@ export async function verifyOtpAction(_prev: OtpState, formData: FormData): Prom
 
 /* ─── Connexion par identifiant + mot de passe ────────────────────────── */
 
-export type PasswordState = { error?: string; redirectTo?: string } | null;
+export type PasswordState = { error?: string; redirectTo?: string; linkTicket?: string; linkEmail?: string } | null;
 
 export async function passwordLoginAction(_prev: PasswordState, formData: FormData): Promise<PasswordState> {
   const identifier = String(formData.get("identifier") || "").trim();
@@ -77,6 +77,8 @@ export async function passwordLoginAction(_prev: PasswordState, formData: FormDa
       setAgentSession(data.accessToken, data.agent as AgentProfile);
       return { redirectTo: "/agent" };
     }
+    // Compte moboo.ci reconnu, 1re connexion ici : numéro à confirmer une fois (puis relié).
+    if (data?.status === "need_phone" && data.googleTicket) return { linkTicket: data.googleTicket, linkEmail: data.email };
     if (!data?.accessToken || !data?.account) return { error: "Connexion impossible. Réessayez." };
     setSession(data, data.account);
     revalidatePath("/", "layout");

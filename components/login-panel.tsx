@@ -64,10 +64,13 @@ function Submit({ label }: { label: string }) {
   );
 }
 
-function PasswordForm({ onForgot, next }: { onForgot: () => void; next?: string }) {
+function PasswordForm({ onForgot, next, onLink }: { onForgot: () => void; next?: string; onLink?: (ticket: string, email?: string) => void }) {
   const [state, action] = useFormState<PasswordState, FormData>(passwordLoginAction, null);
   const [show, setShow] = useState(false);
-  useEffect(() => { if (state?.redirectTo) window.location.assign(state.redirectTo); }, [state]);
+  useEffect(() => {
+    if (state?.redirectTo) window.location.assign(state.redirectTo);
+    else if (state?.linkTicket) onLink?.(state.linkTicket, state.linkEmail);
+  }, [state, onLink]);
 
   return (
     <form action={action} className="space-y-4">
@@ -116,7 +119,7 @@ export function LoginPanel({ initialMode = "telephone", googleClientId, methods 
     .filter(([m]) => (m === "telephone" ? methods.phone : methods.password));
   const available: Mode[] = tabs.length ? tabs.map(([m]) => m) : ["telephone"];
   const [mode, setMode] = useState<Mode>(available.includes(initialMode) ? initialMode : available[0]);
-  const [google, setGoogle] = useState<{ ticket: string; email?: string | null } | null>(null);
+  const [google, setGoogle] = useState<{ ticket: string; email?: string | null; wp?: boolean } | null>(null);
   const [googleError, setGoogleError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -133,10 +136,10 @@ export function LoginPanel({ initialMode = "telephone", googleClientId, methods 
     return (
       <div className="space-y-4">
         <div className="rounded-xl bg-brand-50 p-3 text-sm text-brand-900">
-          <p className="font-semibold">Dernière étape</p>
+          <p className="font-semibold">{google.wp ? "Compte moboo.ci reconnu ✓" : "Dernière étape"}</p>
           <p className="mt-0.5">
-            Confirmez votre numéro pour terminer{google.email ? <> avec <span className="font-semibold">{google.email}</span></> : null}.
-            Ensuite, le bouton Google suffira.
+            {google.wp ? <>Première connexion sur le nouveau site : confirmez votre numéro une seule fois pour relier votre compte{google.email ? <> <span className="font-semibold">{google.email}</span></> : null}. Ensuite, votre identifiant et votre mot de passe suffiront.</>
+              : <>Confirmez votre numéro pour terminer{google.email ? <> avec <span className="font-semibold">{google.email}</span></> : null}. Ensuite, le bouton Google suffira.</>}
           </p>
         </div>
         <LoginFlow googleTicket={google.ticket} next={next} />
@@ -168,7 +171,7 @@ export function LoginPanel({ initialMode = "telephone", googleClientId, methods 
         ))}
       </div> : null}
 
-      {mode === "telephone" ? <LoginFlow next={next} /> : <PasswordForm next={next} onForgot={() => setMode("telephone")} />}
+      {mode === "telephone" ? <LoginFlow next={next} /> : <PasswordForm next={next} onForgot={() => setMode("telephone")} onLink={(ticket, email) => { setGoogle({ ticket, email, wp: true }); setMode("telephone"); }} />}
     </div>
   );
 }
