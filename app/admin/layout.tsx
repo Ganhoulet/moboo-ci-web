@@ -115,6 +115,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         ...children.map((c) => ({ href: `/admin/reglages/${c.id}`, label: c.label, icon: c.icon, child: true, group: s.id })),
       ];
     }),
+    { href: "/admin/sante", label: "Santé du site", icon: "gauge" },
     { href: "/admin/securite", label: "Ma sécurité (2FA)", icon: "shield" },
   ];
   // Menu limité aux rubriques du rôle ; une adresse ouverte directement sans droit affiche « Accès refusé ».

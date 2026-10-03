@@ -30,6 +30,7 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/seo", ["seo"]],
   ["/admin/accueil", ["pages"]],
   ["/admin/reglages", ["settings"]],
+  ["/admin/sante", ["settings"]],
   ["/admin", "any"],
 ];
 
