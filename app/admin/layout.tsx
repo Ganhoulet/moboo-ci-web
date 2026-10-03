@@ -74,6 +74,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/seo", label: "Pages SEO", icon: "search", group: "seo" },
     { href: "/admin/seo/nouvelle", label: "Nouvelle page SEO", icon: "search", child: true, group: "seo" },
     { href: "/admin/seo/nouvelle?type=page", label: "SEO d’une page du site", icon: "search", child: true, group: "seo" },
+    { href: "/admin/seo/redirections", label: "Redirections et 404", icon: "search", child: true, group: "seo" },
     // Marketing : bannières, flyers et pop-ups (application mobile + site).
     { href: "/admin/marketing", label: "Marketing", icon: "megaphone", group: "marketing" },
     { href: "/admin/marketing/nouvelle", label: "Nouvelle campagne", icon: "megaphone", child: true, group: "marketing" },

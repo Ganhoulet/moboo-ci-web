@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { findRedirect } from "./lib/redirects-edge";
 
 /**
  * Renouvelle la session du compte AVANT l'affichage des pages (le seul endroit,
@@ -19,6 +20,23 @@ const cookieOpts = {
 };
 
 export async function middleware(req: NextRequest) {
+  // Anciennes adresses (WordPress) : redirection 301 avant tout le reste.
+  if (req.method === "GET" || req.method === "HEAD") {
+    const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || req.headers.get("x-real-ip") || "";
+    const r = await findRedirect(API_URL, req.nextUrl.pathname, req.nextUrl.searchParams, ip);
+    if (r) {
+      const [target, code] = r;
+      const url = /^https?:\/\//i.test(target) ? new URL(target) : new URL(target, req.nextUrl.origin);
+      return NextResponse.redirect(url, code === 302 ? 302 : 301);
+    }
+    // Adresse avec « / » final (ex. anciens liens WordPress) : forme sans « / ».
+    const p = req.nextUrl.pathname;
+    if (p.length > 1 && p.endsWith("/")) {
+      const url = new URL(req.url);
+      url.pathname = p.replace(/\/+$/, "") || "/";
+      return NextResponse.redirect(url.toString(), 308);
+    }
+  }
   // Chemin de la page pour les server components (SEO des pages existantes : lib/seo).
   req.headers.set("x-moboo-path", req.nextUrl.pathname);
   const next = () => NextResponse.next({ request: { headers: req.headers } });
