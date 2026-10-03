@@ -50,6 +50,9 @@ export function SiteFooter({ chrome, settings }: { chrome: ChromeContent; settin
             {menuAt(chrome.menus, chrome.locations, "footerBottom").map((l) => (
               <A key={l.id} href={safeHref(l.href)} className="hover:text-ink hover:underline">{l.label}</A>
             ))}
+            {/* Pages exigées par Google Play / l'App Store : toujours accessibles. */}
+            <Link href="/confidentialite" className="hover:text-ink hover:underline">Confidentialité</Link>
+            <Link href="/suppression-compte" className="hover:text-ink hover:underline">Supprimer mon compte</Link>
           </span>
           {settings.auth.adminLoginLink ? (
             <Link href="/administration" className="inline-flex items-center gap-1 font-semibold hover:text-ink">

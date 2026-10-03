@@ -12,7 +12,7 @@ const errMsg = (data: any, fallback: string) =>
 
 export type OtpState =
   | { step: "phone"; error?: string; googleTicket?: string }
-  | { step: "code"; phone: string; error?: string; devCode?: string; googleTicket?: string }
+  | { step: "code"; phone: string; error?: string; devCode?: string; googleTicket?: string; channel?: "whatsapp" | "email" | "none"; emailHint?: string | null }
   | { step: "done"; redirectTo?: string }
   | null;
 
@@ -20,16 +20,19 @@ export type OtpState =
 export async function sendOtpAction(_prev: OtpState, formData: FormData): Promise<OtpState> {
   const phone = String(formData.get("phone") || "").trim();
   const googleTicket = String(formData.get("googleTicket") || "") || undefined;
+  const byEmail = formData.get("channel") === "email";
   if (phone.replace(/[^0-9]/g, "").length < 8) {
     return { step: "phone", error: "Entrez un numéro de téléphone valide.", googleTicket };
   }
   try {
-    const { ok, data } = await siteRequestOtp(phone);
+    const { ok, data } = await siteRequestOtp(phone, undefined, byEmail ? "email" : "auto");
     if (!ok) {
+      // « Recevoir par e-mail » refusé : on reste sur l'étape du code, avec le message.
+      if (byEmail) return { step: "code", phone, error: errMsg(data, "Envoi par e-mail impossible."), googleTicket };
       return { step: "phone", error: errMsg(data, "Envoi impossible. Réessayez."), googleTicket };
     }
     // devCode renvoyé uniquement en dev/staging (pas de SMS configuré).
-    return { step: "code", phone, devCode: data?.devCode, googleTicket };
+    return { step: "code", phone, devCode: data?.devCode, googleTicket, channel: data?.channel, emailHint: data?.emailHint };
   } catch {
     return { step: "phone", error: "Service indisponible. Réessayez plus tard.", googleTicket };
   }

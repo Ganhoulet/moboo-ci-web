@@ -8,6 +8,7 @@ import { getUser } from "../../backoffice-actions";
 import { Avatar, Card, Pill, TYPE_LABEL, ago, fmtDate, fmtDateTime } from "@/components/backoffice/ui";
 import { UserActions, SessionRevoke } from "@/components/backoffice/user-actions";
 import { NotesPanel } from "@/components/backoffice/notes-panel";
+import { UserDeletionActions } from "@/components/backoffice/deletion-actions";
 import { AuditList } from "@/components/backoffice/audit-list";
 
 const METHOD: Record<string, string> = {
@@ -54,7 +55,14 @@ export default async function AdminUserPage({ params }: { params: { id: string }
             {a.whatsapp ? <> · <a href={`https://wa.me/${String(a.whatsapp).replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener" className="hover:underline">WhatsApp</a></> : null}
             {[a.commune, a.city].filter(Boolean).length ? <> · {[a.commune, a.city].filter(Boolean).join(", ")}</> : null}
           </p>
-          {a.accountStatus !== "active" ? (
+          {a.accountStatus === "deleting" ? (
+            <div className="mt-2 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-rose-200">
+              Suppression demandée par l’utilisateur le {fmtDateTime(a.statusChangedAt)} — définitive le <strong>{fmtDate(a.deletionScheduledAt)}</strong>.
+              {canManage ? <UserDeletionActions id={a.id} canPurge={can(me?.permissions, "roles")} /> : null}
+            </div>
+          ) : a.accountStatus === "deleted" ? (
+            <p className="mt-2 rounded-md bg-slate-100 px-3 py-2 text-sm text-slate-700">Compte supprimé le {fmtDateTime(a.statusChangedAt)} : les données personnelles ont été effacées.</p>
+          ) : a.accountStatus !== "active" ? (
             <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
               {a.accountStatus === "banned" ? "Banni" : "Suspendu"} le {fmtDateTime(a.statusChangedAt)}{a.statusChangedBy ? ` par ${a.statusChangedBy}` : ""}
               {a.suspendedUntil ? ` · jusqu’au ${fmtDateTime(a.suspendedUntil)}` : ""}

@@ -94,3 +94,11 @@ export const deleteRoleAction = async (key: string) =>
   send(`/site/admin/roles/${encodeURIComponent(key)}`, "DELETE", undefined, "Suppression impossible.", ["/admin/roles"]);
 export const setAdminRoleAction = async (id: string, role: string) =>
   send(`/site/admin/admins/${encodeURIComponent(id)}/role`, "PUT", { role }, "Changement impossible.", ["/admin/administrateurs", "/admin/roles"]);
+
+/* ─── Suppressions de compte ───────────────────────────────────────────── */
+
+export interface DeletionRow { id: string; accountId: string | null; phone: string; email: string | null; scope: "site" | "app" | "pro"; reason: string | null; reasonLabel: string | null; details: string | null; status: string; scheduledAt: string | null; handledBy: string | null; handledAt: string | null; createdAt: string }
+export const getDeletions = async (status?: string) => get<{ items: DeletionRow[]; counts: Record<string, number> }>(`/site/admin/deletions${qs({ status })}`);
+export const markDeletionDoneAction = async (id: string) => send(`/site/admin/deletions/${encodeURIComponent(id)}/done`, "POST", undefined, "Action impossible.", ["/admin/utilisateurs/suppressions"]);
+export const cancelUserDeletionAction = async (id: string) => send(`/site/admin/users/${encodeURIComponent(id)}/deletion/cancel`, "POST", undefined, "Annulation impossible.", [`/admin/utilisateurs/${id}`, "/admin/utilisateurs/suppressions"]);
+export const purgeUserAction = async (id: string) => send(`/site/admin/users/${encodeURIComponent(id)}/deletion/purge`, "POST", undefined, "Suppression impossible.", [`/admin/utilisateurs/${id}`, "/admin/utilisateurs/suppressions"]);

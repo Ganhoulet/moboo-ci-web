@@ -33,6 +33,11 @@ export default async function Profil() {
         googleClientId={GOOGLE_CLIENT_ID}
       />
       {tf.ok ? <div id="2fa"><TwoFactorSettings initial={tf.data} /></div> : null}
+      <section className="mt-8 rounded-2xl border border-red-100 bg-red-50/40 p-5">
+        <h2 className="font-display text-base font-bold text-ink">Supprimer mon compte</h2>
+        <p className="mt-1 text-sm text-muted">Votre compte, vos annonces et vos données personnelles seront supprimés. Vous pourrez annuler pendant {settings.legal.deletionGraceDays} jours.</p>
+        <Link href="/suppression-compte" className="mt-3 inline-flex rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">Supprimer mon compte…</Link>
+      </section>
     </div>
   );
 }

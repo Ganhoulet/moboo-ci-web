@@ -7,7 +7,7 @@ const BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://moboo.ci").replace(/\
 /** Plan du site : pages principales + pages SEO publiées (back-office → Pages SEO). */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const main = ["/", "/annonces", "/annonces?transaction=rent", "/annonces?transaction=sale", "/annonces?transaction=furnished", "/annonces?transaction=event", "/forfaits", "/publier"]
+  const main = ["/", "/annonces", "/annonces?transaction=rent", "/annonces?transaction=sale", "/annonces?transaction=furnished", "/annonces?transaction=event", "/forfaits", "/publier", "/confidentialite", "/suppression-compte"]
     .map((p, i) => ({ url: `${BASE}${p === "/" ? "" : p}`, lastModified: now, changeFrequency: "daily" as const, priority: i === 0 ? 1 : 0.8 }));
   const seo = (await getSeoLinks())
     .filter((l) => l.kind === "landing" && !l.noindex)

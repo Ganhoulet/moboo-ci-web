@@ -247,10 +247,10 @@ export async function apiPost<T>(path: string, body: unknown, token?: string): P
   return { ok: res.ok, status: res.status, data };
 }
 
-export function siteRequestOtp(phone: string, deviceId?: string) {
-  return apiPost<{ sent: boolean; channel: string; expiresIn: number; devCode?: string }>(
+export function siteRequestOtp(phone: string, deviceId?: string, channel?: "auto" | "email") {
+  return apiPost<{ sent: boolean; channel: "whatsapp" | "email" | "none"; emailHint?: string | null; expiresIn: number; devCode?: string }>(
     "/site/auth/request-otp",
-    { phone, deviceId },
+    { phone, deviceId, ...(channel === "email" ? { channel } : {}) },
   );
 }
 

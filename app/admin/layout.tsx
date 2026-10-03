@@ -59,6 +59,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
     // Utilisateurs (façon WordPress) : comptes, fiche 360°, rôles, journal.
     { href: "/admin/utilisateurs", label: "Utilisateurs", icon: "users", group: "utilisateurs" },
+    { href: "/admin/utilisateurs/suppressions", label: "Demandes de suppression", icon: "users", child: true, group: "utilisateurs" },
     { href: "/admin/administrateurs", label: "Administrateurs", icon: "users", child: true, group: "utilisateurs" },
     { href: "/admin/roles", label: "Rôles et permissions", icon: "key", child: true, group: "utilisateurs" },
     { href: "/admin/journal", label: "Journal d’activité", icon: "history", child: true, group: "utilisateurs" },

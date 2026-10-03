@@ -5,6 +5,7 @@ import { Avatar, Pill, TYPE_LABEL, ago, fmtDate } from "@/components/backoffice/
 type SP = Record<string, string | undefined>;
 const STATUS_TABS = [
   { key: "", label: "Tous" }, { key: "active", label: "Actifs" }, { key: "suspended", label: "Suspendus" }, { key: "banned", label: "Bannis" },
+  { key: "deleting", label: "Suppression en cours" }, { key: "deleted", label: "Supprimés" },
 ];
 
 /** Back-office → Utilisateurs (façon WordPress « Tous les utilisateurs »). */

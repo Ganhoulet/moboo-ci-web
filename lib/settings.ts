@@ -51,6 +51,10 @@ export interface SiteSettings {
   };
   verification: { enabled: boolean; types: string[]; requiredForListings: boolean; docTypes: string; intro: string };
   moderation: { reportsEnabled: boolean };
+  legal: {
+    companyName: string; companyAddress: string; contactEmail: string; contactPhone: string;
+    privacyUpdated: string; privacyHtml: string; deletionGraceDays: number; deletionIntro: string;
+  };
 }
 
 export interface MapSettings {
@@ -120,6 +124,11 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     intro: "Faites vérifier votre compte : les visiteurs font davantage confiance aux professionnels vérifiés. Vos documents ne sont jamais publiés.",
   },
   moderation: { reportsEnabled: true },
+  legal: {
+    companyName: "Moboo", companyAddress: "Abidjan, Côte d’Ivoire", contactEmail: "contact@moboo.ci", contactPhone: "",
+    privacyUpdated: "3 octobre 2026", privacyHtml: "", deletionGraceDays: 30,
+    deletionIntro: "Vous pouvez demander la suppression de votre compte Moboo.ci (site et application) et des données qui y sont liées, à tout moment, sans avoir à installer l’application.",
+  },
 };
 
 /** Nom d'un rôle (type de compte), renommable dans le back-office. */

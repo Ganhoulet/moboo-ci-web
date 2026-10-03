@@ -37,6 +37,8 @@ export function UserActions({ a, canManage, sessions }: { a: Account; canManage:
     });
 
   if (!canManage) return <p className="text-sm text-muted">Votre rôle permet de consulter cette fiche, pas de la modifier.</p>;
+  if (a.accountStatus === "deleted") return <p className="text-sm text-muted">Compte supprimé : aucune action possible.</p>;
+  if (a.accountStatus === "deleting") return <p className="text-sm text-muted">Suppression en cours : utilisez le bandeau en haut de la fiche pour l’annuler ou la terminer.</p>;
   const btn = "w-full rounded-md border px-3 py-2 text-left text-sm font-semibold transition disabled:opacity-50";
   const blocked = a.accountStatus !== "active";
 

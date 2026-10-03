@@ -38,6 +38,9 @@ export function LoginFlow({ googleTicket, next }: { googleTicket?: string; next?
   const onCodeStep = phoneState?.step === "code";
   const phone = onCodeStep ? phoneState.phone : "";
   const devCode = onCodeStep ? phoneState.devCode : undefined;
+  const channel = onCodeStep ? phoneState.channel : undefined;
+  const emailHint = onCodeStep ? phoneState.emailHint : undefined;
+  const codeError = (codeState?.step === "code" && codeState.error) || (onCodeStep && phoneState.error) || null;
   const ticket = (phoneState && "googleTicket" in phoneState ? phoneState.googleTicket : undefined) ?? googleTicket;
   const ticketInput = <>
     {ticket ? <input type="hidden" name="googleTicket" value={ticket} /> : null}
@@ -63,8 +66,8 @@ export function LoginFlow({ googleTicket, next }: { googleTicket?: string; next?
             className="input"
             required
           />
-          <p className="mt-1 text-xs text-muted">
-            Vous recevrez un code par WhatsApp/SMS.
+            <p className="mt-1 text-xs text-muted">
+            Vous recevrez un code par WhatsApp (ou par e-mail si votre compte en a un).
           </p>
         </div>
         {phoneState?.step === "phone" && phoneState.error ? (
@@ -96,7 +99,9 @@ export function LoginFlow({ googleTicket, next }: { googleTicket?: string; next?
           required
         />
         <p className="mt-1 text-xs text-muted">
-          Envoyé au <span className="font-semibold text-ink">{phone}</span>.
+          {channel === "email" && emailHint
+            ? <>Envoyé par e-mail à <span className="font-semibold text-ink">{emailHint}</span> (pensez aux courriers indésirables).</>
+            : <>Envoyé par WhatsApp au <span className="font-semibold text-ink">{phone}</span>.</>}
         </p>
         {devCode ? (
           <p className="mt-1 text-xs font-semibold text-accent-700">
@@ -110,10 +115,15 @@ export function LoginFlow({ googleTicket, next }: { googleTicket?: string; next?
         </label>
         <input id="firstName" name="firstName" type="text" placeholder="Votre prénom" className="input" />
       </div>
-      {codeState?.step === "code" && codeState.error ? (
-        <p className="text-sm font-medium text-red-600">{codeState.error}</p>
-      ) : null}
+      {codeError ? <p className="text-sm font-medium text-red-600">{codeError}</p> : null}
       <SubmitButton label="Se connecter" />
+      {channel !== "email" && emailHint ? (
+        // Pas de message WhatsApp ? Le code peut arriver à l'adresse e-mail du compte.
+        <button type="submit" formAction={sendOtp} formNoValidate name="channel" value="email"
+          className="w-full text-center text-sm font-semibold text-brand-800 hover:underline">
+          Pas reçu ? Recevoir le code par e-mail ({emailHint})
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={() => window.location.assign("/compte")}
