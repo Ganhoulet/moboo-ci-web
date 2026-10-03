@@ -67,7 +67,7 @@ export function LoginFlow({ googleTicket, next }: { googleTicket?: string; next?
             required
           />
             <p className="mt-1 text-xs text-muted">
-            Vous recevrez un code par WhatsApp (ou par e-mail si votre compte en a un).
+            Vous recevrez un code par SMS ou WhatsApp (ou par e-mail si votre compte en a un).
           </p>
         </div>
         {phoneState?.step === "phone" && phoneState.error ? (
@@ -101,7 +101,7 @@ export function LoginFlow({ googleTicket, next }: { googleTicket?: string; next?
         <p className="mt-1 text-xs text-muted">
           {channel === "email" && emailHint
             ? <>Envoyé par e-mail à <span className="font-semibold text-ink">{emailHint}</span> (pensez aux courriers indésirables).</>
-            : <>Envoyé par WhatsApp au <span className="font-semibold text-ink">{phone}</span>.</>}
+            : <>Envoyé par {channel === "sms" ? "SMS" : "WhatsApp"} au <span className="font-semibold text-ink">{phone}</span>.</>}
         </p>
         {devCode ? (
           <p className="mt-1 text-xs font-semibold text-accent-700">

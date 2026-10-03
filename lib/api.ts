@@ -248,7 +248,7 @@ export async function apiPost<T>(path: string, body: unknown, token?: string): P
 }
 
 export function siteRequestOtp(phone: string, deviceId?: string, channel?: "auto" | "email") {
-  return apiPost<{ sent: boolean; channel: "whatsapp" | "email" | "none"; emailHint?: string | null; expiresIn: number; devCode?: string }>(
+  return apiPost<{ sent: boolean; channel: "whatsapp" | "sms" | "email" | "none"; emailHint?: string | null; expiresIn: number; devCode?: string }>(
     "/site/auth/request-otp",
     { phone, deviceId, ...(channel === "email" ? { channel } : {}) },
   );

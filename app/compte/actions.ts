@@ -12,7 +12,7 @@ const errMsg = (data: any, fallback: string) =>
 
 export type OtpState =
   | { step: "phone"; error?: string; googleTicket?: string }
-  | { step: "code"; phone: string; error?: string; devCode?: string; googleTicket?: string; channel?: "whatsapp" | "email" | "none"; emailHint?: string | null }
+  | { step: "code"; phone: string; error?: string; devCode?: string; googleTicket?: string; channel?: "whatsapp" | "sms" | "email" | "none"; emailHint?: string | null }
   | { step: "done"; redirectTo?: string }
   | null;
 

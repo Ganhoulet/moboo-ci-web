@@ -133,7 +133,7 @@ export function DeletionByPhone({ days, mode }: { days: number; mode: "delete" |
         <input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="6 chiffres" className="input mt-1 tracking-[0.4em]" required />
       </label>
       <p className="-mt-2 text-xs text-muted">
-        {hint?.channel === "email" && hint.emailHint ? <>Envoyé par e-mail à {hint.emailHint}.</> : <>Envoyé par WhatsApp au {phone}.</>}
+        {hint?.channel === "email" && hint.emailHint ? <>Envoyé par e-mail à {hint.emailHint}.</> : <>Envoyé par {hint?.channel === "sms" ? "SMS" : "WhatsApp"} au {phone}.</>}
         {hint?.devCode ? <span className="ml-1 font-semibold text-accent-700">Code de test : {hint.devCode}</span> : null}
         {hint?.channel !== "email" && hint?.emailHint ? <button type="button" onClick={() => send("email")} className="ml-1 font-semibold text-brand-800 hover:underline">Recevoir par e-mail</button> : null}
       </p>
