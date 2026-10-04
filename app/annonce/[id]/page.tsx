@@ -1,3 +1,5 @@
+import { ConversionSignals } from "@/components/conversion-signals";
+import { getSignals } from "@/lib/signals";
 import { ReviewsSection } from "@/components/reviews";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -46,7 +48,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
   if (!l) notFound();
   // Arrivée depuis une annonce sponsorisée : clic compté pour l'annonceur.
   if (searchParams?.sp) trackAdClick("boost", searchParams.sp);
-  const partners = await getZonePartners(l.id);
+  const [partners, signals] = await Promise.all([getZonePartners(l.id), getSignals("listing", l.id)]);
 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");
@@ -237,6 +239,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
         </div>
 
         <aside className="lg:self-start">
+          <ConversionSignals type="listing" id={l.id} initial={signals} className="mb-4" />
           <AsidePerson person={person} />
           {isReservable ? (
             <ListingReservation

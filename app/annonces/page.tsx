@@ -18,6 +18,7 @@ import { getSession } from "@/lib/session";
 import { getSiteSettings } from "@/lib/settings";
 import { getTaxonomies } from "@/lib/taxonomies";
 import { getSponsored, zonesOfQuery } from "@/lib/ads";
+import { getCardSignals } from "@/lib/signals";
 import { getCampaigns } from "@/lib/marketing";
 import { PropertyCard } from "@/components/property-card";
 import { SiteBanners } from "@/components/marketing/site-banners";
@@ -104,6 +105,9 @@ export default async function AnnoncesPage({
     .filter(([, v]) => v) as [string, string][]).toString();
 
   // Espace annonceur : annonces sponsorisées de la zone (page 1) et bannières ciblées.
+  // Centre marketing : un message de conversion réel par carte (réservations, baisse de prix…).
+  const cardSignals = await getCardSignals([...items.map((p) => p.id)]);
+  items = items.map((p) => (cardSignals[p.id] ? { ...p, signal: cardSignals[p.id] } : p));
   const [sponsored, banners] = await Promise.all([
     !isReservableTab && page === 1 && settings.ads?.enabled !== false ? getSponsored({ q, transaction: tx2, propertyType }) : Promise.resolve([]),
     q ? getCampaigns("site_banner", zonesOfQuery(q)).then((xs) => xs.filter((c) => c.badge === "Sponsorisé")) : Promise.resolve([]),

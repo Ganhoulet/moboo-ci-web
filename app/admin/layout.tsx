@@ -84,6 +84,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Marketing : bannières, flyers et pop-ups (application mobile + site).
     { href: "/admin/marketing", label: "Marketing", icon: "megaphone", group: "marketing" },
     { href: "/admin/marketing/nouvelle", label: "Nouvelle campagne", icon: "megaphone", child: true, group: "marketing" },
+    { href: "/admin/centre-marketing", label: "Centre marketing", icon: "megaphone", group: "centre" },
+    { href: "/admin/centre-marketing/reservations", label: "Réservations déclarées", icon: "megaphone", child: true, group: "centre" },
+    { href: "/admin/centre-marketing/promotions", label: "Promotions", icon: "megaphone", child: true, group: "centre" },
+    { href: "/admin/centre-marketing/reglages", label: "Réglages", icon: "megaphone", child: true, group: "centre" },
     { href: "/admin/publicite", label: "Publicité (annonceurs)", icon: "megaphone", group: "publicite" },
     { href: "/admin/publicite/tarifs", label: "Tarifs", icon: "megaphone", child: true, group: "publicite" },
     // Immobilier (façon Houzez « Real Estate ») : annonces, listes, agences et agents.

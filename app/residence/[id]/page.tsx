@@ -1,3 +1,5 @@
+import { ConversionSignals } from "@/components/conversion-signals";
+import { getSignals } from "@/lib/signals";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -33,9 +35,12 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 const num = (v: unknown) => (v == null || v === "" ? 0 : Number(v) || 0);
 
-export default async function ResidencePage({ params }: { params: { id: string } }) {
+export default async function ResidencePage({ params, searchParams }: { params: { id: string }; searchParams: { checkIn?: string; checkOut?: string } }) {
   const r = await getResidence(params.id);
   if (!r) notFound();
+  // Centre marketing : signaux de conversion (données réelles), selon les dates cherchées.
+  const dates = { checkIn: searchParams?.checkIn, checkOut: searchParams?.checkOut };
+  const signals = await getSignals("residence", r.id, dates);
 
   const zone = [r.quartier, r.commune, r.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const apts = r.apartments ?? [];
@@ -254,6 +259,7 @@ export default async function ResidencePage({ params }: { params: { id: string }
 
         {/* Carte de réservation avec calendrier (façon Airbnb) */}
         <aside id="reserver" className="scroll-mt-24 lg:self-start">
+          <ConversionSignals type="residence" id={r.id} initial={signals} checkIn={dates.checkIn} checkOut={dates.checkOut} className="mb-4" />
           <AsidePerson person={person} />
           {bookable.length > 0 ? (
             <ResidenceBooking apartments={bookable} occupiedByApt={occupiedByApt} depositPercent={30} />

@@ -29,6 +29,7 @@ export function PropertyRow({ p }: { p: Property }) {
           <div className="mt-auto flex flex-wrap items-end justify-between gap-2 pt-2">
             <p className="text-lg font-extrabold text-brand-800">{formatXOF(p.price)}{p.priceLabel ? <span className="text-sm font-medium text-muted"> {p.priceLabel}</span> : null}</p>
             {p.meta ? <span className="chip">{p.meta}</span> : null}
+            {p.signal ? <span className="text-xs font-semibold text-amber-800"><span aria-hidden>{p.signal.icon}</span> {p.signal.text}</span> : null}
           </div>
         </div>
       </article>

@@ -32,6 +32,8 @@ export interface Property {
   /** Espace annonceur : vitrine premium (grand format), annonce sponsorisée (boost par zone). */
   showcase?: boolean;
   sponsored?: boolean;
+  /** Centre marketing : message de conversion de la carte (données réelles). */
+  signal?: { text: string; tone: "urgent" | "social" | "deal" | "info" | "trust"; icon: string } | null;
   labels?: { slug: string; label: string; color: string | null }[];
   /** Statut (back-office → Statuts) : remplace le badge de transaction s'il est défini. */
   status?: { label: string; color: string | null } | null;

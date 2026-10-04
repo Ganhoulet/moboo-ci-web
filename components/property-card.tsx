@@ -77,6 +77,11 @@ export function PropertyCard({ p }: { p: Property }) {
             {p.zone}
           </p>
           {p.meta ? <span className="chip mt-2">{p.meta}</span> : null}
+          {p.signal ? (
+            <p className={"mt-2 flex items-center gap-1 text-xs font-semibold " + ({ urgent: "text-red-700", social: "text-amber-800", deal: "text-emerald-700", info: "text-sky-700", trust: "text-slate-600" }[p.signal.tone] ?? "text-slate-700")}>
+              <span aria-hidden>{p.signal.icon}</span><span className="line-clamp-1">{p.signal.text}</span>
+            </p>
+          ) : null}
         </div>
       </article>
     </Link>

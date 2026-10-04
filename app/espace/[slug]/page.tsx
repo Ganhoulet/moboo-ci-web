@@ -1,3 +1,5 @@
+import { ConversionSignals } from "@/components/conversion-signals";
+import { getSignals } from "@/lib/signals";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { formatXOF, getEspace, getEspaceOccupied } from "@/lib/api";
@@ -60,6 +62,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function EspacePage({ params }: { params: { slug: string } }) {
   const e = await getEspace(params.slug);
   if (!e) notFound();
+  const signals = await getSignals("espace", e.id);
 
   const zone = [e.quartier, e.commune].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const tarifs = (e.tarifs ?? []).filter((t) => (t.prix ?? 0) > 0);
@@ -229,6 +232,7 @@ export default async function EspacePage({ params }: { params: { slug: string } 
         </div>
 
         <aside id="reserver" className="scroll-mt-24 lg:self-start">
+          <ConversionSignals type="espace" id={e.id} initial={signals} className="mb-4" />
           <AsidePerson person={person} />
           <EspaceBooking espaceId={e.id} occupied={occupied} fromPrice={aPartir} />
         </aside>
