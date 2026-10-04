@@ -17,6 +17,7 @@ export interface MigrationStatus {
     total: number; created: number; linked: number; noPhone: number; conflict: number; pending: number;
     problems: { wpId: number; login: string; email: string | null; phoneRaw: string | null; status: string; note: string | null }[];
   };
+  billing?: { packages: number; memberships: number; invoices: number };
 }
 
 export async function getMigrationStatus() {

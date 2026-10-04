@@ -365,3 +365,13 @@ export async function submitVerificationAction(input: {
   revalidatePath("/mon-espace/verification");
   return ok ? { ok: true } : { ok: false, error: errMsg(data, "Envoi impossible.") };
 }
+
+/** Mode test : résultat du paiement simulé d'une facture de test. Renvoie la page de retour. */
+export async function testPayAction(id: string, result: "success" | "failed"): Promise<{ ok: boolean; next?: string; error?: string }> {
+  if (!getSession()) return { ok: false, error: "Connectez-vous d'abord." };
+  const { ok, data } = await authedFetch(`/site/me/invoices/${encodeURIComponent(id)}/test-pay`, { method: "POST", body: JSON.stringify({ result }) });
+  if (!ok) return { ok: false, error: errMsg(data, "Simulation impossible.") };
+  revalidatePath("/mon-espace", "layout");
+  const back = data?.kind === "package" ? "/mon-espace/forfait" : "/mon-espace/annonces";
+  return { ok: true, next: `${back}?facture=${encodeURIComponent(id)}` };
+}

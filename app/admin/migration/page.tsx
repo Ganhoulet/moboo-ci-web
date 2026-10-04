@@ -115,6 +115,16 @@ export default async function Migration() {
           </div>
         ) : null}
       </section>
+
+      <section className="space-y-4">
+        <h2 className="font-display text-lg font-bold text-ink">Forfaits Houzez</h2>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <Tile label="Forfaits repris" value={n(s.billing?.packages ?? 0)} hint="visibles dans Immobilier → Forfaits" />
+          <Tile label="Adhésions en cours" value={n(s.billing?.memberships ?? 0)} hint="chacun garde son forfait jusqu’à sa date de fin" tone={s.billing?.memberships ? "ok" : "default"} />
+          <Tile label="Factures reprises" value={n(s.billing?.invoices ?? 0)} hint="numérotées WP-…, dans Immobilier → Factures" />
+        </div>
+        <p className="text-sm text-muted">Envoyés par l’extension « Moboo Migration » (bouton « Envoyer les forfaits et factures »), <strong>après</strong> les comptes. À relancer le jour de la bascule.</p>
+      </section>
     </div>
   );
 }

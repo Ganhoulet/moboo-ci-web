@@ -171,10 +171,11 @@ export async function removePackageAction(id: string): Promise<R> {
 export interface Invoice {
   id: string; number: string; label: string; amount: number; status: "pending" | "paid" | "cancelled" | "failed"; method: string | null;
   paymentRef: string | null; billingName: string | null; billingPhone: string | null; billingEmail: string | null; createdAt: string; paidAt: string | null;
+  test?: boolean; kind?: "package" | "listing" | "featured";
   subscription?: { packageName: string; startsAt: string; endsAt: string } | null;
   issuer?: { name: string; address: string; taxId: string; note: string };
 }
-export interface AdminInvoicePage { total: number; page: number; perPage: number; revenue: number; counts: Record<string, number>; items: Invoice[] }
+export interface AdminInvoicePage { total: number; page: number; perPage: number; revenue: number; testCount?: number; counts: Record<string, number>; items: Invoice[] }
 
 export async function listInvoices(params: Record<string, string | undefined>): Promise<AdminInvoicePage | null> {
   const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString();
@@ -190,4 +191,8 @@ export async function invoiceStatusAction(id: string, status: "paid" | "cancelle
 }
 export async function grantPackageAction(input: { phone: string; packageId: string; method?: string }): Promise<R> {
   return call(`${BILL}/invoices`, "POST", input, "Attribution impossible.");
+}
+/** Mode test : supprime les factures de test et les forfaits qu'elles ont activés. */
+export async function purgeTestInvoicesAction(): Promise<R> {
+  return call(`${BILL}/test-data/purge`, "POST", {}, "Suppression impossible.");
 }
