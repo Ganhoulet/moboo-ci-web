@@ -23,7 +23,7 @@ export async function middleware(req: NextRequest) {
   // Anciennes adresses (WordPress) : redirection 301 avant tout le reste.
   if (req.method === "GET" || req.method === "HEAD") {
     const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || req.headers.get("x-real-ip") || "";
-    const r = await findRedirect(API_URL, req.nextUrl.pathname, req.nextUrl.searchParams, ip);
+    const r = await findRedirect(API_URL, req.nextUrl.pathname, req.nextUrl.searchParams, ip, req.headers.get("user-agent") || "");
     if (r) {
       const [target, code] = r;
       const url = /^https?:\/\//i.test(target) ? new URL(target) : new URL(target, req.nextUrl.origin);

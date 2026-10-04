@@ -3,7 +3,7 @@ import Link from "next/link";
 import { img } from "@/lib/img";
 import { qrSvg } from "@/lib/qr-svg";
 import { QrBatchBar, QrSelectAll } from "@/components/backoffice/qr-batch-bar";
-import { getQrStats, searchQr, type QrListing, type QrRealtor } from "./actions";
+import { getQrStats, scanCounts, searchQr, type QrListing, type QrRealtor } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,7 @@ function Thumb({ svg }: { svg: string }) {
   return <div className="h-16 w-16 shrink-0 rounded-md bg-white p-1 ring-1 ring-slate-200 [&>svg]:h-full [&>svg]:w-full" dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 
-async function RealtorRow({ r }: { r: QrRealtor }) {
+async function RealtorRow({ r, scans }: { r: QrRealtor; scans: number }) {
   const svg = await qrSvg(r.qrUrl);
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200 has-[:checked]:ring-2 has-[:checked]:ring-brand-600">
@@ -22,7 +22,7 @@ async function RealtorRow({ r }: { r: QrRealtor }) {
         <p className="truncate font-semibold text-ink">{r.name}</p>
         <p className="text-xs text-muted">
           <span className={"mr-1 rounded px-1.5 py-0.5 font-semibold " + (r.kind === "agency" ? "bg-orange-100 text-orange-800" : "bg-blue-100 text-blue-800")}>{r.label}</span>
-          {r.phone || "sans téléphone"} · {r.listings} annonce{r.listings > 1 ? "s" : ""} en ligne{r.zone ? ` · ${r.zone}` : ""}
+          {r.phone || "sans téléphone"} · {r.listings} annonce{r.listings > 1 ? "s" : ""} en ligne{r.zone ? ` · ${r.zone}` : ""} · <strong className="text-ink">{scans}</strong> scan{scans > 1 ? "s" : ""} (30 j)
         </p>
         <p className="mt-0.5 truncate font-mono text-[11px] text-slate-400">{r.qrUrl}</p>
       </div>
@@ -35,7 +35,7 @@ async function RealtorRow({ r }: { r: QrRealtor }) {
   );
 }
 
-async function ListingRow({ l }: { l: QrListing }) {
+async function ListingRow({ l, scans }: { l: QrListing; scans: number }) {
   const svg = await qrSvg(l.qrUrl);
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200 has-[:checked]:ring-2 has-[:checked]:ring-brand-600">
@@ -43,7 +43,7 @@ async function ListingRow({ l }: { l: QrListing }) {
       {l.photo ? <img src={img(l.photo, 200)} alt="" className="h-14 w-20 rounded object-cover" /> : <span className="h-14 w-20 rounded bg-slate-100" />}
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold text-ink">{l.title}</p>
-        <p className="text-xs text-muted">{l.price || "Prix non renseigné"}{l.zone ? ` · ${l.zone}` : ""}{l.owner ? ` · ${l.owner}` : ""}</p>
+        <p className="text-xs text-muted">{l.price || "Prix non renseigné"}{l.zone ? ` · ${l.zone}` : ""}{l.owner ? ` · ${l.owner}` : ""} · <strong className="text-ink">{scans}</strong> scan{scans > 1 ? "s" : ""} (30 j)</p>
         <p className="mt-0.5 truncate font-mono text-[11px] text-slate-400">{l.qrUrl}</p>
       </div>
       <Thumb svg={svg} />
@@ -58,10 +58,11 @@ export default async function QrPosters({ searchParams }: { searchParams: { q?: 
   const type = searchParams.type === "realtors" || searchParams.type === "listings" ? searchParams.type : "all";
   const limit = [40, 100, 200].includes(Number(searchParams.n)) ? Number(searchParams.n) : 40;
   const [stats, res] = await Promise.all([getQrStats(), searchQr(q, type, limit)]);
+  const counts = res ? await scanCounts([...res.realtors.map((r) => ({ kind: r.kind, ref: r.ref })), ...res.listings.map((l) => ({ kind: "listing", ref: l.ref }))]) : {};
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-extrabold text-ink">Affiches QR</h1>
+        <h1 className="font-display text-2xl font-extrabold text-ink">Affiches QR — agents, agences, annonces</h1>
         <p className="max-w-3xl text-sm text-muted">
           Les QR codes de l’application Moboo.ci, identiques à ceux que les agents impriment eux-mêmes : affiche bleue « Scannez et trouvez mes annonces » pour chaque agent et agence, fiche noir et blanc pour chaque annonce.
           Imprimez-les en <strong>A3, A4 ou A5</strong> et déposez-les dans leurs agences, boutiques et vitrines : le client scanne et tombe sur le profil ou l’annonce.
@@ -93,7 +94,7 @@ export default async function QrPosters({ searchParams }: { searchParams: { q?: 
                 <h2 className="font-display text-lg font-bold text-ink">Agents et agences {q ? "" : "— les plus actifs"} ({res.realtors.length})</h2>
                 {res.realtors.length ? <QrSelectAll name="r" /> : null}
               </div>
-              {res.realtors.length ? <ul className="space-y-2">{res.realtors.map((r) => <RealtorRow key={r.ref} r={r} />)}</ul>
+              {res.realtors.length ? <ul className="space-y-2">{res.realtors.map((r) => <RealtorRow key={r.ref} r={r} scans={counts[`${r.kind}:${r.ref}`] ?? 0} />)}</ul>
                 : <p className="text-sm text-muted">Aucun agent ni agence pour « {q} ».</p>}
             </section>
           ) : null}
@@ -103,7 +104,7 @@ export default async function QrPosters({ searchParams }: { searchParams: { q?: 
                 <h2 className="font-display text-lg font-bold text-ink">Annonces {q ? "" : "— les plus récentes"} ({res.listings.length})</h2>
                 {res.listings.length ? <QrSelectAll name="l" /> : null}
               </div>
-              {res.listings.length ? <ul className="space-y-2">{res.listings.map((l) => <ListingRow key={l.ref} l={l} />)}</ul>
+              {res.listings.length ? <ul className="space-y-2">{res.listings.map((l) => <ListingRow key={l.ref} l={l} scans={counts[`listing:${l.ref}`] ?? 0} />)}</ul>
                 : <p className="text-sm text-muted">Aucune annonce pour « {q} ».</p>}
             </section>
           ) : null}

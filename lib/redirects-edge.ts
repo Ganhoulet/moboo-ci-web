@@ -36,8 +36,25 @@ async function load(api: string) {
 }
 
 /** Destination d'une ancienne adresse, ou null. */
-export async function findRedirect(api: string, pathname: string, search: URLSearchParams, ip: string): Promise<Entry | null> {
+export async function findRedirect(api: string, pathname: string, search: URLSearchParams, ip: string, ua = ""): Promise<Entry | null> {
   if (SKIP.test(pathname)) return null;
+  // QR codes (application, affiches, pages SEO) : jamais en cache, chaque scan est compté par l'API.
+  const qrPath = /^\/q\/[a-z0-9]{4,12}\/?$/i.test(pathname);
+  if (qrPath || (normalizePath(pathname) === "/" && /^\d{1,10}$/.test(search.get("p") || ""))) {
+    try {
+      const qs = new URLSearchParams({ path: pathname });
+      for (const k of ["p", "t", "s"]) { const v = search.get(k); if (v) qs.set(k, v); }
+      const r = await fetch(`${api}/site/redirects/resolve?${qs}`, {
+        headers: { ...relayHeaders(ip), ...(ua ? { "X-Moboo-Client-UA": ua.slice(0, 300) } : {}) },
+        signal: AbortSignal.timeout(2500), cache: "no-store",
+      });
+      if (!r.ok) return null;
+      const d = (await r.json()) as { target: string; code: number };
+      return d.target && d.code !== 404 ? [d.target, d.code] : null;
+    } catch {
+      return null;
+    }
+  }
   if (!cache || Date.now() - cache.at > 60_000) {
     // Une fois par minute au plus : on attend la liste à jour (2,5 s max ; sinon l'ancienne sert).
     loading ??= load(api).finally(() => { loading = null; });

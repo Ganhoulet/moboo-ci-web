@@ -84,8 +84,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Marketing : bannières, flyers et pop-ups (application mobile + site).
     { href: "/admin/marketing", label: "Marketing", icon: "megaphone", group: "marketing" },
     { href: "/admin/marketing/nouvelle", label: "Nouvelle campagne", icon: "megaphone", child: true, group: "marketing" },
-    // Affiches QR : les QR codes de l'application (agents, agences, annonces) à imprimer en A3 / A4 / A5.
-    { href: "/admin/affiches-qr", label: "Affiches QR", icon: "megaphone", child: true, group: "marketing" },
+    // Marketing terrain : affiches QR à poser (agents, agences, annonces, pages SEO) et comptage des scans.
+    { href: "/admin/affiches-qr", label: "Marketing terrain", icon: "megaphone", group: "terrain" },
+    { href: "/admin/affiches-qr", label: "Affiches QR (agents, annonces)", icon: "megaphone", child: true, group: "terrain" },
+    { href: "/admin/affiches-qr/seo", label: "QR pages SEO", icon: "megaphone", child: true, group: "terrain" },
+    { href: "/admin/affiches-qr/scans", label: "Scans QR", icon: "megaphone", child: true, group: "terrain" },
+    { href: "/admin/affiches-qr/modele", label: "Modèle des affiches SEO", icon: "megaphone", child: true, group: "terrain" },
     { href: "/admin/centre-marketing", label: "Centre marketing", icon: "megaphone", group: "centre" },
     { href: "/admin/centre-marketing/reservations", label: "Réservations déclarées", icon: "megaphone", child: true, group: "centre" },
     { href: "/admin/centre-marketing/promotions", label: "Promotions", icon: "megaphone", child: true, group: "centre" },

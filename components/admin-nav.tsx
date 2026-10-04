@@ -21,17 +21,20 @@ export function AdminNav({ items }: { items: AdminNavItem[] }) {
   const on = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(href + "/"));
   // Rubrique ouverte : celle de la page affichée (parente ou l'une de ses sous-rubriques).
   const openGroup = items.find((it) => on(it.href))?.group;
+  // Sous-rubrique active : la plus précise (ex. /admin/affiches-qr/seo plutôt que /admin/affiches-qr).
+  const activeChild = items.filter((it) => it.child && on(it.href)).sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const childOn = (href: string) => href === activeChild;
   return (
     <>
       <nav className="hidden lg:block">
         {items.filter((it) => !it.child || it.group === openGroup).map((it) => it.child ? (
-          <Link key={it.href} href={it.href}
-            className={"flex items-center py-2 pl-14 pr-4 text-[13px] font-medium transition " + (on(it.href) ? "bg-white/10 text-white" : "text-slate-400 hover:text-white")}>
+          <Link key={`c:${it.href}`} href={it.href}
+            className={"flex items-center py-2 pl-14 pr-4 text-[13px] font-medium transition " + (childOn(it.href) ? "bg-white/10 text-white" : "text-slate-400 hover:text-white")}>
             {it.label}
             <Badge n={it.badge} />
           </Link>
         ) : (
-          <Link key={it.href} href={it.href}
+          <Link key={`p:${it.href}`} href={it.href}
             className={"flex items-center gap-3 border-l-4 px-4 py-3 text-sm font-semibold transition " +
               (on(it.href) || (it.group && it.group === openGroup) ? "border-sky-400 bg-brand-700 text-white" : "border-transparent text-slate-300 hover:bg-white/5 hover:text-white")}>
             <span className={on(it.href) ? "text-white" : "text-slate-400"}>{ADMIN_ICONS[it.icon] ?? ADMIN_ICONS.gauge}</span>
@@ -43,9 +46,9 @@ export function AdminNav({ items }: { items: AdminNavItem[] }) {
       </nav>
       <nav className="flex gap-2 overflow-x-auto px-3 py-3 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
         {items.filter((it) => !it.child || it.group === openGroup).map((it) => (
-          <Link key={it.href} href={it.href}
+          <Link key={`${it.child ? "c" : "p"}:${it.href}`} href={it.href}
             className={"inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold " +
-              (on(it.href) ? "bg-brand-700 text-white" : "bg-white/10 text-slate-200")}>
+              ((it.child ? childOn(it.href) : on(it.href)) ? "bg-brand-700 text-white" : "bg-white/10 text-slate-200")}>
             {ADMIN_ICONS[it.icon] ?? ADMIN_ICONS.gauge}
             {it.label}
             {it.badge ? <span className="rounded-full bg-amber-500 px-1.5 text-[11px] font-bold text-white">{it.badge}</span> : null}

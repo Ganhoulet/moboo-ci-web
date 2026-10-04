@@ -18,9 +18,12 @@ export const PAPER: Record<PaperFormat, { w: number; h: number; label: string }>
 const pt = (n: number) => `calc(var(--u) * ${n}mm)`;
 const FONT = "Helvetica, Arial, sans-serif"; // police par défaut du PDF de l'application
 
+export interface SeoTexts { kicker: string; headline: string; text: string; cta: string; contactLabel: string; contactPhone: string; footer: string; bgColor: string; accentColor: string; textColor: string }
+
 export type PosterData =
   | { kind: "agent" | "agency"; title: string; phone: string; url: string; qrSvg: string }
-  | { kind: "listing"; title: string; price: string; url: string; qrSvg: string };
+  | { kind: "listing"; title: string; price: string; url: string; qrSvg: string }
+  | { kind: "seo"; t: SeoTexts; url: string; qrSvg: string };
 
 export function Sheet({ children, bg = "#ffffff" }: { children: React.ReactNode; bg?: string }) {
   return (
@@ -98,6 +101,42 @@ export function ListingPoster({ d }: { d: Extract<PosterData, { kind: "listing" 
   );
 }
 
+/**
+ * Affiche de rue d'une page SEO (« Maisons à louer à Yopougon ») : texte en haut,
+ * QR code au centre, contact Moboo en bas. Tous les textes et couleurs sont modifiables.
+ */
+export function SeoPoster({ d }: { d: Extract<PosterData, { kind: "seo" }> }) {
+  const t = d.t;
+  const long = t.headline.length > 40;
+  return (
+    <Sheet bg={t.bgColor}>
+      <div style={{ height: "100%", boxSizing: "border-box", padding: `${pt(40)} ${pt(40)} ${pt(30)}`, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", color: t.textColor }}>
+        {t.kicker.trim() ? (
+          <p style={{ margin: 0, background: t.accentColor, color: "#fff", borderRadius: pt(30), padding: `${pt(6)} ${pt(18)}`, fontSize: pt(14), fontWeight: 700, letterSpacing: pt(1.5) }}>{t.kicker}</p>
+        ) : null}
+        <p style={{ margin: `${pt(16)} 0 0`, fontSize: pt(long ? 38 : 48), fontWeight: 800, lineHeight: 1.08 }}>{t.headline}</p>
+        {t.text.trim() ? <p style={{ margin: `${pt(12)} 0 0`, fontSize: pt(16), lineHeight: 1.35, opacity: 0.95, maxWidth: pt(470) }}>{t.text}</p> : null}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%" }}>
+          <div style={{ background: "#fff", borderRadius: pt(22), padding: pt(16), border: `${pt(6)} solid ${t.accentColor}` }}>
+            <Qr svg={d.qrSvg} size={long ? 280 : 300} />
+          </div>
+          {t.cta.trim() ? <p style={{ margin: `${pt(12)} 0 0`, color: t.accentColor === t.bgColor ? t.textColor : t.accentColor, fontSize: pt(30), fontWeight: 900, letterSpacing: pt(2) }}>{t.cta}</p> : null}
+        </div>
+        {t.contactPhone.trim() || t.contactLabel.trim() ? (
+          <div style={{ width: "100%", background: "#fff", color: "#0f172a", borderRadius: pt(16), padding: `${pt(12)} ${pt(16)}`, boxSizing: "border-box" }}>
+            {t.contactLabel.trim() ? <p style={{ margin: 0, fontSize: pt(15), fontWeight: 700 }}>{t.contactLabel}</p> : null}
+            {t.contactPhone.trim() ? <p style={{ margin: `${pt(2)} 0 0`, fontSize: pt(34), fontWeight: 900, color: t.bgColor, whiteSpace: "nowrap" }}>☎ {t.contactPhone}</p> : null}
+          </div>
+        ) : null}
+        <div style={{ marginTop: pt(14), display: "flex", alignItems: "center", gap: pt(8) }}>
+          <img src="/qr/moboo-icon.png" alt="" style={{ width: pt(30), height: pt(30), objectFit: "contain" }} />
+          <span style={{ fontSize: pt(20), fontWeight: 700 }}>{t.footer || "Moboo.ci"}</span>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
 export function Poster({ d }: { d: PosterData }) {
-  return d.kind === "listing" ? <ListingPoster d={d} /> : <RealtorPoster d={d} />;
+  return d.kind === "listing" ? <ListingPoster d={d} /> : d.kind === "seo" ? <SeoPoster d={d} /> : <RealtorPoster d={d} />;
 }

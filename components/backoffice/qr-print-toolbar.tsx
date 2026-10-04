@@ -4,7 +4,7 @@ import { useState } from "react";
 import { PAPER, type PaperFormat } from "./qr-poster";
 
 /** Choix du format (A3 / A4 / A5) et impression des affiches. */
-export function QrPrintToolbar({ count, initial = "A4", children }: { count: number; initial?: PaperFormat; children: React.ReactNode }) {
+export function QrPrintToolbar({ count, initial = "A4", blocked, children }: { count: number; initial?: PaperFormat; blocked?: string | null; children: React.ReactNode }) {
   const [f, setF] = useState<PaperFormat>(initial);
   const p = PAPER[f];
   return (
@@ -22,6 +22,7 @@ export function QrPrintToolbar({ count, initial = "A4", children }: { count: num
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           main { padding: 0 !important; }
           .qr-toolbar { display: none !important; }
+          .qr-builder { display: block !important; }
           .qr-sheets { display: block; }
           .qr-sheet { break-after: page; page-break-after: always; }
           .qr-sheet:last-child { break-after: auto; page-break-after: auto; }
@@ -38,7 +39,7 @@ export function QrPrintToolbar({ count, initial = "A4", children }: { count: num
           ))}
         </div>
         <span className="text-xs text-muted">{p.label}</span>
-        <button type="button" onClick={() => window.print()} className="ml-auto rounded-md bg-[#FE6600] px-5 py-2 text-sm font-bold text-white hover:opacity-90">
+        <button type="button" onClick={() => window.print()} disabled={!!blocked} title={blocked ?? undefined} className="ml-auto rounded-md bg-[#FE6600] px-5 py-2 text-sm font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
           Imprimer {count > 1 ? `les ${count} affiches` : "l’affiche"}
         </button>
         <p className="w-full text-xs text-muted">Dans la fenêtre d’impression, choisissez le papier {f}, marges « Aucune », et cochez « Graphiques d’arrière-plan » pour le fond bleu. Vous pouvez aussi « Enregistrer en PDF ».</p>
