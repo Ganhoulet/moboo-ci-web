@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { img } from "@/lib/img";
 import { qrSvg } from "@/lib/qr-svg";
+import { QrBatchBar, QrSelectAll } from "@/components/backoffice/qr-batch-bar";
 import { getQrStats, searchQr, type QrListing, type QrRealtor } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,8 @@ function Thumb({ svg }: { svg: string }) {
 async function RealtorRow({ r }: { r: QrRealtor }) {
   const svg = await qrSvg(r.qrUrl);
   return (
-    <li className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+    <li className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200 has-[:checked]:ring-2 has-[:checked]:ring-brand-600">
+      <input type="checkbox" name="r" value={r.ref} form="qr-batch" aria-label={`Sélectionner ${r.name}`} className="h-5 w-5" />
       {r.photo ? <img src={img(r.photo, 160)} alt="" className="h-12 w-12 rounded-full object-cover" />
         : <span className="grid h-12 w-12 place-items-center rounded-full bg-[#0555CC] font-display text-lg font-black text-white">{r.name.charAt(0).toUpperCase()}</span>}
       <div className="min-w-0 flex-1">
@@ -36,7 +38,8 @@ async function RealtorRow({ r }: { r: QrRealtor }) {
 async function ListingRow({ l }: { l: QrListing }) {
   const svg = await qrSvg(l.qrUrl);
   return (
-    <li className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+    <li className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200 has-[:checked]:ring-2 has-[:checked]:ring-brand-600">
+      <input type="checkbox" name="l" value={l.ref} form="qr-batch" aria-label={`Sélectionner ${l.title}`} className="h-5 w-5" />
       {l.photo ? <img src={img(l.photo, 200)} alt="" className="h-14 w-20 rounded object-cover" /> : <span className="h-14 w-20 rounded bg-slate-100" />}
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold text-ink">{l.title}</p>
@@ -50,10 +53,11 @@ async function ListingRow({ l }: { l: QrListing }) {
 }
 
 /** Back-office → Marketing → Affiches QR : les QR codes de l'application, à imprimer pour les agents, agences et annonces. */
-export default async function QrPosters({ searchParams }: { searchParams: { q?: string; type?: string } }) {
+export default async function QrPosters({ searchParams }: { searchParams: { q?: string; type?: string; n?: string } }) {
   const q = (searchParams.q ?? "").trim();
   const type = searchParams.type === "realtors" || searchParams.type === "listings" ? searchParams.type : "all";
-  const [stats, res] = await Promise.all([getQrStats(), searchQr(q, type)]);
+  const limit = [40, 100, 200].includes(Number(searchParams.n)) ? Number(searchParams.n) : 40;
+  const [stats, res] = await Promise.all([getQrStats(), searchQr(q, type, limit)]);
   return (
     <div className="space-y-6">
       <div>
@@ -73,6 +77,11 @@ export default async function QrPosters({ searchParams }: { searchParams: { q?: 
           <option value="realtors">Agents et agences</option>
           <option value="listings">Annonces</option>
         </select>
+        <select name="n" defaultValue={String(limit)} aria-label="Nombre de résultats" className="rounded-md border border-slate-300 px-2 py-2 text-sm">
+          <option value="40">40 résultats</option>
+          <option value="100">100 résultats</option>
+          <option value="200">200 résultats</option>
+        </select>
         <button className="rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Rechercher</button>
       </form>
 
@@ -80,18 +89,29 @@ export default async function QrPosters({ searchParams }: { searchParams: { q?: 
         <>
           {type !== "listings" ? (
             <section>
-              <h2 className="mb-2 font-display text-lg font-bold text-ink">Agents et agences {q ? "" : "— les plus actifs"}</h2>
+              <div className="mb-2 flex items-center gap-3">
+                <h2 className="font-display text-lg font-bold text-ink">Agents et agences {q ? "" : "— les plus actifs"} ({res.realtors.length})</h2>
+                {res.realtors.length ? <QrSelectAll name="r" /> : null}
+              </div>
               {res.realtors.length ? <ul className="space-y-2">{res.realtors.map((r) => <RealtorRow key={r.ref} r={r} />)}</ul>
                 : <p className="text-sm text-muted">Aucun agent ni agence pour « {q} ».</p>}
             </section>
           ) : null}
           {type !== "realtors" ? (
             <section>
-              <h2 className="mb-2 font-display text-lg font-bold text-ink">Annonces {q ? "" : "— les plus récentes"}</h2>
+              <div className="mb-2 flex items-center gap-3">
+                <h2 className="font-display text-lg font-bold text-ink">Annonces {q ? "" : "— les plus récentes"} ({res.listings.length})</h2>
+                {res.listings.length ? <QrSelectAll name="l" /> : null}
+              </div>
               {res.listings.length ? <ul className="space-y-2">{res.listings.map((l) => <ListingRow key={l.ref} l={l} />)}</ul>
                 : <p className="text-sm text-muted">Aucune annonce pour « {q} ».</p>}
             </section>
           ) : null}
+          {/* Impression groupée : les cases ci-dessus appartiennent à ce formulaire (attribut form). */}
+          <form id="qr-batch" action="/admin/affiches-qr/imprimer" method="get">
+            <input type="hidden" name="lot" value="1" />
+          </form>
+          <QrBatchBar />
         </>
       )}
     </div>
