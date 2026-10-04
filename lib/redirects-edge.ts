@@ -45,18 +45,20 @@ export async function findRedirect(api: string, pathname: string, search: URLSea
   }
   const path = normalizePath(pathname);
   const shortLink = path === "/" && /^\d{1,10}$/.test(search.get("p") || "");
-  const hit = cache?.map.get(shortLink ? `__p${search.get("p")}` : path);
+  // `t` (agent | agency) lève l'ambiguïté des identifiants récents des QR codes.
+  const shortKey = `__p${search.get("p")}${search.get("t") ? `_${search.get("t")}` : ""}`;
+  const hit = cache?.map.get(shortLink ? shortKey : path);
   if (hit) return hit;
   // Liens courts WordPress (?p=123) ou adresse au format WordPress pas encore connue.
   if (!shortLink && !WP_LIKE.test(path)) return null;
   try {
     const qs = new URLSearchParams({ path: pathname });
-    for (const k of ["p", "property_id", "post", "listing_id"]) { const v = search.get(k); if (v) qs.set(k, v); }
+    for (const k of ["p", "t", "property_id", "post", "listing_id"]) { const v = search.get(k); if (v) qs.set(k, v); }
     const r = await fetch(`${api}/site/redirects/resolve?${qs}`, { headers: relayHeaders(ip), signal: AbortSignal.timeout(2500) });
     if (!r.ok) return null;
     const d = (await r.json()) as { target: string; code: number };
     if (!d.target || d.code === 404) return null;
-    cache?.map.set(path === "/" ? `__p${search.get("p")}` : path, [d.target, d.code]);
+    cache?.map.set(path === "/" ? shortKey : path, [d.target, d.code]);
     return [d.target, d.code];
   } catch {
     return null;
