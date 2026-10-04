@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 import type { MapSettings } from "@/lib/settings";
 import type { MapMarker } from "@/lib/map-markers";
+import { img as optimized } from "@/lib/img";
 
 export type { MapMarker };
 
@@ -12,7 +13,7 @@ export type Bbox = { south: number; west: number; north: number; east: number };
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
 function popupHtml(m: MapMarker) {
-  const img = m.image ? `<img src="${esc(m.image)}" alt="" style="width:100%;height:96px;object-fit:cover;border-radius:6px;margin-bottom:6px">` : "";
+  const img = m.image ? `<img src="${esc(optimized(m.image, 320))}" loading="lazy" alt="" style="width:100%;height:96px;object-fit:cover;border-radius:6px;margin-bottom:6px">` : "";
   const body = `${img}<strong style="display:block;font-size:13px;line-height:1.3">${esc(m.title ?? "")}</strong>${m.label ? `<span style="color:#1e3a8a;font-weight:700">${esc(m.label)}</span>` : ""}`;
   return m.href ? `<a href="${esc(m.href)}" style="display:block;width:180px;color:inherit;text-decoration:none">${body}</a>` : `<div style="width:180px">${body}</div>`;
 }

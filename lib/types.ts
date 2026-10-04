@@ -164,5 +164,6 @@ export interface ListingItem {
     name: string; kind: string; photoUrl: string | null; username: string | null;
     phone: string | null; whatsapp: string | null; email: string | null;
     verified?: boolean;
+    businessVerified?: boolean;
   } | null;
 }

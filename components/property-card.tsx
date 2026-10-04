@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatXOF } from "@/lib/api";
 import { TRANSACTION_BADGE, type Property } from "@/lib/property";
 import { FavoriteButton } from "./favorite-button";
+import { imgProps } from "@/lib/img";
 
 export function PropertyCard({ p }: { p: Property }) {
   return (
@@ -11,9 +12,10 @@ export function PropertyCard({ p }: { p: Property }) {
           {p.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={p.image}
+              {...imgProps(p.image, { width: 480, sizes: "(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw" })}
               alt={p.title}
               loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
             />
           ) : (

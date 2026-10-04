@@ -92,5 +92,5 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // Pages uniquement (pas les fichiers statiques ni les images).
-  matcher: ["/((?!_next/static|\\.well-known|_next/image|favicon|icon|apple-icon|robots|sitemap|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt|xml)$).*)"],
+  matcher: ["/((?!_next/static|img$|\\.well-known|_next/image|favicon|icon|apple-icon|robots|sitemap|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt|xml)$).*)"],
 };

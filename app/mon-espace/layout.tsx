@@ -30,7 +30,7 @@ export default async function EspaceLayout({ children }: { children: React.React
   const items = menuFor(type)
     .filter((i) => settings.packages.enabled || (i.key !== "forfait" && i.key !== "factures"))
     // Vérification : seulement si activée pour ce type de compte (back-office).
-    .filter((i) => i.key !== "verification" || (settings.verification.enabled && settings.verification.types.includes(type)));
+    .filter((i) => i.key !== "verification" || (settings.verification.enabled && (settings.verification.types.includes(type) || (settings.verification.businessTypes ?? []).includes(type))));
   const publisher = isPublisher(type);
   const [newInquiries, unread] = await Promise.all([
     publisher ? listMyInquiries().then((xs) => xs.filter((q) => q.status === "new").length) : 0,

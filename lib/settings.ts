@@ -49,8 +49,12 @@ export interface SiteSettings {
     pageTitle: string; pageIntro: string;
     companyName: string; companyAddress: string; companyTaxId: string; invoiceNote: string;
   };
-  verification: { enabled: boolean; types: string[]; requiredForListings: boolean; docTypes: string; intro: string };
+  verification: {
+    enabled: boolean; types: string[]; requiredForListings: boolean; docTypes: string; intro: string;
+    requireSelfie: boolean; requireDocNumber: boolean; businessTypes: string[]; businessDocTypes: string; expiryReminderDays: number;
+  };
   moderation: { reportsEnabled: boolean };
+  disputes: { enabled: boolean; windowDays: number; hostReplyHours: number; guestCancel: boolean; intro: string };
   legal: {
     companyName: string; companyAddress: string; contactEmail: string; contactPhone: string;
     privacyUpdated: string; privacyHtml: string; deletionGraceDays: number; deletionIntro: string;
@@ -120,10 +124,16 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
   verification: {
     enabled: false, types: ["agent", "entreprise"], requiredForListings: false,
-    docTypes: "Carte nationale d’identité, Passeport, Registre du commerce (RCCM), Carte professionnelle",
+    docTypes: "Carte nationale d’identité, Passeport, Permis de conduire, Carte consulaire, Carte de résident",
+    requireSelfie: true, requireDocNumber: true, businessTypes: ["agent", "entreprise"], expiryReminderDays: 30,
+    businessDocTypes: "Registre du commerce (RCCM), Agrément d’agent immobilier, Carte professionnelle, Déclaration fiscale d’existence (DFE)",
     intro: "Faites vérifier votre compte : les visiteurs font davantage confiance aux professionnels vérifiés. Vos documents ne sont jamais publiés.",
   },
   moderation: { reportsEnabled: true },
+  disputes: {
+    enabled: true, windowDays: 14, hostReplyHours: 48, guestCancel: true,
+    intro: "Décrivez précisément le problème et joignez des photos : l’équipe Moboo contacte l’hôte et vous répond sous 48 h ouvrées. Pendant l’examen, l’acompte versé n’est pas reversé à l’hôte.",
+  },
   legal: {
     companyName: "Moboo", companyAddress: "Abidjan, Côte d’Ivoire", contactEmail: "contact@moboo.ci", contactPhone: "",
     privacyUpdated: "3 octobre 2026", privacyHtml: "", deletionGraceDays: 30,

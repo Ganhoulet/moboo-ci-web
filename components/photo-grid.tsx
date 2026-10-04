@@ -6,6 +6,7 @@ import { buildMedia, type Media } from "@/lib/media";
 import { toggleFavorite, useFavorites } from "@/lib/favorites";
 import { toggleAccountFavoriteAction } from "@/app/mon-espace/actions";
 import type { Property } from "@/lib/property";
+import { img, imgProps } from "@/lib/img";
 
 /* ─── Briques ──────────────────────────────────────────────────────────── */
 
@@ -160,7 +161,7 @@ export function MobileGallery({
                 <button type="button" className="block h-full w-full" onClick={() => setOpen(i)} aria-label={`Agrandir la photo ${i + 1}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={m.src}
+                    {...imgProps(m.src, { width: 960, sizes: "100vw" })}
                     alt={i === 0 ? alt : ""}
                     loading={i < 2 ? "eager" : "lazy"}
                     decoding="async"
@@ -300,7 +301,7 @@ export function PhotoGrid({ photos, alt, videoUrl, variant = "mosaic" }: { photo
         <Poster m={m} alt={alt} className="h-full w-full object-cover transition hover:scale-[1.02]" />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={thumbSrc(m) ?? ""} alt={i === 0 ? alt : ""} loading={i === 0 ? undefined : "lazy"} decoding="async" className="h-full w-full object-cover transition hover:scale-[1.02]" />
+        <img {...(m.kind === "photo" ? imgProps(m.src, { width: i === 0 ? 960 : 480, sizes: i === 0 ? "(min-width: 768px) 50vw, 100vw" : "(min-width: 768px) 25vw, 50vw" }) : { src: thumbSrc(m) ?? "" })} alt={i === 0 ? alt : ""} loading={i === 0 ? undefined : "lazy"} fetchPriority={i === 0 ? "high" : undefined} decoding="async" className="h-full w-full object-cover transition hover:scale-[1.02]" />
       )}
       {m.kind === "video" ? <PlayBadge size={i === 0 ? 72 : 44} /> : null}
     </button>
@@ -383,7 +384,7 @@ export function PhotoGrid({ photos, alt, videoUrl, variant = "mosaic" }: { photo
             <Poster m={main} alt={alt} className="h-full w-full object-cover transition hover:scale-[1.02]" />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={main.src} alt={alt} decoding="async" className="h-full w-full object-cover transition hover:scale-[1.02]" />
+            <img {...imgProps(main.src, { width: 960, sizes: "(min-width: 1024px) 60vw, 100vw" })} alt={alt} fetchPriority="high" decoding="async" className="h-full w-full object-cover transition hover:scale-[1.02]" />
           )}
           {main.kind === "video" ? <PlayBadge size={72} /> : null}
         </button>
@@ -398,7 +399,7 @@ export function PhotoGrid({ photos, alt, videoUrl, variant = "mosaic" }: { photo
                 aria-label={`Photo ${i + 2}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={thumbSrc(m) ?? ""} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition hover:scale-[1.03]" />
+                <img {...(m.kind === "photo" ? imgProps(m.src, { width: 480, sizes: "(min-width: 1024px) 20vw, 50vw" }) : { src: thumbSrc(m) ?? "" })} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition hover:scale-[1.03]" />
               </button>
             ))}
           </div>
@@ -504,7 +505,7 @@ export function Lightbox({
           )
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img key={m.src} src={m.src} alt={`${alt} — photo ${i + 1}`} className="max-h-full max-w-full object-contain" />
+          <img key={m.src} {...imgProps(m.src, { width: 1600, sizes: "100vw" })} alt={`${alt} — photo ${i + 1}`} decoding="async" className="max-h-full max-w-full object-contain" />
         )}
         {n > 1 && (
           <>
@@ -529,7 +530,7 @@ export function Lightbox({
                 <Poster m={x} className="h-full w-full object-cover" />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={x.src} alt="" loading="lazy" className="h-full w-full object-cover" />
+                <img src={img(x.src, 320)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
               )}
               {x.kind === "video" ? <PlayBadge size={26} /> : null}
             </button>

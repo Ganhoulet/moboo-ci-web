@@ -13,6 +13,8 @@ import { PropertyTile } from "./property-tile";
 import { HeroSearch } from "./hero-search";
 import { LoanCalculator } from "./calculator";
 import { Faq } from "./faq";
+import { img as optimized, imgProps } from "@/lib/img";
+const imgSmall = (u: string | null | undefined) => optimized(u, 320);
 
 type P = Record<string, any>;
 const BG: Record<string, string> = { white: "bg-white", soft: "bg-slate-50", brand: "bg-brand-900 text-white" };
@@ -76,7 +78,7 @@ async function Hero({ s, data }: { s: Section; data: HomeData }) {
     <section id={`section-${s.id}`} className="relative isolate z-20">
       {img ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={img} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
+        <img {...imgProps(img, { width: 1600, sizes: "100vw" })} alt="" fetchPriority="high" decoding="async" className="absolute inset-0 -z-10 h-full w-full object-cover" />
       ) : (
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,#3b5bdb_0%,#1e3a8a_45%,#0f1f4d_100%)]" />
       )}
@@ -172,7 +174,7 @@ function QuickStart({ s, edit }: { s: Section; edit?: boolean }) {
           <Link key={i} href={x.href || "#"} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-card-hover">
             {x.image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={x.image} alt="" className="mb-4 h-32 w-full rounded-xl object-cover" />
+              <img {...imgProps(x.image, { width: 480, sizes: "(min-width: 1024px) 25vw, 100vw" })} alt="" loading="lazy" decoding="async" className="mb-4 h-32 w-full rounded-xl object-cover" />
             ) : <span className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-2xl">{x.icon || "🏠"}</span>}
             <p className="mt-4 font-display text-lg font-bold text-ink">{x.title}</p>
             <p className="mt-1 text-sm text-muted">{x.text}</p>
@@ -255,7 +257,7 @@ function PropertyTypes({ s, data, edit }: { s: Section; data: HomeData; edit?: b
           <Link key={x.type} href={`/annonces?propertyType=${encodeURIComponent(x.type)}`} className="group relative block aspect-[4/5] overflow-hidden rounded-2xl bg-slate-200">
             {x.image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={x.image} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+              <img {...imgProps(x.image, { width: 640, sizes: "(min-width: 1024px) 33vw, 100vw" })} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
             ) : <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-brand-700 to-brand-900 text-6xl">{TYPE_ICON[x.type] ?? "🏠"}</div>}
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
               <p className="font-display text-lg font-bold">{x.t?.label ?? x.type}</p>
@@ -279,7 +281,7 @@ function Banner({ s, edit }: { s: Section; edit?: boolean }) {
         {style === "image" && p.image ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.image} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
+            <img {...imgProps(p.image, { width: 1600, sizes: "100vw" })} alt="" loading="lazy" decoding="async" className="absolute inset-0 -z-10 h-full w-full object-cover" />
             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/70 to-black/10" />
           </>
         ) : null}
@@ -332,11 +334,11 @@ function Pros({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean })
           <Link key={x.href ?? x.username} href={x.href ?? `/pro/${x.username}`} className="w-[70%] shrink-0 snap-start rounded-2xl border border-slate-200 bg-white p-5 text-center transition hover:shadow-card-hover sm:w-[40%] lg:w-[calc(20%-16px)]">
             {x.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={x.avatarUrl} alt="" className="mx-auto h-20 w-20 rounded-full object-cover" />
+              <img src={imgSmall(x.avatarUrl)} alt="" loading="lazy" decoding="async" className="mx-auto h-20 w-20 rounded-full object-cover" />
             ) : <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-brand-800 font-display text-2xl font-bold text-white">{x.name.charAt(0).toUpperCase()}</span>}
             <p className="mt-3 truncate font-semibold text-ink">{x.name}</p>
             <p className="truncate text-xs text-muted">{x.accountType === "entreprise" ? "Agence" : "Agent"} · {x.city || "Côte d’Ivoire"}</p>
-            <p className="mt-2 text-xs font-semibold text-slate-600">{x.listings} annonce{x.listings > 1 ? "s" : ""}{x.verified ? <span className="ml-1 text-emerald-700">· ✓ Vérifié</span> : null}</p>
+            <p className="mt-2 text-xs font-semibold text-slate-600">{x.listings} annonce{x.listings > 1 ? "s" : ""}{x.businessVerified ? <span className="ml-1 text-violet-800">· ✓ Pro vérifié</span> : x.verified ? <span className="ml-1 text-emerald-700">· ✓ Vérifié</span> : null}</p>
           </Link>
         ))}
       </Carousel>
@@ -466,7 +468,7 @@ function Articles({ s, edit }: { s: Section; edit?: boolean }) {
             <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200">
               {x.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={x.image} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                <img {...imgProps(x.image, { width: 480, sizes: "(min-width: 1024px) 25vw, 50vw" })} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
               ) : <div className="grid h-full place-items-center text-4xl">📰</div>}
             </div>
             {x.tag ? <p className="mt-3 text-xs font-bold uppercase tracking-wider text-accent-700">{x.tag}</p> : null}

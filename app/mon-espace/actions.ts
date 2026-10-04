@@ -335,10 +335,18 @@ export async function unlinkGoogleAction(): Promise<{ ok: boolean }> {
 
 /* ─── Vérification du compte ───────────────────────────────────────────── */
 
+export interface VerificationRequest {
+  id: string; level: "identity" | "business"; docType: string; fullName: string; status: string; statusLabel: string;
+  adminNote: string | null; createdAt: string; docExpiry: string | null; businessName: string | null;
+}
+export interface VerificationLevel {
+  offered: boolean; verified: boolean; verifiedAt: string | null; expiresAt?: string | null; docTypes: string[]; last: VerificationRequest | null;
+}
 export interface MyVerification {
   enabled: boolean; concerned: boolean; required: boolean; verified: boolean; verifiedAt: string | null;
-  docTypes: string[]; intro: string;
-  last: { id: string; docType: string; fullName: string; status: string; statusLabel: string; adminNote: string | null; createdAt: string } | null;
+  docTypes: string[]; intro: string; requireSelfie: boolean; requireDocNumber: boolean; phoneVerified: boolean;
+  identity: VerificationLevel; business: VerificationLevel;
+  last: VerificationRequest | null;
 }
 
 export async function getMyVerification(): Promise<MyVerification | null> {
@@ -347,7 +355,10 @@ export async function getMyVerification(): Promise<MyVerification | null> {
   return ok ? data : null;
 }
 
-export async function submitVerificationAction(input: { docType: string; fullName: string; front: string; back?: string; note?: string }): Promise<{ ok: boolean; error?: string }> {
+export async function submitVerificationAction(input: {
+  level: "identity" | "business"; docType: string; fullName: string; docNumber?: string; docExpiry?: string; businessName?: string;
+  front: string; back?: string; selfie?: string; note?: string;
+}): Promise<{ ok: boolean; error?: string }> {
   const { ok, data } = await authedFetch("/site/me/verification", { method: "POST", body: JSON.stringify(input) });
   revalidatePath("/mon-espace/verification");
   return ok ? { ok: true } : { ok: false, error: errMsg(data, "Envoi impossible.") };

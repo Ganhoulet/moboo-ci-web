@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatXOF } from "@/lib/api";
 import { TRANSACTION_BADGE, type Property } from "@/lib/property";
 import { FavoriteButton } from "./favorite-button";
+import { imgProps } from "@/lib/img";
 
 /** Annonce en ligne (présentation « Liste » de la page des résultats). */
 export function PropertyRow({ p }: { p: Property }) {
@@ -11,7 +12,7 @@ export function PropertyRow({ p }: { p: Property }) {
         <div className="relative w-36 shrink-0 overflow-hidden bg-slate-100 sm:w-60">
           {p.image ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={p.image} alt={p.title} loading="lazy" className="h-full min-h-[8.5rem] w-full object-cover transition duration-300 group-hover:scale-105" />
+            <img {...imgProps(p.image, { width: 320, sizes: "(min-width: 640px) 16rem, 100vw" })} alt={p.title} loading="lazy" decoding="async" className="h-full min-h-[8.5rem] w-full object-cover transition duration-300 group-hover:scale-105" />
           ) : <div className="h-full min-h-[8.5rem] bg-gradient-to-br from-brand-100 to-slate-100" />}
           <FavoriteButton property={p} className="absolute left-2 top-2" />
         </div>

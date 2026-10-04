@@ -25,5 +25,7 @@ export const ADMIN_ICONS: Record<string, React.ReactNode> = {
   megaphone: <svg {...sv}><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1ZM15 8a5 5 0 0 1 0 8M18 5a9 9 0 0 1 0 14" /></svg>,
   flag: <svg {...sv}><path d="M4 21V4M4 4h12l-2 4 2 4H4" /></svg>,
   history: <svg {...sv}><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></svg>,
+  calendar: <svg {...sv}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  scale: <svg {...sv}><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 0 0 6 0L5 7Zm14 0-3 7a3 3 0 0 0 6 0l-3-7Z" strokeLinecap="round" strokeLinejoin="round" /></svg>,
   key: <svg {...sv}><circle cx="8" cy="15" r="4" /><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14 9l2 2" /></svg>,
 };

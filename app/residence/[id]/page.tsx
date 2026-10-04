@@ -14,6 +14,7 @@ import {
   KeyFacts, Section, displayName, type Fact,
 } from "@/components/detail";
 import { getSiteSettings } from "@/lib/settings";
+import { img } from "@/lib/img";
 
 export const revalidate = 60;
 
@@ -188,7 +189,7 @@ export default async function ResidencePage({ params }: { params: { id: string }
                     <div key={a.id} className="flex items-center gap-4 p-4">
                       {cover ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={cover} alt="" loading="lazy" className="h-16 w-20 shrink-0 rounded-lg object-cover" />
+                        <img src={img(cover, 320)} alt="" loading="lazy" decoding="async" className="h-16 w-20 shrink-0 rounded-lg object-cover" />
                       ) : null}
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-ink">{apartmentLabel(a.type)}</p>

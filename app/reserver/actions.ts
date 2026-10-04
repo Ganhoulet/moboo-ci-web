@@ -43,7 +43,7 @@ export async function submitReservation(
       ok: true,
       bookingId: data.bookingId,
       message:
-        "Demande envoyée ! L'hôte va confirmer la disponibilité — vous recevrez alors le lien de paiement de l'acompte par WhatsApp/SMS.",
+        "Demande envoyée ! L'hôte va confirmer la disponibilité — vous recevrez alors le lien de paiement de l'acompte par WhatsApp/SMS. Suivez-la dans Mon espace → Mes réservations (connexion avec ce numéro).",
     };
   } catch {
     return { ok: false, message: "Service indisponible pour le moment. Réessayez plus tard." };
@@ -85,7 +85,7 @@ export async function submitEventReservation(
     return {
       ok: true,
       message:
-        "Demande envoyée ! Le propriétaire va vous recontacter pour confirmer la date et le devis.",
+        "Demande envoyée ! Le propriétaire va vous recontacter pour confirmer la date et le devis. Suivez-la dans Mon espace → Mes réservations (connexion avec ce numéro).",
     };
   } catch {
     return { ok: false, message: "Service indisponible pour le moment. Réessayez plus tard." };

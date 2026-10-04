@@ -4,7 +4,7 @@
 
 export type Permission =
   | "users.view" | "users.manage" | "roles" | "audit" | "moderation" | "listings" | "realestate"
-  | "verifications" | "billing" | "analytics" | "marketing" | "seo" | "pages" | "app" | "settings";
+  | "verifications" | "billing" | "disputes" | "analytics" | "marketing" | "seo" | "pages" | "app" | "settings";
 
 /** Permission(s) exigée(s) par chaque rubrique (préfixe d'adresse ; la plus précise gagne). */
 const RULES: [string, Permission[] | "any" | "super"][] = [
@@ -31,6 +31,9 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/accueil", ["pages"]],
   ["/admin/reglages", ["settings"]],
   ["/admin/statistiques", ["analytics"]],
+  ["/admin/reservations", ["disputes"]],
+  ["/admin/litiges/reglages", ["disputes"]],
+  ["/admin/litiges", ["disputes"]],
   ["/admin/sante", ["settings"]],
   ["/admin", "any"],
 ];

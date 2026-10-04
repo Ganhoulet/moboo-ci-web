@@ -144,6 +144,7 @@ export interface ProProfile {
   linkedin: string | null;
   memberSince: string;
   verified?: boolean;
+  businessVerified?: boolean;
   listings: ListingItem[];
 }
 
@@ -205,6 +206,7 @@ export interface SiteAccount {
   googleLinked?: boolean;
   isAdmin?: boolean;       // accès au back-office (/admin)
   verified?: boolean;      // compte vérifié (badge)
+  businessVerified?: boolean;
   adminRole?: { key: string; name: string } | null; // rôle du back-office
   permissions?: string[];  // permissions du rôle (menu du back-office)
 }

@@ -87,7 +87,7 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
         sub: [l.agent.position, l.agent.company].filter(Boolean).join(" · ") || l.agent.serviceArea || "Agent immobilier Moboo.ci",
       }
     : l.owner
-      ? { role: "Annonceur", name: l.owner.name, photoUrl: l.owner.photoUrl, sub: "Contact direct, sans commission", verified: !!l.owner.verified }
+      ? { role: "Annonceur", name: l.owner.name, photoUrl: l.owner.photoUrl, sub: "Contact direct, sans commission", verified: !!l.owner.verified, businessVerified: !!l.owner.businessVerified }
       : l.contactName
         ? { role: "Annonceur", name: displayName(l.contactName), sub: "Contact direct, sans commission" }
         : null;

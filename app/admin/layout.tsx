@@ -10,6 +10,7 @@ import { TwoFactorSettings } from "@/components/two-factor-settings";
 import { headers } from "next/headers";
 import { can, canAccess } from "@/lib/admin-perms";
 import { getModerationSummary } from "./backoffice-actions";
+import { getDisputeCounts } from "./litiges/actions";
 
 export const metadata: Metadata = { title: "Back-office", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -55,6 +56,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     getAdminSettings(),
     can(perms, "moderation") ? getModerationSummary() : Promise.resolve(null),
   ]);
+  const disputes = can(perms, "disputes") ? await getDisputeCounts() : null;
   const items: AdminNavItem[] = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
     // Statistiques (façon Zillow / Airbnb) : indicateurs, recherches, professionnels.
@@ -99,6 +101,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/immobilier/forfaits", "Forfaits"],
       ["/admin/immobilier/factures", "Factures"],
     ].map(([href, label]) => ({ href, label, icon: "building", child: true, group: "immobilier" })),
+    // Réservations faites sur Moboo.ci et litiges (médiation, gel du reversement).
+    { href: "/admin/reservations", label: "Réservations", icon: "calendar", group: "reservations", badge: disputes?.open ?? 0 },
+    { href: "/admin/litiges", label: "Litiges", icon: "scale", child: true, group: "reservations", badge: disputes?.open ?? 0 },
+    { href: "/admin/litiges/reglages", label: "Réglages", icon: "scale", child: true, group: "reservations" },
     // Vérification des comptes (demandes + réglages).
     { href: "/admin/verifications", label: "Vérification des comptes", icon: "shield", group: "verifications" },
     { href: "/admin/verifications/reglages", label: "Réglages", icon: "shield", child: true, group: "verifications" },

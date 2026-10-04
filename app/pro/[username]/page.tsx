@@ -8,6 +8,7 @@ import { VerifiedBadge } from "@/components/verified-badge";
 import { mapListing } from "@/lib/property";
 import { PropertyCard } from "@/components/property-card";
 import { ReportButton } from "@/components/report-button";
+import { img } from "@/lib/img";
 
 export const revalidate = 60;
 
@@ -38,13 +39,13 @@ export default async function ProPage({ params }: { params: { username: string }
         <div className="container-page flex flex-wrap items-center gap-5 py-10">
           {p.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={p.avatarUrl} alt="" className="h-24 w-24 rounded-full object-cover ring-4 ring-white/20" />
+            <img src={img(p.avatarUrl, 320)} alt="" className="h-24 w-24 rounded-full object-cover ring-4 ring-white/20" />
           ) : (
             <span className="grid h-24 w-24 place-items-center rounded-full bg-white/15 font-display text-4xl font-extrabold">{p.name.charAt(0).toUpperCase()}</span>
           )}
           <div className="min-w-0 flex-1">
             <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">{accountLabel(p, names)}</span>
-            <h1 className="mt-2 flex flex-wrap items-center gap-2 font-display text-3xl font-extrabold">{p.name}{p.verified ? <VerifiedBadge tone="dark" /> : null}</h1>
+            <h1 className="mt-2 flex flex-wrap items-center gap-2 font-display text-3xl font-extrabold">{p.name}{p.verified ? <VerifiedBadge tone="dark" /> : null}{p.businessVerified ? <VerifiedBadge tone="dark" kind="business" /> : null}</h1>
             <p className="mt-1 text-sm text-white/80">
               {[p.commune, p.city].filter(Boolean).join(", ") || "Côte d'Ivoire"} · Membre depuis {new Date(p.memberSince).getFullYear()}
               {" · "}{p.listings.length} annonce(s){rent ? ` dont ${rent} en location` : ""}

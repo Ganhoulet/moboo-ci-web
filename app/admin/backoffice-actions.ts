@@ -30,7 +30,7 @@ async function send<T = any>(path: string, method: string, body: unknown, fallba
 export interface AdminUserRow {
   id: string; appId: number; name: string; phone: string; email: string | null; username: string | null; companyName: string | null;
   accountType: string; city: string | null; commune: string | null; avatarUrl: string | null; status: "active" | "suspended" | "banned";
-  verified: boolean; isAdmin: boolean; twoFactor: boolean; createdAt: string; lastLoginAt: string | null; listings: number;
+  verified: boolean; businessVerified?: boolean; isAdmin: boolean; twoFactor: boolean; createdAt: string; lastLoginAt: string | null; listings: number;
 }
 export interface AdminUserPage { total: number; page: number; perPage: number; counts: { status: Record<string, number>; type: Record<string, number> }; items: AdminUserRow[] }
 

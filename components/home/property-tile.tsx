@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatXOF } from "@/lib/api";
 import { TRANSACTION_BADGE, type Property } from "@/lib/property";
 import { FavoriteButton } from "../favorite-button";
+import { imgProps } from "@/lib/img";
 
 /** Carte d'annonce épurée (style Airbnb) : photo arrondie, cœur, texte dessous. */
 export function PropertyTile({ p, className = "" }: { p: Property; className?: string }) {
@@ -11,7 +12,7 @@ export function PropertyTile({ p, className = "" }: { p: Property; className?: s
         <div className="relative aspect-[20/19] overflow-hidden rounded-2xl bg-slate-100">
           {p.image ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={p.image} alt={p.title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+            <img {...imgProps(p.image, { width: 480, sizes: "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 85vw" })} alt={p.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
           ) : (
             <div className="grid h-full place-items-center bg-gradient-to-br from-brand-50 to-slate-100 text-brand-300">
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5" strokeLinecap="round" strokeLinejoin="round" /></svg>

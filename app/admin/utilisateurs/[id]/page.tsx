@@ -41,7 +41,7 @@ export default async function AdminUserPage({ params }: { params: { id: string }
         <div className="min-w-0 flex-1">
           <h1 className="flex flex-wrap items-center gap-2 font-display text-2xl font-extrabold text-ink">
             {a.name || a.phone}
-            {a.verified ? <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-700 ring-1 ring-sky-200">✔ Vérifié</span> : null}
+            {a.verified ? <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-700 ring-1 ring-sky-200">✔ Identité vérifiée</span> : null}{a.businessVerified ? <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-800 ring-1 ring-violet-200">✔ Pro vérifié</span> : null}
             <Pill s={a.accountStatus} />
             {a.role ? <span className="rounded bg-ink px-2 py-0.5 text-xs font-bold text-white">{a.role.name}</span> : null}
           </h1>
