@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { removePackageAction, savePackageAction, type AdminPackage } from "@/app/admin/immobilier/actions";
-import { fcfa } from "@/lib/community";
+import { createMobooPackagesAction, removePackageAction, savePackageAction, type AdminPackage } from "@/app/admin/immobilier/actions";
+import { fcfa, periodLabel } from "@/lib/community";
 
 type Form = { name: string; description: string; price: string; durationDays: string; listings: string; unlimited: boolean; featured: string; popular: boolean; active: boolean };
 const EMPTY: Form = { name: "", description: "", price: "", durationDays: "30", listings: "10", unlimited: false, featured: "0", popular: false, active: true };
@@ -37,7 +37,16 @@ export function AdminPackages({ items }: { items: AdminPackage[] }) {
     run(() => savePackageAction(editing, payload), editing ? "Forfait modifié." : "Forfait ajouté.", () => { setForm(EMPTY); setEditing(null); });
   };
 
+  const missing = ["chap chap", "standard", "lancement", "croissance"].filter((n) => !items.some((p) => p.name.trim().toLowerCase() === n));
   return (
+    <div className="space-y-4">
+    {missing.length ? (
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-sky-50 p-3 text-sm text-sky-900 ring-1 ring-sky-200">
+        <span>Forfaits actuels de moboo.ci : <strong>Chap Chap</strong> 3 000 F · <strong>Standard</strong> 10 000 F · <strong>Lancement</strong> 25 000 F · <strong>Croissance</strong> 60 000 F{missing.length < 4 ? ` (${missing.length} manquant${missing.length > 1 ? "s" : ""})` : ""}.</span>
+        <button type="button" disabled={pending} onClick={() => run(async () => { const r = await createMobooPackagesAction(); return r; }, "Forfaits de moboo.ci créés.")}
+          className="ml-auto rounded-md bg-brand-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-800 disabled:opacity-50">Créer les forfaits de moboo.ci</button>
+      </div>
+    ) : null}
     <div className="grid gap-4 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
       <form onSubmit={submit} className="h-fit space-y-3 rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
         <p className="font-semibold text-ink">{editing ? "Modifier le forfait" : "Nouveau forfait"}</p>
@@ -51,7 +60,7 @@ export function AdminPackages({ items }: { items: AdminPackage[] }) {
             <input className="input mt-1" type="number" min={0} value={form.listings} disabled={form.unlimited} onChange={(e) => set({ listings: e.target.value })} />
             <label className="mt-1 flex items-center gap-2 text-xs"><input type="checkbox" checked={form.unlimited} onChange={(e) => set({ unlimited: e.target.checked })} /> Illimitées</label>
           </div>
-          <div><label className="block text-sm font-semibold">Mises en vedette</label><input className="input mt-1" type="number" min={0} value={form.featured} onChange={(e) => set({ featured: e.target.value })} /></div>
+          <div><label className="block text-sm font-semibold">Annonces sponsorisées</label><input className="input mt-1" type="number" min={0} value={form.featured} onChange={(e) => set({ featured: e.target.value })} /></div>
         </div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.popular} onChange={(e) => set({ popular: e.target.checked })} /> Mis en avant (« Le plus choisi »)</label>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.active} onChange={(e) => set({ active: e.target.checked })} /> Proposé sur le site</label>
@@ -66,7 +75,7 @@ export function AdminPackages({ items }: { items: AdminPackage[] }) {
         {items.length ? (
           <table className="w-full min-w-[40rem] text-sm">
             <thead className="border-b border-slate-200 text-left">
-              <tr><th className="px-4 py-3">Forfait</th><th className="px-4 py-3 text-right">Prix</th><th className="px-4 py-3">Durée</th><th className="px-4 py-3">Annonces</th><th className="px-4 py-3">Vedettes</th><th className="px-4 py-3 text-right">Abonnés</th><th className="px-4 py-3" /></tr>
+              <tr><th className="px-4 py-3">Forfait</th><th className="px-4 py-3 text-right">Prix</th><th className="px-4 py-3">Durée</th><th className="px-4 py-3">Annonces</th><th className="px-4 py-3">Sponsorisées</th><th className="px-4 py-3 text-right">Abonnés</th><th className="px-4 py-3" /></tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.map((p) => (
@@ -78,7 +87,7 @@ export function AdminPackages({ items }: { items: AdminPackage[] }) {
                     {p.description ? <p className="line-clamp-1 text-xs text-muted">{p.description}</p> : null}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right font-semibold">{p.price ? fcfa(p.price) : "Gratuit"}</td>
-                  <td className="px-4 py-3">{p.durationDays} j</td>
+                  <td className="px-4 py-3">{periodLabel(p.durationDays)}</td>
                   <td className="px-4 py-3">{p.listings < 0 ? "Illimitées" : p.listings}</td>
                   <td className="px-4 py-3">{p.featured}</td>
                   <td className="px-4 py-3 text-right">{p.subscribers}</td>
@@ -92,6 +101,7 @@ export function AdminPackages({ items }: { items: AdminPackage[] }) {
           </table>
         ) : <p className="p-8 text-center text-sm text-muted">Aucun forfait. Ajoutez-en un pour ouvrir la page « Forfaits » du site.</p>}
       </div>
+    </div>
     </div>
   );
 }

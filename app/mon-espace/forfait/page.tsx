@@ -21,7 +21,7 @@ export default async function MonForfait({ searchParams }: { searchParams: { fac
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Mon forfait" sub="Annonces en ligne, mises en vedette et renouvellement." />
+      <PageHeader title="Mon forfait" sub="Propriétés en ligne, annonces sponsorisées et renouvellement." />
 
       {invoice ? (
         <div className={"rounded-2xl p-4 text-sm " + (invoice.status === "paid" ? "bg-emerald-50 text-emerald-800" : invoice.status === "pending" ? "bg-amber-50 text-amber-800" : "bg-red-50 text-red-700")}>
@@ -45,7 +45,7 @@ export default async function MonForfait({ searchParams }: { searchParams: { fac
           {plan.limit > 0 ? <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div className={"h-full rounded-full " + (pct >= 100 ? "bg-red-500" : "bg-brand-700")} style={{ width: `${pct}%` }} /></div> : null}
         </div>
         <div className="rounded-2xl bg-white p-5 shadow-card">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Mises en vedette</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Annonces sponsorisées</p>
           <p className="mt-1 font-display text-xl font-extrabold text-ink">{sub ? `${sub.featuredLeft} disponible${sub.featuredLeft > 1 ? "s" : ""}` : "—"}</p>
           <p className="text-sm text-muted">{sub ? `${sub.featuredUsed} utilisée(s) sur ${sub.featured}` : "Incluses dans les forfaits"} · <Link href="/mon-espace/annonces" className="font-semibold text-brand-800 hover:underline">Mes annonces</Link></p>
         </div>

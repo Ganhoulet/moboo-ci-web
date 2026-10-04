@@ -6,7 +6,7 @@ import { fcfa, getPackages } from "@/lib/community";
 import { getSession } from "@/lib/session";
 import { getSiteSettings } from "@/lib/settings";
 
-const BASE_METADATA: Metadata = { title: "Forfaits", description: "Publiez plus d’annonces et mettez vos biens en vedette sur Moboo.ci." };
+const BASE_METADATA: Metadata = { title: "Forfaits", description: "Publiez plus d’annonces et sponsorisez vos biens sur Moboo.ci." };
 export function generateMetadata() {
   return withSeoOverride("/forfaits", BASE_METADATA);
 }
@@ -27,7 +27,7 @@ export default async function ForfaitsPage() {
           {packages.submissionMode === "per_listing" && packages.listingPrice ? (
             <p className="mt-2 text-sm text-slate-600">Sans forfait : {fcfa(packages.listingPrice)} par annonce publiée.</p>
           ) : null}
-          {packages.featuredPrice ? <p className="mt-1 text-sm text-slate-600">Mise en vedette à l’unité : {fcfa(packages.featuredPrice)} TTC.</p> : null}
+          {packages.featuredPrice ? <p className="mt-1 text-sm text-slate-600">Annonce sponsorisée à l’unité : {fcfa(packages.featuredPrice)} TTC.</p> : null}
         </div>
         <div className="mt-10">
           {packages.items.length ? <PackageCards items={packages.items} loggedIn={!!account} /> : (

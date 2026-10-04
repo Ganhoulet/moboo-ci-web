@@ -58,7 +58,7 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
           <span className="text-slate-700">
             {plan.subscription ? <>Forfait <strong>{plan.subscription.packageName}</strong> · </> : <>Sans forfait · </>}
             {plan.limit < 0 ? `${plan.used} annonce(s) en ligne (illimité)` : `${plan.used} / ${plan.limit} annonce(s) en ligne`}
-            {plan.subscription ? ` · ${plan.subscription.featuredLeft} mise(s) en vedette disponible(s)` : ""}
+            {plan.subscription ? ` · ${plan.subscription.featuredLeft} sponsorisation(s) disponible(s)` : ""}
           </span>
           <Link href="/mon-espace/forfait" className="font-semibold text-brand-800 hover:underline">{plan.limit >= 0 && plan.remaining === 0 ? "Passer à un forfait supérieur →" : "Mon forfait →"}</Link>
         </div>
@@ -103,7 +103,7 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
-                    {l.featured ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">★ En vedette</span> : null}
+                    {l.featured ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">★ Sponsorisée</span> : null}
                     {l.awaitingPayment ? <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">En attente de paiement</span> : null}
                     {l.expiresAt ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">{new Date(l.expiresAt) < new Date() ? "Expirée" : `Expire le ${new Date(l.expiresAt).toLocaleDateString("fr-FR")}`}</span> : null}
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{l.transaction === "sale" ? "Vente" : "Location"} · {typeLabel(l.propertyType)}</span>

@@ -35,7 +35,7 @@ export function ListingRowActions({ id, status, transaction, featured, awaitingP
   const feature = () => run(async () => {
     const r = await featureListingAction(id, true);
     if (r.ok || !featuredPrice) return r;
-    if (!window.confirm(`Aucun crédit « vedette » disponible. Mettre cette annonce en vedette pour ${featuredPrice.toLocaleString("fr-FR")} FCFA ?`)) return { ok: true };
+    if (!window.confirm(`Votre forfait n’a plus d’annonce sponsorisée disponible. Sponsoriser cette annonce pour ${featuredPrice.toLocaleString("fr-FR")} FCFA ?`)) return { ok: true };
     return featureListingAction(id, true, true);
   });
   const closed = transaction === "sale" ? "SOLD" : "RENTED";
@@ -64,7 +64,7 @@ export function ListingRowActions({ id, status, transaction, featured, awaitingP
                 ✅ {transaction === "sale" ? "Marquer vendu" : "Marquer loué"}
               </button>
               <button type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "DISABLED"))}>🙈 Masquer du site</button>
-              <button type="button" className={item} onClick={() => (featured ? run(() => featureListingAction(id, false)) : feature())}>{featured ? "☆ Retirer de la vedette" : "⭐ Mettre en vedette"}</button>
+              <button type="button" className={item} onClick={() => (featured ? run(() => featureListingAction(id, false)) : feature())}>{featured ? "☆ Arrêter la sponsorisation" : "⭐ Sponsoriser"}</button>
             </>
           ) : awaitingPayment ? (
             <button type="button" className={item} onClick={() => run(() => payListingAction(id))}>💳 Payer la publication</button>

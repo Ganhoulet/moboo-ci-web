@@ -164,6 +164,27 @@ const refreshPackages = () => revalidateTag(PACKAGES_TAG);
 export async function savePackageAction(id: string | null, input: Partial<AdminPackage>): Promise<R> {
   return call(id ? `${BILL}/packages/${encodeURIComponent(id)}` : `${BILL}/packages`, id ? "PATCH" : "POST", input, "Enregistrement impossible.", refreshPackages);
 }
+/** Les 4 forfaits actuels de moboo.ci (page /abonnements de WordPress). */
+const MOBOO_PACKAGES = [
+  { name: "Chap Chap", price: 3000, durationDays: 18, listings: 3, featured: 1, popular: false },
+  { name: "Standard", price: 10000, durationDays: 30, listings: 8, featured: 3, popular: false },
+  { name: "Lancement", price: 25000, durationDays: 90, listings: 15, featured: 5, popular: true },
+  { name: "Croissance", price: 60000, durationDays: 90, listings: 65, featured: 17, popular: false },
+];
+/** Crée ceux qui manquent (comparaison par nom) ; l'extension de migration les rattachera ensuite. */
+export async function createMobooPackagesAction(): Promise<R & { created?: number }> {
+  const existing = new Set((await listPackages()).map((p) => p.name.trim().toLowerCase()));
+  let created = 0;
+  for (const p of MOBOO_PACKAGES) {
+    if (existing.has(p.name.toLowerCase())) continue;
+    const { ok, data } = await authedFetch(`${BILL}/packages`, { method: "POST", body: JSON.stringify({ ...p, active: true }) });
+    if (!ok) return { ok: false, error: errMsg(data, `Création de « ${p.name} » impossible.`) };
+    created++;
+  }
+  refreshPackages();
+  revalidatePath("/admin/immobilier", "layout");
+  return { ok: true, created };
+}
 export async function removePackageAction(id: string): Promise<R> {
   return call(`${BILL}/packages/${encodeURIComponent(id)}`, "DELETE", undefined, "Suppression impossible.", refreshPackages);
 }

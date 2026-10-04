@@ -45,6 +45,14 @@ export async function getReviews(type: "listing" | "pro", id: string): Promise<R
     ?? { enabled: false, count: 0, average: 0, distribution: [0, 0, 0, 0, 0], items: [] };
 }
 
+/** Durée d'un forfait comme sur moboo.ci : « 18 jours », « 1 mois », « 3 mois », « 1 an ». */
+export function periodLabel(days: number) {
+  if (days >= 365 && days % 365 === 0) return `${days / 365} an${days >= 730 ? "s" : ""}`;
+  if (days >= 30 && days % 30 === 0) return `${days / 30} mois`;
+  return `${days} jour${days > 1 ? "s" : ""}`;
+}
+export const sponsoredLabel = (n: number) => `${n} annonce${n > 1 ? "s" : ""} sponsorisée${n > 1 ? "s" : ""}`;
+
 export const fcfa = (n: number) => `${Number(n || 0).toLocaleString("fr-FR").replace(/ | /g, " ")} FCFA`;
 
 export const INVOICE_STATUS: Record<string, { label: string; cls: string }> = {
