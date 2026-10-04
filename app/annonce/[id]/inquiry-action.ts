@@ -25,13 +25,15 @@ export async function sendInquiryAction(_prev: InquiryState, formData: FormData)
   const name = String(formData.get("name") || "").trim();
   const phone = String(formData.get("phone") || "").trim();
   const message = String(formData.get("message") || "").trim() || undefined;
+  const email = String(formData.get("email") || "").trim() || undefined;
+  const userType = String(formData.get("userType") || "") || undefined;
 
   if (!name || phone.replace(/[^0-9]/g, "").length < 8) {
     return { ok: false, message: "Entrez votre nom et un numéro de téléphone valide." };
   }
   try {
     const { notifications } = await getSiteSettings();
-    return await send({ listingId, name, phone, message }, notifications.inquirySuccessText);
+    return await send({ listingId, name, phone, email, message, userType }, notifications.inquirySuccessText);
   } catch {
     return { ok: false, message: "Service indisponible. Réessayez plus tard." };
   }

@@ -5,6 +5,7 @@ import { getSession, displayName } from "@/lib/session";
 import { LoginPanel } from "@/components/login-panel";
 import { GOOGLE_CLIENT_ID } from "@/lib/google";
 import { getSiteSettings } from "@/lib/settings";
+import { firebaseConfigFrom } from "@/lib/firebase-phone";
 
 export const metadata: Metadata = { title: "Espace administrateur", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -62,6 +63,7 @@ export default async function AdminLogin() {
                 initialMode={auth.loginPassword ? "identifiant" : "telephone"}
                 googleClientId={auth.loginGoogle ? GOOGLE_CLIENT_ID : undefined}
                 methods={{ phone: auth.loginPhone, password: auth.loginPassword }}
+            firebase={firebaseConfigFrom(auth)}
               />
             </div>
           )}

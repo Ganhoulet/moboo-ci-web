@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { sendInquiryAction, type InquiryState } from "@/app/annonce/[id]/inquiry-action";
+import { USER_TYPES } from "@/lib/api";
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -35,6 +36,11 @@ export function InquiryForm({ listingId, title }: { listingId: string; title: st
       <div className="mt-4 space-y-3">
         <input name="name" placeholder="Votre nom" className="input" required />
         <input name="phone" type="tel" inputMode="tel" placeholder="Votre téléphone" className="input" required />
+        <input name="email" type="email" placeholder="Votre e-mail (optionnel)" className="input" />
+        <select name="userType" className="input" defaultValue="" aria-label="Vous êtes">
+          <option value="">Vous êtes… (optionnel)</option>
+          {USER_TYPES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+        </select>
         <textarea
           name="message"
           rows={3}

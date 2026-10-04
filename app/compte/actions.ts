@@ -62,6 +62,21 @@ export async function verifyOtpAction(_prev: OtpState, formData: FormData): Prom
   }
 }
 
+/** Étape 2 (SMS Firebase) : le code a été vérifié par Google ; l'API contrôle le jeton → session. */
+export async function verifyFirebaseAction(input: { phone: string; idToken: string; firstName?: string; googleTicket?: string; next?: string }): Promise<OtpState> {
+  const { phone, googleTicket } = input;
+  try {
+    const { ok, data } = await siteVerifyOtp({ phone, firebaseIdToken: input.idToken, firstName: input.firstName || undefined, googleTicket: googleTicket || undefined });
+    if (ok && (data as any)?.twoFactor) return { step: "done", redirectTo: startTwoFactor(data, safeNext(input.next)) };
+    if (!ok || !data?.accessToken || !data?.account) return { step: "code", phone, error: errMsg(data, "Connexion impossible. Réessayez."), googleTicket };
+    setSession(data, data.account);
+    revalidatePath("/", "layout");
+    return { step: "done" };
+  } catch {
+    return { step: "code", phone, error: "Service indisponible. Réessayez plus tard.", googleTicket };
+  }
+}
+
 /* ─── Connexion par identifiant + mot de passe ────────────────────────── */
 
 export type PasswordState = { error?: string; redirectTo?: string; linkTicket?: string; linkEmail?: string } | null;

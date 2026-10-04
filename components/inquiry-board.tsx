@@ -4,6 +4,8 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { INQUIRY_STEPS } from "@/lib/accounts";
 import { openInquiryConversationAction, updateInquiryAction, type Inquiry } from "@/app/mon-espace/actions";
+import { USER_TYPES } from "@/lib/api";
+const USER_TYPE_LABEL = Object.fromEntries(USER_TYPES);
 
 /**
  * Suivi des demandes (reprise du « Board » CRM de moboo.ci) : colonnes par
@@ -93,8 +95,14 @@ function Card({ q, compact, open, onToggle, onPatch }: {
           <span className="shrink-0 text-[11px] text-muted">{date}</span>
         </div>
         <p className="truncate text-xs text-muted">
-          {q.kind === "visit" ? `🗓 Visite${q.preferredDate ? ` · ${q.preferredDate}` : ""}` : "💬 Contact"} · {q.listingTitle}
+          {q.kind === "visit" ? `🗓 Visite${q.preferredDate ? ` · ${q.preferredDate}` : ""}` : "💬 Contact"} · {q.listingTitle ?? "Votre profil"}
         </p>
+        {q.userType || q.source === "app" ? (
+          <p className="mt-1 flex flex-wrap gap-1">
+            {q.userType ? <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-800">{USER_TYPE_LABEL[q.userType] ?? q.userType}</span> : null}
+            {q.source === "app" ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">📱 Application</span> : null}
+          </p>
+        ) : null}
         {!open && q.note ? <p className="mt-1 truncate text-xs italic text-slate-500">📝 {q.note}</p> : null}
       </button>
 

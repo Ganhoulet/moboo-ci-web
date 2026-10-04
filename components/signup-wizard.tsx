@@ -10,6 +10,7 @@ import {
   sendSignupCodeAction,
   verifySignupAction,
 } from "@/app/inscription/actions";
+import { confirmFirebaseCode, firebaseErrorMessage, sendFirebaseSms, type FirebaseWebConfig } from "@/lib/firebase-phone";
 
 /* ─── Illustrations des types de compte ───────────────────────────────── */
 
@@ -56,6 +57,7 @@ export function SignupWizard({
   allowedTypes,
   roleSelect = true,
   roleLabels,
+  firebase,
 }: {
   /** Choix du rôle à l'inscription (back-office) ; sinon « Particulier ». */
   roleSelect?: boolean;
@@ -66,8 +68,11 @@ export function SignupWizard({
   /** signup = création ; complete = compte connecté qui choisit / change son type. */
   mode?: "signup" | "complete";
   initial?: Partial<Data>;
+  /** SMS envoyés par Firebase (Réglages → Connexion et inscription). */
+  firebase?: FirebaseWebConfig | null;
 }) {
   const router = useRouter();
+  const [viaFirebase, setViaFirebase] = useState(false);
   const steps = mode === "signup" ? STEPS_SIGNUP : STEPS_COMPLETE;
   // Sans choix du rôle : on commence directement par « Que recherchez-vous ? » (particulier).
   const minStep = roleSelect || initial?.accountType ? 0 : 1;
@@ -145,11 +150,23 @@ export function SignupWizard({
     setStep((s) => s + 1);
   }
 
-  function sendCode() {
+  function sendCode(forceClassic = false) {
     startTransition(async () => {
-      const r = await sendSignupCodeAction({ phone: d.phone, username: profile.username, email: profile.email });
+      const useFirebase = !!firebase && !forceClassic;
+      const r = await sendSignupCodeAction({ phone: d.phone, username: profile.username, email: profile.email, checkOnly: useFirebase });
       if (!r.ok) return setError(r.error ?? "Erreur.");
-      setDevCode(r.devCode);
+      setViaFirebase(false);
+      if (useFirebase) {
+        try {
+          await sendFirebaseSms(firebase!, d.phone, "fb-recaptcha");
+          setViaFirebase(true);
+        } catch (x) {
+          // SMS Google indisponible : code par WhatsApp / SMS / e-mail.
+          const r2 = await sendSignupCodeAction({ phone: d.phone, username: profile.username, email: profile.email });
+          if (!r2.ok) return setError(r2.error ?? firebaseErrorMessage(x));
+          setDevCode(r2.devCode);
+        }
+      } else setDevCode(r.devCode);
       setAlreadyRegistered(!!r.phoneRegistered);
       setStep(4);
     });
@@ -157,7 +174,12 @@ export function SignupWizard({
 
   function verify() {
     startTransition(async () => {
-      const r = await verifySignupAction({ phone: d.phone, code: d.code, ...profile });
+      let firebaseIdToken: string | undefined;
+      if (viaFirebase) {
+        try { firebaseIdToken = await confirmFirebaseCode(d.phone, d.code); }
+        catch (x) { return setError(firebaseErrorMessage(x)); }
+      }
+      const r = await verifySignupAction({ phone: d.phone, ...(firebaseIdToken ? { firebaseIdToken } : { code: d.code }), ...profile });
       if (!r.ok) return setError(r.error ?? "Erreur.");
       router.replace("/mon-espace?bienvenue=1");
       router.refresh();
@@ -306,7 +328,8 @@ export function SignupWizard({
                 placeholder="07 07 12 34 56" value={d.phone} onChange={(e) => set({ phone: e.target.value })}
                 onKeyDown={(e) => { if (e.key === "Enter") next(); }} />
             </Field>
-            <p className="mt-2 text-xs text-muted">Vous recevrez un code à 6 chiffres par WhatsApp ou SMS.</p>
+            <p className="mt-2 text-xs text-muted">Vous recevrez un code à 6 chiffres par {firebase ? "SMS" : "WhatsApp ou SMS"}.</p>
+            <div id="fb-recaptcha" />
           </>
         ) : null}
 
@@ -326,6 +349,11 @@ export function SignupWizard({
               autoFocus
             />
             {devCode ? <p className="mt-2 text-center text-xs text-muted">Code de test : <strong>{devCode}</strong></p> : null}
+            {viaFirebase ? (
+              <button type="button" onClick={() => { set({ code: "" }); sendCode(true); }} disabled={pending} className="mt-3 w-full text-center text-sm font-semibold text-brand-800 hover:underline">
+                SMS non reçu ? Recevoir le code par WhatsApp ou e-mail
+              </button>
+            ) : null}
             <button type="button" onClick={() => { setStep(3); set({ code: "" }); }} className="mt-3 w-full text-center text-sm font-semibold text-brand-800 hover:underline">
               Changer de numéro / renvoyer le code
             </button>

@@ -24,6 +24,7 @@ export interface SiteSettings {
     signupEnabled: boolean; signupAccountTypes: string[]; signupRoleSelect: boolean; profileRoleChange: boolean;
     twoFactorOffer: boolean; twoFactorAdminRequired: boolean; twoFactorTotp: boolean; twoFactorEmail: boolean; adminLoginLink: boolean;
     roleLabel_particulier: string; roleLabel_proprietaire: string; roleLabel_agent: string; roleLabel_entreprise: string; roleLabel_etablissement: string;
+    firebasePhone: boolean; firebaseApiKey: string; firebaseAuthDomain: string; firebaseProjectId: string; firebaseAppId: string;
   };
   notifications: { inquirySuccessText: string; visitSuccessText: string; reservationSuccessText: string };
   listing: {
@@ -84,6 +85,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
   auth: {
     loginPhone: true, loginPassword: true, loginGoogle: true,
+    firebasePhone: false, firebaseApiKey: "", firebaseAuthDomain: "", firebaseProjectId: "", firebaseAppId: "",
     loginIntro: "Au choix : votre numéro de téléphone, votre identifiant ou votre compte Google. Retrouvez vos favoris, vos annonces, vos messages et vos alertes.",
     signupEnabled: true, signupAccountTypes: ["particulier", "proprietaire", "agent", "entreprise", "etablissement"],
     signupRoleSelect: true, profileRoleChange: false,

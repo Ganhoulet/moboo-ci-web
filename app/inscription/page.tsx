@@ -5,6 +5,7 @@ import { SignupWizard } from "@/components/signup-wizard";
 import type { AccountType } from "@/lib/accounts";
 import Link from "next/link";
 import { getSiteSettings, roleName } from "@/lib/settings";
+import { firebaseConfigFrom } from "@/lib/firebase-phone";
 
 export const metadata: Metadata = {
   title: "Créer un compte",
@@ -69,7 +70,8 @@ export default async function InscriptionPage({ searchParams }: { searchParams: 
               // Changement de rôle après l'inscription : seulement si le back-office l'autorise.
               allowedTypes={account?.onboarded && !auth.profileRoleChange ? [account.accountType ?? "particulier"] : auth.signupAccountTypes}
               roleSelect={mode === "complete" || auth.signupRoleSelect}
-              roleLabels={Object.fromEntries(["particulier", "proprietaire", "agent", "entreprise", "etablissement"].map((k) => [k, roleName(settings, k)]))} />
+              roleLabels={Object.fromEntries(["particulier", "proprietaire", "agent", "entreprise", "etablissement"].map((k) => [k, roleName(settings, k)]))}
+              firebase={firebaseConfigFrom(auth)} />
           </div>
         </div>
       </div>

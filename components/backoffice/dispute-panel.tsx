@@ -7,8 +7,8 @@ import { disputeDecisionAction, disputeMessageAction } from "@/app/admin/litiges
 type To = "guest" | "host_out" | "host_in" | "internal";
 const TO: [To, string, string][] = [
   ["guest", "Au client", "Visible par le client, envoyé par e-mail."],
-  ["host_out", "Demander à l’hôte", "Notification à l’hôte ; le litige passe « en attente de l’hôte »."],
-  ["host_in", "Réponse de l’hôte", "Ce que l’hôte a répondu par téléphone ou WhatsApp, retranscrit."],
+  ["host_out", "Demander à l’hôte", "L’hôte reçoit une notification et répond depuis Moboo Resi ou Moboo Event ; le litige passe « en attente de l’hôte »."],
+  ["host_in", "Réponse de l’hôte (retranscrite)", "Si l’hôte a répondu par téléphone ou WhatsApp plutôt que dans son application."],
   ["internal", "Note interne", "Jamais montrée au client ni à l’hôte."],
 ];
 

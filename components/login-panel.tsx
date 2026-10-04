@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { LoginFlow } from "./login-flow";
+import type { FirebaseWebConfig } from "@/lib/firebase-phone";
 import { googleLoginAction, passwordLoginAction, type PasswordState } from "@/app/compte/actions";
 
 type Mode = "telephone" | "identifiant";
@@ -107,8 +108,10 @@ function PasswordForm({ onForgot, next, onLink }: { onForgot: () => void; next?:
  * Connexion au choix : code reçu sur le numéro, identifiant + mot de passe,
  * ou Google (client OAuth : lib/google).
  */
-export function LoginPanel({ initialMode = "telephone", googleClientId, methods = { phone: true, password: true }, next }: {
+export function LoginPanel({ initialMode = "telephone", googleClientId, methods = { phone: true, password: true }, next, firebase }: {
   initialMode?: Mode; googleClientId?: string;
+  /** SMS envoyés par Firebase (Réglages → Connexion et inscription). */
+  firebase?: FirebaseWebConfig | null;
   /** Page à ouvrir après la connexion (ex. /admin pour l'espace administrateur). */
   next?: string;
   /** Méthodes activées dans le back-office (Connexion et inscription). */
@@ -142,7 +145,7 @@ export function LoginPanel({ initialMode = "telephone", googleClientId, methods 
               : <>Confirmez votre numéro pour terminer{google.email ? <> avec <span className="font-semibold">{google.email}</span></> : null}. Ensuite, le bouton Google suffira.</>}
           </p>
         </div>
-        <LoginFlow googleTicket={google.ticket} next={next} />
+        <LoginFlow googleTicket={google.ticket} next={next} firebase={firebase} />
         <button type="button" onClick={() => setGoogle(null)} className="w-full text-center text-sm font-semibold text-muted hover:text-ink">
           Annuler
         </button>
@@ -171,7 +174,7 @@ export function LoginPanel({ initialMode = "telephone", googleClientId, methods 
         ))}
       </div> : null}
 
-      {mode === "telephone" ? <LoginFlow next={next} /> : <PasswordForm next={next} onForgot={() => setMode("telephone")} onLink={(ticket, email) => { setGoogle({ ticket, email, wp: true }); setMode("telephone"); }} />}
+      {mode === "telephone" ? <LoginFlow next={next} firebase={firebase} /> : <PasswordForm next={next} onForgot={() => setMode("telephone")} onLink={(ticket, email) => { setGoogle({ ticket, email, wp: true }); setMode("telephone"); }} />}
     </div>
   );
 }

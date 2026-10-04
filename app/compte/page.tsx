@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 import { LoginPanel } from "@/components/login-panel";
 import { GOOGLE_CLIENT_ID } from "@/lib/google";
 import { getSiteSettings } from "@/lib/settings";
+import { firebaseConfigFrom } from "@/lib/firebase-phone";
 
 export const metadata: Metadata = {
   title: "Se connecter",
@@ -29,6 +30,7 @@ export default async function ComptePage({ searchParams }: { searchParams: { bie
             initialMode={searchParams.mode === "identifiant" ? "identifiant" : "telephone"}
             googleClientId={auth.loginGoogle ? GOOGLE_CLIENT_ID : undefined}
             methods={{ phone: auth.loginPhone, password: auth.loginPassword }}
+            firebase={firebaseConfigFrom(auth)}
           />
         </div>
         {auth.signupEnabled ? <div className="mt-5 rounded-2xl border border-accent-200 bg-accent-50 p-5 text-center">

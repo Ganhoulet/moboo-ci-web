@@ -183,6 +183,8 @@ export interface Inquiry {
   message: string | null;
   kind: string;
   preferredDate: string | null;
+  userType?: string | null;
+  source?: "site" | "app";
   status: string;
   note: string | null;
   createdAt: string;

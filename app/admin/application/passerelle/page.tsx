@@ -12,6 +12,7 @@ const LABELS: Record<string, string> = {
   "contact-property-agent": "Contacter l’annonceur", "contact-realtor": "Contacter un agent", "schedule-tour": "Demande de visite",
   "add-review": "Laisser un avis", "report-content": "Signaler", "all-notifications": "Notifications", "check-notifications": "Nouvelles notifications",
   "user-current-package": "Forfait en cours",
+  "save-search": "Enregistrer une recherche", "saved-searches": "Recherches enregistrées", "delete-saved-search": "Supprimer une recherche",
 };
 
 export default async function Gateway() {

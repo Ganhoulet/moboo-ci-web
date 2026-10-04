@@ -258,7 +258,9 @@ export function siteRequestOtp(phone: string, deviceId?: string, channel?: "auto
 
 export function siteVerifyOtp(input: {
   phone: string;
-  code: string;
+  code?: string;
+  /** Connexion par SMS Firebase : jeton d'identité à la place du code. */
+  firebaseIdToken?: string;
   deviceId?: string;
   googleTicket?: string;
 } & SignupProfile) {
@@ -290,6 +292,9 @@ export function siteLogout(refreshToken?: string) {
   return apiPost("/site/auth/logout", { refreshToken });
 }
 
+/** Type de personne (formulaire de contact du site et de l'application Moboo.ci). */
+export const USER_TYPES: [string, string][] = [["buyer", "Acheteur"], ["tenant", "Locataire"], ["seller", "Vendeur / propriétaire"], ["agent", "Agent immobilier"], ["other", "Autre"]];
+
 /** Demande de contact ou de visite sur une annonce. */
 export function submitInquiry(input: {
   listingId?: string;
@@ -299,6 +304,8 @@ export function submitInquiry(input: {
   message?: string;
   kind?: "contact" | "visit" | "reservation";
   preferredDate?: string;
+  /** Vous êtes : acheteur, locataire, vendeur / propriétaire, agent, autre (même liste que l'application). */
+  userType?: string;
 }, token?: string | null) {
   // Connecté : la demande ouvre un fil dans « Messages » rattaché au compte.
   return apiPost<{ id: string; ok: boolean; conversationId?: string | null }>("/marketplace/inquiries", input, token ?? undefined);

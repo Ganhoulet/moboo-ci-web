@@ -20,7 +20,7 @@ export interface AdminDispute extends MyDispute {
   host: { name: string; phone: string | null; email: string | null } | null;
   booking: AdminBooking | null;
   escrow: { id: string; reference: string; status: string; amount: number; payoutStatus: string; refunded: number | null; managerPayout: number | null; commission: number | null } | null;
-  messages: (DisputeMessage & { internal: boolean })[];
+  messages: (DisputeMessage & { internal: boolean; audience: "all" | "guest" | "host" | "team" })[];
   meta: { resolutions: Record<string, string>; statuses: Record<string, string>; hostReplyHours: number };
 }
 

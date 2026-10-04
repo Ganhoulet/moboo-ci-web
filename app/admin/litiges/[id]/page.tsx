@@ -44,10 +44,13 @@ export default async function AdminDisputePage({ params }: { params: { id: strin
             <h2 className="font-semibold text-ink">Échanges</h2>
             <ol className="space-y-2">
               {d.messages.map((m) => (
-                <li key={m.id} className={"rounded-lg p-3 text-sm ring-1 " + (m.internal ? "bg-slate-100 ring-slate-300" : BUBBLE[m.author] ?? BUBBLE.admin)}>
+                <li key={m.id} className={"rounded-lg p-3 text-sm ring-1 " + (m.audience === "team" ? "bg-slate-100 ring-slate-300" : BUBBLE[m.author] ?? BUBBLE.admin)}>
                   <p className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted">
                     <span className="font-semibold text-slate-700">{m.author === "guest" ? `Client · ${m.authorName}` : m.authorName}</span>
-                    {m.internal ? <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold text-white">INTERNE</span> : null}
+                    {m.audience === "team" ? <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold text-white">INTERNE</span>
+                      : m.audience === "host" ? <span className="rounded bg-amber-600 px-1.5 py-0.5 text-[10px] font-bold text-white">VU PAR L’HÔTE</span>
+                      : m.audience === "guest" ? <span className="rounded bg-brand-700 px-1.5 py-0.5 text-[10px] font-bold text-white">VU PAR LE CLIENT</span>
+                      : <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">CLIENT + HÔTE</span>}
                     <span>{when(m.createdAt)}</span>
                   </p>
                   <p className="whitespace-pre-line text-ink">{m.body}</p>
