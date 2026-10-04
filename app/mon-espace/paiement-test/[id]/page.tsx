@@ -8,7 +8,7 @@ import { getMyInvoice } from "../../actions";
 export default async function PaiementTest({ params }: { params: { id: string } }) {
   const invoice = await getMyInvoice(params.id);
   if (!invoice || !invoice.test) notFound();
-  const back = invoice.kind === "package" ? "/mon-espace/forfait" : "/mon-espace/annonces";
+  const back = invoice.kind === "package" ? "/mon-espace/forfait" : invoice.kind === "credits" ? "/mon-espace/publicite" : "/mon-espace/annonces";
 
   return (
     <div className="mx-auto max-w-lg space-y-4">

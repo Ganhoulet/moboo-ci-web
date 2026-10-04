@@ -156,6 +156,11 @@ export interface ListingItem {
   } | null;
   /** Back-office : « en vedette » et étiquettes (nom + couleur). */
   featured?: boolean;
+  /** Vitrine premium (espace annonceur). */
+  showcase?: boolean;
+  /** Annonce sponsorisée (boost par zone) et son boost. */
+  sponsored?: boolean;
+  boostId?: string;
   labels?: { slug: string; label: string; color: string | null }[];
   /** Statut affiché (back-office → Statuts) : à louer, à vendre, loué, vendu. */
   statusLabel?: { slug: string; label: string; color: string | null } | null;

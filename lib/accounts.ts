@@ -166,7 +166,7 @@ export const WELCOME_NEXT: Record<AccountType, { text: string; cta?: { href: str
 
 export type DashKey =
   | "tableau" | "reservations" | "annonces" | "nouvelle" | "statistiques" | "demandes"
-  | "messages" | "favoris" | "recherches" | "profil" | "forfait" | "factures" | "verification";
+  | "messages" | "favoris" | "recherches" | "profil" | "forfait" | "publicite" | "factures" | "verification";
 
 export interface DashItem {
   key: DashKey;
@@ -189,6 +189,7 @@ export const DASH_MENU: DashItem[] = [
   { key: "favoris", href: "/mon-espace/favoris", label: "Favoris", types: "all" },
   { key: "recherches", href: "/mon-espace/recherches", label: "Recherches & alertes", types: "all" },
   { key: "forfait", href: "/mon-espace/forfait", label: "Mon forfait", types: PUB },
+  { key: "publicite", href: "/mon-espace/publicite", label: "Publicité", types: PUB },
   { key: "factures", href: "/mon-espace/factures", label: "Factures", types: PUB },
   { key: "verification", href: "/mon-espace/verification", label: "Vérification", types: "all" },
   { key: "profil", href: "/mon-espace/profil", label: "Mon profil", types: "all" },

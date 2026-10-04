@@ -53,7 +53,7 @@ export function CreativeView({ c, variant }: { c: Creative; variant: "banner" | 
   // split : texte à gauche, photo à droite (bannière d'accueil)
   return (
     <div className="relative flex min-h-[132px] overflow-hidden rounded-2xl" style={{ background: c.bgColor, color: c.textColor }}>
-      <div className="relative z-10 flex w-[58%] flex-col justify-center p-4">
+      <div className={"relative z-10 flex flex-col justify-center p-4 " + (c.imageUrl ? "w-[58%]" : "w-full sm:px-6")}>
         {badge ? <div className="mb-1">{badge}</div> : null}
         {c.title ? <p className="font-display text-base font-black leading-tight sm:text-lg">{c.title}</p> : null}
         {c.text ? <p className="mt-1 line-clamp-2 text-xs opacity-90">{c.text}</p> : null}

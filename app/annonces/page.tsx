@@ -17,6 +17,10 @@ import { SaveSearchButton } from "@/components/save-search-button";
 import { getSession } from "@/lib/session";
 import { getSiteSettings } from "@/lib/settings";
 import { getTaxonomies } from "@/lib/taxonomies";
+import { getSponsored, zonesOfQuery } from "@/lib/ads";
+import { getCampaigns } from "@/lib/marketing";
+import { PropertyCard } from "@/components/property-card";
+import { SiteBanners } from "@/components/marketing/site-banners";
 
 const BASE_METADATA: Metadata = {
   title: "Annonces",
@@ -99,6 +103,12 @@ export default async function AnnoncesPage({
   const query = new URLSearchParams(Object.entries({ transaction: tx2, q: q || undefined, priceMin: priceMin ? String(priceMin) : undefined, priceMax: priceMax ? String(priceMax) : undefined, propertyType: propertyType || undefined, sort })
     .filter(([, v]) => v) as [string, string][]).toString();
 
+  // Espace annonceur : annonces sponsorisées de la zone (page 1) et bannières ciblées.
+  const [sponsored, banners] = await Promise.all([
+    !isReservableTab && page === 1 && settings.ads?.enabled !== false ? getSponsored({ q, transaction: tx2, propertyType }) : Promise.resolve([]),
+    q ? getCampaigns("site_banner", zonesOfQuery(q)).then((xs) => xs.filter((c) => c.badge === "Sponsorisé")) : Promise.resolve([]),
+  ]);
+
   const hasFilters = !!(q || priceMin || priceMax || propertyType || active !== "all");
   const loggedIn = !!getSession();
   const searchCriteria = {
@@ -153,6 +163,17 @@ export default async function AnnoncesPage({
         <div className="mt-4">
           <SaveSearchButton params={searchCriteria} loggedIn={loggedIn} />
         </div>
+      ) : null}
+
+      {banners.length ? <div className="mt-5"><SiteBanners items={banners} /></div> : null}
+
+      {sponsored.length ? (
+        <section className="mt-6 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200" aria-label="Annonces sponsorisées">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">Annonces sponsorisées{q ? ` · ${q}` : ""}</p>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {sponsored.map((p) => <PropertyCard key={p.id} p={p} />)}
+          </div>
+        </section>
       ) : null}
 
       {items.length > 0 ? (

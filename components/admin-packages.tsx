@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { createMobooPackagesAction, removePackageAction, savePackageAction, type AdminPackage } from "@/app/admin/immobilier/actions";
 import { fcfa, periodLabel } from "@/lib/community";
 
-type Form = { name: string; description: string; price: string; durationDays: string; listings: string; unlimited: boolean; featured: string; popular: boolean; active: boolean };
-const EMPTY: Form = { name: "", description: "", price: "", durationDays: "30", listings: "10", unlimited: false, featured: "0", popular: false, active: true };
+type Form = { name: string; description: string; price: string; durationDays: string; listings: string; unlimited: boolean; featured: string; credits: string; popular: boolean; active: boolean };
+const EMPTY: Form = { name: "", description: "", price: "", durationDays: "30", listings: "10", unlimited: false, featured: "0", credits: "0", popular: false, active: true };
 const toForm = (p: AdminPackage): Form => ({
   name: p.name, description: p.description ?? "", price: String(p.price), durationDays: String(p.durationDays),
-  listings: p.listings < 0 ? "10" : String(p.listings), unlimited: p.listings < 0, featured: String(p.featured), popular: p.popular, active: p.active,
+  listings: p.listings < 0 ? "10" : String(p.listings), unlimited: p.listings < 0, featured: String(p.featured), credits: String(p.credits ?? 0), popular: p.popular, active: p.active,
 });
 
 /** Forfaits (façon Houzez « Packages ») : prix, durée, annonces en ligne, vedettes. */
@@ -32,7 +32,7 @@ export function AdminPackages({ items }: { items: AdminPackage[] }) {
     e.preventDefault();
     const payload = {
       name: form.name, description: form.description, price: Number(form.price) || 0, durationDays: Number(form.durationDays) || 30,
-      listings: form.unlimited ? -1 : Number(form.listings) || 0, featured: Number(form.featured) || 0, popular: form.popular, active: form.active,
+      listings: form.unlimited ? -1 : Number(form.listings) || 0, featured: Number(form.featured) || 0, credits: Number(form.credits) || 0, popular: form.popular, active: form.active,
     };
     run(() => savePackageAction(editing, payload), editing ? "Forfait modifié." : "Forfait ajouté.", () => { setForm(EMPTY); setEditing(null); });
   };
@@ -61,6 +61,7 @@ export function AdminPackages({ items }: { items: AdminPackage[] }) {
             <label className="mt-1 flex items-center gap-2 text-xs"><input type="checkbox" checked={form.unlimited} onChange={(e) => set({ unlimited: e.target.checked })} /> Illimitées</label>
           </div>
           <div><label className="block text-sm font-semibold">Annonces sponsorisées</label><input className="input mt-1" type="number" min={0} value={form.featured} onChange={(e) => set({ featured: e.target.value })} /></div>
+          <div><label className="block text-sm font-semibold">Crédits publicité offerts</label><input className="input mt-1" type="number" min={0} step={500} value={form.credits} onChange={(e) => set({ credits: e.target.value })} /><p className="mt-0.5 text-[11px] text-muted">Boosts, vitrine, zone, bannières</p></div>
         </div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.popular} onChange={(e) => set({ popular: e.target.checked })} /> Mis en avant (« Le plus choisi »)</label>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.active} onChange={(e) => set({ active: e.target.checked })} /> Proposé sur le site</label>
@@ -89,7 +90,7 @@ export function AdminPackages({ items }: { items: AdminPackage[] }) {
                   <td className="whitespace-nowrap px-4 py-3 text-right font-semibold">{p.price ? fcfa(p.price) : "Gratuit"}</td>
                   <td className="px-4 py-3">{periodLabel(p.durationDays)}</td>
                   <td className="px-4 py-3">{p.listings < 0 ? "Illimitées" : p.listings}</td>
-                  <td className="px-4 py-3">{p.featured}</td>
+                  <td className="px-4 py-3">{p.featured}{p.credits ? <span className="block text-[11px] text-emerald-700">+{p.credits.toLocaleString("fr-FR")} crédits</span> : null}</td>
                   <td className="px-4 py-3 text-right">{p.subscribers}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-right text-xs font-semibold">
                     <button type="button" onClick={() => { setEditing(p.id); setForm(toForm(p)); }} className="mr-3 text-brand-800 hover:underline">Modifier</button>

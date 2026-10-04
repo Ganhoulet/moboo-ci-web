@@ -52,7 +52,7 @@ export function ResultsView({
     </div>
   ) : (
     <div className={"grid grid-cols-1 gap-5 sm:grid-cols-2 " + (halfMap ? "xl:grid-cols-2" : "lg:grid-cols-3 xl:grid-cols-4")}>
-      {items.map((p) => <div key={p.id} onMouseEnter={() => setActive(p.id)} onMouseLeave={() => setActive(null)}><PropertyCard p={p} /></div>)}
+      {items.map((p) => <div key={p.id} className={p.showcase ? "sm:col-span-2" : undefined} onMouseEnter={() => setActive(p.id)} onMouseLeave={() => setActive(null)}><PropertyCard p={p} /></div>)}
     </div>
   );
 

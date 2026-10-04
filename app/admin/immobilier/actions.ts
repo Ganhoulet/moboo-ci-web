@@ -153,7 +153,7 @@ export async function removeReviewAction(id: string): Promise<R> {
 const BILL = "/site/admin/billing";
 
 export interface AdminPackage {
-  id: string; name: string; description: string | null; price: number; durationDays: number; listings: number; featured: number;
+  id: string; name: string; description: string | null; price: number; durationDays: number; listings: number; featured: number; credits?: number;
   popular: boolean; active: boolean; sort: number; subscribers: number;
 }
 export async function listPackages(): Promise<AdminPackage[]> {
@@ -192,7 +192,7 @@ export async function removePackageAction(id: string): Promise<R> {
 export interface Invoice {
   id: string; number: string; label: string; amount: number; status: "pending" | "paid" | "cancelled" | "failed"; method: string | null;
   paymentRef: string | null; billingName: string | null; billingPhone: string | null; billingEmail: string | null; createdAt: string; paidAt: string | null;
-  test?: boolean; kind?: "package" | "listing" | "featured";
+  test?: boolean; kind?: "package" | "listing" | "featured" | "credits";
   subscription?: { packageName: string; startsAt: string; endsAt: string } | null;
   issuer?: { name: string; address: string; taxId: string; note: string };
 }

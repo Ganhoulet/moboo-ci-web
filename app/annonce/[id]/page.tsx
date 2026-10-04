@@ -12,6 +12,8 @@ import {
 import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
 import { InquiryForm } from "@/components/inquiry-form";
+import { ZonePartners } from "@/components/zone-partners";
+import { getZonePartners, trackAdClick } from "@/lib/ads";
 import { VisitForm } from "@/components/visit-form";
 import { MobileContactBar } from "@/components/mobile-contact-bar";
 import { ContactLink } from "@/components/contact-link";
@@ -39,9 +41,12 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export default async function AnnoncePage({ params }: { params: { id: string } }) {
+export default async function AnnoncePage({ params, searchParams }: { params: { id: string }; searchParams: { sp?: string } }) {
   const l = await getListing(params.id);
   if (!l) notFound();
+  // Arrivée depuis une annonce sponsorisée : clic compté pour l'annonceur.
+  if (searchParams?.sp) trackAdClick("boost", searchParams.sp);
+  const partners = await getZonePartners(l.id);
 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");
@@ -272,6 +277,8 @@ export default async function AnnoncePage({ params }: { params: { id: string } }
               <InquiryForm listingId={l.id} title={l.title} />
             </div>
           ) : null}
+
+          {partners.zone ? <ZonePartners zone={partners.zone} items={partners.items} /> : null}
 
           {moderation.reportsEnabled ? (
             <div className="mt-4 text-center">

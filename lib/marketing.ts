@@ -11,9 +11,11 @@ export type LiveCampaign = Creative & {
   dismissible: boolean; delaySec: number; version: string;
 };
 
-export async function getCampaigns(placement: "site_banner" | "site_popup"): Promise<LiveCampaign[]> {
+export async function getCampaigns(placement: "site_banner" | "site_popup", zones?: string[]): Promise<LiveCampaign[]> {
   try {
-    const r = await fetch(`${API_URL}/site/marketing?placement=${placement}`, {
+    // zones : bannières des annonceurs ciblées sur ces villes / communes (page de résultats).
+    const z = zones?.length ? `&zone=${encodeURIComponent(zones.slice(0, 20).join(","))}` : "";
+    const r = await fetch(`${API_URL}/site/marketing?placement=${placement}${z}`, {
       next: { revalidate: 60, tags: [MARKETING_TAG] }, headers: { Accept: "application/json", ...relayHeaders(false) },
     });
     return r.ok ? ((await r.json()).items as LiveCampaign[]) : [];

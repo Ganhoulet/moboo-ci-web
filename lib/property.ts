@@ -29,6 +29,9 @@ export interface Property {
   bedrooms?: number | null;
   /** Back-office : en vedette, étiquettes (Exclusivité, Nouveau…). */
   featured?: boolean;
+  /** Espace annonceur : vitrine premium (grand format), annonce sponsorisée (boost par zone). */
+  showcase?: boolean;
+  sponsored?: boolean;
   labels?: { slug: string; label: string; color: string | null }[];
   /** Statut (back-office → Statuts) : remplace le badge de transaction s'il est défini. */
   status?: { label: string; color: string | null } | null;
@@ -153,7 +156,8 @@ export function mapListing(l: import("./types").ListingItem): Property {
   const reservable = kind === "furnished" || kind === "event";
   return {
     id: `lst-${l.id}`,
-    href: `/annonce/${l.id}`,
+    // Clic sur une annonce sponsorisée : compté sur la fiche (?sp=).
+    href: l.boostId ? `/annonce/${l.id}?sp=${l.boostId}` : `/annonce/${l.id}`,
     title: l.title,
     zone: [l.quartier || l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire",
     image: l.photos?.[0] ?? null,
@@ -167,6 +171,8 @@ export function mapListing(l: import("./types").ListingItem): Property {
     propertyType: l.propertyType,
     bedrooms: l.bedrooms,
     featured: !!l.featured,
+    showcase: !!l.showcase,
+    sponsored: !!l.sponsored,
     labels: l.labels ?? [],
     status: kind === "classic" && l.statusLabel ? { label: l.statusLabel.label, color: l.statusLabel.color } : null,
     lat: l.latitude ?? null,

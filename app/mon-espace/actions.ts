@@ -372,6 +372,6 @@ export async function testPayAction(id: string, result: "success" | "failed"): P
   const { ok, data } = await authedFetch(`/site/me/invoices/${encodeURIComponent(id)}/test-pay`, { method: "POST", body: JSON.stringify({ result }) });
   if (!ok) return { ok: false, error: errMsg(data, "Simulation impossible.") };
   revalidatePath("/mon-espace", "layout");
-  const back = data?.kind === "package" ? "/mon-espace/forfait" : "/mon-espace/annonces";
+  const back = data?.kind === "package" ? "/mon-espace/forfait" : data?.kind === "credits" ? "/mon-espace/publicite" : "/mon-espace/annonces";
   return { ok: true, next: `${back}?facture=${encodeURIComponent(id)}` };
 }

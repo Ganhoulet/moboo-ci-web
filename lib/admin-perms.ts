@@ -27,6 +27,8 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/application/reglages", ["app"]],
   ["/admin/application", ["app"]],
   ["/admin/marketing", ["marketing"]],
+  ["/admin/publicite/tarifs", ["settings"]],
+  ["/admin/publicite", ["marketing"]],
   ["/admin/seo", ["seo"]],
   ["/admin/accueil", ["pages"]],
   ["/admin/reglages", ["settings"]],

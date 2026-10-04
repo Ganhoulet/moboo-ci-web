@@ -32,6 +32,7 @@ export function PackageCards({ items, loggedIn, current }: { items: Package[]; l
             <ul className="mt-5 flex-1 space-y-2 text-sm text-slate-700">
               <li>✓ {p.listings < 0 ? "Propriétés illimitées" : `${p.listings} propriété${p.listings > 1 ? "s" : ""} en ligne`}</li>
               <li>{p.featured ? "✓" : "–"} {p.featured ? sponsoredLabel(p.featured) : "Sans annonce sponsorisée"}</li>
+              {p.credits ? <li className="font-semibold text-emerald-700">✓ {p.credits.toLocaleString("fr-FR")} crédits publicité offerts</li> : null}
               <li>✓ Demandes et messages illimités</li>
             </ul>
             {loggedIn ? (

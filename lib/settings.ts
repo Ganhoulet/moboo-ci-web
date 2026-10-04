@@ -44,6 +44,8 @@ export interface SiteSettings {
     showDetails: boolean; showFeatures: boolean; showGallery: boolean; showQr: boolean; footerText: string;
   };
   reviews: { enabled: boolean; onListings: boolean; onPros: boolean; moderation: boolean; intro: string };
+  /** Espace annonceur (tarifs : /site/ads/pricing). */
+  ads: { enabled: boolean };
   packages: {
     enabled: boolean; submissionMode: "free" | "membership" | "per_listing"; freeListings: number; listingPrice: number;
     featuredPrice: number; featuredTax: number; expireDays: number; autoDeleteExpired: boolean; restoreQuotaOnDelete: boolean; termsUrl: string;
@@ -118,6 +120,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     showGallery: false, showQr: true, footerText: "Fiche imprimée depuis Moboo.ci — l’immobilier en Côte d’Ivoire.",
   },
   reviews: { enabled: true, onListings: true, onPros: true, moderation: true, intro: "Partagez votre expérience : votre avis aide les autres visiteurs." },
+  ads: { enabled: true },
   packages: {
     enabled: true, submissionMode: "free", freeListings: 3, listingPrice: 2000, featuredPrice: 0, featuredTax: 0, expireDays: 0,
     autoDeleteExpired: false, restoreQuotaOnDelete: true, termsUrl: "", pageTitle: "Choisissez votre forfait",

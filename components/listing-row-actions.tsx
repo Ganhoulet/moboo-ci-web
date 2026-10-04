@@ -65,6 +65,7 @@ export function ListingRowActions({ id, status, transaction, featured, awaitingP
               </button>
               <button type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "DISABLED"))}>🙈 Masquer du site</button>
               <button type="button" className={item} onClick={() => (featured ? run(() => featureListingAction(id, false)) : feature())}>{featured ? "☆ Arrêter la sponsorisation" : "⭐ Sponsoriser"}</button>
+              <Link href={`/mon-espace/publicite?tab=boost&annonce=${id}`} className={item}>📣 Booster par zone / vitrine</Link>
             </>
           ) : awaitingPayment ? (
             <button type="button" className={item} onClick={() => run(() => payListingAction(id))}>💳 Payer la publication</button>

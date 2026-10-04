@@ -16,6 +16,8 @@ export interface Package {
   id: string; name: string; description: string | null; price: number; durationDays: number;
   /** -1 = illimité */
   listings: number; featured: number; popular: boolean;
+  /** Crédits publicité Moboo offerts à l'activation. */
+  credits?: number;
 }
 export interface PackageList {
   enabled: boolean; submissionMode?: "free" | "membership" | "per_listing"; requirePackage: boolean; freeListings: number;
