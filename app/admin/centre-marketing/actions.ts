@@ -13,7 +13,7 @@ export interface CenterOverview {
   activity: { text: string; ago: string; href: string | null; kind: string }[];
 }
 export interface Target { type: "residence" | "espace" | "listing"; id: string; label: string; zone: string | null; units?: { id: string; label: string }[] }
-export interface Promotion { id: string; targetType: string; targetId: string; targetLabel: string; title: string; discountPct: number | null; conditions: string | null; startsAt: string; endsAt: string; active: boolean; views: number }
+export interface Promotion { id: string; targetType: string; targetId: string; targetLabel: string; title: string; discountPct: number | null; conditions: string | null; startsAt: string; endsAt: string; active: boolean; views: number; source?: "admin" | "host"; createdBy?: string | null }
 export interface Declared { id: string; targetType: string; label: string; zone: string | null; checkIn: string; checkOut: string; guests: number | null; note: string | null; status: string; declaredBy: string | null; createdAt: string; residenceId: string | null; espaceId: string | null }
 
 export async function getCenterOverview(): Promise<CenterOverview | null> {

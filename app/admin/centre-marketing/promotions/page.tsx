@@ -12,7 +12,7 @@ export default async function Promotions() {
     <div className="space-y-4">
       <div>
         <h1 className="font-display text-2xl font-extrabold text-ink">Promotions</h1>
-        <p className="max-w-3xl text-sm text-muted">Offres réelles affichées sur la fiche (avec compte à rebours) et sur les cartes des résultats : « −15 % · Offre de lancement (dès 3 nuits) · se termine dans 2 jours ».</p>
+        <p className="max-w-3xl text-sm text-muted">Offres réelles affichées sur la fiche (avec compte à rebours), sur les cartes des résultats et dans l’application Moboo.ci : « −15 % · Offre de lancement (dès 3 nuits) · se termine dans 2 jours ». Les hôtes créent aussi les leurs depuis Moboo Resi et Moboo Event.</p>
       </div>
       <div className="grid gap-4 2xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
         <PromotionForm />
@@ -25,7 +25,7 @@ export default async function Promotions() {
                   const live = p.active && new Date(p.endsAt).getTime() > now;
                   return (
                     <tr key={p.id} className={live ? "" : "text-muted"}>
-                      <td className="px-4 py-2.5"><p className="font-medium">{p.discountPct ? `−${p.discountPct} % · ` : ""}{p.title}</p>{p.conditions ? <p className="text-xs text-muted">{p.conditions}</p> : null}</td>
+                      <td className="px-4 py-2.5"><p className="font-medium">{p.discountPct ? `−${p.discountPct} % · ` : ""}{p.title}</p>{p.conditions ? <p className="text-xs text-muted">{p.conditions}</p> : null}<p className="text-[11px] text-muted">{p.source === "host" ? <span className="rounded bg-sky-50 px-1.5 py-0.5 font-semibold text-sky-800">Créée par l’hôte</span> : "Équipe Moboo"}{p.createdBy ? ` · ${p.createdBy}` : ""}</p></td>
                       <td className="px-2 py-2.5"><span className="text-xs text-muted">{TYPE[p.targetType] ?? p.targetType} · </span>{p.targetLabel}</td>
                       <td className="whitespace-nowrap px-2 py-2.5">{new Date(p.endsAt).toLocaleDateString("fr-FR")}{live ? <span className="ml-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-800">En cours</span> : p.active ? " (terminée)" : " (suspendue)"}</td>
                       <td className="px-2 py-2.5 text-right tabular-nums">{p.views}</td>
