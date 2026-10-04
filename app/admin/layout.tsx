@@ -126,6 +126,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ];
     }),
     { href: "/admin/sante", label: "Santé du site", icon: "gauge" },
+    { href: "/admin/migration", label: "Migration WordPress", icon: "history" },
     { href: "/admin/securite", label: "Ma sécurité (2FA)", icon: "shield" },
   ];
   // Menu limité aux rubriques du rôle ; une adresse ouverte directement sans droit affiche « Accès refusé ».
