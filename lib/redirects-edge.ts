@@ -6,7 +6,7 @@ type Entry = [target: string, code: number];
 let cache: { at: number; map: Map<string, Entry> } | null = null;
 let loading: Promise<void> | null = null;
 
-const WP_LIKE = /^\/(property|properties|propriete|listing|agent|agency|agence|property-(type|status|city|area|state|feature|label)|author|my-account|mon-compte|dashboard|tableau-de-bord|user-dashboard|my-profile|my-properties|favorite-properties|saved-searches|add-new-property|create-listing|submit-property|packages|membership|login|register|sign-up|wp-login\.php|wp-admin|privacy-policy|politique-de-confidentialite|search-results|advanced-search|half-map|for-rent|for-sale|a-louer|a-vendre)(\/|$)/;
+const WP_LIKE = /^\/(property|properties|propriete|listing|agent|agency|agence|property-(type|status|city|area|state|feature|label)|author|my-account|mon-compte|dashboard|tableau-de-bord|user-dashboard|my-profile|my-properties|favorite-properties|saved-searches|add-new-property|create-listing|submit-property|packages|membership|memberships|abonnement|abonnements|tarifs-abonnement|login|register|sign-up|wp-login\.php|wp-admin|privacy-policy|politique-de-confidentialite|search-results|advanced-search|half-map|for-rent|for-sale|a-louer|a-vendre)(\/|$)/;
 const SKIP = /^\/(_next|api|admin|administration|mon-espace|annonce\/|connexion|compte)(\/|$)/;
 
 export function normalizePath(raw: string): string {
