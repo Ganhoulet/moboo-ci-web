@@ -14,7 +14,7 @@ export function DailyBars({ data, label, unit }: { data: { day: string; value: n
   const h = hover != null ? data[hover] : null;
   return (
     <figure className="relative">
-      <svg viewBox={`0 0 ${W} ${H + 18}`} className="block h-auto w-full" role="img" aria-label={`${label} sur 30 jours`} onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${W} ${H + 18}`} className="block h-auto w-full" role="img" aria-label={label} onMouseLeave={() => setHover(null)}>
         {[0.5, 1].map((t) => <line key={t} x1={0} x2={W} y1={H - H * t} y2={H - H * t} stroke="currentColor" className="text-slate-200" strokeWidth={1} />)}
         <line x1={0} x2={W} y1={H} y2={H} stroke="currentColor" className="text-slate-300" strokeWidth={1} />
         {data.map((d, i) => {

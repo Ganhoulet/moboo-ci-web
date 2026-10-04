@@ -23,7 +23,7 @@ export default async function AdminHome() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-extrabold text-ink">Back-office Moboo.ci</h1>
-        <p className="mt-1 text-sm text-muted">Réglez le site sans toucher au code : chaque modification est en ligne dès l’enregistrement.</p>
+        <p className="mt-1 text-sm text-muted">Réglez le site sans toucher au code : chaque modification est en ligne dès l’enregistrement. <Link href="/admin/statistiques" className="font-semibold text-brand-800 hover:underline">Voir les statistiques →</Link></p>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {ALERTS.map(([k, label, href, cls]) => (
