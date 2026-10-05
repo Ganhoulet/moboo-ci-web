@@ -139,7 +139,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         ...children.map((c) => ({ href: `/admin/reglages/${c.id}`, label: c.label, icon: c.icon, child: true, group: s.id })),
       ];
     }),
-    { href: "/admin/sante", label: "Santé du site", icon: "gauge" },
+    { href: "/admin/sante", label: "Santé du site", icon: "gauge", group: "sante" },
+    { href: "/admin/sante/taches", label: "Tâches en arrière-plan", icon: "gauge", child: true, group: "sante" },
     { href: "/admin/migration", label: "Migration WordPress", icon: "history" },
     { href: "/admin/securite", label: "Ma sécurité (2FA)", icon: "shield" },
   ];
