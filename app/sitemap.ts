@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getSeoLinks } from "@/lib/seo";
 import { getPriceCommunes } from "@/lib/prices";
 import { getHelpSitemap } from "@/lib/help";
+import { getZones } from "@/lib/pro-reviews";
 
 export const dynamic = "force-dynamic"; // toujours à jour avec les pages SEO publiées
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://moboo.ci").replace(/\/+$/, "");
@@ -29,5 +30,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
   // Espace professionnels.
   const pros = ["", "/agents", "/agences", "/proprietaires", "/residences", "/espaces"].map((x) => ({ url: `${BASE}/professionnels${x}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.7 }));
-  return [...main, ...seo, ...prices, ...help, ...pros];
+  // Annuaire des agents : page générale + une page par zone couverte.
+  const agents = [
+    { url: `${BASE}/agents-immobiliers`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 },
+    ...(await getZones()).map((z) => ({ url: `${BASE}/agents-immobiliers/${z.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 })),
+  ];
+  return [...main, ...seo, ...prices, ...help, ...pros, ...agents];
 }

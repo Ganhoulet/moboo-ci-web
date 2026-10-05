@@ -123,6 +123,7 @@ export const DEFAULT_MENUS: SiteMenu[] = [
       }),
       L("pros", "Professionnels", "/professionnels", {
         children: [
+          L("pros-a", "Trouver un agent immobilier", "/agents-immobiliers", { description: "Par commune, avec avis clients" }),
           L("pros-0", "Moboo.ci pour les pros", "/professionnels", { description: "Agents, agences, propriétaires, hôtes" }),
           L("pros-1", "Publier une annonce", "/publier"),
           L("pros-2", "Forfaits et tarifs", "/forfaits"),

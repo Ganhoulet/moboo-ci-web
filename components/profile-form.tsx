@@ -27,6 +27,14 @@ export function ProfileForm({ account: a, publicProfile }: { account: SiteAccoun
     whatsapp: a.whatsapp ?? "", website: a.website ?? "", facebook: a.facebook ?? "",
     instagram: a.instagram ?? "", tiktok: a.tiktok ?? "", linkedin: a.linkedin ?? "",
   });
+  const [areas, setAreas] = useState<string[]>(a.serviceAreas ?? []);
+  const [areaInput, setAreaInput] = useState("");
+  const isAgent = a.accountType === "agent" || a.accountType === "entreprise";
+  const addArea = (v: string) => {
+    const z = v.trim().replace(/\s+/g, " ");
+    if (z && areas.length < 15 && !areas.some((x) => x.toLowerCase() === z.toLowerCase())) { setAreas([...areas, z]); setMsg(null); }
+    setAreaInput("");
+  };
   const [avatar, setAvatar] = useState(a.avatarUrl ?? "");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
@@ -47,7 +55,7 @@ export function ProfileForm({ account: a, publicProfile }: { account: SiteAccoun
 
   function save() {
     start(async () => {
-      const r = await saveProfileAction({ ...f, avatarUrl: avatar });
+      const r = await saveProfileAction({ ...f, avatarUrl: avatar, ...(isAgent ? { serviceAreas: areas } : {}) });
       setMsg(r.ok ? { ok: true, text: "Profil enregistré ✓" } : { ok: false, text: r.error ?? "Erreur." });
       if (r.ok) router.refresh();
     });
@@ -124,6 +132,29 @@ export function ProfileForm({ account: a, publicProfile }: { account: SiteAccoun
             {input("tiktok", "TikTok", { placeholder: "tiktok.com/@…" })}
             {input("linkedin", "LinkedIn", { placeholder: "linkedin.com/…" })}
           </div>
+          {isAgent ? (
+            <div className="mt-6">
+              <span className="mb-1 block text-sm font-semibold text-ink">Zones d’intervention</span>
+              <p className="text-sm text-muted">Communes et quartiers où vous travaillez (15 au plus). Les clients vous trouvent dans l’annuaire « Agents immobiliers à … ».</p>
+              {areas.length ? (
+                <ul className="mt-2 flex flex-wrap gap-2">
+                  {areas.map((z) => (
+                    <li key={z} className="inline-flex items-center gap-1 rounded-full bg-brand-50 py-1 pl-3 pr-1 text-sm font-medium text-brand-900">
+                      {z}
+                      <button type="button" onClick={() => { setAreas(areas.filter((x) => x !== z)); setMsg(null); }} className="grid h-5 w-5 place-items-center rounded-full hover:bg-brand-100" aria-label={`Retirer ${z}`}>×</button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <div className="mt-2 flex gap-2">
+                <input className="input" list="zones-communes" value={areaInput} maxLength={60} placeholder="Ex. Cocody Angré, Riviera 3, Bingerville…"
+                  onChange={(e) => setAreaInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addArea(areaInput); } }} />
+                <button type="button" onClick={() => addArea(areaInput)} className="btn-ghost shrink-0 text-sm">Ajouter</button>
+              </div>
+              <datalist id="zones-communes">{COMMUNES.map((c) => <option key={c} value={c} />)}</datalist>
+            </div>
+          ) : null}
         </section>
       ) : null}
 

@@ -293,7 +293,7 @@ export async function syncFavoritesAction(items: Property[]): Promise<Property[]
 
 /* ─── Profil ───────────────────────────────────────────────────────────── */
 
-export async function saveProfileAction(payload: Record<string, string>): Promise<{ ok: boolean; error?: string }> {
+export async function saveProfileAction(payload: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
   if (!getSession()) return { ok: false, error: "Connectez-vous d'abord." };
   const { ok, data } = await authedFetch("/site/auth/me", { method: "PATCH", body: JSON.stringify(payload) });
   if (!ok) return { ok: false, error: errMsg(data, "Enregistrement impossible.") };

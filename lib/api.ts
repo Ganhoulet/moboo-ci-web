@@ -151,6 +151,13 @@ export interface ProProfile {
   memberSince: string;
   verified?: boolean;
   businessVerified?: boolean;
+  /** Zones d'intervention (communes / quartiers). */
+  serviceAreas?: string[];
+  /** Agent / agence repris de moboo.ci (« agent-123 »), et son compte du site s'il en a créé un. */
+  legacy?: boolean;
+  canonical?: string | null;
+  position?: string | null;
+  company?: string | null;
   listings: ListingItem[];
 }
 
@@ -207,6 +214,8 @@ export interface SiteAccount {
   instagram?: string | null;
   tiktok?: string | null;
   linkedin?: string | null;
+  /** Zones d'intervention (agents et agences). */
+  serviceAreas?: string[];
   // Connexion au choix
   hasPassword?: boolean;
   googleLinked?: boolean;

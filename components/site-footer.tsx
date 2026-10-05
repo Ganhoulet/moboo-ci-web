@@ -51,6 +51,7 @@ export function SiteFooter({ chrome, settings }: { chrome: ChromeContent; settin
               <A key={l.id} href={safeHref(l.href)} className="hover:text-ink hover:underline">{l.label}</A>
             ))}
             {/* Pages exigées par Google Play / l'App Store : toujours accessibles. */}
+            <Link href="/agents-immobiliers" className="hover:text-ink hover:underline">Agents immobiliers</Link>
             <Link href="/professionnels" className="hover:text-ink hover:underline">Professionnels</Link>
             <Link href="/aide" className="hover:text-ink hover:underline">Centre d’aide</Link>
             <Link href="/confidentialite" className="hover:text-ink hover:underline">Confidentialité</Link>
