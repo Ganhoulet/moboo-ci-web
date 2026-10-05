@@ -73,6 +73,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Modération (façon Airbnb / Zillow) : annonces à valider, signalements.
     { href: "/admin/moderation", label: "Modération", icon: "flag", group: "moderation", badge: (mod?.pending ?? 0) + (mod?.reports ?? 0) },
     { href: "/admin/moderation?tab=reports", label: "Signalements", icon: "flag", child: true, group: "moderation", badge: mod?.reports ?? 0 },
+    { href: "/admin/moderation/anti-fraude", label: "Anti-fraude", icon: "flag", child: true, group: "moderation" },
     { href: "/admin/moderation/reglages", label: "Réglages", icon: "flag", child: true, group: "moderation" },
     // Apparence : constructeur de la page d'accueil, menu et pied de page.
     { href: "/admin/accueil", label: "Page d’accueil", icon: "layout", group: "apparence" },

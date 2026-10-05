@@ -10,6 +10,7 @@ import { UserActions, SessionRevoke } from "@/components/backoffice/user-actions
 import { NotesPanel } from "@/components/backoffice/notes-panel";
 import { UserDeletionActions } from "@/components/backoffice/deletion-actions";
 import { AuditList } from "@/components/backoffice/audit-list";
+import { getAccountRisk } from "../../moderation/anti-fraude/actions";
 
 const METHOD: Record<string, string> = {
   phone: "Code par téléphone", password: "Mot de passe", google: "Google",
@@ -24,6 +25,7 @@ export default async function AdminUserPage({ params }: { params: { id: string }
   const a = d.account;
   const s = d.stats;
   const canManage = can(me?.permissions, "users.manage");
+  const risk = can(me?.permissions, "moderation") ? await getAccountRisk(a.id) : null;
   const listingsTotal = Object.values(s.listings as Record<string, number>).reduce((x, y) => x + y, 0);
   const kpis: [string, string | number][] = [
     ["Annonces", listingsTotal], ["Vues", s.views], ["Appels + WhatsApp", s.calls + s.whatsapp], ["Demandes (30 j)", s.inquiries30],
@@ -77,6 +79,17 @@ export default async function AdminUserPage({ params }: { params: { id: string }
           <p>2FA : {a.twoFactor ? "activée" : "non"}</p>
         </div>
       </div>
+
+      {risk && risk.score >= 30 ? (
+        <div className={"rounded-lg px-4 py-3 text-sm ring-1 " + (risk.level === "eleve" ? "bg-red-50 text-red-900 ring-red-200" : "bg-amber-50 text-amber-900 ring-amber-200")}>
+          <p className="font-semibold">
+            Anti-fraude : score {risk.score}/100 ({risk.level === "eleve" ? "risque élevé" : "risque moyen"}) ·{" "}
+            <Link href="/admin/moderation/anti-fraude" className="underline">voir l’anti-fraude</Link>
+          </p>
+          <p className="mt-0.5">{risk.reasons.map((r) => r.text).join(" · ")}</p>
+          {risk.linked.length ? <p className="mt-0.5">Même appareil que : {risk.linked.map((l, i) => <span key={l.id}>{i ? ", " : ""}<Link href={`/admin/utilisateurs/${l.id}`} className="underline">{l.name}</Link></span>)}</p> : null}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {kpis.map(([l, v]) => (

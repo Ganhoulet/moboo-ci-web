@@ -11,6 +11,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://resi.moboo.ci/api/v1
 const AT = "moboo_at";
 const RT = "moboo_rt";
 const PROFILE = "moboo_profile";
+// Identifiant anonyme du navigateur (anti-fraude : comptes multiples sur un même appareil).
+const DID = "moboo_did";
 
 const cookieOpts = {
   httpOnly: true,
@@ -20,6 +22,15 @@ const cookieOpts = {
 };
 
 export async function middleware(req: NextRequest) {
+  const known = req.cookies.get(DID)?.value;
+  const did = known && /^[\w-]{16,64}$/.test(known) ? known : crypto.randomUUID();
+  req.headers.set("x-moboo-did", did);
+  const res = await handle(req);
+  if (did !== known) res.cookies.set(DID, did, { ...cookieOpts, maxAge: 60 * 60 * 24 * 365 });
+  return res;
+}
+
+async function handle(req: NextRequest): Promise<NextResponse> {
   // Anciennes adresses (WordPress) : redirection 301 avant tout le reste.
   if (req.method === "GET" || req.method === "HEAD") {
     const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || req.headers.get("x-real-ip") || "";

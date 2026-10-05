@@ -15,5 +15,6 @@ export function relayHeaders(withClientIp: boolean): Record<string, string> {
   if (!key) return {};
   const provider = (globalThis as { __mobooClientIp?: IpProvider }).__mobooClientIp;
   const ip = withClientIp && provider ? provider() : undefined;
-  return { "X-Moboo-Relay-Key": key, ...(ip ? { "X-Moboo-Client-IP": ip } : {}) };
+  const device = withClientIp ? (globalThis as { __mobooDeviceId?: IpProvider }).__mobooDeviceId?.() : undefined;
+  return { "X-Moboo-Relay-Key": key, ...(ip ? { "X-Moboo-Client-IP": ip } : {}), ...(device ? { "X-Moboo-Device": device } : {}) };
 }
