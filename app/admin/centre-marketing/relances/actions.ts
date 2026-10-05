@@ -5,8 +5,8 @@ import { authedFetch } from "@/lib/server-api";
 
 export interface NudgeRule {
   key: string; name: string; trigger: string; delayLabel: string; target: string; enabled: boolean; delayDays: number; cooldownDays: number;
-  channels: string[]; accountTypes: string[]; subject: string; body: string; ctaLabel: string; waTemplate: string; waVars: string[];
-  updatedAt: string; updatedBy: string | null; defaults: { subject: string; body: string; ctaLabel: string };
+  channels: string[]; accountTypes: string[]; subject: string; body: string; ctaLabel: string; smsBody: string; waTemplate: string; waVars: string[];
+  updatedAt: string; updatedBy: string | null; defaults: { subject: string; body: string; ctaLabel: string; smsBody: string; waTemplate: string; waVars: string[] };
 }
 export interface NudgeOverview {
   pros: number; segments: { actif: number; inactif: number; sans_annonce: number }; expiring: number; pending: number;
@@ -23,7 +23,7 @@ export interface NudgeRow {
   error: string | null; createdBy: string | null; sentAt: string | null; clickedAt: string | null; convertedAt: string | null; createdAt: string;
 }
 export interface ManualNudge {
-  accountIds: string[]; ruleKey?: string; channels: string[]; subject?: string; body?: string; ctaLabel?: string; target?: string; waTemplate?: string; waVars?: string[];
+  accountIds: string[]; ruleKey?: string; channels: string[]; subject?: string; body?: string; smsBody?: string; ctaLabel?: string; target?: string; waTemplate?: string; waVars?: string[];
 }
 
 const err = (d: any) => (Array.isArray(d?.error?.message) ? d.error.message.join(" ") : d?.error?.message ?? d?.message) || "Action impossible.";
@@ -52,7 +52,7 @@ export async function runNudgesAction(dryRun: boolean): Promise<{ ok: boolean; e
   if (r.ok && !dryRun) done();
   return r.ok ? { ok: true, data: r.data } : { ok: false, error: err(r.data) };
 }
-export async function previewNudgeAction(body: ManualNudge & { accountId: string }): Promise<{ ok: boolean; error?: string; data?: { subject: string; body: string; ctaLabel: string; target: string } }> {
+export async function previewNudgeAction(body: ManualNudge & { accountId: string }): Promise<{ ok: boolean; error?: string; data?: { subject: string; body: string; sms: string; ctaLabel: string; target: string } }> {
   const r = await authedFetch("/site/admin/nudges/preview", { method: "POST", body: JSON.stringify(body) });
   return r.ok ? { ok: true, data: r.data } : { ok: false, error: err(r.data) };
 }
@@ -61,7 +61,7 @@ export async function sendNudgeAction(body: ManualNudge): Promise<{ ok: boolean;
   if (r.ok) done();
   return r.ok ? { ok: true, queued: r.data.queued } : { ok: false, error: err(r.data) };
 }
-export async function testNudgeAction(body: Partial<NudgeRule> & { ruleKey?: string; to: string; accountId?: string }): Promise<{ ok: boolean; error?: string }> {
+export async function testNudgeAction(body: Partial<NudgeRule> & { ruleKey?: string; to: string; accountId?: string; testChannel?: string; target?: string }): Promise<{ ok: boolean; error?: string }> {
   const r = await authedFetch("/site/admin/nudges/test", { method: "POST", body: JSON.stringify(body) });
   return r.ok ? r.data : { ok: false, error: err(r.data) };
 }

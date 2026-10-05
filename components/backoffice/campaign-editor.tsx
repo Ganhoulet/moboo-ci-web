@@ -2,13 +2,21 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { smsCounter } from "@/lib/sms";
 import { previewAction, saveCampaignAction, sendCampaignAction, testCampaignAction, type Campaign } from "@/app/admin/centre-marketing/campagnes/actions";
 
 const TYPES: [string, string][] = [["particulier", "Particuliers"], ["proprietaire", "Propriétaires"], ["agent", "Agents"], ["entreprise", "Agences / entreprises"], ["etablissement", "Établissements (meublés, espaces)"]];
 const CHANNELS: [Campaign["channel"], string, string][] = [
-  ["email", "E-mail", "Comptes du site ayant une adresse e-mail"],
-  ["whatsapp", "WhatsApp", "Comptes du site (modèle approuvé par Meta)"],
+  ["email", "E-mail", "Comptes, clients ou hôtes ayant une adresse e-mail"],
+  ["whatsapp", "WhatsApp", "Modèle approuvé par Meta (comptes, clients, hôtes)"],
+  ["sms", "SMS", "Texte court, tous les téléphones (comptes, clients, hôtes)"],
   ["push", "Notification push", "Hôtes des applications Moboo Resi / Moboo Event"],
+];
+
+const SOURCES: [NonNullable<Campaign["audience"]["source"]>, string, string][] = [
+  ["site", "Comptes du site", "Agents, agences, propriétaires, particuliers…"],
+  ["clients", "Clients ayant réservé", "Résidences et espaces réservés via Moboo.ci"],
+  ["hosts", "Hôtes Moboo Resi / Event", "Propriétaires et gérants des applications"],
 ];
 
 const input = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm";
@@ -53,7 +61,7 @@ export function CampaignEditor({ initial, variables }: { initial: Campaign; vari
           <label className={label} htmlFor="cname">Nom de la campagne (interne)</label>
           <input id="cname" value={c.name} onChange={(e) => set({ name: e.target.value })} placeholder="Ex. Relance propriétaires Cocody — octobre" className={input} />
           <p className={label}>Canal</p>
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             {CHANNELS.map(([k, l, d]) => (
               <button key={k} type="button" onClick={() => set({ channel: k })}
                 className={"rounded-lg p-3 text-left ring-1 " + (c.channel === k ? "bg-brand-50 ring-2 ring-brand-600" : "bg-white ring-slate-200 hover:bg-slate-50")}>
@@ -74,6 +82,32 @@ export function CampaignEditor({ initial, variables }: { initial: Campaign; vari
               ))}
             </div>
           ) : (
+            <>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {SOURCES.map(([k, l, d]) => (
+                <button key={k} type="button" onClick={() => setC({ ...c, audience: k === "site" ? {} : k === "clients" ? { source: k, clientKind: "all" } : { source: k, hostApp: "all" } })}
+                  className={"rounded-lg p-3 text-left ring-1 " + ((a.source ?? "site") === k ? "bg-brand-50 ring-2 ring-brand-600" : "bg-white ring-slate-200 hover:bg-slate-50")}>
+                  <p className="text-sm font-semibold text-ink">{l}</p><p className="text-xs text-muted">{d}</p>
+                </button>
+              ))}
+            </div>
+            {a.source === "clients" ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-sm">Ont réservé
+                  <select value={a.clientKind ?? "all"} onChange={(e) => setA({ clientKind: e.target.value as "stay" | "event" | "all" })} className={input}>
+                    <option value="all">Une résidence ou un espace</option><option value="stay">Une résidence meublée</option><option value="event">Un espace événementiel</option>
+                  </select>
+                </label>
+                <label className="text-sm">Réservation dans les derniers (jours, facultatif)<input type="number" min={1} value={a.bookedWithinDays ?? ""} onChange={(e) => setA({ bookedWithinDays: Number(e.target.value) || undefined })} className={input} /></label>
+                <p className="text-[11px] text-muted sm:col-span-2">Seuls les clients qui ont réservé <strong>via Moboo.ci</strong> (site, application) sont visés : les clients que les hôtes saisissent eux-mêmes dans leur application restent les leurs. Une réservation annulée ne compte pas.</p>
+              </div>
+            ) : a.source === "hosts" ? (
+              <div className="flex flex-wrap gap-2">
+                {([["all", "Tous les hôtes"], ["resi", "Moboo Resi (résidences)"], ["event", "Moboo Event (espaces)"]] as const).map(([k, l]) => (
+                  <button key={k} type="button" onClick={() => setA({ hostApp: k })} className={"rounded-md px-3 py-2 text-sm font-semibold ring-1 " + ((a.hostApp ?? "all") === k ? "bg-ink text-white ring-ink" : "bg-white ring-slate-300")}>{l}</button>
+                ))}
+              </div>
+            ) : (
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <p className={label}>Types de compte</p>
@@ -104,6 +138,8 @@ export function CampaignEditor({ initial, variables }: { initial: Campaign; vari
                 </div>
               </div>
             </div>
+            )}
+            </>
           )}
         </section>
 
@@ -123,6 +159,12 @@ export function CampaignEditor({ initial, variables }: { initial: Campaign; vari
                 </div>
               ))}
               <button type="button" onClick={() => set({ waVars: [...(c.waVars.length ? c.waVars : [""]), ""] })} className="text-xs font-semibold text-brand-700">+ Variable</button>
+            </>
+          ) : c.channel === "sms" ? (
+            <>
+              <textarea value={c.body} onChange={(e) => set({ body: e.target.value })} rows={4} maxLength={600}
+                placeholder="Moboo.ci: {{prenom}}, -20 % sur les résidences ce week-end ! Réservez: moboo.ci/meubles" className={input} />
+              <p className="text-[11px] text-muted">{smsCounter(c.body)}. Commencez par « Moboo.ci: » pour être reconnu. Les accents rares (ê, ç, ’…) sont simplifiés pour rester à 160 caractères par SMS, et un lien « STOP » de désinscription est ajouté (réglable dans Canaux d’envoi).</p>
             </>
           ) : (
             <>
@@ -147,7 +189,7 @@ export function CampaignEditor({ initial, variables }: { initial: Campaign; vari
           </div>
           <div className="space-y-2 rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <p className={label}>Envoi de test</p>
-            <input value={testTo} onChange={(e) => setTestTo(e.target.value)} placeholder={c.channel === "email" ? "votre@email.ci" : c.channel === "push" ? "Téléphone d’un hôte" : "+225 07 …"} className={input} />
+            <input value={testTo} onChange={(e) => setTestTo(e.target.value)} placeholder={c.channel === "email" ? "votre@email.ci" : c.channel === "push" ? "Téléphone d’un hôte" : "07 07 12 34 56"} className={input} />
             <button type="button" disabled={pending || !testTo} onClick={() => start(async () => { const r = await testCampaignAction(c, testTo); setMsg({ ok: r.ok, text: r.ok ? "Test envoyé." : `Échec : ${r.error}` }); })}
               className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold ring-1 ring-slate-300 hover:bg-slate-50 disabled:opacity-50">Envoyer un test</button>
           </div>

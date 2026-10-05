@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { authedFetch } from "@/lib/server-api";
 
 export interface Audience {
+  source?: "site" | "clients" | "hosts"; clientKind?: "stay" | "event" | "all"; bookedWithinDays?: number; hostApp?: "resi" | "event" | "all";
   accountTypes?: string[]; places?: string[]; verified?: "yes" | "no" | "any"; listings?: "with" | "without" | "any";
   signedUpWithinDays?: number; inactiveDays?: number; activeWithinDays?: number;
 }
 export interface Campaign {
-  id?: string; name: string; channel: "email" | "whatsapp" | "push"; audience: Audience;
+  id?: string; name: string; channel: "email" | "whatsapp" | "sms" | "push"; audience: Audience;
   subject: string; body: string; waTemplate: string; waLanguage: string; waVars: string[]; pushApp: "resi" | "event"; link: string;
 }
 export interface CampaignRow extends Campaign {

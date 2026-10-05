@@ -7,8 +7,10 @@ import {
   previewNudgeAction, runNudgesAction, saveRuleAction, sendNudgeAction, testNudgeAction,
   type ManualNudge, type NudgeOverview, type NudgeRow, type NudgeRule, type ProRow,
 } from "@/app/admin/centre-marketing/relances/actions";
+import { smsCounter } from "@/lib/sms";
 
-const CHANNELS: [string, string][] = [["site", "Mon espace (boîte Infos)"], ["email", "E-mail"], ["whatsapp", "WhatsApp"]];
+const CHANNELS: [string, string][] = [["site", "Mon espace (boîte Infos)"], ["email", "E-mail"], ["whatsapp", "WhatsApp"], ["sms", "SMS"]];
+const CH_LABEL: Record<string, string> = { site: "Mon espace", email: "E-mail", whatsapp: "WhatsApp", sms: "SMS" };
 const TYPES: [string, string][] = [["agent", "Agents"], ["entreprise", "Agences / promoteurs"], ["proprietaire", "Propriétaires"], ["etablissement", "Résidences / espaces"]];
 const SEGMENTS: [string, string][] = [["tous", "Tous"], ["sans_annonce", "Jamais publié"], ["inactif", "Inactifs"], ["actif", "Actifs"], ["expiration", "Annonces qui expirent"], ["demandes", "Demandes en attente"]];
 const SEG_PILL: Record<string, [string, string]> = {
@@ -141,9 +143,9 @@ function ManualPanel({ ids, names, rules, channels, variables, onClose, onSent }
   const [pending, start] = useTransition();
   const [m, setM] = useState<ManualNudge>({
     accountIds: ids, ruleKey: rules[0]?.key ?? "manuel", channels: ["site", ...(channels.email ? ["email"] : [])],
-    subject: "{{prenom}}, ", body: "Bonjour {{prenom}},\n\n{{phrase_demande}}\n\n", ctaLabel: "Publier une annonce", target: "/mon-espace/annonces/nouvelle", waTemplate: "", waVars: ["{{prenom}}"],
+    subject: "{{prenom}}, ", body: "Bonjour {{prenom}},\n\n{{phrase_demande}}\n\n", smsBody: "Moboo.ci: {{prenom}}, des clients cherchent a {{zone}}. Publiez vos biens: {{lien}}", ctaLabel: "Publier une annonce", target: "/mon-espace/annonces/nouvelle", waTemplate: "", waVars: ["{{prenom}}"],
   });
-  const [preview, setPreview] = useState<{ subject: string; body: string; ctaLabel: string } | null>(null);
+  const [preview, setPreview] = useState<{ subject: string; body: string; sms: string; ctaLabel: string } | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const set = <K extends keyof ManualNudge>(k: K, v: ManualNudge[K]) => { setM((x) => ({ ...x, [k]: v })); setPreview(null); };
   const custom = m.ruleKey === "manuel";
@@ -178,6 +180,12 @@ function ManualPanel({ ids, names, rules, channels, variables, onClose, onSent }
           </>
         ) : <p className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">Le texte du modèle se règle dans l’onglet « Relances automatiques ». Une relance manuelle ignore le délai entre deux relances.</p>}
         <div><span className={label}>Canaux</span><div className="mt-2"><ChannelBoxes value={m.channels} onChange={(v) => set("channels", v)} ready={channels} /></div></div>
+        {custom && m.channels.includes("sms") ? (
+          <label className="block"><span className={label}>Texte du SMS</span>
+            <textarea rows={3} value={m.smsBody} onChange={(e) => set("smsBody", e.target.value)} className={input} />
+            <span className="mt-1 block text-[11px] text-muted">{smsCounter((m.smsBody ?? "").replace("{{lien}}", "moboo.ci/r/00000000-0000-0000-0000-000000000000"))}</span>
+          </label>
+        ) : null}
         {custom && m.channels.includes("whatsapp") ? (
           <label className="block"><span className={label}>Modèle WhatsApp approuvé par Meta</span><input value={m.waTemplate} onChange={(e) => set("waTemplate", e.target.value)} className={input} placeholder="relance_agent" /></label>
         ) : null}
@@ -201,6 +209,7 @@ function ManualPanel({ ids, names, rules, channels, variables, onClose, onSent }
             <p className="mt-2 font-semibold text-ink">{preview.subject}</p>
             <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{preview.body}</p>
             <span className="mt-3 inline-flex rounded-md bg-brand-700 px-3 py-1.5 text-xs font-bold text-white">{preview.ctaLabel}</span>
+            {preview.sms ? <p className="mt-3 rounded-md bg-white p-2 text-xs text-slate-700 ring-1 ring-slate-200"><strong>SMS :</strong> {preview.sms}</p> : null}
           </div>
         ) : null}
       </div>
@@ -246,6 +255,7 @@ function RuleCard({ rule, order, stats, sim, channels, variables }: {
   const [r, setR] = useState(rule);
   const [open, setOpen] = useState(false);
   const [to, setTo] = useState("");
+  const [testCh, setTestCh] = useState("sms");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const set = <K extends keyof NudgeRule>(k: K, v: NudgeRule[K]) => setR((x) => ({ ...x, [k]: v }));
   const save = (patch: Partial<NudgeRule> = {}) => start(async () => {
@@ -288,6 +298,12 @@ function RuleCard({ rule, order, stats, sim, channels, variables }: {
           <label className="block"><span className={label}>Objet / titre</span><input value={r.subject} onChange={(e) => set("subject", e.target.value)} className={input} /></label>
           <label className="block"><span className={label}>Message</span><textarea rows={9} value={r.body} onChange={(e) => set("body", e.target.value)} className={input} /></label>
           <label className="block sm:w-1/2"><span className={label}>Texte du bouton</span><input value={r.ctaLabel} onChange={(e) => set("ctaLabel", e.target.value)} className={input} /></label>
+          {r.channels.includes("sms") ? (
+            <label className="block"><span className={label}>Texte du SMS (court ; {"{{lien}}"} = lien suivi)</span>
+              <textarea rows={3} value={r.smsBody} onChange={(e) => set("smsBody", e.target.value)} className={input} />
+              <span className="mt-1 block text-[11px] text-muted">{smsCounter(r.smsBody.replace("{{lien}}", "moboo.ci/r/00000000-0000-0000-0000-000000000000"))}</span>
+            </label>
+          ) : null}
           {r.channels.includes("whatsapp") ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block"><span className={label}>Modèle WhatsApp (Meta)</span><input value={r.waTemplate} onChange={(e) => set("waTemplate", e.target.value)} className={input} placeholder="relance_agent" /></label>
@@ -297,12 +313,17 @@ function RuleCard({ rule, order, stats, sim, channels, variables }: {
           <Variables vars={variables} />
           <div className="flex flex-wrap items-end gap-2">
             <button type="button" disabled={pending} onClick={() => save()} className="rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Enregistrer</button>
-            <button type="button" disabled={pending} onClick={() => setR((x) => ({ ...x, ...rule.defaults }))} className="rounded-md bg-white px-3 py-2 text-sm font-semibold ring-1 ring-slate-300 hover:bg-slate-50">Texte d’origine</button>
+            <button type="button" disabled={pending} onClick={() => setR((x) => ({ ...x, ...r.defaults }))} className="rounded-md bg-white px-3 py-2 text-sm font-semibold ring-1 ring-slate-300 hover:bg-slate-50">Texte d’origine</button>
             <span className="flex-1" />
-            <label className="text-sm"><span className={label}>Envoyer un e-mail de test à</span><input type="email" value={to} onChange={(e) => setTo(e.target.value)} placeholder="vous@moboo.ci" className={input} /></label>
+            <label className="text-sm"><span className={label}>Tester sur</span><input value={to} onChange={(e) => setTo(e.target.value)} placeholder="vous@moboo.ci ou 07 07 …" className={input} /></label>
+            {to && !to.includes("@") ? (
+              <label className="text-sm"><span className={label}>Par</span>
+                <select value={testCh} onChange={(e) => setTestCh(e.target.value)} className={input}><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select>
+              </label>
+            ) : null}
             <button type="button" disabled={pending || !to} onClick={() => start(async () => {
-              const res = await testNudgeAction({ ...r, ruleKey: "manuel", target: r.target, channels: ["email"], to } as never);
-              setMsg(res.ok ? { ok: true, text: `E-mail de test envoyé à ${to}.` } : { ok: false, text: res.error ?? "Échec." });
+              const res = await testNudgeAction({ ...r, ruleKey: "manuel", target: r.target, to, testChannel: testCh });
+              setMsg(res.ok ? { ok: true, text: `Test envoyé à ${to}.` } : { ok: false, text: res.error ?? "Échec." });
             })} className="rounded-md bg-white px-3 py-2 text-sm font-semibold ring-1 ring-slate-300 hover:bg-slate-50">Tester</button>
           </div>
         </div>
@@ -328,7 +349,7 @@ export function NudgeHistory({ items, rules }: { items: NudgeRow[]; rules: Nudge
               <td className="whitespace-nowrap px-4 py-2 text-xs text-muted">{when(n.createdAt)}</td>
               <td className="px-3 py-2"><Link href={`/admin/utilisateurs/${n.accountId}`} className="font-semibold text-ink hover:underline">{n.name}</Link></td>
               <td className="px-3 py-2"><p className="text-xs font-semibold text-slate-500">{name(n.ruleKey)}</p><p className="text-sm">{n.subject}</p></td>
-              <td className="px-3 py-2 text-xs">{n.channels.map((c) => (c === "site" ? "Mon espace" : c === "email" ? "E-mail" : "WhatsApp")).join(", ")}</td>
+              <td className="px-3 py-2 text-xs">{n.channels.map((c) => CH_LABEL[c] ?? c).join(", ")}</td>
               <td className="px-3 py-2 text-xs">
                 <span className={"rounded px-1.5 py-0.5 font-semibold " + (n.status === "sent" ? "bg-emerald-100 text-emerald-700" : n.status === "failed" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600")}>{n.status === "sent" ? "Envoyée" : n.status === "failed" ? "Échec" : "En cours"}</span>
                 {n.error ? <p className="mt-1 text-[11px] text-amber-700">{n.error}</p> : null}

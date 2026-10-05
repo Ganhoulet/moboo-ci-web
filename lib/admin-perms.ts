@@ -31,6 +31,7 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/affiches-qr/modele", ["settings"]],
   ["/admin/affiches-qr", ["marketing"]],
   ["/admin/centre-marketing/reglages", ["settings"]],
+  ["/admin/centre-marketing/canaux", ["settings"]],
   ["/admin/centre-marketing", ["marketing"]],
   ["/admin/publicite/tarifs", ["settings"]],
   ["/admin/publicite", ["marketing"]],
