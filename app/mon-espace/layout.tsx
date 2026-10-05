@@ -33,10 +33,13 @@ export default async function EspaceLayout({ children }: { children: React.React
     // Vérification : seulement si activée pour ce type de compte (back-office).
     .filter((i) => i.key !== "verification" || (settings.verification.enabled && (settings.verification.types.includes(type) || (settings.verification.businessTypes ?? []).includes(type))));
   const publisher = isPublisher(type);
+  // « API & intégrations » : seulement si Moboo a ouvert l'accès à ce compte.
+  const apiPartner = type === "agent" || type === "entreprise" ? (await authedFetch("/site/me/api", { method: "GET" })).data?.enabled === true : false;
   const [newInquiries, unread] = await Promise.all([
     publisher ? listMyInquiries().then((xs) => xs.filter((q) => q.status === "new").length) : 0,
     unreadMessages(),
   ]);
+  const menu = items.filter((i) => i.key !== "api" || apiPartner);
   const badges = { ...(newInquiries ? { demandes: newInquiries } : {}), ...(unread ? { messages: unread } : {}) };
   const name = account.companyName && (type === "entreprise" || type === "agent") ? account.companyName : displayName(account);
 
@@ -66,7 +69,7 @@ export default async function EspaceLayout({ children }: { children: React.React
                 </Link>
               ) : null}
             </div>
-            <DashboardSideNav items={items} badges={badges} />
+            <DashboardSideNav items={menu} badges={badges} />
             {account.isAdmin ? (
               <Link href="/admin" className="flex items-center gap-3 rounded-xl bg-[#1f2327] px-3 py-2.5 text-sm font-semibold text-white hover:bg-black">
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" /></svg>
@@ -85,7 +88,7 @@ export default async function EspaceLayout({ children }: { children: React.React
         {/* Contenu */}
         <main className="min-w-0">
           <div className="mb-5 lg:hidden print:hidden">
-            <DashboardTabs items={items} badges={badges} />
+            <DashboardTabs items={menu} badges={badges} />
             {account.isAdmin ? (
               <Link href="/admin" className="mt-3 inline-flex rounded-full bg-[#1f2327] px-3.5 py-2 text-sm font-semibold text-white">⚙ Back-office du site</Link>
             ) : null}
