@@ -95,6 +95,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/centre-marketing", label: "Centre marketing", icon: "megaphone", group: "centre" },
     { href: "/admin/centre-marketing/reservations", label: "Réservations déclarées", icon: "megaphone", child: true, group: "centre" },
     { href: "/admin/centre-marketing/promotions", label: "Promotions", icon: "megaphone", child: true, group: "centre" },
+    { href: "/admin/centre-marketing/campagnes", label: "Campagnes ciblées", icon: "megaphone", child: true, group: "centre" },
     { href: "/admin/centre-marketing/reglages", label: "Réglages", icon: "megaphone", child: true, group: "centre" },
     { href: "/admin/publicite", label: "Publicité (annonceurs)", icon: "megaphone", group: "publicite" },
     { href: "/admin/publicite/tarifs", label: "Tarifs", icon: "megaphone", child: true, group: "publicite" },
