@@ -22,6 +22,8 @@ import { ContactLink } from "@/components/contact-link";
 import { getSiteSettings } from "@/lib/settings";
 import { getTaxonomies, typeLabel } from "@/lib/taxonomies";
 import { ListingReservation } from "@/components/listing-reservation";
+import { MarketPrice } from "@/components/market-price";
+import { getMarketEstimate } from "@/lib/prices";
 
 export const revalidate = 60;
 
@@ -48,7 +50,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
   if (!l) notFound();
   // Arrivée depuis une annonce sponsorisée : clic compté pour l'annonceur.
   if (searchParams?.sp) trackAdClick("boost", searchParams.sp);
-  const [partners, signals] = await Promise.all([getZonePartners(l.id), getSignals("listing", l.id)]);
+  const [partners, signals, market] = await Promise.all([getZonePartners(l.id), getSignals("listing", l.id), getMarketEstimate(l.id)]);
 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");
@@ -254,6 +256,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
                 <span className="text-2xl font-extrabold text-ink">{formatXOF(l.price)}</span>
                 {l.transaction === "rent" ? <span className="text-sm text-muted">/ mois</span> : null}
               </div>
+              {market ? <MarketPrice e={market} /> : null}
               {/* Coordonnées de l'agent si rattaché, sinon de l'annonceur. */}
               {phoneDigits ? (
                 <div className="mt-4 grid gap-2">

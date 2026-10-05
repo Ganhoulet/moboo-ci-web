@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getSeoLinks } from "@/lib/seo";
+import { getPriceCommunes } from "@/lib/prices";
 
 export const dynamic = "force-dynamic"; // toujours à jour avec les pages SEO publiées
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://moboo.ci").replace(/\/+$/, "");
@@ -12,5 +13,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const seo = (await getSeoLinks())
     .filter((l) => l.kind === "landing" && !l.noindex)
     .map((l) => ({ url: `${BASE}/${l.slug}`, lastModified: new Date(l.updatedAt), changeFrequency: "daily" as const, priority: 0.7 }));
-  return [...main, ...seo];
+  // Indice des prix : page générale + une page par commune.
+  const communes = (await getPriceCommunes()) ?? [];
+  const prices = communes.length
+    ? [{ url: `${BASE}/prix-immobilier`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.7 },
+       ...communes.map((c) => ({ url: `${BASE}/prix-immobilier/${c.slug}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 }))]
+    : [];
+  return [...main, ...seo, ...prices];
 }

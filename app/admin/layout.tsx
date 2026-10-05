@@ -63,6 +63,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/statistiques", label: "Statistiques", icon: "gauge", group: "stats" },
     { href: "/admin/statistiques/recherches", label: "Recherches", icon: "gauge", child: true, group: "stats" },
     { href: "/admin/statistiques/professionnels", label: "Professionnels", icon: "gauge", child: true, group: "stats" },
+    { href: "/admin/statistiques/prix", label: "Indice des prix", icon: "gauge", child: true, group: "stats" },
     // Utilisateurs (façon WordPress) : comptes, fiche 360°, rôles, journal.
     { href: "/admin/utilisateurs", label: "Utilisateurs", icon: "users", group: "utilisateurs" },
     { href: "/admin/utilisateurs/suppressions", label: "Demandes de suppression", icon: "users", child: true, group: "utilisateurs" },

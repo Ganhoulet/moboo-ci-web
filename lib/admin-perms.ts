@@ -36,6 +36,7 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/seo", ["seo"]],
   ["/admin/accueil", ["pages"]],
   ["/admin/reglages", ["settings"]],
+  ["/admin/statistiques/prix/reglages", ["settings"]],
   ["/admin/statistiques", ["analytics"]],
   ["/admin/reservations", ["disputes"]],
   ["/admin/litiges/reglages", ["disputes"]],
