@@ -19,6 +19,23 @@ const nextConfig = {
       ],
     }];
   },
+  // Après la bascule du domaine moboo.ci (WordPress arrêté) :
+  // - l'application Moboo.ci (Houzi) appelle toujours moboo.ci/wp-json/… : ces appels
+  //   sont transmis à la passerelle Houzi de l'API, même pour les téléphones qui n'ont
+  //   pas encore relu leur configuration ;
+  // - les anciens liens de photos moboo.ci/wp-content/uploads/… (partagés, indexés)
+  //   pointent sur leur copie dans le stockage Moboo (WP_MEDIA_BASE_URL, facultatif).
+  async rewrites() {
+    const api = (process.env.NEXT_PUBLIC_API_URL || 'https://resi.moboo.ci/api/v1').replace(/\/+$/, '');
+    const media = (process.env.WP_MEDIA_BASE_URL || '').replace(/\/+$/, '');
+    return {
+      beforeFiles: [
+        { source: '/wp-json', destination: `${api}/wp-json` },
+        { source: '/wp-json/:path*', destination: `${api}/wp-json/:path*` },
+        ...(media ? [{ source: '/wp-content/uploads/:path*', destination: `${media}/:path*` }] : []),
+      ],
+    };
+  },
   // Photos d'annonces envoyées par les server actions de l'espace compte (compressées ~0,5 Mo).
   experimental: { serverActions: { bodySizeLimit: '12mb' } }, // photos (~0,5 Mo) et pièces de vérification (PDF ≤ 5 Mo)
   images: {
