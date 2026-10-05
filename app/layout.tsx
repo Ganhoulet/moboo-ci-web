@@ -14,6 +14,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { menuAt } from "@/lib/menus";
 import { getCampaigns } from "@/lib/marketing";
 import { SitePopup } from "@/components/marketing/site-popup";
+import { NoticeBar, NoticePopup } from "@/components/notices/site-notices";
+import { noticesForVisitor } from "@/lib/notices";
 import { ActivityToasts } from "@/components/activity-toasts";
 import { isOn } from "@/lib/flags";
 import { headers } from "next/headers";
@@ -57,12 +59,13 @@ async function SeoBottom() {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [settings, chrome] = await Promise.all([getSiteSettings(), getChrome()]);
+  const [settings, chrome, notices] = await Promise.all([getSiteSettings(), getChrome(), noticesForVisitor()]);
   const { general, header } = settings;
   return (
     <html lang="fr" className={`${inter.variable} ${poppins.variable}`}>
       <body className="min-h-screen font-sans" style={{ ["--container-max" as string]: `${general.containerWidth}px` }}>
         <ClientSettings favoritesLoginRequired={general.favoritesLoginRequired} loggedIn={!!getSession()} />
+        {notices.bandeau.length ? <NoticeBar items={notices.bandeau} /> : null}
         {header.topBarEnabled && (header.topBarText || header.topBarPhone || header.topBarEmail) ? <TopBar h={header} /> : null}
         <SiteHeader settings={settings} nav={{ items: menuAt(chrome.menus, chrome.locations, "header"), mobile: menuAt(chrome.menus, chrome.locations, "mobile"), style: chrome.menuStyle }} />
         {settings.search.headerSearch !== "none" ? <SearchStrip variant={settings.search.headerSearch} pages={settings.search.headerSearchPages} types={(await getTaxonomies()).type} /> : null}
@@ -70,6 +73,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SeoBottom />
         <SiteFooter chrome={chrome} settings={settings} />
         {general.backToTop ? <BackToTop /> : null}
+        {/* Une information ciblée ouverte passe avant la pop-up marketing (jamais deux fenêtres à la fois). */}
+        {notices.popup.length ? <NoticePopup items={notices.popup} /> : null}
         <SitePopup items={await getCampaigns("site_popup")} loggedIn={!!getSession()} />
         {(await isOn("signaux.toasts")) ? <ActivityToasts /> : null}
         {/* Temps réel : une seule connexion par onglet (les cloches lisent son compteur). */}

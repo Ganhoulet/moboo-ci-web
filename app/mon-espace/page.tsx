@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { INQUIRY_STEPS, WELCOME_NEXT, isPublisher, type AccountType } from "@/lib/accounts";
 import { EmptyState, HostApps, StatCard, ViewsChart, fmtXOF } from "@/components/dashboard-ui";
 import { listSearches } from "@/app/compte/searches-actions";
+import { OpportunityCard } from "@/components/opportunity-card";
 import { getStats, listAccountFavorites, listMyInquiries, listMyListings } from "./actions";
 
 export default async function EspaceHome({ searchParams }: { searchParams: { bienvenue?: string } }) {
@@ -32,6 +33,7 @@ export default async function EspaceHome({ searchParams }: { searchParams: { bie
         </div>
       )}
 
+      {isPublisher(type) ? <OpportunityCard /> : null}
       {isPublisher(type) ? <PublisherHome /> : type === "etablissement" ? <HostHome subtype={account.accountSubtype} /> : <SeekerHome />}
     </div>
   );

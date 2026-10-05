@@ -21,6 +21,7 @@ export const DASH_ICONS: Record<DashKey, React.ReactNode> = {
   publicite: <svg {...sv}><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1ZM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" {...lj} /></svg>,
   factures: <svg {...sv}><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2ZM9 8h6M9 12h6M9 16h3" {...lj} /></svg>,
   verification: <svg {...sv}><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" {...lj} /><path d="m9 12 2 2 4-4" {...lj} /></svg>,
+  infos: <svg {...sv}><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z" {...lj} /><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" {...lj} /></svg>,
   profil: <svg {...sv}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-3.9 3.6-7 8-7s8 3.1 8 7" {...lj} /></svg>,
 };
 

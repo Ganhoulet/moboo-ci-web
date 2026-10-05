@@ -166,7 +166,7 @@ export const WELCOME_NEXT: Record<AccountType, { text: string; cta?: { href: str
 
 export type DashKey =
   | "tableau" | "reservations" | "annonces" | "nouvelle" | "statistiques" | "demandes"
-  | "messages" | "favoris" | "recherches" | "profil" | "forfait" | "publicite" | "factures" | "verification" | "api";
+  | "messages" | "favoris" | "recherches" | "profil" | "forfait" | "publicite" | "factures" | "verification" | "api" | "infos";
 
 export interface DashItem {
   key: DashKey;
@@ -186,6 +186,7 @@ export const DASH_MENU: DashItem[] = [
   { key: "demandes", href: "/mon-espace/demandes", label: "Demandes", types: PUB },
   { key: "reservations", href: "/mon-espace/reservations", label: "Mes réservations", types: "all" },
   { key: "messages", href: "/mon-espace/messages", label: "Messages", types: "all" },
+  { key: "infos", href: "/mon-espace/infos", label: "Infos Moboo", types: "all" },
   { key: "favoris", href: "/mon-espace/favoris", label: "Favoris", types: "all" },
   { key: "recherches", href: "/mon-espace/recherches", label: "Recherches & alertes", types: "all" },
   { key: "forfait", href: "/mon-espace/forfait", label: "Mon forfait", types: PUB },

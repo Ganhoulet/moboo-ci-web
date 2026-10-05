@@ -32,6 +32,7 @@ export function SitePopup({ items, loggedIn }: { items: LiveCampaign[]; loggedIn
     });
     if (!next) return;
     const t = setTimeout(() => {
+      if (document.querySelector("[data-notice-popup]")) return; // une information ciblée est déjà ouverte
       setC(next);
       track(next.id, "view");
       write({ ...read(), [next.id]: { v: next.version, at: Date.now() } });
@@ -47,7 +48,7 @@ export function SitePopup({ items, loggedIn }: { items: LiveCampaign[]; loggedIn
   };
   const body = <div className="w-full"><CreativeView c={c} variant="popup" /></div>;
   return (
-    <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black/60 p-6 backdrop-blur-[2px]" role="dialog" aria-modal="true" onClick={() => close()}>
+    <div data-marketing-popup className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black/60 p-6 backdrop-blur-[2px]" role="dialog" aria-modal="true" onClick={() => close()}>
       <div className="w-full max-w-sm animate-[fadeIn_.2s_ease-out]" onClick={(e) => e.stopPropagation()}>
         {c.ctaUrl ? <a href={c.ctaUrl} onClick={() => track(c.id, "click")} {...(/^https?:/.test(c.ctaUrl) ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{body}</a> : body}
       </div>

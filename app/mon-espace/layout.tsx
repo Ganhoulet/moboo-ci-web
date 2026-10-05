@@ -35,12 +35,13 @@ export default async function EspaceLayout({ children }: { children: React.React
   const publisher = isPublisher(type);
   // « API & intégrations » : seulement si Moboo a ouvert l'accès à ce compte.
   const apiPartner = type === "agent" || type === "entreprise" ? (await authedFetch("/site/me/api", { method: "GET" })).data?.enabled === true : false;
-  const [newInquiries, unread] = await Promise.all([
+  const [newInquiries, unread, infos] = await Promise.all([
     publisher ? listMyInquiries().then((xs) => xs.filter((q) => q.status === "new").length) : 0,
     unreadMessages(),
+    authedFetch("/site/me/notices", { method: "GET" }).then((r) => (r.ok ? Number(r.data?.unread) || 0 : 0)).catch(() => 0),
   ]);
   const menu = items.filter((i) => i.key !== "api" || apiPartner);
-  const badges = { ...(newInquiries ? { demandes: newInquiries } : {}), ...(unread ? { messages: unread } : {}) };
+  const badges = { ...(newInquiries ? { demandes: newInquiries } : {}), ...(unread ? { messages: unread } : {}), ...(infos ? { infos } : {}) };
   const name = account.companyName && (type === "entreprise" || type === "agent") ? account.companyName : displayName(account);
 
   return (
