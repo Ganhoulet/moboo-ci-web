@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSeoLinks, getSeoPage, searchHref, seoLinkLabel } from "@/lib/seo";
 import { espacesPage, listListingsPage, residencesPage } from "@/lib/property";
-import { PropertyCard } from "@/components/property-card";
+import { ResultsView } from "@/components/results-view";
+import { hasMap, layoutFor, zoneSlug } from "@/lib/result-layouts";
 import { getSiteSettings } from "@/lib/settings";
 import type { Property } from "@/lib/property";
 
@@ -47,6 +48,17 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
     items = res.items; total = res.total;
   } catch { /* annonces indisponibles : la page et son texte restent affichés */ }
 
+  // Modèle d'affichage : celui de cette page SEO, sinon de la zone, sinon de l'onglet.
+  const tpl = await layoutFor([`seo:${page.slug}`, f.q ? `zone:${zoneSlug(f.q)}` : null, `search:${f.transaction ?? "all"}`]);
+  const classic = f.transaction !== "furnished" && f.transaction !== "event";
+  const tx = f.transaction === "rent" || f.transaction === "sale" ? f.transaction : undefined;
+  const mapItems = hasMap(tpl) && classic && items.length
+    ? (await listListingsPage({ transaction: tx, propertyType: f.propertyType, q: f.q, priceMin: f.priceMin, priceMax: f.priceMax, perPage: 100, map: true, listingKind: "classic" }).catch(() => ({ items: [] as Property[] }))).items
+    : [];
+  const mapQuery = new URLSearchParams(Object.entries({ transaction: tx, q: f.q, propertyType: f.propertyType, priceMin: f.priceMin ? String(f.priceMin) : undefined, priceMax: f.priceMax ? String(f.priceMax) : undefined })
+    .filter(([, v]) => v) as [string, string][]).toString();
+  const { maps } = await getSiteSettings();
+
   const landing = links.filter((l) => l.kind === "landing" && l.slug !== page.slug && !l.noindex);
   const related = [
     ...landing.filter((l) => page.hubColumn && l.hubColumn === page.hubColumn),
@@ -85,9 +97,7 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
       </div>
 
       {items.length ? (
-        <div className="mt-5 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((p) => <PropertyCard key={p.id} p={p} />)}
-        </div>
+        <ResultsView items={items} tpl={tpl} mapSettings={maps} mapItems={mapItems} query={mapQuery} mapEnabled={hasMap(tpl) && classic} />
       ) : (
         <div className="mt-5 rounded-2xl border border-dashed border-slate-300 p-10 text-center">
           <p className="font-semibold text-ink">De nouvelles annonces arrivent chaque jour.</p>

@@ -49,6 +49,12 @@
   box-shadow: 0 2px 6px rgb(15 23 42 / .35); cursor: pointer;
 }
 .moboo-price-pin.is-active { background: #ea580c; transform: scale(1.12); }
+/* Repères « points » (modèles d'affichage des résultats) */
+.moboo-dot-pin {
+  display: block; width: 16px; height: 16px; border-radius: 999px; background: #ea580c;
+  border: 3px solid #fff; box-shadow: 0 1px 4px rgb(15 23 42 / .45); cursor: pointer; transition: transform .15s;
+}
+.moboo-dot-pin.is-active { background: #1e3a8a; transform: scale(1.5); }
 .leaflet-container { font: inherit; }
 
 /* Texte libre du constructeur de page */

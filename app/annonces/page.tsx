@@ -11,6 +11,7 @@ import {
   type Property,
 } from "@/lib/property";
 import { ResultsView } from "@/components/results-view";
+import { hasMap, layoutFor, zoneSlug } from "@/lib/result-layouts";
 import { SortSelect } from "@/components/sort-select";
 import { SORTS } from "@/lib/sorts";
 import { FilterBar } from "@/components/filter-bar";
@@ -107,8 +108,15 @@ export default async function AnnoncesPage({
     total = res.total;
     correctedQuery = res.correctedQuery;
   }
-  // Demi-carte : biens localisés des mêmes filtres (annonces à louer / à vendre).
-  const halfMap = cfg.resultsView === "halfmap" && !isReservableTab;
+  // Modèle d'affichage (back-office → Apparence → Affichage des résultats) :
+  // la cible la plus précise d'abord (zone recherchée, agent, autour de moi, onglet).
+  const tpl = await layoutFor([
+    q ? `zone:${zoneSlug(correctedQuery ?? q)}` : null, agent ? "agent" : null, near ? "search:near" : null,
+    `search:${reservable ? "all" : active}`,
+  ]);
+  // Carte : biens localisés des mêmes filtres (annonces à louer / à vendre ; les
+  // meublés et espaces s'affichent sur la carte quand ils sont localisés).
+  const halfMap = hasMap(tpl) && !isReservableTab;
   const tx2 = active === "rent" || active === "sale" ? active : undefined;
   const mapItems = halfMap
     ? (await listListingsPage({ transaction: tx2, q, priceMin, priceMax, propertyType, perPage: cfg.mapInitialCount, sort, map: true, listingKind: "classic" })).items
@@ -201,7 +209,7 @@ export default async function AnnoncesPage({
 
       {items.length > 0 ? (
         <>
-          <ResultsView items={items} layout={cfg.resultsLayout} halfMap={halfMap} mapSettings={settings.maps} mapItems={mapItems} autoLoad={cfg.mapAutoLoad} query={query} />
+          <ResultsView items={items} tpl={tpl} mapSettings={settings.maps} mapItems={mapItems} query={query} mapEnabled={hasMap(tpl)} />
           <Pagination
             page={page}
             perPage={PER_PAGE}

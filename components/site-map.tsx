@@ -90,9 +90,11 @@ export function SiteMap({
           }
           for (const m of ms) {
             const price = settings.markerType === "price" && m.label;
+            const dot = settings.markerType === "dot";
             const mk = new g.maps.Marker({
               map, position: { lat: m.lat, lng: m.lng }, title: m.title,
               ...(price ? { label: { text: m.label, color: "#fff", fontSize: "11px", fontWeight: "700" }, icon: { path: "M -30,-12 H 30 V 12 H -30 Z", fillColor: "#1e3a8a", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2, scale: 1, labelOrigin: new g.maps.Point(0, 0) } } : {}),
+              ...(dot ? { icon: { path: g.maps.SymbolPath.CIRCLE, scale: 6, fillColor: "#ea580c", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 } } : {}),
             });
             mk.addListener("click", () => { info.setContent(popupHtml(m)); info.open({ map, anchor: mk }); });
             objs.push(mk); byId.set(m.id, mk);
@@ -138,7 +140,9 @@ export function SiteMap({
       layer.addTo(map);
       const group = L.layerGroup().addTo(map);
       const byId = new Map<string, any>();
-      const icon = (m: MapMarker, active = false) => settings.markerType === "price" && m.label
+      const icon = (m: MapMarker, active = false) => settings.markerType === "dot"
+        ? L.divIcon({ className: "", html: `<span class="moboo-dot-pin${active ? " is-active" : ""}"></span>`, iconSize: [16, 16], iconAnchor: [8, 8], popupAnchor: [0, -8] })
+        : settings.markerType === "price" && m.label
         ? L.divIcon({ className: "", html: `<span class="moboo-price-pin${active ? " is-active" : ""}">${esc(m.label)}</span>`, iconSize: null as any, iconAnchor: [30, 14] })
         : L.divIcon({ className: "", html: PIN_SVG, iconSize: [28, 36], iconAnchor: [14, 35], popupAnchor: [0, -30] });
       let fit = fitMarkers;

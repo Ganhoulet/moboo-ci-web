@@ -78,6 +78,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Apparence : constructeur de la page d'accueil, menu et pied de page.
     { href: "/admin/accueil", label: "Page d’accueil", icon: "layout", group: "apparence" },
     { href: "/admin/accueil/menu", label: "Menus et pied de page", icon: "layout", child: true, group: "apparence" },
+    { href: "/admin/accueil/resultats", label: "Affichage des résultats", icon: "layout", child: true, group: "apparence" },
     // Centre d'aide (moboo.ci/aide) : guides et questions fréquentes par public.
     // Espace « Moboo.ci pour les professionnels » (façon Zillow Partners).
     { href: "/admin/professionnels", label: "Espace professionnels", icon: "megaphone", group: "pros" },

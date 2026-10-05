@@ -66,7 +66,7 @@ export interface SiteSettings {
 
 export interface MapSettings {
   provider: "osm" | "mapbox" | "google"; googleApiKey: string; mapboxToken: string;
-  mapType: "roadmap" | "satellite" | "hybrid" | "terrain"; markerType: "price" | "pin";
+  mapType: "roadmap" | "satellite" | "hybrid" | "terrain"; markerType: "price" | "pin" | "dot";
   defaultZoom: number; maxZoom: number; fallbackLat: string; fallbackLng: string; limitCountry: boolean; country: string;
 }
 
