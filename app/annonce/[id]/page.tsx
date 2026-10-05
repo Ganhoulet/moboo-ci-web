@@ -24,6 +24,7 @@ import { getTaxonomies, typeLabel } from "@/lib/taxonomies";
 import { ListingReservation } from "@/components/listing-reservation";
 import { MarketPrice } from "@/components/market-price";
 import { getMarketEstimate } from "@/lib/prices";
+import { isOn } from "@/lib/flags";
 
 export const revalidate = 60;
 
@@ -50,7 +51,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
   if (!l) notFound();
   // Arrivée depuis une annonce sponsorisée : clic compté pour l'annonceur.
   if (searchParams?.sp) trackAdClick("boost", searchParams.sp);
-  const [partners, signals, market] = await Promise.all([getZonePartners(l.id), getSignals("listing", l.id), getMarketEstimate(l.id)]);
+  const [partners, signals, market] = await Promise.all([getZonePartners(l.id), getSignals("listing", l.id), isOn("prix.repere-fiche").then((on) => (on ? getMarketEstimate(l.id) : null))]);
 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");

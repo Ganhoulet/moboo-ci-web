@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSeoOverride } from "@/lib/seo";
 import Link from "next/link";
 import { NearMe } from "@/components/near-me";
+import { isOn } from "@/lib/flags";
 import {
   listListingsPage,
   residencesPage,
@@ -154,7 +155,7 @@ export default async function AnnoncesPage({
             Résultats pour <strong>« {correctedQuery} »</strong>. Aucune annonce ne correspondait à « {q} ».
           </p>
         ) : null}
-        <div className="mt-3"><NearMe active={!!near} radius={near?.radius ?? 3} /></div>
+        {near || (await isOn("recherche.autour-de-moi")) ? <div className="mt-3"><NearMe active={!!near} radius={near?.radius ?? 3} /></div> : null}
         {isReservableTab && ("checkIn" in stay || "date" in event || guests) ? (
           <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
             ✓ Disponibles
