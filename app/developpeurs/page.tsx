@@ -46,7 +46,7 @@ export default function Developpeurs() {
       <div className="lg:grid lg:grid-cols-[220px_1fr] lg:gap-10">
         <nav className="hidden lg:block">
           <div className="sticky top-24 space-y-1 text-sm">
-            {[["demarrer", "Démarrer"], ["auth", "Authentification"], ["annonces", "Annonces"], ["synchro", "Synchronisation"], ["photos", "Photos"], ["demandes", "Demandes"], ["webhooks", "Webhooks"], ["stats", "Statistiques"], ["erreurs", "Erreurs et limites"]].map(([id, l]) => (
+            {[["demarrer", "Démarrer"], ["wordpress", "Extension WordPress"], ["auth", "Authentification"], ["annonces", "Annonces"], ["synchro", "Synchronisation"], ["photos", "Photos"], ["demandes", "Demandes"], ["webhooks", "Webhooks"], ["stats", "Statistiques"], ["erreurs", "Erreurs et limites"]].map(([id, l]) => (
               <a key={id} href={`#${id}`} className="block rounded-md px-2 py-1 text-slate-600 hover:bg-slate-100 hover:text-ink">{l}</a>
             ))}
           </div>
@@ -70,6 +70,21 @@ export default function Developpeurs() {
             <p className="text-sm text-slate-600">Adresse de l’API : <code className="rounded bg-slate-100 px-1.5 py-0.5">{BASE}</code> · Échanges en JSON (UTF-8) · Dates au format ISO 8601.</p>
           </Section>
 
+          <Section id="wordpress" title="Site WordPress : l’extension Moboo.ci Connect">
+            <p className="text-slate-700">
+              Votre site est sous WordPress ? Aucune ligne de code : installez l’extension, collez votre clé, c’est fini. Chaque bien publié ou modifié part
+              automatiquement sur Moboo.ci (retiré s’il est dépublié, « vendu » / « loué » suivis), et les demandes de vos clients arrivent dans WordPress et par e-mail.
+            </p>
+            <ul className="list-disc space-y-1 pl-5 text-slate-700">
+              <li>Thèmes reconnus automatiquement : <strong>Houzez</strong>, <strong>RealHomes</strong>, <strong>WP Residence</strong>.</li>
+              <li>Tout autre thème ou extension : écran de correspondance (champ personnalisé, ACF, catégorie, galerie) avec aperçu avant envoi.</li>
+              <li>Shortcode <code>[moboo_annonces]</code> : affiche vos annonces Moboo.ci sur une page de votre site.</li>
+            </ul>
+            <a href="/downloads/moboo-connect.zip" className="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-5 py-3 font-semibold text-white hover:bg-brand-800">Télécharger l’extension (moboo-connect.zip)</a>
+            <p className="text-sm text-slate-600">WordPress → Extensions → Ajouter → Téléverser, activer, puis Réglages → Moboo.ci. Site en <strong>https</strong> pour recevoir les demandes en temps réel.</p>
+            <p className="text-sm text-slate-600">Autre technologie (PHP, Laravel, Node, Python, site sur mesure…) : votre développeur appelle l’API ci-dessous depuis votre logiciel, dans n’importe quel langage.</p>
+          </Section>
+
           <Section id="auth" title="Authentification">
             <p className="text-slate-700">Chaque requête porte votre clé dans l’en-tête <code>Authorization</code>. La clé n’est affichée qu’à sa création : gardez-la sur votre serveur, jamais dans une page web ou une application.</p>
             <Code>{`curl ${BASE}/me \\
@@ -90,6 +105,7 @@ export default function Developpeurs() {
                     ["POST", "/listings", "Publie une annonce (externalRef facultatif)"],
                     ["GET / PATCH / DELETE", "/listings/{id}", "Lire, modifier, retirer par identifiant Moboo"],
                     ["PATCH", "/listings/{id}/status", "ACTIVE, SOLD (vendu), RENTED (loué), DISABLED (masquée)"],
+                    ["PUT", "/webhook", "Déclarer l’adresse de réception des demandes ({ \"url\": \"https://…\" }) : renvoie le secret de signature"],
                   ].map(([m, p, r]) => <tr key={m + p} className="border-t border-slate-100"><td className="px-3 py-2 font-mono text-xs font-bold">{m}</td><td className="px-3 py-2 font-mono text-xs">{p}</td><td className="px-3 py-2">{r}</td></tr>)}
                 </tbody>
               </table>
