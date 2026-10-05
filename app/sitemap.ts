@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getSeoLinks } from "@/lib/seo";
 import { getPriceCommunes } from "@/lib/prices";
+import { getHelpSitemap } from "@/lib/help";
 
 export const dynamic = "force-dynamic"; // toujours à jour avec les pages SEO publiées
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://moboo.ci").replace(/\/+$/, "");
@@ -19,5 +20,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ? [{ url: `${BASE}/prix-immobilier`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.7 },
        ...communes.map((c) => ({ url: `${BASE}/prix-immobilier/${c.slug}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 }))]
     : [];
-  return [...main, ...seo, ...prices];
+  // Centre d'aide : accueil, publics, articles.
+  const helpRows = (await getHelpSitemap()) ?? [];
+  const help = [
+    { url: `${BASE}/aide`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 },
+    ...["premiers-pas", "locataires", "voyageurs", "proprietaires", "agents", "agences", "residences", "espaces", "paiements"].map((k) => ({ url: `${BASE}/aide/${k}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.5 })),
+    ...helpRows.map((h) => ({ url: `${BASE}/aide/article/${h.slug}`, lastModified: new Date(h.updatedAt), changeFrequency: "monthly" as const, priority: 0.4 })),
+  ];
+  return [...main, ...seo, ...prices, ...help];
 }

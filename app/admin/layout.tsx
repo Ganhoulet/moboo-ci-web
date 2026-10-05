@@ -78,6 +78,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Apparence : constructeur de la page d'accueil, menu et pied de page.
     { href: "/admin/accueil", label: "Page d’accueil", icon: "layout", group: "apparence" },
     { href: "/admin/accueil/menu", label: "Menus et pied de page", icon: "layout", child: true, group: "apparence" },
+    // Centre d'aide (moboo.ci/aide) : guides et questions fréquentes par public.
+    { href: "/admin/aide", label: "Centre d’aide", icon: "search", group: "aide" },
+    { href: "/admin/aide/nouveau", label: "Nouvel article", icon: "search", child: true, group: "aide" },
     // Pages SEO (façon Yoast) : pages d'atterrissage + SEO des pages du site.
     { href: "/admin/seo", label: "Pages SEO", icon: "search", group: "seo" },
     { href: "/admin/seo/nouvelle", label: "Nouvelle page SEO", icon: "search", child: true, group: "seo" },

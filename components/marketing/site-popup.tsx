@@ -18,7 +18,8 @@ export function SitePopup({ items, loggedIn }: { items: LiveCampaign[]; loggedIn
   const [c, setC] = useState<LiveCampaign | null>(null);
 
   useEffect(() => {
-    if (path.startsWith("/admin") || path.startsWith("/administration") || path.startsWith("/connexion")) return;
+    // Pas de pop-up publicitaire dans le back-office, à la connexion ni dans le centre d'aide.
+    if (path.startsWith("/admin") || path.startsWith("/administration") || path.startsWith("/connexion") || path.startsWith("/aide")) return;
     const seen = read();
     const next = items.find((x) => {
       if (x.audience === "guests" && loggedIn) return false;
