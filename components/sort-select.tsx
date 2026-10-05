@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SORTS } from "@/lib/sorts";
 
-export function SortSelect({ value }: { value: string }) {
+export function SortSelect({ value, near = false }: { value: string; near?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -17,6 +17,7 @@ export function SortSelect({ value }: { value: string }) {
           q.delete("page");
           router.push(`${pathname}?${q}`);
         }}>
+        {near ? <option value="distance">Les plus proches</option> : null}
         {SORTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
       </select>
     </label>

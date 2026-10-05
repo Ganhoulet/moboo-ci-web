@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { withSeoOverride } from "@/lib/seo";
 import Link from "next/link";
+import { NearMe } from "@/components/near-me";
 import {
   listListingsPage,
   residencesPage,
@@ -39,6 +40,9 @@ export default async function AnnoncesPage({
 }: {
   searchParams: {
     transaction?: string;
+    lat?: string;
+    lng?: string;
+    radius?: string;
     q?: string;
     reservable?: string;
     priceMin?: string;
@@ -67,6 +71,11 @@ export default async function AnnoncesPage({
   const propertyType = (searchParams.propertyType ?? "").trim();
   const page = Math.max(1, Number(searchParams.page) || 1);
   const agent = /^\d{1,10}$/.test(searchParams.agent ?? "") ? searchParams.agent : undefined;
+  // Recherche par rayon (« Autour de moi ») : centre et rayon en km.
+  const nLat = Number(searchParams.lat), nLng = Number(searchParams.lng), nRad = Number(searchParams.radius);
+  const near = searchParams.lat && searchParams.lng && Number.isFinite(nLat) && Number.isFinite(nLng)
+    ? { lat: nLat, lng: nLng, radius: Math.min(50, Math.max(0.5, nRad > 0 ? nRad : 3)) } : undefined;
+  let correctedQuery: string | undefined;
 
   const isReservableTab = active === "furnished" || active === "event";
   // Recherche de disponibilités (barre hybride de l'accueil).
@@ -84,16 +93,18 @@ export default async function AnnoncesPage({
     // Meublés / espaces = l'inventaire réservable publié depuis Moboo Resi /
     // Moboo Event (feuille de route §4 : Moboo.ci n'en est que la vitrine).
     const res = active === "furnished"
-      ? await residencesPage({ q, page, perPage: PER_PAGE, ...stay, priceMax })
-      : await espacesPage({ q, page, perPage: PER_PAGE, ...event, priceMax });
+      ? await residencesPage({ q, page, perPage: PER_PAGE, ...stay, priceMax, near })
+      : await espacesPage({ q, page, perPage: PER_PAGE, ...event, priceMax, near });
     items = res.items;
     total = res.total;
+    correctedQuery = res.correctedQuery;
   } else {
     // Tout / à louer / à vendre → pagination + filtres serveur (des milliers de biens).
     const tx = active === "rent" || active === "sale" ? active : undefined;
-    const res = await listListingsPage({ transaction: tx, q, priceMin, priceMax, propertyType, page, perPage: PER_PAGE, sort, agent });
+    const res = await listListingsPage({ transaction: tx, q, priceMin, priceMax, propertyType, page, perPage: PER_PAGE, sort: near && (!searchParams.sort || searchParams.sort === "distance") ? undefined : sort, agent, near });
     items = res.items;
     total = res.total;
+    correctedQuery = res.correctedQuery;
   }
   // Demi-carte : biens localisés des mêmes filtres (annonces à louer / à vendre).
   const halfMap = cfg.resultsView === "halfmap" && !isReservableTab;
@@ -109,8 +120,8 @@ export default async function AnnoncesPage({
   const cardSignals = await getCardSignals([...items.map((p) => p.id)]);
   items = items.map((p) => (cardSignals[p.id] ? { ...p, signal: cardSignals[p.id] } : p));
   const [sponsored, banners] = await Promise.all([
-    !isReservableTab && page === 1 && settings.ads?.enabled !== false ? getSponsored({ q, transaction: tx2, propertyType }) : Promise.resolve([]),
-    q ? getCampaigns("site_banner", zonesOfQuery(q)).then((xs) => xs.filter((c) => c.badge === "Sponsorisé")) : Promise.resolve([]),
+    !isReservableTab && page === 1 && settings.ads?.enabled !== false ? getSponsored({ q: correctedQuery ?? q, transaction: tx2, propertyType }) : Promise.resolve([]),
+    q ? getCampaigns("site_banner", zonesOfQuery(correctedQuery ?? q)).then((xs) => xs.filter((c) => c.badge === "Sponsorisé")) : Promise.resolve([]),
   ]);
 
   const hasFilters = !!(q || priceMin || priceMax || propertyType || active !== "all");
@@ -135,8 +146,15 @@ export default async function AnnoncesPage({
         <p className="text-sm text-muted">
           {total.toLocaleString("fr-FR")} bien(s)
           {total > PER_PAGE ? ` · ${rangeFrom}–${rangeTo} affichés` : ""}
-          {q ? ` · « ${q} »` : ""}
+          {q ? ` · « ${correctedQuery ?? q} »` : ""}
+          {near ? ` · dans un rayon de ${String(near.radius).replace(".", ",")} km` : ""}
         </p>
+        {correctedQuery ? (
+          <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
+            Résultats pour <strong>« {correctedQuery} »</strong>. Aucune annonce ne correspondait à « {q} ».
+          </p>
+        ) : null}
+        <div className="mt-3"><NearMe active={!!near} radius={near?.radius ?? 3} /></div>
         {isReservableTab && ("checkIn" in stay || "date" in event || guests) ? (
           <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
             ✓ Disponibles
@@ -148,7 +166,7 @@ export default async function AnnoncesPage({
           </p>
         ) : null}
         </div>
-        {!isReservableTab ? <SortSelect value={sort} /> : null}
+        {!isReservableTab ? <SortSelect value={near && (!searchParams.sort || searchParams.sort === "distance") ? "distance" : sort} near={!!near} /> : null}
       </div>
 
       <div className="mt-5">
@@ -194,6 +212,7 @@ export default async function AnnoncesPage({
               priceMax: priceMax ? String(priceMax) : undefined,
               propertyType: propertyType || undefined,
               agent,
+              lat: near ? searchParams.lat : undefined, lng: near ? searchParams.lng : undefined, radius: near ? String(near.radius) : undefined,
               checkIn: searchParams.checkIn, checkOut: searchParams.checkOut, guests: searchParams.guests,
               date: searchParams.date, days: searchParams.days,
               sort: searchParams.sort || undefined,

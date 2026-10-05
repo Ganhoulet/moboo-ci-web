@@ -47,7 +47,12 @@ export interface Paginated<T> {
   page: number;
   perPage: number;
   items: T[];
+  /** Recherche corrigée (fautes de frappe) quand la recherche tapée ne donnait rien. */
+  correctedQuery?: string;
 }
+
+/** Recherche par rayon : centre et rayon en km. */
+export interface NearQuery { lat: number; lng: number; radius: number }
 
 export interface Apartment {
   id: string;

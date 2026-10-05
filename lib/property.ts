@@ -1,4 +1,5 @@
 import { listEspaces, listListings, listResidences } from "./api";
+import type { NearQuery } from "./types";
 
 const PROPERTY_TYPE_LABEL: Record<string, string> = {
   appartement: "Appartement",
@@ -15,6 +16,8 @@ const PROPERTY_TYPE_LABEL: Record<string, string> = {
 export type Transaction = "rent" | "sale" | "furnished" | "event";
 
 export interface Property {
+  /** Recherche par rayon : distance au point choisi (km). */
+  distanceKm?: number;
   id: string;
   href: string;
   title: string;
@@ -57,11 +60,21 @@ export const TRANSACTION_FILTERS: { key: Transaction | "all"; label: string }[] 
   { key: "event", label: "Espaces" },
 ];
 
+/** Distance au point recherché (recherche par rayon), reportée sur la carte du bien. */
+function withDistance<T>(map: (x: T) => Property) {
+  return (x: T): Property => {
+    const d = (x as { distanceKm?: number }).distanceKm;
+    return typeof d === "number" ? { ...map(x), distanceKm: d } : map(x);
+  };
+}
+
 export interface PagedProperties {
   items: Property[];
   total: number;
   page: number;
   perPage: number;
+  /** Recherche corrigée (« Cocodi » → « cocody ») quand la recherche tapée ne donnait rien. */
+  correctedQuery?: string;
 }
 
 /** Libellés des types de logement Moboo Resi (enum ApartmentType). */
@@ -110,15 +123,15 @@ export function mapEspace(e: import("./types").Espace): Property {
 }
 
 /** Résidences meublées réservables (publiées depuis Moboo Resi), paginées. */
-export async function residencesPage(opts: { q?: string; page?: number; perPage?: number; checkIn?: string; checkOut?: string; guests?: number; priceMax?: number }): Promise<PagedProperties> {
-  const { items, total, page, perPage } = await listResidences({ ...opts, page: opts.page ?? 1, perPage: opts.perPage ?? 24 });
-  return { items: items.map(mapResidence), total, page, perPage };
+export async function residencesPage(opts: { q?: string; page?: number; perPage?: number; checkIn?: string; checkOut?: string; guests?: number; priceMax?: number; near?: NearQuery }): Promise<PagedProperties> {
+  const { items, total, page, perPage, correctedQuery } = await listResidences({ ...opts, page: opts.page ?? 1, perPage: opts.perPage ?? 24 });
+  return { items: items.map(withDistance(mapResidence)), total, page, perPage, correctedQuery };
 }
 
 /** Espaces événementiels réservables (publiés depuis Moboo Event), paginés. */
-export async function espacesPage(opts: { q?: string; page?: number; perPage?: number; date?: string; days?: number; guests?: number; priceMax?: number }): Promise<PagedProperties> {
-  const { items, total, page, perPage } = await listEspaces({ ...opts, page: opts.page ?? 1, perPage: opts.perPage ?? 24 });
-  return { items: items.map(mapEspace), total, page, perPage };
+export async function espacesPage(opts: { q?: string; page?: number; perPage?: number; date?: string; days?: number; guests?: number; priceMax?: number; near?: NearQuery }): Promise<PagedProperties> {
+  const { items, total, page, perPage, correctedQuery } = await listEspaces({ ...opts, page: opts.page ?? 1, perPage: opts.perPage ?? 24 });
+  return { items: items.map(withDistance(mapEspace)), total, page, perPage, correctedQuery };
 }
 
 /** Résidences proches (même commune, sinon même ville), hors résidence courante. */
@@ -200,8 +213,10 @@ export async function listListingsPage(opts: {
   map?: boolean;
   featured?: boolean;
   agent?: string;
+  near?: NearQuery;
 }): Promise<PagedProperties> {
-  const { items, total, page, perPage } = await listListings({
+  const { items, total, page, perPage, correctedQuery } = await listListings({
+    near: opts.near,
     sort: opts.sort,
     bbox: opts.bbox,
     map: opts.map,
@@ -216,7 +231,7 @@ export async function listListingsPage(opts: {
     page: opts.page ?? 1,
     perPage: opts.perPage ?? 24,
   });
-  return { items: items.map(mapListing), total, page, perPage };
+  return { items: items.map(withDistance(mapListing)), total, page, perPage, correctedQuery };
 }
 
 /** Biens similaires : même ville + même type de transaction (hors bien courant). */
