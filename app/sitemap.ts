@@ -27,5 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...["premiers-pas", "locataires", "voyageurs", "proprietaires", "agents", "agences", "residences", "espaces", "paiements"].map((k) => ({ url: `${BASE}/aide/${k}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.5 })),
     ...helpRows.map((h) => ({ url: `${BASE}/aide/article/${h.slug}`, lastModified: new Date(h.updatedAt), changeFrequency: "monthly" as const, priority: 0.4 })),
   ];
-  return [...main, ...seo, ...prices, ...help];
+  // Espace professionnels.
+  const pros = ["", "/agents", "/agences", "/proprietaires", "/residences", "/espaces"].map((x) => ({ url: `${BASE}/professionnels${x}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.7 }));
+  return [...main, ...seo, ...prices, ...help, ...pros];
 }

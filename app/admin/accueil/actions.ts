@@ -14,7 +14,7 @@ export interface AdminPage {
 }
 type R = { ok: boolean; page?: AdminPage; error?: string };
 
-export async function getAdminPage(slug: "home" | "chrome"): Promise<AdminPage | null> {
+export async function getAdminPage(slug: string): Promise<AdminPage | null> {
   const { ok, data } = await authedFetch(`/site/admin/pages/${slug}`, { method: "GET" });
   return ok ? data : null;
 }

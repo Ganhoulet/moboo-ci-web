@@ -121,8 +121,9 @@ export const DEFAULT_MENUS: SiteMenu[] = [
           L("espaces-3", "Réserver en ligne", "/reserver", { description: "Disponibilités en temps réel" }),
         ],
       }),
-      L("pros", "Professionnels", "/forfaits", {
+      L("pros", "Professionnels", "/professionnels", {
         children: [
+          L("pros-0", "Moboo.ci pour les pros", "/professionnels", { description: "Agents, agences, propriétaires, hôtes" }),
           L("pros-1", "Publier une annonce", "/publier"),
           L("pros-2", "Forfaits et tarifs", "/forfaits"),
           L("pros-3", "Espace pro", "/compte?mode=identifiant"),
