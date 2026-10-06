@@ -131,6 +131,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/reservations", label: "Réservations", icon: "calendar", group: "reservations", badge: disputes?.open ?? 0 },
     { href: "/admin/litiges", label: "Litiges", icon: "scale", child: true, group: "reservations", badge: disputes?.open ?? 0 },
     { href: "/admin/litiges/reglages", label: "Réglages", icon: "scale", child: true, group: "reservations" },
+    // Services Moboo (ex-extensions WordPress des applications).
+    { href: "/admin/services", label: "Services Moboo", icon: "phone", group: "services" },
+    ...[
+      ["/admin/services/alertes", "Alertes"],
+      ["/admin/services/etats-des-lieux", "États des lieux"],
+      ["/admin/services/support", "Support"],
+      ["/admin/services/estimations", "Estimations foncier / loyer"],
+      ["/admin/services/cartes", "Cartes pro"],
+      ["/admin/services/reglages", "Réglages"],
+    ].map(([href, label]) => ({ href, label, icon: "phone", child: true, group: "services" })),
     // Vérification des comptes (demandes + réglages).
     { href: "/admin/verifications", label: "Vérification des comptes", icon: "shield", group: "verifications" },
     { href: "/admin/verifications/reglages", label: "Réglages", icon: "shield", child: true, group: "verifications" },
