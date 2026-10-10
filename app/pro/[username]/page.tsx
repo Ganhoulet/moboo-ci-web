@@ -16,6 +16,7 @@ import { getSession } from "@/lib/session";
 import { MediaGallery } from "@/components/pro-page/media-gallery";
 import { ListingTabs } from "@/components/pro-page/listing-tabs";
 import { ContactForm } from "@/components/pro-page/contact-card";
+import { VideoPlayer } from "@/components/pro-page/video-player";
 
 export const revalidate = 60;
 
@@ -70,12 +71,13 @@ function ClosedCard({ d }: { d: ProClosedDeal }) {
       <div className="relative aspect-[4/3] bg-slate-100">
         {d.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={img(d.photo, 480)} alt="" loading="lazy" className="h-full w-full object-cover grayscale-[35%]" />
+          <img src={img(d.photo, 480)} alt="" loading="lazy" className="h-full w-full object-cover" />
         ) : null}
         <span className={"absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow " + (sold ? "bg-rose-600" : "bg-violet-600")}>{sold ? "Vendu" : "Loué"}</span>
+        {(d.photos?.length ?? 0) > 1 ? <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white">{d.photos!.length} photos</span> : null}
       </div>
       <div className="p-4">
-        <p className="font-display text-lg font-extrabold text-ink">{formatXOF(d.price)}{sold ? "" : <span className="text-sm font-semibold text-muted"> /mois</span>}</p>
+        <p className="font-display text-lg font-extrabold text-ink">{d.price ? <>{formatXOF(d.price)}{sold ? "" : <span className="text-sm font-semibold text-muted"> /mois</span>}</> : sold ? "Vendu" : "Loué"}</p>
         <p className="mt-0.5 line-clamp-1 text-sm text-slate-600">{d.title}</p>
         <p className="mt-1 text-xs text-muted">{d.place}{d.place ? " · " : ""}{new Date(d.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</p>
       </div>
@@ -166,12 +168,12 @@ export default async function ProPage({ params }: { params: { username: string }
                   <h1 className="mt-4 font-display text-2xl font-extrabold leading-tight text-ink">{p.name}</h1>
                   <p className="mt-1 text-sm font-semibold text-slate-600">{title}</p>
                   {p.agency ? (
-                    <Link href={`/pro/${p.agency.username}`} className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
+                    <Link href={p.agency.username ? `/pro/${p.agency.username}` : "#"} className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
                       {p.agency.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={img(p.agency.avatarUrl, 64)} alt="" className="h-5 w-5 rounded object-cover" />
                       ) : null}
-                      {p.agency.name}
+                      Membre de {p.agency.name}
                     </Link>
                   ) : p.company ? <p className="mt-1 text-sm text-muted">{p.company}</p> : null}
                   <div className="mt-2 flex flex-wrap justify-center gap-1.5">
@@ -204,7 +206,7 @@ export default async function ProPage({ params }: { params: { username: string }
                   {waLink ? <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-2.5 text-sm font-bold text-white transition hover:brightness-105">WhatsApp</a> : null}
                 </div>
 
-                <div id="contact" className="mt-5 scroll-mt-24 border-t border-slate-100 pt-5">
+                <div id="contact" className="mt-5 hidden scroll-mt-24 border-t border-slate-100 pt-5 lg:block">
                   <p className="mb-3 font-display text-base font-bold text-ink">{isAgency ? "Contacter l’agence" : `Contacter ${first}`}</p>
                   <ContactForm username={p.username} firstName={isAgency ? p.name : first} defaults={me ? { name: [me.firstName, me.lastName].filter(Boolean).join(" "), phone: me.phone } : undefined} />
                 </div>
@@ -246,6 +248,14 @@ export default async function ProPage({ params }: { params: { username: string }
               </section>
             ) : null}
 
+            {media.some((m) => m.type === "video") ? (
+              <Section id="videos" title={media.filter((m) => m.type === "video").length > 1 ? "Vidéos" : "Vidéo de présentation"}>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {media.filter((m) => m.type === "video").map((m) => <VideoPlayer key={m.id} provider={m.provider} url={m.url} thumb={m.thumb} caption={m.caption} />)}
+                </div>
+              </Section>
+            ) : null}
+
             {p.bio || prof?.specialties?.length ? (
               <Section id="a-propos" title={`À propos de ${isAgency ? p.name : first}`}>
                 {p.bio ? <p className="max-w-3xl whitespace-pre-line leading-relaxed text-slate-700">{p.bio}</p> : null}
@@ -269,16 +279,22 @@ export default async function ProPage({ params }: { params: { username: string }
             {p.team?.length ? (
               <Section id="equipe" title={`L’équipe (${p.team.length})`}>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-                  {p.team.map((t) => (
-                    <Link key={t.username} href={`/pro/${t.username}`} className="group rounded-2xl border border-slate-200 p-4 text-center transition hover:shadow-card">
+                  {p.team.map((t, i) => {
+                    const body = (
+                      <>
                       {t.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={img(t.avatarUrl, 200)} alt="" className="mx-auto h-20 w-20 rounded-full object-cover" />
                       ) : <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-brand-100 font-display text-2xl font-bold text-brand-800">{t.name.charAt(0)}</span>}
                       <p className="mt-3 font-semibold text-ink group-hover:underline">{t.name}</p>
                       <p className="text-xs text-muted">{t.title || "Agent immobilier"}{t.verified ? " · ✓ vérifié" : ""}</p>
-                    </Link>
-                  ))}
+                      {t.phone ? <p className="mt-1 text-xs font-semibold text-brand-700">{t.phone}</p> : null}
+                      </>
+                    );
+                    return t.username
+                      ? <Link key={t.username} href={`/pro/${t.username}`} className="group rounded-2xl border border-slate-200 p-4 text-center transition hover:shadow-card">{body}</Link>
+                      : <div key={`m${i}`} className="rounded-2xl border border-slate-200 p-4 text-center">{body}</div>;
+                  })}
                 </div>
               </Section>
             ) : null}
@@ -290,6 +306,12 @@ export default async function ProPage({ params }: { params: { username: string }
                 </ul>
               </Section>
             ) : null}
+
+            {/* Mobile : formulaire après le contenu (la carte reste compacte en haut). */}
+            <section id="contact-mobile" className="scroll-mt-20 border-t border-slate-200 py-10 lg:hidden">
+              <h2 className="mb-4 font-display text-2xl font-extrabold text-ink">{isAgency ? "Contacter l’agence" : `Contacter ${first}`}</h2>
+              <ContactForm username={p.username} firstName={isAgency ? p.name : first} defaults={me ? { name: [me.firstName, me.lastName].filter(Boolean).join(" "), phone: me.phone } : undefined} />
+            </section>
 
             <section id="avis" className="scroll-mt-24 border-t border-slate-200 py-10">
               <div className="max-w-3xl"><ProReviewsSection refId={p.username} path={`/pro/${p.username}`} name={p.name} /></div>
@@ -324,7 +346,7 @@ export default async function ProPage({ params }: { params: { username: string }
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
         <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-ink">{p.name}</p><p className="truncate text-xs text-muted">{title}</p></div>
         {waLink ? <a href={waLink} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white">WhatsApp</a> : null}
-        <a href="#contact" className="rounded-xl bg-ink px-4 py-2.5 text-sm font-bold text-white">Contacter</a>
+        <a href="#contact-mobile" className="rounded-xl bg-ink px-4 py-2.5 text-sm font-bold text-white">Contacter</a>
       </div>
     </div>
   );

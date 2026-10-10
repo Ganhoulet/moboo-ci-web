@@ -161,23 +161,23 @@ export interface ProProfile {
   listings: ListingItem[];
   /** Page façon Zillow (comptes du site). */
   profile?: ProPageProfile;
-  agency?: { username: string; name: string; avatarUrl: string | null; verified: boolean } | null;
+  agency?: { username: string | null; name: string; avatarUrl: string | null; verified: boolean; role?: string } | null;
   stats?: { closedTotal: number; closedLast12: number; sold: number; rented: number; activeSale: number; activeRent: number; priceMin: number | null; priceMax: number | null; avgSale: number | null };
   closed?: ProClosedDeal[];
-  team?: { username: string; name: string; avatarUrl: string | null; verified: boolean; title: string }[];
+  team?: { username: string | null; name: string; avatarUrl: string | null; verified: boolean; title: string; phone?: string | null }[];
 }
 
-export interface ProMedia { id: string; type: "photo" | "video"; provider: "upload" | "youtube" | "vimeo" | "tiktok" | "facebook"; url: string; thumb: string; caption: string }
+export interface ProMedia { id: string; type: "photo" | "video"; provider: "upload" | "youtube" | "vimeo" | "tiktok"; url: string; thumb: string; caption: string; link?: string }
 
 export interface ProPageProfile {
   title: string; licenseNumber: string; experienceSince: number | null; experienceYears?: number | null;
-  languages: string[]; specialties: string[]; agencyUsername: string | null;
+  languages: string[]; specialties: string[];
   tagline: string; coverUrl: string; officeAddress: string; media: ProMedia[];
 }
 
 export interface ProClosedDeal {
   id: string; title: string; price: number; transaction: string; status: string; propertyType: string;
-  place: string; photo: string | null; date: string; bedrooms: number | null; surface: number | null;
+  place: string; photo: string | null; photos?: string[]; date: string; bedrooms: number | null; surface: number | null;
 }
 
 /** Page publique d'un pro (agent, agence, propriétaire). null si introuvable. */

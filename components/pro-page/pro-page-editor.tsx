@@ -3,13 +3,15 @@
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import type { ProMedia } from "@/lib/api";
-import { addVideoLink, arrangeMedia, mediaUploadUrl, refreshProPage, removeMedia, saveProPage } from "@/app/mon-espace/page-pro/actions";
+import { addVideoLinks, arrangeMedia, leaveAgency, mediaUploadUrl, refreshProPage, removeMedia, saveProPage } from "@/app/mon-espace/page-pro/actions";
+import { parseVideoLink, PROVIDER_LABEL } from "@/lib/video-embed";
+import { VideoPlayer } from "./video-player";
 import { uploadImageAction } from "@/app/mon-espace/actions";
 
-interface Settings { enabled: boolean; maxPhotos: number; maxVideos: number; allowVideoUpload: boolean; allowVideoLinks: boolean; maxVideoMb: number; maxPhotoMb: number }
+interface Settings { enabled: boolean; maxPhotos: number; maxVideos: number; maxPhotoMb: number }
 interface Data {
-  username: string | null; accountType: string; settings: Settings; agency: { username: string; name: string } | null;
-  profile: { title: string; licenseNumber: string; experienceSince: number | null; languages: string[]; specialties: string[]; agencyUsername: string | null; tagline: string; coverUrl: string; officeAddress: string; media: ProMedia[] };
+  username: string | null; accountType: string; settings: Settings; agency: { username: string | null; name: string; role: string } | null;
+  profile: { title: string; licenseNumber: string; experienceSince: number | null; languages: string[]; specialties: string[]; tagline: string; coverUrl: string; officeAddress: string; media: ProMedia[] };
 }
 
 const input = "w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-ink focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink";
@@ -80,17 +82,16 @@ export function ProPageEditor({ initial }: { initial: Data }) {
   const p = d.profile;
   const [f, setF] = useState({
     title: p.title, licenseNumber: p.licenseNumber, experienceSince: p.experienceSince ? String(p.experienceSince) : "",
-    tagline: p.tagline, officeAddress: p.officeAddress, agencyUsername: p.agencyUsername ?? "", coverUrl: p.coverUrl,
+    tagline: p.tagline, officeAddress: p.officeAddress, coverUrl: p.coverUrl,
   });
   const [languages, setLanguages] = useState(p.languages);
   const [specialties, setSpecialties] = useState(p.specialties);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [mediaMsg, setMediaMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
-  const [link, setLink] = useState({ url: "", caption: "" });
+  const [links, setLinks] = useState("");
   const [pending, start] = useTransition();
   const photoInput = useRef<HTMLInputElement>(null);
-  const videoInput = useRef<HTMLInputElement>(null);
   const coverInput = useRef<HTMLInputElement>(null);
   const s = d.settings;
   const photos = p.media.filter((m) => m.type === "photo").length;
@@ -107,21 +108,30 @@ export function ProPageEditor({ initial }: { initial: Data }) {
     apply(r, "Page enregistrée : elle est à jour sur Moboo.ci.", setMsg);
   });
 
-  const upload = async (file: File, type: "photo" | "video") => {
+  const upload = async (file: File) => {
     setMediaMsg(null);
-    const max = type === "video" ? s.maxVideoMb : s.maxPhotoMb;
-    const blob = type === "photo" ? await shrink(file) : file;
-    if (blob.size > max * 1024 * 1024) { setMediaMsg({ ok: false, text: `Fichier trop lourd : ${max} Mo maximum.` }); return; }
-    const t = await mediaUploadUrl(type);
+    const blob = await shrink(file);
+    if (blob.size > s.maxPhotoMb * 1024 * 1024) { setMediaMsg({ ok: false, text: `Photo trop lourde : ${s.maxPhotoMb} Mo maximum.` }); return; }
+    const t = await mediaUploadUrl();
     if (!t.ok) { setMediaMsg({ ok: false, text: t.error ?? "Envoi impossible." }); return; }
     const fd = new FormData();
-    fd.append("file", blob, type === "photo" ? "photo.jpg" : file.name);
+    fd.append("file", blob, "photo.jpg");
     setProgress(0);
     const r = await send(t.data.url, fd, setProgress);
     setProgress(null);
     if (!r.ok) { setMediaMsg({ ok: false, text: (Array.isArray(r.data?.error?.message) ? r.data.error.message.join(" ") : r.data?.error?.message ?? r.data?.message) || "Envoi impossible." }); return; }
-    apply(await refreshProPage(d.username), type === "video" ? "Vidéo ajoutée." : "Photo ajoutée.");
+    apply(await refreshProPage(d.username), "Photo ajoutée.");
   };
+
+  // Liens collés (un par ligne) : aperçu immédiat de chaque vidéo reconnue.
+  const pasted = links.split(/\s+/).map((x) => x.trim()).filter(Boolean).map((raw) => ({ raw, v: parseVideoLink(raw) }));
+  const addLinks = () => start(async () => {
+    const ok = pasted.filter((x) => x.v).map((x) => x.raw);
+    if (!ok.length) { setMediaMsg({ ok: false, text: "Collez le lien d’une vidéo YouTube, TikTok ou Vimeo." }); return; }
+    const r = await addVideoLinks(ok, "", d.username);
+    apply(r, ok.length > 1 ? `${ok.length} vidéos ajoutées.` : "Vidéo ajoutée.");
+    if (r.ok) setLinks("");
+  });
 
   const move = (id: string, dir: -1 | 1) => start(async () => {
     const list = [...p.media];
@@ -148,7 +158,7 @@ export function ProPageEditor({ initial }: { initial: Data }) {
         <p className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200">Choisissez d’abord un identifiant public dans <Link href="/mon-espace/profil" className="font-semibold underline">Mon profil</Link> pour activer votre page.</p>
       )}
 
-      <Card title="Photos et vidéos de présentation" sub={`Présentez-vous, votre agence, vos réalisations. Jusqu’à ${s.maxVideos} vidéo(s) et ${s.maxPhotos} photo(s). La première vidéo s’affiche en grand en haut de votre page.`}>
+      <Card title="Photos et vidéos de présentation" sub={`Présentez-vous, votre agence, vos réalisations : jusqu’à ${s.maxVideos} vidéo(s) (liens YouTube, TikTok, Vimeo) et ${s.maxPhotos} photo(s). La première vidéo s’affiche en grand en haut de votre page.`}>
         {!s.enabled ? <p className="text-sm text-muted">Les médias sont désactivés pour le moment.</p> : (
           <>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -176,26 +186,34 @@ export function ProPageEditor({ initial }: { initial: Data }) {
             </div>
             {!p.media.length ? <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-muted">Aucun média pour l’instant. Une courte vidéo de présentation (30 s à 2 min) inspire confiance aux clients.</p> : null}
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-ink">Ajouter des vidéos YouTube, TikTok ou Vimeo <span className="font-normal text-muted">({videos}/{s.maxVideos})</span></p>
+              <p className="text-xs text-muted">Copiez le lien de la vidéo (bouton « Partager » → « Copier le lien ») et collez-le ici. Plusieurs liens : un par ligne.</p>
+              <textarea value={links} onChange={(e) => setLinks(e.target.value)} rows={2} disabled={videos >= s.maxVideos}
+                placeholder={"https://youtu.be/…\nhttps://www.tiktok.com/@agence/video/…"} className={input + " mt-2 font-mono text-xs"} />
+              {pasted.length ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {pasted.map(({ raw, v }) => (
+                    <div key={raw} className="rounded-xl bg-white p-2 ring-1 ring-slate-200">
+                      {v && v.url ? <VideoPlayer provider={v.provider} url={v.url} thumb={v.thumb} />
+                        : v ? <p className="p-3 text-xs text-slate-600">Lien court TikTok : la vidéo sera reconnue à l’ajout.</p>
+                        : <p className="p-3 text-xs text-red-600">Lien non reconnu : {raw.slice(0, 60)}</p>}
+                      {v ? <p className="mt-1 px-1 text-xs font-semibold text-emerald-700">✓ {PROVIDER_LABEL[v.provider]}</p> : null}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              <button type="button" disabled={pending || !pasted.some((x) => x.v) || videos >= s.maxVideos} onClick={addLinks} className="mt-3 rounded-xl bg-ink px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Ajouter {pasted.filter((x) => x.v).length > 1 ? `les ${pasted.filter((x) => x.v).length} vidéos` : "la vidéo"}</button>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <button type="button" disabled={photos >= s.maxPhotos || progress !== null} onClick={() => photoInput.current?.click()} className="rounded-xl border border-ink px-4 py-2 text-sm font-bold text-ink hover:bg-slate-50 disabled:opacity-40">+ Photo ({photos}/{s.maxPhotos})</button>
-              {s.allowVideoUpload ? <button type="button" disabled={videos >= s.maxVideos || progress !== null} onClick={() => videoInput.current?.click()} className="rounded-xl bg-ink px-4 py-2 text-sm font-bold text-white hover:bg-black disabled:opacity-40">+ Vidéo depuis mon téléphone ({videos}/{s.maxVideos})</button> : null}
-              <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { const x = e.target.files?.[0]; if (x) void upload(x, "photo"); e.target.value = ""; }} />
-              <input ref={videoInput} type="file" accept="video/mp4,video/quicktime,video/webm" hidden onChange={(e) => { const x = e.target.files?.[0]; if (x) void upload(x, "video"); e.target.value = ""; }} />
+              <span className="text-xs text-muted">JPG, PNG ou WEBP, réduite automatiquement.</span>
+              <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { const x = e.target.files?.[0]; if (x) void upload(x); e.target.value = ""; }} />
             </div>
             {progress !== null ? (
               <div className="mt-3"><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-accent-500 transition-all" style={{ width: `${progress}%` }} /></div><p className="mt-1 text-xs text-muted">Envoi… {progress} %</p></div>
             ) : null}
-            {s.allowVideoLinks && videos < s.maxVideos ? (
-              <div className="mt-4 rounded-xl bg-slate-50 p-3">
-                <p className="text-sm font-semibold text-ink">Ou une vidéo YouTube, TikTok, Vimeo ou Facebook</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <input value={link.url} onChange={(e) => setLink({ ...link, url: e.target.value })} placeholder="https://youtube.com/watch?v=…" className={input + " min-w-[220px] flex-1"} />
-                  <input value={link.caption} onChange={(e) => setLink({ ...link, caption: e.target.value })} placeholder="Légende (facultatif)" className={input + " sm:w-48"} />
-                  <button type="button" disabled={pending || !link.url.trim()} onClick={() => start(async () => { const r = await addVideoLink(link.url, link.caption, d.username); apply(r, "Vidéo ajoutée."); if (r.ok) setLink({ url: "", caption: "" }); })} className="rounded-xl bg-ink px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Ajouter</button>
-                </div>
-              </div>
-            ) : null}
-            <p className="mt-2 text-xs text-muted">Vidéo : MP4 ou MOV, {s.maxVideoMb} Mo maximum. Photo : JPG, PNG ou WEBP (réduite automatiquement).</p>
             {mediaMsg ? <p className={"mt-2 text-sm " + (mediaMsg.ok ? "text-emerald-700" : "text-red-600")}>{mediaMsg.text}</p> : null}
           </>
         )}
@@ -210,10 +228,15 @@ export function ProPageEditor({ initial }: { initial: Data }) {
           <label className="text-sm"><span className="font-semibold text-ink">En activité depuis (année)</span>
             <input className={input + " mt-1"} type="number" min={1950} max={year} value={f.experienceSince} placeholder={String(year - 5)} onChange={(e) => setF({ ...f, experienceSince: e.target.value })} /></label>
           {!isAgency ? (
-            <label className="text-sm"><span className="font-semibold text-ink">Agence de rattachement</span>
-              <input className={input + " mt-1"} value={f.agencyUsername} placeholder="identifiant de l’agence (moboo.ci/pro/…)" onChange={(e) => setF({ ...f, agencyUsername: e.target.value })} />
-              {d.agency ? <span className="mt-1 block text-xs text-emerald-700">✓ {d.agency.name} — vous apparaissez dans son équipe.</span> : <span className="mt-1 block text-xs text-muted">Vous apparaîtrez dans la section « Équipe » de sa page.</span>}
-            </label>
+            <div className="text-sm">
+              <span className="font-semibold text-ink">Agence</span>
+              {d.agency ? (
+                <div className="mt-1 flex flex-wrap items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 ring-1 ring-emerald-200">
+                  <span className="text-emerald-900">✓ Membre de <strong>{d.agency.name}</strong> · {d.agency.role}</span>
+                  <button type="button" className="ml-auto text-xs font-semibold text-red-600 hover:underline" onClick={() => { if (confirm(`Quitter l’équipe de ${d.agency!.name} ?`)) start(async () => apply(await leaveAgency(d.username), "Vous avez quitté l’équipe.", setMsg)); }}>Quitter</button>
+                </div>
+              ) : <p className="mt-1 rounded-xl bg-slate-50 px-3 py-2 text-xs text-muted">Indépendant. Pour apparaître « Membre de … », votre agence vous ajoute à son équipe depuis son espace, avec votre numéro de téléphone.</p>}
+            </div>
           ) : null}
           <label className="text-sm sm:col-span-2"><span className="font-semibold text-ink">Phrase d’accroche</span>
             <input className={input + " mt-1"} value={f.tagline} maxLength={140} placeholder="Je vous trouve le bon logement à Cocody, sans perte de temps." onChange={(e) => setF({ ...f, tagline: e.target.value })} /></label>

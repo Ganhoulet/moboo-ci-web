@@ -21,14 +21,10 @@ export function ProPageSettingsForm({ initial }: { initial: any }) {
   return (
     <div className="rounded-lg bg-white p-5 shadow-sm ring-1 ring-slate-200">
       {check("enabled", "Photos et vidéos activées sur les pages des pros")}
-      {num("maxVideos", "Vidéos par page", "0 à 10 (par défaut 2)")}
+      {num("maxVideos", "Vidéos par page", "Liens YouTube, TikTok ou Vimeo ; 0 à 10 (par défaut 2)")}
       {num("maxPhotos", "Photos par page", "0 à 30 (par défaut 8)")}
-      {num("maxVideoMb", "Taille max d’une vidéo (Mo)", "Envoi depuis le téléphone ; 1 à 200 Mo")}
       {num("maxPhotoMb", "Taille max d’une photo (Mo)", "Les photos sont réduites automatiquement avant l’envoi")}
-      <div className="pt-2">
-        {check("allowVideoUpload", "Autoriser l’envoi de fichiers vidéo (MP4, MOV)")}
-        {check("allowVideoLinks", "Autoriser les liens YouTube, TikTok, Vimeo, Facebook")}
-      </div>
+      {num("maxDeals", "Biens vendus / loués par pro", "Réalisations affichées sur la page ; 0 à 2000")}
       <div className="mt-4 flex items-center gap-3">
         <button type="button" disabled={pending} onClick={() => start(async () => { const r = await saveProPageSettings(v); if (r.ok) setV(r.data); setMsg(r.ok ? { ok: true, text: "Réglages enregistrés." } : { ok: false, text: r.error }); })} className="rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60">Enregistrer</button>
         {msg ? <span className={"text-sm " + (msg.ok ? "text-emerald-700" : "text-red-600")}>{msg.text}</span> : null}
