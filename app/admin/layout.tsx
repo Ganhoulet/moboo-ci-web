@@ -139,6 +139,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/services/support", "Support"],
       ["/admin/services/estimations", "Estimations foncier / loyer"],
       ["/admin/services/cartes", "Cartes pro"],
+      ["/admin/services/application", "Configuration des applications"],
       ["/admin/services/reglages", "Réglages"],
     ].map(([href, label]) => ({ href, label, icon: "phone", child: true, group: "services" })),
     // Vérification des comptes (demandes + réglages).

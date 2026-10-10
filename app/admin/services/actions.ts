@@ -86,3 +86,15 @@ export async function setCard(accountId: string, body: { action?: string; expire
   revalidatePath("/admin/services/cartes");
   return r;
 }
+
+export async function saveAppConfig(cfg: unknown) {
+  const r = await call("/app-config", "PUT", cfg);
+  revalidatePath("/admin/services/application");
+  return r;
+}
+
+export async function setAutonomousOwner(ref: string, on: boolean) {
+  const r = await call("/app-config/autonomous", "POST", { ref, on });
+  revalidatePath("/admin/services/application");
+  return r;
+}
