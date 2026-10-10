@@ -21,6 +21,7 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/immobilier/partenaires", ["realestate"]],
   ["/admin/immobilier/api-partenaires", ["realestate"]],
   ["/admin/immobilier/avis", ["realestate"]],
+  ["/admin/immobilier/pages-pros", ["realestate", "settings"]],
   ["/admin/immobilier/forfaits", ["billing"]],
   ["/admin/immobilier/factures", ["billing"]],
   ["/admin/immobilier", ["listings", "moderation"]],

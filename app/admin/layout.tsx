@@ -124,6 +124,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/immobilier/partenaires", "Partenaires"],
       ["/admin/immobilier/api-partenaires", "API partenaires"],
       ["/admin/immobilier/avis", "Avis"],
+      ["/admin/immobilier/pages-pros", "Pages des pros (vidéos, photos)"],
       ["/admin/immobilier/forfaits", "Forfaits"],
       ["/admin/immobilier/factures", "Factures"],
     ].map(([href, label]) => ({ href, label, icon: "building", child: true, group: "immobilier" })),

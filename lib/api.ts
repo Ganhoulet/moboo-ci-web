@@ -159,6 +159,25 @@ export interface ProProfile {
   position?: string | null;
   company?: string | null;
   listings: ListingItem[];
+  /** Page façon Zillow (comptes du site). */
+  profile?: ProPageProfile;
+  agency?: { username: string; name: string; avatarUrl: string | null; verified: boolean } | null;
+  stats?: { closedTotal: number; closedLast12: number; sold: number; rented: number; activeSale: number; activeRent: number; priceMin: number | null; priceMax: number | null; avgSale: number | null };
+  closed?: ProClosedDeal[];
+  team?: { username: string; name: string; avatarUrl: string | null; verified: boolean; title: string }[];
+}
+
+export interface ProMedia { id: string; type: "photo" | "video"; provider: "upload" | "youtube" | "vimeo" | "tiktok" | "facebook"; url: string; thumb: string; caption: string }
+
+export interface ProPageProfile {
+  title: string; licenseNumber: string; experienceSince: number | null; experienceYears?: number | null;
+  languages: string[]; specialties: string[]; agencyUsername: string | null;
+  tagline: string; coverUrl: string; officeAddress: string; media: ProMedia[];
+}
+
+export interface ProClosedDeal {
+  id: string; title: string; price: number; transaction: string; status: string; propertyType: string;
+  place: string; photo: string | null; date: string; bedrooms: number | null; surface: number | null;
 }
 
 /** Page publique d'un pro (agent, agence, propriétaire). null si introuvable. */
@@ -313,6 +332,8 @@ export const USER_TYPES: [string, string][] = [["buyer", "Acheteur"], ["tenant",
 /** Demande de contact ou de visite sur une annonce. */
 export function submitInquiry(input: {
   listingId?: string;
+  /** Demande adressée à un pro depuis sa page (identifiant public). */
+  toUsername?: string;
   name: string;
   phone: string;
   email?: string;
