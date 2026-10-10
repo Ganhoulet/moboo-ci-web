@@ -66,7 +66,10 @@ export default async function AnnoncesPage({
   const PER_PAGE = cfg.perPage;
   const sort = SORTS.some(([k]) => k === searchParams.sort) ? searchParams.sort! : cfg.defaultOrder;
   const reservable = searchParams.reservable === "1";
-  const active = (reservable ? "all" : (searchParams.transaction as Transaction | "all")) ?? "all";
+  // « Biens réservables » : meublés (par défaut) ou espaces, jamais les annonces classiques.
+  const active = reservable
+    ? (searchParams.transaction === "event" ? "event" : "furnished")
+    : ((searchParams.transaction as Transaction | "all") ?? "all");
   const q = (searchParams.q ?? "").trim();
   const priceMin = Number(searchParams.priceMin) > 0 ? Number(searchParams.priceMin) : undefined;
   const priceMax = Number(searchParams.priceMax) > 0 ? Number(searchParams.priceMax) : undefined;

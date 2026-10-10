@@ -91,3 +91,12 @@ export async function submitEventReservation(
     return { ok: false, message: "Service indisponible pour le moment. Réessayez plus tard." };
   }
 }
+
+/** Nom et téléphone du compte connecté, pour pré-remplir les formulaires de réservation (fiches en cache). */
+export async function myBookingContact(): Promise<{ name: string; phone: string } | null> {
+  const { getSession, displayName } = await import("@/lib/session");
+  const a = getSession();
+  if (!a) return null;
+  const name = displayName(a);
+  return { name: name === a.phone ? "" : name, phone: a.phone ?? "" };
+}

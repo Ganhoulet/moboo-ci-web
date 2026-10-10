@@ -25,14 +25,14 @@ export function FilterBar(f: FilterState) {
     if (f.priceMin) p.set("priceMin", String(f.priceMin));
     if (f.priceMax) p.set("priceMax", String(f.priceMax));
     if (f.propertyType) p.set("propertyType", f.propertyType);
+    if (f.reservable) p.set("reservable", "1");
     return `/annonces${p.toString() ? `?${p}` : ""}`;
   };
 
   return (
     <div className="space-y-4">
-      {!f.reservable && (
-        <div className="flex flex-wrap gap-2">
-          {TRANSACTION_FILTERS.map((t) => {
+      <div className="flex flex-wrap gap-2">
+          {TRANSACTION_FILTERS.filter((t) => !f.reservable || t.key === "furnished" || t.key === "event").map((t) => {
             const isActive = f.active === t.key;
             return (
               <Link
@@ -49,15 +49,14 @@ export function FilterBar(f: FilterState) {
               </Link>
             );
           })}
-        </div>
-      )}
+      </div>
 
       <form
         method="get"
         action="/annonces"
         className="grid gap-3 rounded-2xl bg-white p-4 shadow-card sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_auto]"
       >
-        {!f.reservable && f.active !== "all" ? (
+        {f.active !== "all" ? (
           <input type="hidden" name="transaction" value={f.active} />
         ) : null}
         {f.reservable ? <input type="hidden" name="reservable" value="1" /> : null}

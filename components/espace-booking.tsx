@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitEventReservation, type ReserveState } from "@/app/reserver/actions";
+import { useBookingContact } from "./use-booking-contact";
 import { AvailabilityCalendar, type CalendarSelection } from "./availability-calendar";
 import { formatXOF, type OccupiedRange } from "@/lib/api";
 
@@ -28,6 +29,7 @@ export function EspaceBooking({
 }) {
   const [sel, setSel] = useState<CalendarSelection>({ checkIn: null, checkOut: null, nights: 0 });
   const [state, action] = useFormState<ReserveState, FormData>(submitEventReservation, null);
+  const contact = useBookingContact();
   const ready = !!(sel.checkIn && sel.checkOut);
 
   if (state?.ok) {
@@ -67,8 +69,8 @@ export function EspaceBooking({
         </label>
         <input name="nomEvenement" placeholder="Nom de l'événement (optionnel)" className="input" />
         <input name="nbInvites" type="number" min={1} defaultValue={50} placeholder="Nombre d'invités" className="input" aria-label="Nombre d'invités" />
-        <input name="guestName" required placeholder="Votre nom" className="input" />
-        <input name="guestPhone" required inputMode="tel" placeholder="Téléphone" className="input" />
+        <input ref={contact.name} name="guestName" required placeholder="Votre nom" className="input" />
+        <input ref={contact.phone} name="guestPhone" required inputMode="tel" placeholder="Téléphone" className="input" />
       </div>
 
       {state && !state.ok ? <p className="mt-2 text-sm font-medium text-red-600">{state.message}</p> : null}

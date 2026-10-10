@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitReservation, type ReserveState } from "@/app/reserver/actions";
+import { useBookingContact } from "./use-booking-contact";
 import { AvailabilityCalendar, type CalendarSelection } from "./availability-calendar";
 import { formatXOF, type OccupiedRange } from "@/lib/api";
 
@@ -33,6 +34,7 @@ export function ResidenceBooking({
   const [aptId, setAptId] = useState(apartments[0]?.id ?? "");
   const [sel, setSel] = useState<CalendarSelection>({ checkIn: null, checkOut: null, nights: 0 });
   const [state, action] = useFormState<ReserveState, FormData>(submitReservation, null);
+  const contact = useBookingContact();
 
   const apt = apartments.find((a) => a.id === aptId);
   const total = apt && sel.nights ? apt.nightlyPrice * sel.nights : 0;
@@ -103,8 +105,8 @@ export function ResidenceBooking({
       ) : null}
 
       <div className="mt-4 grid gap-3">
-        <input name="guestName" required placeholder="Votre nom" className="input" />
-        <input name="guestPhone" required inputMode="tel" placeholder="Téléphone (mobile money)" className="input" />
+        <input ref={contact.name} name="guestName" required placeholder="Votre nom" className="input" />
+        <input ref={contact.phone} name="guestPhone" required inputMode="tel" placeholder="Téléphone (mobile money)" className="input" />
         <input name="personsCount" type="number" min={1} defaultValue={1} placeholder="Voyageurs" className="input" aria-label="Voyageurs" />
       </div>
 
