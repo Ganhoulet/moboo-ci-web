@@ -217,3 +217,11 @@ export async function grantPackageAction(input: { phone: string; packageId: stri
 export async function purgeTestInvoicesAction(): Promise<R> {
   return call(`${BILL}/test-data/purge`, "POST", {}, "Suppression impossible.");
 }
+
+/** Rattache les biens repris de moboo.ci (WordPress) aux comptes du site (même téléphone / e-mail). */
+export async function linkLegacyListings(): Promise<{ ok: boolean; error?: string; accounts?: number; linked?: number }> {
+  const { ok, data } = await authedFetch(`${BASE}/link-legacy`, { method: "POST" });
+  if (!ok) return { ok: false, error: errMsg(data, "Rattachement impossible.") };
+  revalidatePath("/admin/immobilier");
+  return { ok: true, accounts: data?.accounts ?? 0, linked: data?.linked ?? 0 };
+}

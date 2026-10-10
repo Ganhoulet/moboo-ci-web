@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminListingsTable } from "@/components/admin-listings-table";
 import { getTaxonomies } from "@/lib/taxonomies";
 import { listAdminListings } from "./actions";
+import { LinkLegacyButton } from "@/components/backoffice/link-legacy-button";
 
 type SP = Record<string, string | undefined>;
 const TABS = [
@@ -38,7 +39,10 @@ export default async function AdminListings({ searchParams }: { searchParams: SP
           <h1 className="font-display text-2xl font-extrabold text-ink">Annonces</h1>
           <p className="text-sm text-muted">Toutes les annonces du site : publier, masquer, mettre en vedette, marquer vendue ou louée, dupliquer.</p>
         </div>
-        <Link href="/admin/immobilier/nouvelle" className="rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">+ Nouvelle annonce</Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <LinkLegacyButton />
+          <Link href="/admin/immobilier/nouvelle" className="rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">+ Nouvelle annonce</Link>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-x-1 gap-y-2 text-sm">
