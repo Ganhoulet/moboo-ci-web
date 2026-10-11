@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { fcfa, since } from "@/lib/am";
-import { addActivityAction, assignAction, bookingContactAction, confirmBookingAction, declineBookingAction, taskDoneAction } from "@/app/admin/comptes/actions";
+import { addActivityAction, assignAction, bookingContactAction, changeDatesAction, confirmBookingAction, declineBookingAction, disputeReplyAction, taskDoneAction } from "@/app/admin/comptes/actions";
 
 const input = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand-600 focus:outline-none";
 const digits = (p?: string | null) => String(p ?? "").replace(/\D/g, "");
@@ -82,6 +82,7 @@ export function PendingBookingCard({ b }: { b: PendingBooking }) {
         <button type="button" disabled={pending} onClick={() => setMode(mode === "decline" ? "" : "decline")} className="rounded-md px-3 py-1.5 text-sm font-semibold text-red-700 ring-1 ring-red-200 hover:bg-red-50">✕ Refuser (indisponible)</button>
         <button type="button" disabled={pending} onClick={() => run(() => bookingContactAction(b.key, "call", "sans_reponse", "Hôte injoignable"), "Noté : sans réponse.")} className="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50">Pas de réponse</button>
         <button type="button" disabled={pending} onClick={() => run(() => bookingContactAction(b.key, "call", "rappeler", "L’hôte vérifie et rappelle"), "Noté : à rappeler.")} className="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50">L’hôte rappelle</button>
+        <ChangeDates bookingKey={b.key} start={b.start} end={b.end} />
       </div>
       {mode === "confirm" ? (
         <div className="mt-3 space-y-2 rounded-lg bg-emerald-50 p-3 text-sm">
@@ -171,6 +172,57 @@ export function AssignControl({ kind, id, current, managers, canAssign, meId }: 
       {!current ? <button type="button" disabled={pending} onClick={() => set(meId)} className="rounded-md bg-brand-800 px-3 py-1.5 text-sm font-semibold text-white">Prendre en charge</button> : null}
       {current === meId ? <button type="button" disabled={pending} onClick={() => set(null)} className="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300">Rendre ce compte</button> : null}
       {err ? <span className="text-xs text-red-600">{err}</span> : null}
+    </div>
+  );
+}
+
+/** Changer les dates d'une réservation pour l'hôte (accord de l'hôte et du client). */
+export function ChangeDates({ bookingKey, start: s0, end: e0, compact }: { bookingKey: string; start: string; end: string; compact?: boolean }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [pending, start] = useTransition();
+  const [f, setF] = useState({ start: s0.slice(0, 10), end: e0.slice(0, 10), note: "", host: false, guest: false });
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className={compact ? "text-xs font-semibold text-brand-800 hover:underline" : "rounded-md px-3 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"}>📅 Changer les dates</button>;
+  return (
+    <div className="mt-2 w-full space-y-2 rounded-lg bg-sky-50 p-3 text-sm" data-dates={bookingKey}>
+      <div className="flex flex-wrap gap-2">
+        <label className="text-xs font-semibold">Arrivée / début<input type="date" className={input + " mt-1"} value={f.start} onChange={(e) => setF({ ...f, start: e.target.value })} /></label>
+        <label className="text-xs font-semibold">Départ / fin<input type="date" className={input + " mt-1"} value={f.end} onChange={(e) => setF({ ...f, end: e.target.value })} /></label>
+      </div>
+      <label className="flex items-start gap-2"><input type="checkbox" className="mt-0.5 h-4 w-4" checked={f.host} onChange={(e) => setF({ ...f, host: e.target.checked })} />L’hôte accepte les nouvelles dates.</label>
+      <label className="flex items-start gap-2"><input type="checkbox" className="mt-0.5 h-4 w-4" checked={f.guest} onChange={(e) => setF({ ...f, guest: e.target.checked })} />Le client a demandé ou accepté ce changement.</label>
+      <input className={input} placeholder="Note (facultatif)" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} />
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" disabled={pending || !f.host || !f.guest} onClick={() => start(async () => {
+          const r = await changeDatesAction(bookingKey, { start: f.start, end: f.end, note: f.note });
+          setMsg(r.ok ? { ok: true, text: `Dates changées${r.data?.totalAmount != null ? ` · nouveau total ${fcfa(r.data.totalAmount)}` : ""}. Le client est prévenu.` } : { ok: false, text: r.error ?? "Erreur." });
+          if (r.ok) router.refresh();
+        })} className="rounded-md bg-sky-700 px-3 py-1.5 font-semibold text-white disabled:opacity-50">{pending ? "…" : "Enregistrer les nouvelles dates"}</button>
+        <button type="button" onClick={() => setOpen(false)} className="text-xs font-semibold text-slate-600">Annuler</button>
+      </div>
+      {msg ? <p className={"text-sm font-semibold " + (msg.ok ? "text-emerald-700" : "text-red-600")}>{msg.text}</p> : null}
+    </div>
+  );
+}
+
+/** Répondre à un litige pour l'hôte (son accord est exigé). */
+export function DisputeReply({ kind, id, disputeId }: { kind: string; id: string; disputeId: string }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [body, setBody] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  return (
+    <div className="mt-2 space-y-2" data-dispute-reply={disputeId}>
+      <textarea className={input} rows={3} maxLength={4000} placeholder="Réponse de l’hôte au client (ex. remboursement de la nuit proposé, photo de la réparation…)" value={body} onChange={(e) => setBody(e.target.value)} />
+      <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-0.5 h-4 w-4" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />L’hôte m’a donné son accord sur cette réponse.</label>
+      <button type="button" disabled={pending || !agreed || body.trim().length < 2} onClick={() => start(async () => {
+        const r = await disputeReplyAction(kind, id, disputeId, body);
+        setMsg(r.ok ? { ok: true, text: "Réponse envoyée au client au nom de l’hôte (signée « via Moboo »)." } : { ok: false, text: r.error ?? "Erreur." });
+        if (r.ok) { setBody(""); setAgreed(false); router.refresh(); }
+      })} className="rounded-md bg-brand-800 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50">{pending ? "…" : "Répondre pour l’hôte"}</button>
+      {msg ? <p className={"text-sm font-semibold " + (msg.ok ? "text-emerald-700" : "text-red-600")}>{msg.text}</p> : null}
     </div>
   );
 }

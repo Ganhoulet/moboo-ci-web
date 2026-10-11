@@ -38,3 +38,25 @@ export async function taskDoneAction(id: string, done: boolean): Promise<R> {
 export async function assignAction(kind: string, id: string, managerId: string | null): Promise<R> {
   return send(`/accounts/${kind}/${encodeURIComponent(id)}/manager`, "PUT", { managerId });
 }
+
+export async function saveTeamAction(id: string | null, input: { name: string; zones: string; leadId: string | null; members: string[] }): Promise<R> {
+  return send(id ? `/teams/${encodeURIComponent(id)}` : "/teams", id ? "PUT" : "POST", input);
+}
+export async function deleteTeamAction(id: string): Promise<R> {
+  return send(`/teams/${encodeURIComponent(id)}`, "DELETE");
+}
+export async function saveMemberAction(id: string, input: Record<string, unknown>): Promise<R> {
+  return send(`/members/${encodeURIComponent(id)}`, "PUT", input);
+}
+export async function distributeAction(): Promise<R & { data?: any }> {
+  return send("/distribute", "POST", {});
+}
+export async function runAlertsAction(): Promise<R & { data?: any }> {
+  return send("/alerts/run", "POST", {});
+}
+export async function changeDatesAction(key: string, input: { start: string; end: string; note: string }): Promise<R & { data?: any }> {
+  return send(`/bookings/${encodeURIComponent(key)}/dates`, "POST", { ...input, hostAgreed: true, guestAgreed: true });
+}
+export async function disputeReplyAction(kind: string, id: string, disputeId: string, body: string): Promise<R> {
+  return send(`/accounts/${kind}/${encodeURIComponent(id)}/disputes/${encodeURIComponent(disputeId)}/reply`, "POST", { body, hostAgreed: true });
+}
