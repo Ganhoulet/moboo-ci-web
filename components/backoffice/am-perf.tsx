@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { saveGoalsAction } from "@/app/admin/comptes/actions";
 
 export interface Metric { key: string; label: string; unit?: string; lower?: boolean; goal: boolean }
-const fmt = (v: number | null | undefined, unit?: string) => v == null ? "—" : unit === "F" ? `${new Intl.NumberFormat("fr-FR").format(v)} F` : `${new Intl.NumberFormat("fr-FR").format(v)}${unit === "min" ? " min" : ""}`;
+const fmt = (v: number | null | undefined, unit?: string) => v == null ? "—" : unit === "F" ? `${new Intl.NumberFormat("fr-FR").format(v)} F` : `${new Intl.NumberFormat("fr-FR").format(v)}${unit === "min" ? " min" : unit === "%" ? " %" : ""}`;
 
 /** Valeur + objectif + barre de progression (vert atteint, orange en cours, rouge loin). */
 export function MetricCell({ m, value, goal }: { m: Metric; value: number | null; goal: number | null }) {

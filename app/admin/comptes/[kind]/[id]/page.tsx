@@ -5,6 +5,7 @@ import { ActivityForm, AssignControl, ChangeDates, DisputeReply, TaskCheck } fro
 import { fcfa } from "@/lib/am";
 import { RecoList } from "@/components/backoffice/am-reco";
 import { AccessPanel } from "@/components/backoffice/am-access";
+import { HostActivityPanel } from "@/components/backoffice/am-activity";
 import { getAm } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -59,13 +60,14 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
 
       <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
         <div className="space-y-5">
+          {d.activity ? <HostActivityPanel a={d.activity} /> : null}
           {reco ? <RecoList kind={d.kind} id={d.id} data={reco} /> : null}
           <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
-            <h2 className="font-display text-lg font-bold text-ink">{d.kind === "site" ? "Annonces" : "Dernières réservations"}</h2>
+            <h2 className="font-display text-lg font-bold text-ink">{d.kind === "site" ? "Annonces" : "Dernières réservations (apps et Moboo.ci)"}</h2>
             <ul className="mt-2 divide-y divide-slate-100 text-sm">
               {d.recent.map((r: any) => (
                 <li key={r.key} className="flex flex-wrap justify-between gap-2 py-2">
-                  <span>{r.href ? <Link href={r.href} target="_blank" className="font-semibold hover:underline">{r.title}</Link> : <b>{r.title}</b>} <span className="text-xs text-muted">· {new Date(r.when).toLocaleDateString("fr-FR")}</span></span>
+                  <span>{r.href ? <Link href={r.href} target="_blank" className="font-semibold hover:underline">{r.title}</Link> : <b>{r.title}</b>} <span className="text-xs text-muted">· {new Date(r.when).toLocaleDateString("fr-FR")}</span>{r.source ? <span className={"ml-1 rounded px-1.5 py-0.5 text-[11px] font-semibold " + (r.source === "Moboo.ci" ? "bg-brand-50 text-brand-800" : "bg-slate-100 text-slate-700")}>{r.source}</span> : null}</span>
                   <span className="text-xs"><span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold">{STATUS[r.status] ?? r.status}</span>{r.amount != null ? ` · ${fcfa(r.amount)}` : ""}</span>
                   {d.kind !== "site" && UPCOMING.includes(r.status) && r.end ? <div className="w-full"><ChangeDates bookingKey={r.key} start={r.when} end={r.end} compact /></div> : null}
                 </li>

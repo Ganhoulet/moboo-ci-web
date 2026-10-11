@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GoalsEditor, MetricCell, type Metric } from "@/components/backoffice/am-perf";
 import { getAm } from "../actions";
+import { PortfolioComparison } from "@/components/backoffice/am-activity";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,8 @@ export default async function AmPerformance({ searchParams }: { searchParams: { 
       <div>
         <h1 className="font-display text-2xl font-extrabold text-ink">Objectifs et performance</h1>
         <p className="max-w-3xl text-sm text-muted">
-          Chaque mois : réservations confirmées pour les hôtes, délai médian d’intervention après l’alerte, contacts, recommandations corrigées, chiffre d’affaires Moboo.ci
-          du portefeuille, tâches et accès assistés. {d.canEdit ? "Fixez des objectifs pour toute l’équipe ou par personne : la barre passe au vert quand l’objectif est atteint." : `Vos résultats du mois et votre rang dans l’équipe (${d.teamSize} account managers).`}
+          Chaque mois : réservations confirmées pour les hôtes, délai médian d’intervention, contacts, recommandations corrigées, chiffre d’affaires du portefeuille
+          (saisies dans Moboo Resi et Moboo Event + Moboo.ci), part de Moboo.ci, occupation, loyers et baux Moboo Pro, tâches et accès assistés. {d.canEdit ? "Fixez des objectifs pour toute l’équipe ou par personne : la barre passe au vert quand l’objectif est atteint." : `Vos résultats du mois et votre rang dans l’équipe (${d.teamSize} account managers).`}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -40,10 +41,10 @@ export default async function AmPerformance({ searchParams }: { searchParams: { 
 
       {d.totals ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {["bookingsSaved", "responseMin", "contacts", "recoFixed", "revenue"].map((k) => {
+          {["bookingsSaved", "responseMin", "totalRevenue", "revenue", "occupancy"].map((k) => {
             const m = metrics.find((x) => x.key === k)!;
             const v = d.totals[k];
-            return <div key={k} className="rounded-lg bg-white p-4 ring-1 ring-slate-200"><p className="text-xs text-muted">{m.label}</p><p className="font-display text-xl font-extrabold text-ink">{v == null ? "—" : m.unit === "F" ? `${new Intl.NumberFormat("fr-FR").format(v)} F` : `${v}${m.unit === "min" ? " min" : ""}`}</p></div>;
+            return <div key={k} className="rounded-lg bg-white p-4 ring-1 ring-slate-200"><p className="text-xs text-muted">{m.label}</p><p className="font-display text-xl font-extrabold text-ink">{v == null ? "—" : m.unit === "F" ? `${new Intl.NumberFormat("fr-FR").format(v)} F` : `${v}${m.unit === "min" ? " min" : m.unit === "%" ? " %" : ""}`}</p></div>;
           })}
         </div>
       ) : null}
@@ -66,6 +67,7 @@ export default async function AmPerformance({ searchParams }: { searchParams: { 
           </tbody>
         </table>
       </div>
+      {d.comparison ? <PortfolioComparison comparison={d.comparison} boost={d.boost ?? []} /> : null}
       {!d.canEdit && d.rows[0] ? <p className="text-sm text-muted">Votre rang ce mois-ci : <b className="text-ink">{d.rows[0].rank}</b> sur {d.teamSize}.</p> : null}
     </div>
   );
