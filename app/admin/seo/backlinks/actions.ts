@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { SEO_TAG } from "@/lib/seo";
 import { authedFetch } from "@/lib/server-api";
 
 export interface Backlink {
@@ -28,6 +29,8 @@ export async function getVideos(): Promise<SocialVideo[]> {
 async function send(path: string, method: string, body?: unknown, page = "/admin/seo/backlinks"): Promise<R> {
   const r = await authedFetch(`${B}${path}`, { method, ...(body ? { body: JSON.stringify(body) } : {}) });
   revalidatePath(page);
+  // Vidéos affichées sur les pages du quartier : rafraîchies tout de suite.
+  if (page === "/admin/seo/tiktok") revalidateTag(SEO_TAG);
   return r.ok ? { ok: true } : { ok: false, error: msg(r.data, "Action impossible.") };
 }
 export const saveBacklinkAction = async (id: string | null, body: Partial<Backlink>) => send(id ? `/backlinks/${id}` : "/backlinks/new", id ? "PUT" : "POST", body);
