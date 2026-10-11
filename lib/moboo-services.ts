@@ -6,7 +6,10 @@ export interface CreditPack { id: string; label: string; credits: number; price:
 export interface AlertePack { id: string; label: string; audience: "sender" | "agent"; credits: number; days: number; price: number }
 export interface RechargePack { id: string; label: string; amount: number; price: number }
 
-export interface SiteTile { enabled: boolean; icon: string; title: string; tagline: string; landingTitle: string; landingIntro: string }
+export interface SiteTile {
+  enabled: boolean; icon: string; title: string; tagline: string; landingTitle: string; landingIntro: string;
+  price: string; audience: string[]; dispatch: "moboo" | "agents"; proModules: string;
+}
 
 export interface ServicesConfig {
   alertes: { enabled: boolean; userPaid: boolean; agentPaid: boolean; packages: AlertePack[] };

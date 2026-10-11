@@ -550,6 +550,7 @@ async function ServicesRow({ s, edit }: { s: Section; edit?: boolean }) {
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-2xl">{x.icon}</span>
             <span className="mt-4 font-display text-lg font-bold">{x.title}</span>
             <span className="mt-1 flex-1 text-sm text-muted">{x.tagline}</span>
+            {p.showPrice !== false && x.price ? <span className="mt-3 text-xs font-semibold text-brand-700">{x.price}</span> : null}
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold underline decoration-slate-300 underline-offset-4 group-hover:decoration-ink">{p.cta || "Commencer"} →</span>
           </Link>
         ))}

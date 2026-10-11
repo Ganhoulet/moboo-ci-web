@@ -58,7 +58,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     can(perms, "moderation") ? getModerationSummary() : Promise.resolve(null),
   ]);
   const disputes = can(perms, "disputes") ? await getDisputeCounts() : null;
-  const svc = can(perms, "services") ? await getServicesBadges() : { edl: 0, leads: 0 };
+  const svc = can(perms, "services") ? await getServicesBadges() : { edl: 0, leads: 0, missions: 0 };
   const items: AdminNavItem[] = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
     // Statistiques (façon Zillow / Airbnb) : indicateurs, recherches, professionnels.
@@ -140,9 +140,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/litiges", label: "Litiges", icon: "scale", child: true, group: "reservations", badge: disputes?.open ?? 0 },
     { href: "/admin/litiges/reglages", label: "Réglages", icon: "scale", child: true, group: "reservations" },
     // Services Moboo (ex-extensions WordPress des applications).
-    { href: "/admin/services", label: "Services Moboo", icon: "phone", group: "services", badge: svc.edl + svc.leads },
+    { href: "/admin/services", label: "Services Moboo", icon: "phone", group: "services", badge: svc.edl + svc.leads + svc.missions },
     ...[
       ["/admin/services/alertes", "Alertes", 0],
+      ["/admin/services/missions", "Missions (Moboo Pro)", svc.missions],
       ["/admin/services/etats-des-lieux", "États des lieux", svc.edl],
       ["/admin/services/demandes", "Demandes du site", svc.leads],
       ["/admin/services/solvabilite", "Solvabilité locataire"],

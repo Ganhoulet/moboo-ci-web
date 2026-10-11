@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 const TABS: [string, string][] = [
   ["/admin/services", "Vue d’ensemble"],
   ["/admin/services/alertes", "Alertes"],
+  ["/admin/services/missions", "Missions"],
   ["/admin/services/etats-des-lieux", "États des lieux"],
   ["/admin/services/demandes", "Demandes du site"],
   ["/admin/services/solvabilite", "Solvabilité"],

@@ -102,9 +102,26 @@ export async function setAutonomousOwner(ref: string, on: boolean) {
 }
 
 /** Badges du menu : demandes d'état des lieux à attribuer et demandes de rappel non traitées. */
-export async function getServicesBadges(): Promise<{ edl: number; leads: number }> {
-  const [e, l] = await Promise.all([call<{ pending: number }>("/edl/pending"), call<{ fresh: number }>("/leads?page=1&status=new")]);
-  return { edl: e.data?.pending ?? 0, leads: l.data?.fresh ?? 0 };
+export async function getServicesBadges(): Promise<{ edl: number; leads: number; missions: number }> {
+  const [e, l, m] = await Promise.all([call<{ pending: number }>("/edl/pending"), call<{ fresh: number }>("/leads?page=1&status=new"), call<{ pending: number }>("/missions/pending")]);
+  return { edl: e.data?.pending ?? 0, leads: l.data?.fresh ?? 0, missions: m.data?.pending ?? 0 };
+}
+
+// Missions Moboo (réalisées dans Moboo Pro).
+export async function missionAgents(id: string, q: string) {
+  return call<{ items: { id: string; name: string; phone: string; zone: string; moboo: boolean; verified: boolean; type: string; inZone: boolean }[] }>(`/missions/${id}/agents?q=${encodeURIComponent(q)}`);
+}
+
+export async function missionAssign(id: string, agentId: string, price: number, note: string) {
+  const r = await call(`/missions/${id}/assign`, "POST", { agentId, price, note });
+  revalidatePath("/admin", "layout");
+  return r;
+}
+
+export async function missionSetStatus(id: string, status: string) {
+  const r = await call(`/missions/${id}/status`, "POST", { status });
+  revalidatePath("/admin", "layout");
+  return r;
 }
 
 // États des lieux : attribution à un agent (Moboo Pro), diffusion aux agents, statut.

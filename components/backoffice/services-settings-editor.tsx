@@ -3,11 +3,13 @@
 import { useEffect, useState, useTransition } from "react";
 import { edlAgents, saveServicesConfig } from "@/app/admin/services/actions";
 import type { AlertePack, ServicesConfig, Soon } from "@/lib/moboo-services";
+import { SERVICE_LABEL, SERVICE_SLUG, isMissionKey } from "@/lib/site-services";
+
+const SITE_LABEL = SERVICE_LABEL as Record<string, string>;
+const SITE_SLUG = SERVICE_SLUG as Record<string, string>;
 
 type Tab = "site" | "alertes" | "edl" | "support" | "foncier" | "loyer" | "solvency" | "card";
 const TABS: [Tab, string][] = [["site", "Services du site"], ["alertes", "Alertes"], ["edl", "État des lieux"], ["support", "Support"], ["foncier", "Estimation foncière"], ["loyer", "Estimation loyer"], ["solvency", "Solvabilité"], ["card", "Carte pro"]];
-const SITE_LABEL: Record<string, string> = { edl: "État des lieux", loyer: "Estimation de loyer", foncier: "Estimation de terrain", solvabilite: "Solvabilité locataire" };
-const SITE_SLUG: Record<string, string> = { edl: "etat-des-lieux", loyer: "estimation-loyer", foncier: "estimation-terrain", solvabilite: "solvabilite-locataire" };
 
 const input = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand-600 focus:outline-none";
 
@@ -95,7 +97,7 @@ function MobooAgents({ ids, onChange }: { ids: string[]; onChange: (ids: string[
   return (
     <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-200">
       <p className="text-sm font-semibold text-ink">Agents Moboo</p>
-      <p className="text-xs text-muted">Proposés en premier quand vous attribuez une demande ; ils la reçoivent dans Moboo Pro › États des lieux.</p>
+      <p className="text-xs text-muted">Proposés en premier quand vous attribuez un état des lieux ou une mission ; ils la reçoivent dans Moboo Pro.</p>
       <div className="mt-2 flex flex-wrap gap-2">
         {ids.map((id) => (
           <span key={id} className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold ring-1 ring-slate-300">
@@ -140,7 +142,7 @@ export function ServicesSettingsEditor({ initial, initialTab }: { initial: Servi
     up("site", { order: o });
   };
   const setTile = (k: string, v: Partial<ServicesConfig["site"]["tiles"][string]>) => up("site", { tiles: { ...cfg.site.tiles, [k]: { ...cfg.site.tiles[k], ...v } } });
-  const serviceOn = (k: string) => (k === "edl" ? cfg.edl.enabled : k === "loyer" ? cfg.loyer.enabled : k === "foncier" ? cfg.foncier.enabled : cfg.solvency.enabled);
+  const serviceOn = (k: string) => (k === "edl" ? cfg.edl.enabled : k === "loyer" ? cfg.loyer.enabled : k === "foncier" ? cfg.foncier.enabled : k === "solvabilite" ? cfg.solvency.enabled : true);
 
   const a = cfg.alertes, e = cfg.edl, s = cfg.support, f = cfg.foncier, l = cfg.loyer, c = cfg.card;
   return (
@@ -161,7 +163,7 @@ export function ServicesSettingsEditor({ initial, initialTab }: { initial: Servi
                 <div key={k} className="rounded-lg p-3 ring-1 ring-slate-200">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-2xl">{t.icon}</span>
-                    <p className="flex-1 font-display font-bold text-ink">{SITE_LABEL[k] ?? k} <a href={`/services/${SITE_SLUG[k]}`} target="_blank" rel="noreferrer" className="ml-1 text-xs font-normal text-brand-700 underline">voir la page</a></p>
+                    <p className="flex-1 font-display font-bold text-ink">{SITE_LABEL[k] ?? k}{isMissionKey(k) ? <span className="ml-2 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-800">MISSION MOBOO PRO{t.dispatch === "agents" ? " · AGENTS DE LA ZONE" : " · ATTRIBUÉE PAR MOBOO"}</span> : null} <a href={`/services/${SITE_SLUG[k]}`} target="_blank" rel="noreferrer" className="ml-1 text-xs font-normal text-brand-700 underline">voir la page</a></p>
                     {!serviceOn(k) ? <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">service désactivé dans son onglet</span> : null}
                     <button type="button" aria-label="Monter" disabled={i === 0} onClick={() => moveTile(k, -1)} className="rounded px-2 py-1 text-sm ring-1 ring-slate-300 disabled:opacity-30">↑</button>
                     <button type="button" aria-label="Descendre" disabled={i === cfg.site.order.length - 1} onClick={() => moveTile(k, 1)} className="rounded px-2 py-1 text-sm ring-1 ring-slate-300 disabled:opacity-30">↓</button>
@@ -174,6 +176,26 @@ export function ServicesSettingsEditor({ initial, initialTab }: { initial: Servi
                       <Field label="Accroche"><Text value={t.tagline} onChange={(tagline) => setTile(k, { tagline })} /></Field>
                       <div className="sm:col-span-3"><Field label="Titre de la page dédiée"><Text value={t.landingTitle} onChange={(landingTitle) => setTile(k, { landingTitle })} /></Field></div>
                       <div className="sm:col-span-3"><Field label="Texte d’introduction de la page"><Text area value={t.landingIntro} onChange={(landingIntro) => setTile(k, { landingIntro })} /></Field></div>
+                      <div className="sm:col-span-3"><Field label="Prix affiché" hint="Texte libre, ex. « 15 000 FCFA », « 8 % des loyers encaissés ». Vide : pas de prix."><Text value={t.price} onChange={(price) => setTile(k, { price })} /></Field></div>
+                      {isMissionKey(k) ? (
+                        <div className="grid gap-3 rounded-md bg-slate-50 p-3 sm:col-span-3 sm:grid-cols-2">
+                          <Field label="Qui reçoit les commandes ?">
+                            <select className={input} value={t.dispatch} onChange={(ev) => setTile(k, { dispatch: ev.target.value as "moboo" | "agents" })}>
+                              <option value="moboo">Moboo d’abord : le back-office attribue à un agent</option>
+                              <option value="agents">Agents de la zone : ils la prennent dans Moboo Pro</option>
+                            </select>
+                          </Field>
+                          <div className="text-sm">
+                            <span className="font-semibold text-ink">Comptes pro qui peuvent la réaliser</span>
+                            <div className="mt-1 flex gap-4">
+                              {[["agent", "Agents"], ["entreprise", "Agences"]].map(([v, l]) => (
+                                <label key={v} className="flex items-center gap-1.5"><input type="checkbox" checked={t.audience.includes(v)} onChange={(ev) => setTile(k, { audience: ev.target.checked ? [...t.audience, v] : t.audience.filter((x) => x !== v) })} />{l}</label>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="sm:col-span-2"><Field label="Modules Moboo Pro utilisés par l’agent" hint="Affiché à l’agent dans Moboo Pro avec la mission."><Text value={t.proModules} onChange={(proModules) => setTile(k, { proModules })} /></Field></div>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>

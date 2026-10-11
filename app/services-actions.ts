@@ -21,3 +21,4 @@ export async function serviceLeadAction(service: string, form: { full_name: stri
 export async function solvencyRequestAction(form: Record<string, string>) { return post<{ ref: string; channel: string; ttlMin: number }>("/solvabilite", form); }
 export async function solvencyConfirmAction(ref: string, code: string) { return post(`/solvabilite/${encodeURIComponent(ref)}/confirm`, { code }); }
 export async function solvencyResendAction(ref: string) { return post<{ channel: string }>(`/solvabilite/${encodeURIComponent(ref)}/resend`, {}); }
+export async function missionRequestAction(service: string, form: Record<string, unknown>) { return post<{ id: number; dispatch: string }>(`/mission/${encodeURIComponent(service)}`, form); }

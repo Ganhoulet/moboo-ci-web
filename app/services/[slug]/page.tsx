@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EdlForm, FoncierForm, LoyerForm, SolvencyForm } from "@/components/services/service-forms";
-import { getServiceZones, getSiteServices, serviceBySlug, serviceHref, type ServiceKey, type ServiceTile } from "@/lib/site-services";
+import { MissionForm } from "@/components/services/mission-form";
+import { MISSION_POINTS } from "@/lib/missions";
+import { getServiceZones, getSiteServices, isMissionKey, serviceBySlug, serviceHref, type ServiceKey, type ServiceTile, type ToolKey } from "@/lib/site-services";
 
 export const revalidate = 120;
 
-const POINTS: Record<ServiceKey, string[]> = {
+const POINTS: Record<ToolKey, string[]> = {
   edl: ["Agent Moboo formé, rapport photo pièce par pièce", "Entrée ou sortie, à la date qui vous convient", "Un document clair pour éviter les litiges sur la caution"],
   loyer: ["Calculé sur les loyers réels de votre quartier", "Fourchette du marché et annonces comparables", "Gratuit et sans inscription"],
   foncier: ["Prix du marché et valeur fiscale (DGI)", "Frais de notaire et d’ACD estimés", "Niveau de risque selon le statut du terrain"],
@@ -43,8 +45,9 @@ export default async function ServicePage({ params }: { params: { slug: string }
             <p className="mt-4 text-5xl" aria-hidden>{t.icon}</p>
             <h1 className="mt-3 font-display text-3xl font-black leading-tight sm:text-4xl">{t.landingTitle || t.title}</h1>
             <p className="mt-4 text-white/85">{t.landingIntro}</p>
+            {t.price ? <p className="mt-4 inline-block rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold">{t.price}</p> : null}
             <ul className="mt-6 space-y-2 text-sm">
-              {POINTS[key].map((p) => <li key={p} className="flex gap-2"><span className="text-accent-400">✓</span>{p}</li>)}
+              {(isMissionKey(key) ? MISSION_POINTS[key] : POINTS[key]).map((p) => <li key={p} className="flex gap-2"><span className="text-accent-400">✓</span>{p}</li>)}
             </ul>
           </div>
           <div className="rounded-3xl bg-white p-5 text-ink shadow-2xl sm:p-7">
@@ -52,6 +55,7 @@ export default async function ServicePage({ params }: { params: { slug: string }
             {key === "loyer" ? <LoyerForm zones={zones} /> : null}
             {key === "foncier" ? <FoncierForm zones={zones} /> : null}
             {key === "solvabilite" ? <SolvencyForm {...r.solvency} /> : null}
+            {isMissionKey(key) ? <MissionForm service={key} price={t.price} /> : null}
           </div>
         </div>
       </section>
@@ -62,7 +66,7 @@ export default async function ServicePage({ params }: { params: { slug: string }
             {others.map((o) => (
               <Link key={o.key} href={serviceHref(o.key)} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-card-hover">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-100 text-2xl">{o.icon}</span>
-                <span><span className="block font-display font-bold text-ink">{o.title}</span><span className="block text-sm text-muted">{o.tagline}</span></span>
+                <span><span className="block font-display font-bold text-ink">{o.title}</span><span className="block text-sm text-muted">{o.tagline}</span>{o.price ? <span className="mt-1 block text-xs font-semibold text-brand-700">{o.price}</span> : null}</span>
               </Link>
             ))}
           </div>

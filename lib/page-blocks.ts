@@ -165,11 +165,16 @@ export const BLOCKS: BlockDef[] = [
       { key: "only", label: "Services affichés (vide : tous ceux activés)", type: "multi", options: [
         { value: "edl", label: "État des lieux" }, { value: "loyer", label: "Estimation de loyer" },
         { value: "foncier", label: "Estimation de terrain" }, { value: "solvabilite", label: "Solvabilité locataire" },
+        { value: "mise_en_location", label: "Mise en location" }, { value: "gestion_locative", label: "Gestion locative" },
+        { value: "visite", label: "Visite pour vous" }, { value: "bail", label: "Bail & contrat" }, { value: "photos_annonce", label: "Photos & annonce" },
+        { value: "avis_valeur", label: "Avis de valeur" }, { value: "devis_travaux", label: "Devis travaux" },
+        { value: "verif_fonciere", label: "Vérification foncière" }, { value: "panneau_qr", label: "Panneau À louer + QR" },
       ] },
+      { key: "showPrice", label: "Afficher le prix sur les tuiles", type: "bool" },
       { key: "cta", label: "Texte du lien", type: "text" },
       ...common,
     ],
-    defaults: { title: "Nos services", subtitle: "Des pros et des outils pour louer et acheter en confiance", cta: "Commencer", background: "soft", only: [] },
+    defaults: { title: "Nos services", subtitle: "Des pros et des outils pour louer et acheter en confiance", cta: "Commencer", background: "soft", only: [], showPrice: true },
   },
   {
     type: "listings", label: "Carrousel d’annonces", icon: "🏠",
