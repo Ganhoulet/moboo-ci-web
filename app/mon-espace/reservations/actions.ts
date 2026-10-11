@@ -8,6 +8,13 @@ const errMsg = (data: any, fallback: string) =>
   || (Array.isArray(data?.error?.message) ? data.error.message[0] : data?.error?.message) || fallback;
 
 export type Stage = "requested" | "accepted" | "confirmed" | "ongoing" | "completed" | "cancelled" | "no_show";
+/** Révélé une fois la réservation confirmée (acompte payé) : façon Airbnb. */
+export interface BookingAccess {
+  code: string | null; codeLabel: string; address: string | null; latitude: number | null; longitude: number | null; mapsUrl: string | null;
+  hostPhone: string | null; checkInTime: string | null; checkOutTime: string | null; instructions: string | null;
+  wifiName: string | null; wifiPassword: string | null; houseRules: string | null;
+}
+
 export interface MyBooking {
   key: string; kind: "stay" | "event"; ref: string; title: string; place: string; photo: string | null; href: string | null;
   start: string; end: string; nights: number | null; guests: number; amount: number; deposit: number; paid: number;
@@ -16,6 +23,7 @@ export interface MyBooking {
   canCancel: boolean; canDispute: boolean; dispute: { id: string; number: string; status: string; statusLabel: string } | null;
   guest: { name: string; phone: string }; host: { name: string | null };
   cancellationReason: string | null; createdAt: string;
+  access?: BookingAccess | null;
 }
 export interface MyBookingDetail extends MyBooking {
   windowDays: number; categories: { key: string; label: string }[]; outcomes: Record<string, string>;

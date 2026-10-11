@@ -53,6 +53,35 @@ export default async function BookingDetail({ params }: { params: { key: string 
         {b.stage === "requested" ? <p className="text-xs text-muted">L’hôte confirme la disponibilité ; vous recevez ensuite le lien de paiement de l’acompte par WhatsApp ou SMS. L’acompte est conservé par Moboo et versé à l’hôte après votre arrivée.</p> : null}
       </section>
 
+      {b.access ? (
+        <section className="space-y-3 rounded-2xl border border-green-200 bg-green-50 p-5">
+          <h2 className="font-display text-lg font-bold text-ink">Votre arrivée</h2>
+          {b.access.code ? (
+            <div>
+              <p className="text-sm font-semibold text-green-800">{b.access.codeLabel}</p>
+              <p className="font-mono text-3xl font-extrabold tracking-[0.3em] text-ink">{b.access.code}</p>
+              <p className="text-xs text-slate-600">
+                {b.kind === "stay"
+                  ? "Donnez ce code à l’hôte à votre arrivée : il le saisit dans Moboo Resi pour valider votre entrée et débloquer le versement de l’acompte."
+                  : "Présentez cette référence au propriétaire le jour de l’événement : elle prouve que vous venez de Moboo."}
+              </p>
+            </div>
+          ) : null}
+          <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+            {b.access.address ? <div className="sm:col-span-2"><dt className="text-muted">Adresse exacte</dt><dd className="font-semibold text-ink">{b.access.address}</dd></div> : null}
+            {b.access.checkInTime ? <div><dt className="text-muted">{b.kind === "stay" ? "Arrivée à partir de" : "Ouverture"}</dt><dd className="font-semibold text-ink">{b.access.checkInTime}</dd></div> : null}
+            {b.access.checkOutTime ? <div><dt className="text-muted">{b.kind === "stay" ? "Départ avant" : "Fermeture"}</dt><dd className="font-semibold text-ink">{b.access.checkOutTime}</dd></div> : null}
+            {b.access.instructions ? <div className="sm:col-span-2"><dt className="text-muted">Accès</dt><dd className="whitespace-pre-line text-ink">{b.access.instructions}</dd></div> : null}
+            {b.access.wifiName ? <div><dt className="text-muted">Wi‑Fi</dt><dd className="font-semibold text-ink">{b.access.wifiName}{b.access.wifiPassword ? ` · ${b.access.wifiPassword}` : ""}</dd></div> : null}
+            {b.access.houseRules ? <div className="sm:col-span-2"><dt className="text-muted">Règlement</dt><dd className="whitespace-pre-line text-ink">{b.access.houseRules}</dd></div> : null}
+          </dl>
+          <div className="flex flex-wrap gap-2">
+            {b.access.mapsUrl ? <a href={b.access.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary bg-green-700 hover:bg-green-800">Itinéraire (GPS)</a> : null}
+            {b.access.hostPhone ? <a href={`tel:${b.access.hostPhone}`} className="rounded-full px-4 py-2 text-sm font-semibold text-green-800 ring-1 ring-green-300 hover:bg-green-100">{b.kind === "stay" ? "Appeler l’hôte" : "Appeler le propriétaire"}</a> : null}
+          </div>
+        </section>
+      ) : null}
+
       {disputeOpen ? (
         <p className="rounded-2xl bg-violet-50 p-4 text-sm text-violet-900">Un litige est en cours pour cette réservation. <Link href={`/mon-espace/reservations/litige/${b.dispute!.id}`} className="font-semibold underline">Suivre le litige</Link></p>
       ) : b.canDispute ? (
