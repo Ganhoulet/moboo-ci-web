@@ -12,6 +12,7 @@ import { can, canAccess } from "@/lib/admin-perms";
 import { getModerationSummary } from "./backoffice-actions";
 import { getDisputeCounts } from "./litiges/actions";
 import { getServicesBadges } from "./services/actions";
+import { getAm } from "./comptes/actions";
 
 export const metadata: Metadata = { title: "Back-office", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -59,6 +60,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ]);
   const disputes = can(perms, "disputes") ? await getDisputeCounts() : null;
   const svc = can(perms, "services") ? await getServicesBadges() : { edl: 0, leads: 0, missions: 0 };
+  const am = can(perms, "accounts") ? await getAm<{ urgent: number; pending: number }>("/badge").catch(() => null) : null;
   const items: AdminNavItem[] = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
     // Statistiques (façon Zillow / Airbnb) : indicateurs, recherches, professionnels.
@@ -135,6 +137,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/immobilier/forfaits", "Forfaits"],
       ["/admin/immobilier/factures", "Factures"],
     ].map(([href, label]) => ({ href, label, icon: "building", child: true, group: "immobilier" })),
+    // Account managers (façon Booking.com) : réservations à confirmer pour l'hôte, portefeuille, suivi.
+    { href: "/admin/comptes", label: "Suivi des comptes", icon: "users", group: "comptes", badge: am?.urgent ?? 0 },
+    { href: "/admin/comptes/reservations", label: "Réservations à confirmer", icon: "users", child: true, group: "comptes", badge: am?.pending ?? 0 },
+    { href: "/admin/comptes/portefeuille", label: "Portefeuille", icon: "users", child: true, group: "comptes" },
+    { href: "/admin/comptes/taches", label: "Tâches", icon: "users", child: true, group: "comptes" },
+    { href: "/admin/comptes/reglages", label: "Réglages", icon: "users", child: true, group: "comptes" },
     // Formulaires : champs de publication et onglets de l'espace membre.
     { href: "/admin/formulaires", label: "Formulaires", icon: "layout", group: "formulaires" },
     { href: "/admin/formulaires", label: "Publication d’annonce", icon: "layout", child: true, group: "formulaires" },
