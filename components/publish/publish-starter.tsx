@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { publishStartHref } from "@/lib/publish-route";
 
 const WHO: [string, string][] = [["proprietaire", "Propriétaire"], ["agent", "Agent"], ["agence", "Agence / promoteur"]];
 const GOAL: [string, string, string][] = [["rent", "Louer", "🔑"], ["sale", "Vendre", "🏷️"], ["short", "Meublé / espace", "🛏️"]];
@@ -10,7 +11,7 @@ const TYPES: [string, string][] = [["appartement", "Appartement"], ["villa", "Vi
 const pill = (on: boolean) => "rounded-full border px-4 py-2 text-sm font-semibold transition " + (on ? "border-accent-600 bg-accent-50 text-accent-800" : "border-slate-300 text-ink hover:border-ink");
 
 /** Carte « Commençons » de la page /publier : profil, objectif, type, téléphone → formulaire pré-rempli. */
-export function PublishStarter({ phone }: { phone?: string }) {
+export function PublishStarter({ phone, loggedIn }: { phone?: string; loggedIn: boolean }) {
   const router = useRouter();
   const [who, setWho] = useState("proprietaire");
   const [goal, setGoal] = useState("rent");
@@ -18,8 +19,7 @@ export function PublishStarter({ phone }: { phone?: string }) {
   const [tel, setTel] = useState(phone ?? "");
   const go = (e: React.FormEvent) => {
     e.preventDefault();
-    const q = new URLSearchParams({ cat: goal, type, ...(tel ? { tel } : {}), profil: who });
-    router.push(`/publier/annonce?${q.toString()}`);
+    router.push(publishStartHref({ cat: goal, type, tel, profil: who, loggedIn }));
   };
   return (
     <form onSubmit={go} className="rounded-3xl bg-white p-6 text-ink shadow-2xl ring-1 ring-black/5 sm:p-7" aria-label="Commencer une annonce">
@@ -53,8 +53,10 @@ export function PublishStarter({ phone }: { phone?: string }) {
         <input value={tel} onChange={(e) => setTel(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="07 00 00 00 00"
           className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-brand-600" />
       </label>
-      <button type="submit" className="mt-5 w-full rounded-full bg-accent-600 py-3.5 text-base font-bold text-white hover:bg-accent-700">Commencer maintenant →</button>
-      <p className="mt-3 text-center text-xs text-muted">Aucune commission · Vous êtes contacté directement</p>
+      <button type="submit" className="mt-5 w-full rounded-full bg-accent-600 py-3.5 text-base font-bold text-white hover:bg-accent-700">{goal === "short" ? "Découvrir Moboo Resi et Event →" : "Continuer →"}</button>
+      <p className="mt-3 text-center text-xs text-muted">
+        {goal === "short" ? "Meublés et espaces se publient avec réservation en ligne." : loggedIn ? "Vous allez compléter votre annonce dans votre espace." : "Connexion ou inscription en 1 minute, puis vous décrivez votre bien."}
+      </p>
     </form>
   );
 }

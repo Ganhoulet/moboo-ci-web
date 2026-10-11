@@ -71,7 +71,7 @@ export default async function PublierLanding() {
               </div>
             ) : null}
           </div>
-          <div id="commencer" className="lg:pl-6"><PublishStarter phone={account?.phone} /></div>
+          <div id="commencer" className="lg:pl-6"><PublishStarter phone={account?.phone} loggedIn={!!account} /></div>
         </div>
       </section>
 

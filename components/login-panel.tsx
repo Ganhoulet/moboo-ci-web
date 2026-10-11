@@ -108,7 +108,9 @@ function PasswordForm({ onForgot, next, onLink }: { onForgot: () => void; next?:
  * Connexion au choix : code reçu sur le numéro, identifiant + mot de passe,
  * ou Google (client OAuth : lib/google).
  */
-export function LoginPanel({ initialMode = "telephone", googleClientId, methods = { phone: true, password: true }, next, firebase }: {
+export function LoginPanel({ initialMode = "telephone", googleClientId, methods = { phone: true, password: true }, next, firebase, phone }: {
+  /** Numéro déjà saisi (ex. page « Publier une annonce »). */
+  phone?: string;
   initialMode?: Mode; googleClientId?: string;
   /** SMS envoyés par Firebase (Réglages → Connexion et inscription). */
   firebase?: FirebaseWebConfig | null;
@@ -174,7 +176,7 @@ export function LoginPanel({ initialMode = "telephone", googleClientId, methods 
         ))}
       </div> : null}
 
-      {mode === "telephone" ? <LoginFlow next={next} firebase={firebase} /> : <PasswordForm next={next} onForgot={() => setMode("telephone")} onLink={(ticket, email) => { setGoogle({ ticket, email, wp: true }); setMode("telephone"); }} />}
+      {mode === "telephone" ? <LoginFlow next={next} firebase={firebase} phone={phone} /> : <PasswordForm next={next} onForgot={() => setMode("telephone")} onLink={(ticket, email) => { setGoogle({ ticket, email, wp: true }); setMode("telephone"); }} />}
     </div>
   );
 }

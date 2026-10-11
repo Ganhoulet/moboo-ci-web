@@ -25,7 +25,7 @@ function SubmitButton({ label, busy = false }: { label: string; busy?: boolean }
  * `firebase` : SMS envoyé et vérifié par Firebase (Google) ; en cas d'échec,
  * le code part par WhatsApp / SMS / e-mail comme d'habitude.
  */
-export function LoginFlow({ googleTicket, next, firebase }: { googleTicket?: string; next?: string; firebase?: FirebaseWebConfig | null } = {}) {
+export function LoginFlow({ googleTicket, next, firebase, phone: presetPhone }: { googleTicket?: string; next?: string; firebase?: FirebaseWebConfig | null; phone?: string } = {}) {
   const router = useRouter();
   const [phoneState, sendOtp] = useFormState<OtpState, FormData>(sendOtpAction, { step: "phone", googleTicket });
   const [codeState, verifyOtp] = useFormState<OtpState, FormData>(verifyOtpAction, null);
@@ -146,6 +146,7 @@ export function LoginFlow({ googleTicket, next, firebase }: { googleTicket?: str
             autoComplete="tel"
             placeholder="07 07 12 34 56"
             className="input"
+            defaultValue={presetPhone}
             required
           />
           <p className="mt-1 text-xs text-muted">

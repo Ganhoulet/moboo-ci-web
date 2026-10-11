@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { safeNext } from "@/lib/two-factor";
 import { getSession } from "@/lib/session";
 import { SignupWizard } from "@/components/signup-wizard";
 import type { AccountType } from "@/lib/accounts";
@@ -15,10 +16,14 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function InscriptionPage({ searchParams }: { searchParams: { profil?: string } }) {
+export default async function InscriptionPage({ searchParams }: { searchParams: { profil?: string; next?: string; type?: string; tel?: string } }) {
   const account = getSession();
+  // Suite du parcours après l'inscription (ex. publier une annonce depuis /publier).
+  const next = searchParams.next ? safeNext(searchParams.next) : undefined;
   // Compte déjà configuré : l'inscription n'a plus lieu d'être (sauf changement de profil).
-  if (account?.onboarded && searchParams.profil !== "modifier") redirect("/mon-espace");
+  if (account?.onboarded && searchParams.profil !== "modifier") redirect(next ?? "/mon-espace");
+  // Profil choisi sur la page « Publier » : propriétaire, agent ou agence.
+  const preset = ({ proprietaire: "proprietaire", agent: "agent", agence: "entreprise" } as Record<string, AccountType>)[searchParams.type ?? ""];
 
   const mode = account ? "complete" : "signup";
   const settings = await getSiteSettings();
@@ -34,7 +39,7 @@ export default async function InscriptionPage({ searchParams }: { searchParams: 
   }
   const initial = account
     ? {
-        accountType: (account.onboarded ? account.accountType : undefined) as AccountType | undefined,
+        accountType: (preset ?? (account.onboarded ? account.accountType : undefined)) as AccountType | undefined,
         accountSubtype: account.accountSubtype ?? undefined,
         accountRole: account.accountRole ?? undefined,
         companyName: account.companyName ?? "",
@@ -44,7 +49,9 @@ export default async function InscriptionPage({ searchParams }: { searchParams: 
         username: account.username ?? "",
         email: account.email ?? "",
       }
-    : undefined;
+    : preset || searchParams.tel
+      ? { ...(preset ? { accountType: preset } : {}), ...(searchParams.tel ? { phone: searchParams.tel.replace(/[^\d+ ]/g, "").slice(0, 20) } : {}) }
+      : undefined;
 
   return (
     <div className="relative overflow-hidden">
@@ -66,7 +73,7 @@ export default async function InscriptionPage({ searchParams }: { searchParams: 
               : "Dites-nous qui vous êtes : votre espace Moboo.ci s'adapte à votre activité."}
           </p>
           <div className="mt-6 rounded-3xl bg-white p-6 shadow-card sm:p-8">
-            <SignupWizard mode={mode} initial={initial}
+            <SignupWizard mode={mode} initial={initial} next={next}
               // Changement de rôle après l'inscription : seulement si le back-office l'autorise.
               allowedTypes={account?.onboarded && !auth.profileRoleChange ? [account.accountType ?? "particulier"] : auth.signupAccountTypes}
               roleSelect={mode === "complete" || auth.signupRoleSelect}

@@ -58,7 +58,10 @@ export function SignupWizard({
   roleSelect = true,
   roleLabels,
   firebase,
+  next: afterSignup,
 }: {
+  /** Page à ouvrir une fois le compte créé (par défaut : Mon espace). */
+  next?: string;
   /** Choix du rôle à l'inscription (back-office) ; sinon « Particulier ». */
   roleSelect?: boolean;
   /** Noms des rôles renommés dans le back-office. */
@@ -181,7 +184,7 @@ export function SignupWizard({
       }
       const r = await verifySignupAction({ phone: d.phone, ...(firebaseIdToken ? { firebaseIdToken } : { code: d.code }), ...profile });
       if (!r.ok) return setError(r.error ?? "Erreur.");
-      router.replace("/mon-espace?bienvenue=1");
+      router.replace(afterSignup ?? "/mon-espace?bienvenue=1");
       router.refresh();
     });
   }
@@ -190,7 +193,7 @@ export function SignupWizard({
     startTransition(async () => {
       const r = await completeProfileAction(profile);
       if (!r.ok) return setError(r.error ?? "Erreur.");
-      router.replace("/mon-espace?bienvenue=1");
+      router.replace(afterSignup ?? "/mon-espace?bienvenue=1");
       router.refresh();
     });
   }
