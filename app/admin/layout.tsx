@@ -11,6 +11,7 @@ import { headers } from "next/headers";
 import { can, canAccess } from "@/lib/admin-perms";
 import { getModerationSummary } from "./backoffice-actions";
 import { getDisputeCounts } from "./litiges/actions";
+import { getServicesBadges } from "./services/actions";
 
 export const metadata: Metadata = { title: "Back-office", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -57,6 +58,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     can(perms, "moderation") ? getModerationSummary() : Promise.resolve(null),
   ]);
   const disputes = can(perms, "disputes") ? await getDisputeCounts() : null;
+  const svc = can(perms, "services") ? await getServicesBadges() : { edl: 0, leads: 0 };
   const items: AdminNavItem[] = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
     // Statistiques (façon Zillow / Airbnb) : indicateurs, recherches, professionnels.
@@ -138,16 +140,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/litiges", label: "Litiges", icon: "scale", child: true, group: "reservations", badge: disputes?.open ?? 0 },
     { href: "/admin/litiges/reglages", label: "Réglages", icon: "scale", child: true, group: "reservations" },
     // Services Moboo (ex-extensions WordPress des applications).
-    { href: "/admin/services", label: "Services Moboo", icon: "phone", group: "services" },
+    { href: "/admin/services", label: "Services Moboo", icon: "phone", group: "services", badge: svc.edl + svc.leads },
     ...[
-      ["/admin/services/alertes", "Alertes"],
-      ["/admin/services/etats-des-lieux", "États des lieux"],
+      ["/admin/services/alertes", "Alertes", 0],
+      ["/admin/services/etats-des-lieux", "États des lieux", svc.edl],
+      ["/admin/services/demandes", "Demandes du site", svc.leads],
+      ["/admin/services/solvabilite", "Solvabilité locataire"],
       ["/admin/services/support", "Support"],
       ["/admin/services/estimations", "Estimations foncier / loyer"],
       ["/admin/services/cartes", "Cartes pro"],
       ["/admin/services/application", "Configuration des applications"],
       ["/admin/services/reglages", "Réglages"],
-    ].map(([href, label]) => ({ href, label, icon: "phone", child: true, group: "services" })),
+    ].map(([href, label, badge]) => ({ href: String(href), label: String(label), icon: "phone", child: true, group: "services", badge: Number(badge) || 0 })),
     // Vérification des comptes (demandes + réglages).
     { href: "/admin/verifications", label: "Vérification des comptes", icon: "shield", group: "verifications" },
     { href: "/admin/verifications/reglages", label: "Réglages", icon: "shield", child: true, group: "verifications" },

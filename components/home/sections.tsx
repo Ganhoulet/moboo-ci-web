@@ -14,6 +14,7 @@ import { HeroSearch } from "./hero-search";
 import { LoanCalculator } from "./calculator";
 import { Faq } from "./faq";
 import { img as optimized, imgProps } from "@/lib/img";
+import { getSiteServices, serviceHref } from "@/lib/site-services";
 const imgSmall = (u: string | null | undefined) => optimized(u, 320);
 
 type P = Record<string, any>;
@@ -533,6 +534,30 @@ async function AppBlock({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
+async function ServicesRow({ s, edit }: { s: Section; edit?: boolean }) {
+  const p: P = s.props;
+  const only = Array.isArray(p.only) ? (p.only as string[]) : [];
+  const items = (await getSiteServices()).items.filter((x) => !only.length || only.includes(x.key));
+  if (!items.length) return edit ? <Shell s={s} edit={edit}><p className="text-sm text-muted">Aucun service activé (Services Moboo › Réglages › Site).</p></Shell> : null;
+  const dark = p.background === "brand";
+  return (
+    <Shell s={s} edit={edit}>
+      <Head title={p.title} subtitle={p.subtitle} dark={dark} />
+      <Carousel label={p.title || "Services"}>
+        {items.map((x) => (
+          <Link key={x.key} href={serviceHref(x.key)} data-service={x.key}
+            className="group flex w-[78%] shrink-0 snap-start flex-col rounded-2xl border border-slate-200 bg-white p-5 text-ink transition hover:-translate-y-0.5 hover:shadow-card-hover sm:w-[45%] lg:w-[calc(25%-15px)]">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-2xl">{x.icon}</span>
+            <span className="mt-4 font-display text-lg font-bold">{x.title}</span>
+            <span className="mt-1 flex-1 text-sm text-muted">{x.tagline}</span>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold underline decoration-slate-300 underline-offset-4 group-hover:decoration-ink">{p.cta || "Commencer"} →</span>
+          </Link>
+        ))}
+      </Carousel>
+    </Shell>
+  );
+}
+
 /** Rendu d'une section publiée (null : type inconnu ou masquée). */
 export async function HomeSection({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
   if (!s.enabled) return null;
@@ -541,6 +566,7 @@ export async function HomeSection({ s, data, edit }: { s: Section; data: HomeDat
     case "hero": return <Hero s={s} data={data} />;
     case "categories": return <Categories s={s} data={data} edit={edit} />;
     case "quickStart": return <QuickStart s={s} edit={edit} />;
+    case "services": return <ServicesRow s={s} edit={edit} />;
     case "listings": return <Listings s={s} edit={edit} />;
     case "reservables": return <Reservables s={s} edit={edit} />;
     case "localities": return <Localities s={s} data={data} edit={edit} />;

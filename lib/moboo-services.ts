@@ -6,12 +6,17 @@ export interface CreditPack { id: string; label: string; credits: number; price:
 export interface AlertePack { id: string; label: string; audience: "sender" | "agent"; credits: number; days: number; price: number }
 export interface RechargePack { id: string; label: string; amount: number; price: number }
 
+export interface SiteTile { enabled: boolean; icon: string; title: string; tagline: string; landingTitle: string; landingIntro: string }
+
 export interface ServicesConfig {
   alertes: { enabled: boolean; userPaid: boolean; agentPaid: boolean; packages: AlertePack[] };
-  edl: { enabled: boolean; agentPaid: boolean; seqPct: number; mobooSharePct: number; soon: Soon; packages: RechargePack[] };
+  /** dispatch « moboo » : demandes traitées par le back-office (attribution à un agent Moboo) ; « agents » : diffusion aux agents de la zone. */
+  edl: { enabled: boolean; agentPaid: boolean; seqPct: number; mobooSharePct: number; soon: Soon; packages: RechargePack[]; dispatch: "moboo" | "agents"; mobooAgents: string[] };
   support: { version: number; maintenance: boolean; maintenanceMsg: string; minAppVersion: string; whatsapp: string; chatForAll: boolean };
   foncier: { enabled: boolean; soon: Soon; marketLabel: string; minObs: number; since: string; minSqm: number; maxSqm: number; packages: CreditPack[] };
   loyer: { enabled: boolean; soon: Soon; minObs: number; since: string; trendSince: string; trendMin: number; packages: CreditPack[] };
+  solvency: { enabled: boolean; incomeMultiple: number; codeTtlMin: number };
+  site: { order: string[]; tiles: Record<string, SiteTile> };
   card: {
     durationMonths: number; reminderDays: number[];
     primaryColor: string; secondaryColor: string; goldColor: string; accentColor: string;

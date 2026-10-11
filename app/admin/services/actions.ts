@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { SITE_SERVICES_TAG } from "@/lib/site-services";
 import { authedFetch } from "@/lib/server-api";
 import type { ServicesConfig } from "@/lib/moboo-services";
 
@@ -22,6 +23,7 @@ export async function getServices<T = any>(path: string): Promise<T | null> {
 export async function saveServicesConfig(cfg: ServicesConfig) {
   const r = await call<ServicesConfig>("/config", "PUT", cfg);
   revalidatePath("/admin/services", "layout");
+  revalidateTag(SITE_SERVICES_TAG);
   return r;
 }
 
@@ -97,4 +99,44 @@ export async function setAutonomousOwner(ref: string, on: boolean) {
   const r = await call("/app-config/autonomous", "POST", { ref, on });
   revalidatePath("/admin/services/application");
   return r;
+}
+
+/** Badges du menu : demandes d'état des lieux à attribuer et demandes de rappel non traitées. */
+export async function getServicesBadges(): Promise<{ edl: number; leads: number }> {
+  const [e, l] = await Promise.all([call<{ pending: number }>("/edl/pending"), call<{ fresh: number }>("/leads?page=1&status=new")]);
+  return { edl: e.data?.pending ?? 0, leads: l.data?.fresh ?? 0 };
+}
+
+// États des lieux : attribution à un agent (Moboo Pro), diffusion aux agents, statut.
+export async function edlAgents(q: string) {
+  return call<{ items: { id: string; name: string; phone: string; zone: string; moboo: boolean; verified: boolean }[] }>(`/edl/agents?q=${encodeURIComponent(q)}`);
+}
+
+export async function edlAssign(id: string, agentId: string, price: number, note: string) {
+  const r = await call(`/edl/${id}/assign`, "POST", { agentId, price, note });
+  revalidatePath("/admin", "layout");
+  return r;
+}
+
+export async function edlDispatch(id: string) {
+  const r = await call<{ agents: number }>(`/edl/${id}/dispatch`, "POST", {});
+  revalidatePath("/admin", "layout");
+  return r;
+}
+
+export async function edlSetStatus(id: string, status: string) {
+  const r = await call(`/edl/${id}/status`, "POST", { status });
+  revalidatePath("/admin", "layout");
+  return r;
+}
+
+export async function leadSetStatus(id: string, status: string) {
+  const r = await call(`/leads/${id}/status`, "POST", { status });
+  revalidatePath("/admin", "layout");
+  return r;
+}
+
+/** Solvabilité sans canal SMS : code à dicter au candidat après avoir recueilli son accord. */
+export async function solvencyCode(ref: string) {
+  return call<{ code: string; ttlMin: number; tenantName: string; tenantPhone: string }>(`/solvabilite/${encodeURIComponent(ref)}/code`, "POST", {});
 }

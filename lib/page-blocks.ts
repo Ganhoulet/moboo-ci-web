@@ -157,6 +157,21 @@ export const BLOCKS: BlockDef[] = [
     },
   },
   {
+    type: "services", label: "Services Moboo (carrousel)", icon: "🧰",
+    description: "État des lieux, estimation de loyer, de terrain, solvabilité : une ligne de services qui mène chacun à sa page dédiée. Ordre, textes et activation : Services Moboo › Réglages › Site.",
+    fields: [
+      { key: "title", label: "Titre", type: "text" },
+      { key: "subtitle", label: "Sous-titre", type: "text" },
+      { key: "only", label: "Services affichés (vide : tous ceux activés)", type: "multi", options: [
+        { value: "edl", label: "État des lieux" }, { value: "loyer", label: "Estimation de loyer" },
+        { value: "foncier", label: "Estimation de terrain" }, { value: "solvabilite", label: "Solvabilité locataire" },
+      ] },
+      { key: "cta", label: "Texte du lien", type: "text" },
+      ...common,
+    ],
+    defaults: { title: "Nos services", subtitle: "Des pros et des outils pour louer et acheter en confiance", cta: "Commencer", background: "soft", only: [] },
+  },
+  {
     type: "listings", label: "Carrousel d’annonces", icon: "🏠",
     description: "Annonces filtrées (vedette, nouveautés, à louer à Cocody…) en carrousel ou en grille.",
     fields: [
@@ -354,6 +369,7 @@ export const DEFAULT_HOME: PageContent = {
   sections: [
     def("hero", "hero-main"),
     def("categories", "categories-main"),
+    def("services", "services-main"),
     def("marketing", "marketing-main"),
     def("listings", "listings-featured"),
     def("quickStart", "quickstart-main"),

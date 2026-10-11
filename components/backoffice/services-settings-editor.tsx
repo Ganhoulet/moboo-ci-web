@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { saveServicesConfig } from "@/app/admin/services/actions";
+import { useEffect, useState, useTransition } from "react";
+import { edlAgents, saveServicesConfig } from "@/app/admin/services/actions";
 import type { AlertePack, ServicesConfig, Soon } from "@/lib/moboo-services";
 
-type Tab = "alertes" | "edl" | "support" | "foncier" | "loyer" | "card";
-const TABS: [Tab, string][] = [["alertes", "Alertes"], ["edl", "État des lieux"], ["support", "Support"], ["foncier", "Estimation foncière"], ["loyer", "Estimation loyer"], ["card", "Carte pro"]];
+type Tab = "site" | "alertes" | "edl" | "support" | "foncier" | "loyer" | "solvency" | "card";
+const TABS: [Tab, string][] = [["site", "Services du site"], ["alertes", "Alertes"], ["edl", "État des lieux"], ["support", "Support"], ["foncier", "Estimation foncière"], ["loyer", "Estimation loyer"], ["solvency", "Solvabilité"], ["card", "Carte pro"]];
+const SITE_LABEL: Record<string, string> = { edl: "État des lieux", loyer: "Estimation de loyer", foncier: "Estimation de terrain", solvabilite: "Solvabilité locataire" };
+const SITE_SLUG: Record<string, string> = { edl: "etat-des-lieux", loyer: "estimation-loyer", foncier: "estimation-terrain", solvabilite: "solvabilite-locataire" };
 
 const input = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand-600 focus:outline-none";
 
@@ -79,10 +81,46 @@ function Packs<T extends { id: string; label: string; price: number }>({ rows, o
   );
 }
 
+/** Agents Moboo proposés en premier à l'attribution des états des lieux. */
+function MobooAgents({ ids, onChange }: { ids: string[]; onChange: (ids: string[]) => void }) {
+  const [names, setNames] = useState<Record<string, string>>({});
+  const [q, setQ] = useState("");
+  const [found, setFound] = useState<{ id: string; name: string; phone: string; zone: string }[]>([]);
+  useEffect(() => { void edlAgents("").then((x) => setNames(Object.fromEntries((x.data?.items ?? []).map((a) => [a.id, `${a.name} · ${a.phone}`])))); }, []);
+  useEffect(() => {
+    if (q.trim().length < 2) { setFound([]); return; }
+    const t = setTimeout(() => { void edlAgents(q).then((x) => setFound(x.data?.items ?? [])); }, 250);
+    return () => clearTimeout(t);
+  }, [q]);
+  return (
+    <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-200">
+      <p className="text-sm font-semibold text-ink">Agents Moboo</p>
+      <p className="text-xs text-muted">Proposés en premier quand vous attribuez une demande ; ils la reçoivent dans Moboo Pro › États des lieux.</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {ids.map((id) => (
+          <span key={id} className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold ring-1 ring-slate-300">
+            {names[id] ?? id.slice(0, 8)}
+            <button type="button" aria-label="Retirer" className="text-red-600" onClick={() => onChange(ids.filter((x) => x !== id))}>×</button>
+          </span>
+        ))}
+        {!ids.length ? <span className="text-xs text-muted">Aucun agent Moboo pour l’instant.</span> : null}
+      </div>
+      <input value={q} onChange={(ev) => setQ(ev.target.value)} placeholder="Ajouter un agent : nom, téléphone…" className={input + " mt-2"} />
+      {found.length ? (
+        <ul className="mt-1 max-h-48 overflow-y-auto rounded-md bg-white ring-1 ring-slate-200">
+          {found.filter((a) => !ids.includes(a.id)).map((a) => (
+            <li key={a.id}><button type="button" className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-50" onClick={() => { onChange([...ids, a.id]); setNames((n) => ({ ...n, [a.id]: `${a.name} · ${a.phone}` })); setQ(""); }}>{a.name} <span className="text-xs text-muted">{a.phone} · {a.zone}</span></button></li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 /** Back-office → Services Moboo → Réglages (ex-réglages des extensions WordPress). */
-export function ServicesSettingsEditor({ initial }: { initial: ServicesConfig }) {
+export function ServicesSettingsEditor({ initial, initialTab }: { initial: ServicesConfig; initialTab?: string }) {
   const [cfg, setCfg] = useState<ServicesConfig>(initial);
-  const [tab, setTab] = useState<Tab>("alertes");
+  const [tab, setTab] = useState<Tab>(TABS.some(([k]) => k === initialTab) ? (initialTab as Tab) : "alertes");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const up = <K extends keyof ServicesConfig>(k: K, v: Partial<ServicesConfig[K]>) => setCfg((c) => ({ ...c, [k]: { ...c[k], ...v } }));
@@ -93,6 +131,17 @@ export function ServicesSettingsEditor({ initial }: { initial: ServicesConfig })
     setMsg(r.ok ? { ok: true, text: "Réglages enregistrés : ils s’appliquent tout de suite au site et aux applications." } : { ok: false, text: r.error ?? "Erreur" });
   });
 
+  const moveTile = (k: string, dir: -1 | 1) => {
+    const o = [...cfg.site.order];
+    const i = o.indexOf(k);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= o.length) return;
+    [o[i], o[j]] = [o[j], o[i]];
+    up("site", { order: o });
+  };
+  const setTile = (k: string, v: Partial<ServicesConfig["site"]["tiles"][string]>) => up("site", { tiles: { ...cfg.site.tiles, [k]: { ...cfg.site.tiles[k], ...v } } });
+  const serviceOn = (k: string) => (k === "edl" ? cfg.edl.enabled : k === "loyer" ? cfg.loyer.enabled : k === "foncier" ? cfg.foncier.enabled : cfg.solvency.enabled);
+
   const a = cfg.alertes, e = cfg.edl, s = cfg.support, f = cfg.foncier, l = cfg.loyer, c = cfg.card;
   return (
     <div className="rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
@@ -102,6 +151,49 @@ export function ServicesSettingsEditor({ initial }: { initial: ServicesConfig })
         ))}
       </div>
       <div className="space-y-4 p-4 sm:p-5">
+        {tab === "site" ? (
+          <>
+            <p className="text-sm text-muted">Services proposés sur moboo.ci : rangée « Services » de l’accueil (bloc du constructeur de page) et pages dédiées <code>/services/…</code>. Réordonnez, masquez ou réécrivez chaque service ; il n’apparaît que s’il est aussi activé dans son onglet.</p>
+            {cfg.site.order.map((k, i) => {
+              const t = cfg.site.tiles[k];
+              if (!t) return null;
+              return (
+                <div key={k} className="rounded-lg p-3 ring-1 ring-slate-200">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-2xl">{t.icon}</span>
+                    <p className="flex-1 font-display font-bold text-ink">{SITE_LABEL[k] ?? k} <a href={`/services/${SITE_SLUG[k]}`} target="_blank" rel="noreferrer" className="ml-1 text-xs font-normal text-brand-700 underline">voir la page</a></p>
+                    {!serviceOn(k) ? <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">service désactivé dans son onglet</span> : null}
+                    <button type="button" aria-label="Monter" disabled={i === 0} onClick={() => moveTile(k, -1)} className="rounded px-2 py-1 text-sm ring-1 ring-slate-300 disabled:opacity-30">↑</button>
+                    <button type="button" aria-label="Descendre" disabled={i === cfg.site.order.length - 1} onClick={() => moveTile(k, 1)} className="rounded px-2 py-1 text-sm ring-1 ring-slate-300 disabled:opacity-30">↓</button>
+                  </div>
+                  <Check label="Afficher sur le site" checked={t.enabled} onChange={(enabled) => setTile(k, { enabled })} />
+                  {t.enabled ? (
+                    <div className="grid gap-3 sm:grid-cols-[90px_1fr_1fr]">
+                      <Field label="Icône"><Text value={t.icon} onChange={(icon) => setTile(k, { icon })} /></Field>
+                      <Field label="Titre de la tuile"><Text value={t.title} onChange={(title) => setTile(k, { title })} /></Field>
+                      <Field label="Accroche"><Text value={t.tagline} onChange={(tagline) => setTile(k, { tagline })} /></Field>
+                      <div className="sm:col-span-3"><Field label="Titre de la page dédiée"><Text value={t.landingTitle} onChange={(landingTitle) => setTile(k, { landingTitle })} /></Field></div>
+                      <div className="sm:col-span-3"><Field label="Texte d’introduction de la page"><Text area value={t.landingIntro} onChange={(landingIntro) => setTile(k, { landingIntro })} /></Field></div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+            <p className="text-xs text-muted">Pour placer la rangée sur l’accueil : Accueil (constructeur de page) › Ajouter une section › « Services Moboo (carrousel) ».</p>
+          </>
+        ) : null}
+
+        {tab === "solvency" ? (
+          <>
+            <Check label="Vérification de solvabilité activée" hint="Le bailleur saisit le candidat ; le candidat reçoit un code par SMS et le lui transmet pour donner son accord. Le rapport s’appuie sur les loyers suivis dans Moboo Pro (sans nom de bailleur ni montant) et sur les revenus déclarés." checked={cfg.solvency.enabled} onChange={(enabled) => up("solvency", { enabled })} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Revenus minimum recommandés (× le loyer)" hint="Seuil du rapport revenus / loyer (3 = le loyer ne dépasse pas le tiers des revenus)."><Num value={cfg.solvency.incomeMultiple} onChange={(incomeMultiple) => up("solvency", { incomeMultiple })} min={1} max={10} /></Field>
+              <Field label="Validité du code SMS (minutes)"><Num value={cfg.solvency.codeTtlMin} onChange={(codeTtlMin) => up("solvency", { codeTtlMin })} min={5} max={1440} /></Field>
+            </div>
+            <p className="rounded-lg bg-slate-50 p-3 text-xs text-muted">Le SMS part par le canal configuré dans Marketing › Canaux d’envoi. Sans canal SMS, la demande est signalée aux administrateurs par e-mail pour transmettre le code à la main.</p>
+          </>
+        ) : null}
+
         {tab === "alertes" ? (
           <>
             <Check label="Alertes activées" hint="Les locataires et acheteurs décrivent leur recherche ; les agents de la zone sont prévenus (notification + e-mail)." checked={a.enabled} onChange={(enabled) => up("alertes", { enabled })} />
@@ -122,6 +214,13 @@ export function ServicesSettingsEditor({ initial }: { initial: ServicesConfig })
         {tab === "edl" ? (
           <>
             <Check label="État des lieux activé" hint="Le locataire ou le propriétaire publie une demande ; les agents de la zone se portent candidats avec leur prix." checked={e.enabled} onChange={(enabled) => up("edl", { enabled })} />
+            <Field label="Qui réalise les états des lieux ?" hint="Valable pour les demandes du site et de l’application.">
+              <select className={input} value={e.dispatch} onChange={(ev) => up("edl", { dispatch: ev.target.value as "moboo" | "agents" })}>
+                <option value="moboo">Les agents Moboo : le back-office est prévenu et attribue chaque demande</option>
+                <option value="agents">Tous les agents : diffusion automatique aux agents de la zone (Moboo Pro)</option>
+              </select>
+            </Field>
+            <MobooAgents ids={e.mobooAgents} onChange={(mobooAgents) => up("edl", { mobooAgents })} />
             <Check label="Agents payants" hint="Abonnement « Alertes » actif requis pour être ciblé et se porter candidat." checked={e.agentPaid} onChange={(agentPaid) => up("edl", { agentPaid })} />
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Séquestre (% du prix proposé)" hint="Gelé sur le wallet de l’agent quand il est choisi ; rendu en totalité si la demande est annulée."><Num value={e.seqPct} onChange={(seqPct) => up("edl", { seqPct })} max={100} /></Field>
