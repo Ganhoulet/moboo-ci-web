@@ -79,13 +79,30 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
   if (l.bedrooms != null) specs.push({ icon: I.bed, label: "Chambres", value: String(l.bedrooms) });
   if (l.bathrooms != null) specs.push({ icon: I.bath, label: "Salles de bain", value: String(l.bathrooms) });
   if (l.garage != null && l.garage > 0) specs.push({ icon: I.car, label: "Garage", value: String(l.garage) });
-  if (l.surface != null) specs.push({ icon: I.area, label: "Surface", value: `${l.surface} m²` });
+  const dt = l.details ?? {};
+  if (l.surface != null) specs.push({ icon: I.area, label: "Surface", value: `${l.surface} ${dt.sizeUnit || "m²"}` });
+  if (dt.landArea) specs.push({ icon: I.area, label: "Terrain", value: `${dt.landArea} ${dt.landAreaUnit || "m²"}` });
+  if (dt.garageSize) specs.push({ icon: I.car, label: "Taille du garage", value: dt.garageSize });
   if (l.yearBuilt != null && l.yearBuilt > 0) specs.push({ icon: I.cal, label: "Année", value: String(l.yearBuilt) });
 
   if (l.transaction === "sale" && l.surface && l.price > 0 && l.propertyType === "terrain") {
     specs.push({ icon: I.tag, label: "Prix au m²", value: formatXOF(l.price / l.surface) });
   }
   const features = l.features ?? [];
+  // Prix tel que saisi dans l'application : condition (« À partir de »), fréquence, prix promotionnel.
+  const promo = dt.secondaryPrice && dt.secondaryPrice > 0 && dt.secondaryPrice < l.price ? dt.secondaryPrice : null;
+  const postfix = dt.pricePostfix || (l.transaction === "rent" ? "/ mois" : "");
+  const priceView = (big: string) => (
+    <>
+      {dt.pricePrefix ? <span className="mr-1 text-sm font-medium text-muted">{dt.pricePrefix}</span> : null}
+      <span className={big}>{formatXOF(promo ?? l.price)}</span>
+      {postfix ? <span className="text-sm font-medium text-muted"> {postfix}</span> : null}
+      {promo ? <span className="ml-2 text-sm font-medium text-muted line-through">{formatXOF(l.price)}</span> : null}
+    </>
+  );
+  const floorPlans = (dt.floorPlans ?? []).filter((p) => p.title || p.image);
+  const additional = dt.additional ?? [];
+  const tour = dt.virtualTour?.startsWith("https://") ? dt.virtualTour : null;
   const units = (l.units ?? []).filter((u) => u?.title);
   const txLabel = l.transaction === "rent" ? "À louer" : "À vendre";
 
@@ -164,10 +181,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
         zone={zone}
         summary={summary.slice(1)}
         price={
-          <p className="text-xl font-extrabold text-brand-800">
-            {formatXOF(l.price)}
-            {l.transaction === "rent" ? <span className="text-sm font-medium text-muted"> / mois</span> : null}
-          </p>
+          <p className="text-xl font-extrabold text-brand-800">{priceView("")}</p>
         }
         meta={meta}
         person={person}
@@ -191,15 +205,70 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
             </Section>
           ) : null}
 
+          {additional.length > 0 || dt.postalCode ? (
+            <Section title="Détails supplémentaires">
+              <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+                {additional.map((a, i) => (
+                  <div key={a.title + i} className="flex justify-between gap-4 border-b border-slate-100 py-2">
+                    <dt className="text-muted">{a.title}</dt>
+                    <dd className="text-right font-semibold text-ink">{a.value}</dd>
+                  </div>
+                ))}
+                {dt.postalCode ? (
+                  <div className="flex justify-between gap-4 border-b border-slate-100 py-2">
+                    <dt className="text-muted">Code postal</dt>
+                    <dd className="text-right font-semibold text-ink">{dt.postalCode}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            </Section>
+          ) : null}
+
+          {tour ? (
+            <Section title="Visite virtuelle 360°">
+              <div className="aspect-video overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+                <iframe src={tour} title="Visite virtuelle 360°" className="h-full w-full" allow="fullscreen; xr-spatial-tracking; gyroscope; accelerometer" allowFullScreen loading="lazy" referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-fullscreen" />
+              </div>
+            </Section>
+          ) : null}
+
+          {floorPlans.length > 0 ? (
+            <Section title={`Plans (${floorPlans.length})`}>
+              <div className="space-y-3">
+                {floorPlans.map((p, i) => (
+                  <details key={p.title + i} className="rounded-2xl border border-slate-200 bg-white p-4" open={i === 0}>
+                    <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 font-semibold text-ink">
+                      <span>{p.title || `Plan ${i + 1}`}</span>
+                      <span className="flex flex-wrap gap-3 text-xs font-medium text-muted">
+                        {p.rooms ? <span>{p.rooms} ch.</span> : null}
+                        {p.baths ? <span>{p.baths} sdb</span> : null}
+                        {p.size ? <span>{p.size}</span> : null}
+                        {p.price ? <span className="font-semibold text-ink">{p.price}</span> : null}
+                      </span>
+                    </summary>
+                    {p.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.image} alt={p.title || "Plan"} loading="lazy" className="mt-3 max-h-[32rem] w-full rounded-xl object-contain" />
+                    ) : null}
+                    {p.description ? <p className="mt-3 whitespace-pre-line text-sm text-slate-600">{p.description}</p> : null}
+                  </details>
+                ))}
+              </div>
+            </Section>
+          ) : null}
+
           {units.length > 0 ? (
             <Section title={`Unités disponibles (${units.length})`}>
               <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                <table className="w-full min-w-[28rem] text-sm">
+                <table className="w-full min-w-[40rem] text-sm">
                   <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-muted">
                     <tr>
                       <th className="px-4 py-2.5 font-semibold">Unité</th>
+                      <th className="px-4 py-2.5 font-semibold">Type</th>
                       <th className="px-4 py-2.5 font-semibold">Chambres</th>
+                      <th className="px-4 py-2.5 font-semibold">Sdb</th>
                       <th className="px-4 py-2.5 font-semibold">Surface</th>
+                      <th className="px-4 py-2.5 font-semibold">Disponibilité</th>
                       <th className="px-4 py-2.5 text-right font-semibold">Prix</th>
                     </tr>
                   </thead>
@@ -207,9 +276,12 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
                     {units.map((u, i) => (
                       <tr key={u.title + i}>
                         <td className="px-4 py-3 font-semibold text-ink">{u.title}</td>
-                        <td className="px-4 py-3 text-slate-600">{u.bedrooms || "—"}</td>
-                        <td className="px-4 py-3 text-slate-600">{u.size ? `${u.size.replace(/\s*m(²|2)?$/i, "")} m²` : "—"}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-ink">{u.price ? formatXOF(u.price) : "Sur demande"}</td>
+                        <td className="px-4 py-3 text-slate-600">{u.type || "—"}</td>
+                        <td className="px-4 py-3 text-slate-600">{u.beds || u.bedrooms || "—"}</td>
+                        <td className="px-4 py-3 text-slate-600">{u.baths || u.bathrooms || "—"}</td>
+                        <td className="px-4 py-3 text-slate-600">{u.size ? `${u.size.replace(/\s*m(²|2)?$/i, "")} ${u.sizeUnit || "m²"}` : "—"}</td>
+                        <td className="px-4 py-3 text-slate-600">{u.availability || "—"}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-ink">{u.price ? formatXOF(u.price) : "Sur demande"}{u.price && u.priceUnit ? <span className="text-xs font-medium text-muted"> {u.priceUnit}</span> : null}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -225,6 +297,8 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
           ) : null}
 
           {l.listingKind === "classic" || !l.listingKind ? <ReviewsSection type="listing" id={l.id} path={path} /> : null}
+
+          {dt.disclaimer ? <p className="rounded-2xl bg-slate-50 p-4 text-xs leading-relaxed text-muted">{dt.disclaimer}</p> : null}
 
           {!isReservable ? (
             <Section title="Conseils avant de vous engager">
@@ -258,10 +332,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
             />
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-extrabold text-ink">{formatXOF(l.price)}</span>
-                {l.transaction === "rent" ? <span className="text-sm text-muted">/ mois</span> : null}
-              </div>
+              <div className="flex flex-wrap items-baseline gap-x-1">{priceView("text-2xl font-extrabold text-ink")}</div>
               {market ? <MarketPrice e={market} /> : null}
               {/* Coordonnées de l'agent si rattaché, sinon de l'annonceur. */}
               {phoneDigits ? (

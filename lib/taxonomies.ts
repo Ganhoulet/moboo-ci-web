@@ -45,6 +45,7 @@ export const editorLists = (t: Taxonomies) => ({
   types: t.type.map((x) => ({ key: x.slug, label: x.label })),
   features: t.feature.map((x) => x.label),
   communes: t.area.map((x) => x.label),
+  labels: t.label.map((x) => ({ key: x.slug, label: x.label })),
 });
 
 export const typeLabel = (t: Taxonomies, slug: string) => t.type.find((x) => x.slug === slug)?.label ?? "Bien";

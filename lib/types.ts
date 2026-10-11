@@ -143,7 +143,19 @@ export interface ListingItem {
   description?: string | null;
   contactName?: string | null;
   contactPhone?: string | null;
-  units?: { title: string; price?: number | null; bedrooms?: string; bathrooms?: string; size?: string }[];
+  units?: {
+    title: string; price?: number | null; priceUnit?: string; bedrooms?: string; bathrooms?: string; beds?: string; baths?: string;
+    size?: string; sizeUnit?: string; type?: string; availability?: string;
+  }[];
+  /** Champs complémentaires (formulaire « Ajouter un bien » de l'application). */
+  details?: {
+    pricePrefix?: string; pricePostfix?: string; secondaryPrice?: number;
+    sizeUnit?: string; landArea?: number; landAreaUnit?: string; garageSize?: string;
+    additional?: { title: string; value: string }[];
+    virtualTour?: string;
+    floorPlans?: { title: string; price: string; size: string; rooms: string; baths: string; image: string; description: string }[];
+    postalCode?: string; disclaimer?: string; privateNote?: string;
+  };
   reference?: number | null;
   views?: number;
   createdAt?: string;

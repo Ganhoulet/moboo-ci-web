@@ -6,8 +6,8 @@ import { ListingEditor, type ListingDraft } from "@/components/listing-editor";
 import { getMyListing } from "../../actions";
 import { getSiteSettings } from "@/lib/settings";
 import { editorLists, getTaxonomies } from "@/lib/taxonomies";
+import { draftFromListing } from "@/lib/listing-draft";
 
-const s = (v: unknown) => (v == null ? "" : String(v));
 
 export default async function ModifierAnnonce({ params }: { params: { id: string } }) {
   const account = getSession()!;
@@ -15,17 +15,7 @@ export default async function ModifierAnnonce({ params }: { params: { id: string
   const l = await getMyListing(params.id);
   if (!l) notFound();
 
-  const draft: ListingDraft = {
-    transaction: l.transaction === "sale" ? "sale" : "rent",
-    propertyType: l.propertyType || "autre",
-    title: s(l.title), price: s(l.price), description: s(l.description),
-    bedrooms: s(l.bedrooms), bathrooms: s(l.bathrooms), garage: s(l.garage), surface: s(l.surface), yearBuilt: s(l.yearBuilt),
-    features: Array.isArray(l.features) ? l.features.map(String) : [],
-    city: s(l.city) || "Abidjan", commune: s(l.commune), quartier: s(l.quartier), address: s(l.address),
-    latitude: l.latitude ?? null, longitude: l.longitude ?? null,
-    photos: Array.isArray(l.photos) ? l.photos.map(String) : [],
-    videoUrl: s(l.videoUrl), contactName: s(l.contactName), contactPhone: s(l.contactPhone),
-  };
+  const draft: ListingDraft = draftFromListing(l);
   const st = STATUS_LABEL[l.status] ?? STATUS_LABEL.ACTIVE;
 
   return (

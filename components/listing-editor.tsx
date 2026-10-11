@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { COMMUNES, LISTING_FEATURES, PROPERTY_TYPES } from "@/lib/accounts";
 import { saveListingAction, uploadImageAction } from "@/app/mon-espace/actions";
 
-const STEPS = ["L'essentiel", "Détails", "Équipements", "Localisation", "Photos & vidéo", "Contact"];
+const STEPS = ["L'essentiel", "Détails", "Équipements", "Localisation", "Photos & vidéo", "Plans & lots", "Contact"];
+const CONTACT_STEP = STEPS.length - 1;
+const AREA_UNITS = ["m²", "ha", "are", "lot"];
+const FREQ = ["", "par mois", "par jour", "par semaine", "par an", "à débattre"];
 
 export type ListingDraft = {
   transaction: "rent" | "sale";
@@ -30,7 +33,27 @@ export type ListingDraft = {
   videoUrl: string;
   contactName: string;
   contactPhone: string;
+  // Champs complémentaires (mêmes que le formulaire de l'application Moboo.ci).
+  labels: string[];
+  pricePrefix: string;
+  pricePostfix: string;
+  secondaryPrice: string;
+  sizeUnit: string;
+  landArea: string;
+  landAreaUnit: string;
+  garageSize: string;
+  additional: { title: string; value: string }[];
+  virtualTour: string;
+  floorPlans: FloorPlanDraft[];
+  units: UnitDraft[];
+  postalCode: string;
+  disclaimer: string;
+  privateNote: string;
 };
+export type FloorPlanDraft = { title: string; price: string; size: string; rooms: string; baths: string; image: string; description: string };
+export type UnitDraft = { title: string; price: string; priceUnit: string; beds: string; baths: string; size: string; sizeUnit: string; type: string; availability: string };
+const EMPTY_PLAN: FloorPlanDraft = { title: "", price: "", size: "", rooms: "", baths: "", image: "", description: "" };
+const EMPTY_UNIT: UnitDraft = { title: "", price: "", priceUnit: "", beds: "", baths: "", size: "", sizeUnit: "m²", type: "", availability: "" };
 
 
 /** Compresse une image dans le navigateur (1600 px max, JPEG ~75 %) → data URI. */
@@ -70,8 +93,10 @@ export type EditorSave = (id: string | null, payload: Record<string, any>) => Pr
 export function ListingEditor({
   id, initial, maxPhotos: MAX_PHOTOS = 12,
   saveAction = saveListingAction, createdHref = "/mon-espace/annonces?publiee={id}",
-  types = PROPERTY_TYPES, features: FEATURES = LISTING_FEATURES, communes: AREAS = COMMUNES,
+  types = PROPERTY_TYPES, features: FEATURES = LISTING_FEATURES, communes: AREAS = COMMUNES, labels: LABELS = [],
 }: {
+  /** Étiquettes du back-office (Exclusivité, Nouveau…), 5 au plus. */
+  labels?: { key: string; label: string }[];
   id?: string; initial: ListingDraft;
   /** Réglage « Nombre maximum de photos » (back-office). */
   maxPhotos?: number;
@@ -104,7 +129,7 @@ export function ListingEditor({
     }
     if (s === 1 && d.description.trim().length < 40) return "Décrivez le bien (40 caractères minimum).";
     if (s === 3 && !d.city.trim()) return "Indiquez la ville.";
-    if (s === 5 && d.contactPhone.replace(/[^0-9]/g, "").length < 8) return "Indiquez un numéro de contact.";
+    if (s === CONTACT_STEP && d.contactPhone.replace(/[^0-9]/g, "").length < 8) return "Indiquez un numéro de contact.";
     return null;
   }
 
@@ -118,8 +143,31 @@ export function ListingEditor({
       city: d.city.trim(), commune: d.commune || null, quartier: d.quartier.trim() || null, address: d.address.trim() || null,
       latitude: d.latitude, longitude: d.longitude, photos: d.photos, videoUrl: d.videoUrl.trim() || null,
       contactName: d.contactName.trim() || null, contactPhone: d.contactPhone.trim(),
+      labels: d.labels,
+      details: {
+        pricePrefix: d.pricePrefix, pricePostfix: d.pricePostfix, secondaryPrice: d.secondaryPrice, sizeUnit: d.sizeUnit,
+        landArea: d.landArea, landAreaUnit: d.landAreaUnit, garageSize: d.garageSize, additional: d.additional, virtualTour: d.virtualTour,
+        floorPlans: d.floorPlans, postalCode: d.postalCode, disclaimer: d.disclaimer, privateNote: d.privateNote,
+      },
+      units: d.units,
     };
   }
+
+  async function uploadPlan(i: number, file: File | undefined) {
+    if (!file) return;
+    setUploading("Envoi du plan…");
+    try {
+      const r = await uploadImageAction(await compress(file), "annonce");
+      if (r.ok && r.url) setPlan(i, { image: r.url });
+      else setError(r.error ?? "Envoi impossible.");
+    } catch {
+      setError("Cette image n'a pas pu être lue.");
+    }
+    setUploading(null);
+  }
+  const setPlan = (i: number, p: Partial<FloorPlanDraft>) => set({ floorPlans: d.floorPlans.map((x, j) => (j === i ? { ...x, ...p } : x)) });
+  const setUnit = (i: number, p: Partial<UnitDraft>) => set({ units: d.units.map((x, j) => (j === i ? { ...x, ...p } : x)) });
+  const setExtra = (i: number, p: Partial<{ title: string; value: string }>) => set({ additional: d.additional.map((x, j) => (j === i ? { ...x, ...p } : x)) });
 
   function save() {
     for (let s = 0; s < STEPS.length; s++) {
@@ -212,8 +260,30 @@ export function ListingEditor({
             <Field label={d.transaction === "rent" ? "Loyer mensuel (FCFA) *" : "Prix de vente (FCFA) *"}>
               <input className="input" inputMode="numeric" value={d.price} placeholder="Ex. 250000"
                 onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, "") })} />
-              {Number(d.price) > 0 ? <p className="mt-1 text-xs text-muted">{new Intl.NumberFormat("fr-FR").format(Number(d.price))} FCFA{d.transaction === "rent" ? " / mois" : ""}</p> : null}
+              {Number(d.price) > 0 ? <p className="mt-1 text-xs text-muted">{d.pricePrefix ? `${d.pricePrefix} ` : ""}{new Intl.NumberFormat("fr-FR").format(Number(d.price))} FCFA{d.pricePostfix ? ` ${d.pricePostfix}` : d.transaction === "rent" ? " / mois" : ""}</p> : null}
             </Field>
+            <details className="rounded-2xl border border-slate-200 p-4" open={!!(d.pricePrefix || d.pricePostfix || d.secondaryPrice)}>
+              <summary className="cursor-pointer text-sm font-semibold text-ink">Options de prix (facultatif)</summary>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <Field label="Condition de prix"><input className="input" value={d.pricePrefix} maxLength={40} placeholder="Ex. À partir de" onChange={(e) => set({ pricePrefix: e.target.value })} /></Field>
+                <Field label="Fréquence de paiement">
+                  <select className="input" value={FREQ.includes(d.pricePostfix) ? d.pricePostfix : ""} onChange={(e) => set({ pricePostfix: e.target.value })}>
+                    {FREQ.map((f) => <option key={f} value={f}>{f || (d.transaction === "rent" ? "par mois (défaut)" : "—")}</option>)}
+                  </select>
+                </Field>
+                <Field label="Prix promotionnel"><input className="input" inputMode="numeric" value={d.secondaryPrice} placeholder="Ex. 230000" onChange={(e) => set({ secondaryPrice: e.target.value.replace(/[^0-9]/g, "") })} /></Field>
+              </div>
+            </details>
+            {LABELS.length ? (
+              <Field label="Étiquettes (5 au plus)">
+                <div className="flex flex-wrap gap-2">
+                  {LABELS.map((t) => {
+                    const on = d.labels.includes(t.key);
+                    return <Chip key={t.key} on={on} onClick={() => set({ labels: on ? d.labels.filter((x) => x !== t.key) : [...d.labels, t.key].slice(0, 5) })}>{on ? "✓ " : ""}{t.label}</Chip>;
+                  })}
+                </div>
+              </Field>
+            ) : null}
           </>
         ) : null}
 
@@ -229,8 +299,29 @@ export function ListingEditor({
               <Num label="Chambres" v={d.bedrooms} on={(v) => set({ bedrooms: v })} />
               <Num label="Salles de bain" v={d.bathrooms} on={(v) => set({ bathrooms: v })} />
               <Num label="Garages" v={d.garage} on={(v) => set({ garage: v })} />
-              <Num label="Surface (m²)" v={d.surface} on={(v) => set({ surface: v })} />
+              <Num label={`Surface (${d.sizeUnit || "m²"})`} v={d.surface} on={(v) => set({ surface: v })} />
               <Num label="Année de construction" v={d.yearBuilt} on={(v) => set({ yearBuilt: v })} />
+              <Field label="Unité de surface">
+                <select className="input" value={d.sizeUnit} onChange={(e) => set({ sizeUnit: e.target.value })}>{AREA_UNITS.map((u) => <option key={u}>{u}</option>)}</select>
+              </Field>
+              <Num label={`Terrain (${d.landAreaUnit || "m²"})`} v={d.landArea} on={(v) => set({ landArea: v })} />
+              <Field label="Unité du terrain">
+                <select className="input" value={d.landAreaUnit} onChange={(e) => set({ landAreaUnit: e.target.value })}>{AREA_UNITS.map((u) => <option key={u}>{u}</option>)}</select>
+              </Field>
+              <Field label="Taille du garage"><input className="input" value={d.garageSize} maxLength={40} placeholder="Ex. 2 voitures" onChange={(e) => set({ garageSize: e.target.value })} /></Field>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-semibold text-ink">Détails supplémentaires</p>
+              <div className="space-y-2">
+                {d.additional.map((a, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input className="input" value={a.title} maxLength={60} placeholder="Ex. Eau" onChange={(e) => setExtra(i, { title: e.target.value })} />
+                    <input className="input" value={a.value} maxLength={160} placeholder="Ex. Forage + SODECI" onChange={(e) => setExtra(i, { value: e.target.value })} />
+                    <button type="button" aria-label="Retirer" className="shrink-0 rounded-lg px-3 text-red-600 ring-1 ring-red-200" onClick={() => set({ additional: d.additional.filter((_, j) => j !== i) })}>✕</button>
+                  </div>
+                ))}
+              </div>
+              {d.additional.length < 20 ? <button type="button" className="btn-ghost mt-2" onClick={() => set({ additional: [...d.additional, { title: "", value: "" }] })}>＋ Ajouter un détail</button> : null}
             </div>
           </>
         ) : null}
@@ -264,6 +355,7 @@ export function ListingEditor({
               </Field>
               <Field label="Quartier"><input className="input" value={d.quartier} placeholder="Ex. Riviera 2, Zone 4…" onChange={(e) => set({ quartier: e.target.value })} /></Field>
               <Field label="Adresse (non affichée)"><input className="input" value={d.address} placeholder="Rue, repère…" onChange={(e) => set({ address: e.target.value })} /></Field>
+              <Field label="Code postal / boîte postale"><input className="input" value={d.postalCode} maxLength={12} placeholder="Ex. 01 BP 1234" onChange={(e) => set({ postalCode: e.target.value })} /></Field>
             </div>
             <AddressSearch onPick={(h) => { set({ latitude: h.lat, longitude: h.lng }); setMapsLink(`${h.lat.toFixed(6)}, ${h.lng.toFixed(6)}`); }} />
             <Field label="Position sur la carte (recommandé)">
@@ -312,10 +404,63 @@ export function ListingEditor({
             <Field label="Vidéo (optionnel)">
               <input className="input" value={d.videoUrl} placeholder="Lien YouTube ou TikTok" onChange={(e) => set({ videoUrl: e.target.value })} />
             </Field>
+            <Field label="Visite virtuelle 360° (optionnel)">
+              <input className="input" value={d.virtualTour} placeholder="Lien Matterport, Kuula… ou code <iframe> à coller" onChange={(e) => set({ virtualTour: e.target.value })} />
+            </Field>
           </>
         ) : null}
 
         {step === 5 ? (
+          <>
+            <div>
+              <p className="font-display text-base font-bold text-ink">Plans (facultatif)</p>
+              <p className="text-sm text-muted">Plan de chaque niveau ou de chaque type de logement (image).</p>
+              <div className="mt-3 space-y-3">
+                {d.floorPlans.map((pl, i) => (
+                  <div key={i} className="grid gap-2 rounded-2xl border border-slate-200 p-3 sm:grid-cols-3">
+                    <input className="input sm:col-span-2" value={pl.title} placeholder="Titre (ex. Rez-de-chaussée)" onChange={(e) => setPlan(i, { title: e.target.value })} />
+                    <input className="input" value={pl.price} placeholder="Prix (facultatif)" onChange={(e) => setPlan(i, { price: e.target.value })} />
+                    <input className="input" value={pl.rooms} placeholder="Pièces" onChange={(e) => setPlan(i, { rooms: e.target.value })} />
+                    <input className="input" value={pl.baths} placeholder="Salles de bain" onChange={(e) => setPlan(i, { baths: e.target.value })} />
+                    <input className="input" value={pl.size} placeholder="Surface (ex. 120 m²)" onChange={(e) => setPlan(i, { size: e.target.value })} />
+                    <textarea className="input sm:col-span-3" rows={2} value={pl.description} placeholder="Description du plan" onChange={(e) => setPlan(i, { description: e.target.value })} />
+                    <div className="flex items-center gap-3 sm:col-span-3">
+                      {pl.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={pl.image} alt="" className="h-16 w-24 rounded-lg object-cover ring-1 ring-slate-200" />
+                      ) : null}
+                      <label className="btn-ghost cursor-pointer">{pl.image ? "Changer l'image" : "＋ Image du plan"}<input type="file" accept="image/*" hidden onChange={(e) => uploadPlan(i, e.target.files?.[0])} /></label>
+                      <button type="button" className="ml-auto text-sm font-semibold text-red-600" onClick={() => set({ floorPlans: d.floorPlans.filter((_, j) => j !== i) })}>Retirer</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {d.floorPlans.length < 10 ? <button type="button" className="btn-ghost mt-2" onClick={() => set({ floorPlans: [...d.floorPlans, { ...EMPTY_PLAN }] })}>＋ Ajouter un plan</button> : null}
+            </div>
+            <div>
+              <p className="font-display text-base font-bold text-ink">Lots et sous-annonces (facultatif)</p>
+              <p className="text-sm text-muted">Immeuble, résidence ou programme : chaque logement disponible avec son prix.</p>
+              <div className="mt-3 space-y-3">
+                {d.units.map((u, i) => (
+                  <div key={i} className="grid gap-2 rounded-2xl border border-slate-200 p-3 sm:grid-cols-4">
+                    <input className="input sm:col-span-2" value={u.title} placeholder="Titre (ex. Appartement A2)" onChange={(e) => setUnit(i, { title: e.target.value })} />
+                    <input className="input" value={u.type} placeholder="Type (ex. 3 pièces)" onChange={(e) => setUnit(i, { type: e.target.value })} />
+                    <input className="input" inputMode="numeric" value={u.price} placeholder="Prix FCFA" onChange={(e) => setUnit(i, { price: e.target.value.replace(/[^0-9]/g, "") })} />
+                    <input className="input" value={u.priceUnit} placeholder="Ex. par mois" onChange={(e) => setUnit(i, { priceUnit: e.target.value })} />
+                    <input className="input" value={u.beds} placeholder="Chambres" onChange={(e) => setUnit(i, { beds: e.target.value })} />
+                    <input className="input" value={u.baths} placeholder="Salles de bain" onChange={(e) => setUnit(i, { baths: e.target.value })} />
+                    <input className="input" value={u.size} placeholder="Surface" onChange={(e) => setUnit(i, { size: e.target.value })} />
+                    <input className="input sm:col-span-3" value={u.availability} placeholder="Disponibilité (ex. tout de suite, 1er décembre)" onChange={(e) => setUnit(i, { availability: e.target.value })} />
+                    <button type="button" className="text-sm font-semibold text-red-600" onClick={() => set({ units: d.units.filter((_, j) => j !== i) })}>Retirer</button>
+                  </div>
+                ))}
+              </div>
+              {d.units.length < 30 ? <button type="button" className="btn-ghost mt-2" onClick={() => set({ units: [...d.units, { ...EMPTY_UNIT }] })}>＋ Ajouter un lot</button> : null}
+            </div>
+          </>
+        ) : null}
+
+        {step === CONTACT_STEP ? (
           <>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Nom affiché"><input className="input" value={d.contactName} onChange={(e) => set({ contactName: e.target.value })} /></Field>
@@ -333,6 +478,12 @@ export function ListingEditor({
                 <p className="truncate text-xs text-muted">{[d.quartier, d.commune, d.city].filter(Boolean).join(", ")} · {d.photos.length} photo(s) · {d.features.length} équipement(s)</p>
               </div>
             </div>
+            <Field label="Mention légale (facultatif)">
+              <textarea className="input" rows={2} value={d.disclaimer} maxLength={600} placeholder="Ex. Prix hors frais d’agence, sous réserve de disponibilité." onChange={(e) => set({ disclaimer: e.target.value })} />
+            </Field>
+            <Field label="Note privée (visible par vous seul)">
+              <textarea className="input" rows={2} value={d.privateNote} maxLength={2000} placeholder="Ex. Clés chez le gardien, propriétaire joignable le soir…" onChange={(e) => set({ privateNote: e.target.value })} />
+            </Field>
           </>
         ) : null}
       </div>
