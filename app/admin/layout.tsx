@@ -144,6 +144,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/comptes/opportunites", label: "Centre des opportunités", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/taches", label: "Tâches", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/equipes", label: "Équipes et zones", icon: "users", child: true, group: "comptes" },
+    { href: "/admin/comptes/performance", label: "Objectifs et performance", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/reglages", label: "Réglages", icon: "users", child: true, group: "comptes" },
     // Formulaires : champs de publication et onglets de l'espace membre.
     { href: "/admin/formulaires", label: "Formulaires", icon: "layout", group: "formulaires" },

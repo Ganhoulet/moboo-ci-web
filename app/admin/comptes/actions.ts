@@ -88,3 +88,6 @@ export async function phoneChangeAction(accountId: string, newPhone: string, rea
 export async function decidePhoneAction(id: string, approve: boolean, note = ""): Promise<R> {
   return send(`/phone-changes/${encodeURIComponent(id)}/decide`, "POST", { approve, note });
 }
+export async function saveGoalsAction(managerId: string, period: string, goals: Record<string, number | null>): Promise<R> {
+  return send("/goals", "PUT", { managerId, period, goals });
+}
