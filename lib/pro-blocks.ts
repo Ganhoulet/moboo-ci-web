@@ -173,7 +173,7 @@ export const PRO_DEFAULTS: Record<ProSlug, ProContent> = {
   "pros-agents": {
     meta: { title: "Agents immobiliers : plus de mandats et de clients avec Moboo.ci", description: "Page professionnelle, publication de vos mandats, suivi des demandes, statistiques, badge Vérifié et visibilité par quartier : Moboo.ci, l’outil des agents immobiliers en Côte d’Ivoire." },
     sections: [
-      s("proHero", { eyebrow: "Agents immobiliers", title: "Plus de clients, moins de temps perdu", subtitle: "Publiez vos mandats, recevez des demandes qualifiées et suivez chaque client jusqu’à la signature, depuis une seule application.", primaryLabel: "Créer mon compte agent", primaryHref: "/inscription", secondaryLabel: "Être rappelé", secondaryHref: "#contact", image: "/aide/demandes.webp" }),
+      s("proHero", { eyebrow: "Agents immobiliers", title: "Plus de clients, moins de temps perdu", subtitle: "Publiez vos mandats, recevez des demandes qualifiées et suivez chaque client jusqu’à la signature, depuis une seule application.", primaryLabel: "Créer mon compte agent", primaryHref: "/inscription", secondaryLabel: "Être rappelé", secondaryHref: "#contact", image: "/aide/page-pro.webp" }),
       stats(["searches30", "recherches de clients (30 j)"], ["inquiries30", "demandes envoyées aux annonceurs (30 j)"], ["views30", "vues d’annonces (30 j)"], ["listings", "annonces en ligne"]),
       s("proFeatures", { title: "Tout ce dont un agent a besoin", subtitle: "Gratuit pour démarrer, sans commission sur vos affaires.", columns: "3", items: [
         { icon: "🪪", title: "Votre page professionnelle", text: "Photo, présentation, WhatsApp, réseaux, toutes vos annonces et vos avis : partagez-la comme une carte de visite.", href: "/aide/article/agent-demarrer" },
@@ -207,7 +207,7 @@ export const PRO_DEFAULTS: Record<ProSlug, ProContent> = {
   "pros-agences": {
     meta: { title: "Agences immobilières et promoteurs : votre vitrine sur Moboo.ci", description: "Présentez votre agence et vos programmes, publiez automatiquement par API ou WordPress, suivez les demandes, gérez forfaits et factures : Moboo.ci pour les agences et promoteurs immobiliers." },
     sections: [
-      s("proHero", { eyebrow: "Agences et promoteurs", title: "Toute votre agence, visible partout en Côte d’Ivoire", subtitle: "Une vitrine pour votre marque, vos biens et vos programmes neufs, des demandes centralisées et une publication automatique depuis vos outils.", primaryLabel: "Créer le compte de l’agence", primaryHref: "/inscription", secondaryLabel: "Parler à un conseiller", secondaryHref: "#contact", image: "/aide/api.webp" }),
+      s("proHero", { eyebrow: "Agences et promoteurs", title: "Toute votre agence, visible partout en Côte d’Ivoire", subtitle: "Une vitrine pour votre marque, vos biens et vos programmes neufs, des demandes centralisées et une publication automatique depuis vos outils.", primaryLabel: "Créer le compte de l’agence", primaryHref: "/inscription", secondaryLabel: "Parler à un conseiller", secondaryHref: "#contact", image: "/aide/page-agence.webp" }),
       stats(["listings", "annonces en ligne"], ["searches30", "recherches (30 j)"], ["inquiries30", "demandes de clients (30 j)"], ["cities", "villes couvertes"]),
       s("proFeatures", { title: "Pensé pour les équipes et les volumes", columns: "3", items: [
         { icon: "🏢", title: "Vitrine de l’agence", text: "Logo, présentation, tous vos biens et vos avis sur une page à votre nom.", href: "/aide/article/agence-demarrer" },
