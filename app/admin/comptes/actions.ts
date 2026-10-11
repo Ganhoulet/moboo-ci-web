@@ -60,3 +60,9 @@ export async function changeDatesAction(key: string, input: { start: string; end
 export async function disputeReplyAction(kind: string, id: string, disputeId: string, body: string): Promise<R> {
   return send(`/accounts/${kind}/${encodeURIComponent(id)}/disputes/${encodeURIComponent(disputeId)}/reply`, "POST", { body, hostAgreed: true });
 }
+export async function sendRecoAction(kind: string, id: string, input: { code: string; itemId: string; channel: string; message: string }): Promise<R & { data?: any }> {
+  return send(`/accounts/${kind}/${encodeURIComponent(id)}/recommendations/send`, "POST", input);
+}
+export async function dismissRecoAction(kind: string, id: string, input: { code: string; itemId: string; note?: string }): Promise<R> {
+  return send(`/accounts/${kind}/${encodeURIComponent(id)}/recommendations/dismiss`, "POST", input);
+}

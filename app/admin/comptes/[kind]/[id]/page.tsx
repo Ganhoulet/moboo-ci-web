@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { ActivityForm, AssignControl, ChangeDates, DisputeReply, TaskCheck } from "@/components/backoffice/am-ui";
 import { fcfa } from "@/lib/am";
+import { RecoList } from "@/components/backoffice/am-reco";
 import { getAm } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function AmAccount({ params }: { params: { kind: string; id
   const [d, managers] = await Promise.all([getAm<any>(`/accounts/${params.kind}/${encodeURIComponent(params.id)}`), getAm<{ id: string; name: string }[]>("/managers")]);
   if (!d) notFound();
   // Litiges de l'hôte (résidences et espaces) : ouverts en détail, pour répondre à sa place.
+  const reco = await getAm<any>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/recommendations`);
   const disputes = d.kind === "site" ? null : await getAm<{ items: any[]; awaitingReply: number }>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/disputes`);
   const openDisputes = await Promise.all((disputes?.items ?? []).filter((x) => x.open).slice(0, 5).map((x) => getAm<any>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/disputes/${x.id}`)));
   const p = d.profile;
@@ -54,6 +56,7 @@ export default async function AmAccount({ params }: { params: { kind: string; id
 
       <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
         <div className="space-y-5">
+          {reco ? <RecoList kind={d.kind} id={d.id} data={reco} /> : null}
           <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
             <h2 className="font-display text-lg font-bold text-ink">{d.kind === "site" ? "Annonces" : "Dernières réservations"}</h2>
             <ul className="mt-2 divide-y divide-slate-100 text-sm">

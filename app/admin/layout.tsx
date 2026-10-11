@@ -141,6 +141,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/comptes", label: "Suivi des comptes", icon: "users", group: "comptes", badge: am?.urgent ?? 0 },
     { href: "/admin/comptes/reservations", label: "Réservations à confirmer", icon: "users", child: true, group: "comptes", badge: am?.pending ?? 0 },
     { href: "/admin/comptes/portefeuille", label: "Portefeuille", icon: "users", child: true, group: "comptes" },
+    { href: "/admin/comptes/opportunites", label: "Centre des opportunités", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/taches", label: "Tâches", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/equipes", label: "Équipes et zones", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/reglages", label: "Réglages", icon: "users", child: true, group: "comptes" },
