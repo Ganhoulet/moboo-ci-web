@@ -24,7 +24,7 @@ export async function SavedSearches() {
                   {s.alertsEnabled ? "Alertes activées" : "Alertes en pause"}
                 </span>
               </Link>
-              <form action={deleteSearchAction.bind(null, s.id)}>
+              <form data-action="alerts.manage" action={deleteSearchAction.bind(null, s.id)}>
                 <button
                   type="submit"
                   aria-label="Supprimer la recherche"
@@ -36,7 +36,7 @@ export async function SavedSearches() {
                 </button>
               </form>
             </div>
-            <form action={toggleAlertAction.bind(null, s.id, !s.alertsEnabled)} className="mt-3">
+            <form data-action="alerts.manage" action={toggleAlertAction.bind(null, s.id, !s.alertsEnabled)} className="mt-3">
               <button
                 type="submit"
                 className={

@@ -43,7 +43,7 @@ export function ListingRowActions({ id, status, transaction, featured, awaitingP
 
   return (
     <div ref={ref} className="relative flex shrink-0 items-center gap-1">
-      <Link href={`/mon-espace/annonces/${id}`} className="hidden rounded-lg px-3 py-1.5 text-sm font-semibold text-brand-800 hover:bg-brand-50 sm:inline-flex">
+      <Link data-action="listing.edit" href={`/mon-espace/annonces/${id}`} className="hidden rounded-lg px-3 py-1.5 text-sm font-semibold text-brand-800 hover:bg-brand-50 sm:inline-flex">
         Modifier
       </Link>
       <button type="button" aria-label="Plus d'actions" onClick={() => setOpen((v) => !v)} disabled={pending}
@@ -56,24 +56,24 @@ export function ListingRowActions({ id, status, transaction, featured, awaitingP
       </button>
       {open ? (
         <div className="absolute right-0 top-10 z-30 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-          <Link href={`/mon-espace/annonces/${id}`} className={item + " sm:hidden"}>✏️ Modifier</Link>
+          <Link data-action="listing.edit" href={`/mon-espace/annonces/${id}`} className={item + " sm:hidden"}>✏️ Modifier</Link>
           {status === "ACTIVE" ? <Link href={`/annonce/${id}`} target="_blank" className={item}>👁 Voir sur le site</Link> : null}
           {status === "ACTIVE" ? (
             <>
-              <button type="button" className={item} onClick={() => run(() => setListingStatusAction(id, closed))}>
+              <button data-action="listing.status" type="button" className={item} onClick={() => run(() => setListingStatusAction(id, closed))}>
                 ✅ {transaction === "sale" ? "Marquer vendu" : "Marquer loué"}
               </button>
-              <button type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "DISABLED"))}>🙈 Masquer du site</button>
-              <button type="button" className={item} onClick={() => (featured ? run(() => featureListingAction(id, false)) : feature())}>{featured ? "☆ Arrêter la sponsorisation" : "⭐ Sponsoriser"}</button>
-              <Link href={`/mon-espace/publicite?tab=boost&annonce=${id}`} className={item}>📣 Booster par zone / vitrine</Link>
+              <button data-action="listing.status" type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "DISABLED"))}>🙈 Masquer du site</button>
+              <button data-action="listing.feature" type="button" className={item} onClick={() => (featured ? run(() => featureListingAction(id, false)) : feature())}>{featured ? "☆ Arrêter la sponsorisation" : "⭐ Sponsoriser"}</button>
+              <Link data-action="ads.boost" href={`/mon-espace/publicite?tab=boost&annonce=${id}`} className={item}>📣 Booster par zone / vitrine</Link>
             </>
           ) : awaitingPayment ? (
             <button type="button" className={item} onClick={() => run(() => payListingAction(id))}>💳 Payer la publication</button>
           ) : (
-            <button type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "ACTIVE"))}>🚀 Remettre en ligne</button>
+            <button data-action="listing.status" type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "ACTIVE"))}>🚀 Remettre en ligne</button>
           )}
-          <button type="button" className={item} onClick={() => run(() => duplicateListingAction(id))}>📄 Dupliquer</button>
-          <button type="button" className={item + " text-red-600"}
+          <button data-action="listing.duplicate" type="button" className={item} onClick={() => run(() => duplicateListingAction(id))}>📄 Dupliquer</button>
+          <button data-action="listing.delete" type="button" className={item + " text-red-600"}
             onClick={() => { if (confirm("Supprimer cette annonce ? Elle sera retirée du site.")) run(() => deleteListingAction(id)); }}>
             🗑 Supprimer
           </button>

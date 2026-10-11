@@ -159,7 +159,7 @@ export function ProfileForm({ account: a, publicProfile }: { account: SiteAccoun
       ) : null}
 
       {msg ? <p className={"rounded-xl p-3 text-sm font-medium " + (msg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>{msg.text}</p> : null}
-      <button type="button" onClick={save} disabled={pending || uploading} className="btn-primary w-full bg-accent-600 hover:bg-accent-700 disabled:opacity-60 sm:w-auto sm:px-8">
+      <button data-action="profile.edit" type="button" onClick={save} disabled={pending || uploading} className="btn-primary w-full bg-accent-600 hover:bg-accent-700 disabled:opacity-60 sm:w-auto sm:px-8">
         {pending ? "Enregistrement…" : "Enregistrer mon profil"}
       </button>
     </div>

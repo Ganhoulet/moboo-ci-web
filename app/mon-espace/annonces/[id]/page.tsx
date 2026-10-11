@@ -1,4 +1,4 @@
-import { requireSpace } from "@/lib/member-space";
+import { actionAllowed, requireSpace } from "@/lib/member-space";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { PageHeader, STATUS_LABEL } from "@/components/dashboard-ui";
@@ -13,6 +13,8 @@ import { parseListingForm } from "@/lib/listing-form";
 export default async function ModifierAnnonce({ params }: { params: { id: string } }) {
   const account = getSession()!;
   await requireSpace(account.accountType, "annonces");
+  // Modification coupée ou réservée (back-office → Formulaires) : retour à la liste.
+  if (!(await actionAllowed(account.accountType, "listing.edit"))) redirect("/mon-espace/annonces");
   const l = await getMyListing(params.id);
   if (!l) notFound();
 

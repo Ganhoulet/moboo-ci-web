@@ -109,7 +109,7 @@ function Card({ q, compact, open, onToggle, onPatch }: {
       {open ? (
         <div className="mt-3 space-y-3 border-t border-slate-100 pt-3">
           {q.message ? <p className="whitespace-pre-line text-sm text-slate-600">{q.message}</p> : null}
-          <button type="button" onClick={openChat} disabled={opening}
+          <button data-action="inquiry.chat" type="button" onClick={openChat} disabled={opening}
             className="btn-primary w-full bg-brand-800 py-2 text-sm hover:bg-brand-900 disabled:opacity-60">
             {opening ? "Ouverture…" : "💬 Répondre dans Messages"}
           </button>
@@ -122,7 +122,7 @@ function Card({ q, compact, open, onToggle, onPatch }: {
           </div>
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-ink">Étape</span>
-            <select className="input py-2 text-sm" value={q.status} onChange={(e) => setStatus(e.target.value)} disabled={pending}>
+            <select data-action="inquiry.update" className="input py-2 text-sm" value={q.status} onChange={(e) => setStatus(e.target.value)} disabled={pending}>
               {INQUIRY_STEPS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
             </select>
           </label>
@@ -130,7 +130,7 @@ function Card({ q, compact, open, onToggle, onPatch }: {
             <span className="mb-1 block text-xs font-semibold text-ink">Note privée</span>
             <textarea className="input min-h-[70px] text-sm" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ex. rappeler lundi, budget 200 000 F…" />
           </label>
-          <button type="button" onClick={saveNote} disabled={pending || note === (q.note ?? "")}
+          <button data-action="inquiry.update" type="button" onClick={saveNote} disabled={pending || note === (q.note ?? "")}
             className="btn-primary w-full bg-accent-600 py-2 text-sm hover:bg-accent-700 disabled:opacity-50">
             {pending ? "Enregistrement…" : "Enregistrer la note"}
           </button>

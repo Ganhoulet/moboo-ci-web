@@ -36,7 +36,7 @@ export function PackageCards({ items, loggedIn, current }: { items: Package[]; l
               <li>✓ Demandes et messages illimités</li>
             </ul>
             {loggedIn ? (
-              <button type="button" disabled={!!busy} onClick={() => choose(p.id)}
+              <button data-action="package.checkout" type="button" disabled={!!busy} onClick={() => choose(p.id)}
                 className={"mt-6 rounded-full py-2.5 text-sm font-bold transition disabled:opacity-60 " + (p.popular ? "bg-accent-600 text-white hover:bg-accent-700" : "bg-brand-800 text-white hover:bg-brand-900")}>
                 {busy === p.id ? "Redirection vers le paiement…" : current === p.name ? "Renouveler" : "Commencer"}
               </button>

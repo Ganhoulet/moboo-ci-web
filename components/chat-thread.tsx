@@ -75,7 +75,7 @@ export function ChatThread({ conversationId, messages }: { conversationId: strin
         <div ref={bottom} />
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); send(); }} className="border-t border-slate-200 bg-white p-3">
+      <form data-action="message.send" onSubmit={(e) => { e.preventDefault(); send(); }} className="border-t border-slate-200 bg-white p-3">
         {error ? <p className="mb-2 text-sm font-medium text-red-600">{error}</p> : null}
         <div className="flex items-end gap-2">
           <textarea

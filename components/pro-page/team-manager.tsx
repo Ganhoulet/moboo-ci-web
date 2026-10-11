@@ -56,7 +56,7 @@ export function TeamManager({ initial }: { initial: Member[] }) {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
+      <section data-action="team.manage" className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
         <h2 className="font-display text-lg font-bold text-ink">Ajouter un membre</h2>
         <div className="mt-3 inline-flex rounded-full bg-slate-100 p-1 text-sm font-semibold">
           <button type="button" onClick={() => setMode("account")} className={"rounded-full px-4 py-1.5 " + (mode === "account" ? "bg-white text-ink shadow" : "text-muted")}>Agent avec un compte Moboo</button>
@@ -102,7 +102,7 @@ export function TeamManager({ initial }: { initial: Member[] }) {
                 <input defaultValue={m.role} onBlur={(e) => e.target.value !== m.role && start(async () => apply(await updateMember(m.id, { role: e.target.value }), "Rôle enregistré."))} className="mt-0.5 w-full max-w-[240px] rounded-lg border border-transparent px-1 text-sm text-muted hover:border-slate-200 focus:border-slate-300 focus:outline-none" />
                 <p className="text-xs text-muted">{m.linked ? <>Compte Moboo{m.username ? <> · <Link href={`/pro/${m.username}`} className="underline">voir sa page</Link></> : null}</> : "Sans compte"}{m.phone ? ` · ${m.phone}` : ""}</p>
               </div>
-              <div className="flex items-center gap-1 text-xs">
+              <div data-action="team.manage" className="flex items-center gap-1 text-xs">
                 <button type="button" disabled={pending || i === 0} onClick={() => move(i, -1)} className="rounded bg-slate-100 px-2 py-1 disabled:opacity-40" aria-label="Monter">↑</button>
                 <button type="button" disabled={pending || i === members.length - 1} onClick={() => move(i, 1)} className="rounded bg-slate-100 px-2 py-1 disabled:opacity-40" aria-label="Descendre">↓</button>
                 <button type="button" disabled={pending} onClick={() => { if (confirm(`Retirer ${m.name} de l’équipe ?`)) start(async () => apply(await removeMember(m.id), "Membre retiré.")); }} className="ml-2 font-semibold text-red-600 hover:underline">Retirer</button>

@@ -12,7 +12,7 @@ export function CancelBookingButton({ bookingKey }: { bookingKey: string }) {
   const [err, setErr] = useState<string | null>(null);
   return (
     <div>
-      <button type="button" disabled={pending}
+      <button data-action="booking.cancel" type="button" disabled={pending}
         onClick={() => window.confirm("Annuler cette demande de réservation ? L’hôte sera prévenu.") && start(async () => {
           const r = await cancelBookingAction(bookingKey);
           if (!r.ok) setErr(r.error); else router.refresh();
@@ -52,13 +52,13 @@ export function DisputeForm({ bookingKey, categories, outcomes, intro }: {
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-red-700 ring-1 ring-red-200 hover:bg-red-50">
+      <button data-action="dispute.manage" type="button" onClick={() => setOpen(true)} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-red-700 ring-1 ring-red-200 hover:bg-red-50">
         ⚠ Signaler un problème
       </button>
     );
   }
   return (
-    <form className="space-y-4 rounded-2xl bg-white p-5 shadow-card"
+    <form data-action="dispute.manage" className="space-y-4 rounded-2xl bg-white p-5 shadow-card"
       onSubmit={(e) => {
         e.preventDefault();
         start(async () => {
@@ -117,7 +117,7 @@ export function DisputeReply({ id, waiting }: { id: string; waiting: boolean }) 
   const [pending, start] = useTransition();
   return (
     <div className="space-y-3">
-      <form className={"space-y-3 rounded-2xl bg-white p-5 shadow-card " + (waiting ? "ring-2 ring-amber-300" : "")}
+      <form data-action="dispute.manage" className={"space-y-3 rounded-2xl bg-white p-5 shadow-card " + (waiting ? "ring-2 ring-amber-300" : "")}
         onSubmit={(e) => {
           e.preventDefault();
           start(async () => {
@@ -135,7 +135,7 @@ export function DisputeReply({ id, waiting }: { id: string; waiting: boolean }) 
         {err ? <p className="text-sm font-medium text-red-600">{err}</p> : null}
         <button disabled={pending || !body.trim()} className="btn-primary bg-brand-800 hover:bg-brand-900 disabled:opacity-60">{pending ? "Envoi…" : "Envoyer"}</button>
       </form>
-      <button type="button" disabled={pending} className="text-sm font-semibold text-slate-500 hover:underline"
+      <button data-action="dispute.manage" type="button" disabled={pending} className="text-sm font-semibold text-slate-500 hover:underline"
         onClick={() => window.confirm("Retirer ce litige ? Le problème sera considéré comme réglé.") && start(async () => {
           const r = await withdrawDisputeAction(id);
           if (!r.ok) setErr(r.error); else router.refresh();

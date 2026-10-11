@@ -175,10 +175,10 @@ export function ProPageEditor({ initial }: { initial: Data }) {
                     <input defaultValue={m.caption} placeholder="Légende" maxLength={120} onBlur={(e) => e.target.value !== m.caption && caption(m.id, e.target.value)} className="w-full rounded-lg border border-slate-200 px-2 py-1 text-xs" />
                     <div className="flex items-center justify-between text-xs">
                       <span className="flex gap-1">
-                        <button type="button" disabled={pending || i === 0} onClick={() => move(m.id, -1)} className="rounded bg-slate-100 px-2 py-0.5 disabled:opacity-40" aria-label="Avancer">←</button>
-                        <button type="button" disabled={pending || i === p.media.length - 1} onClick={() => move(m.id, 1)} className="rounded bg-slate-100 px-2 py-0.5 disabled:opacity-40" aria-label="Reculer">→</button>
+                        <button data-action="pro.media" type="button" disabled={pending || i === 0} onClick={() => move(m.id, -1)} className="rounded bg-slate-100 px-2 py-0.5 disabled:opacity-40" aria-label="Avancer">←</button>
+                        <button data-action="pro.media" type="button" disabled={pending || i === p.media.length - 1} onClick={() => move(m.id, 1)} className="rounded bg-slate-100 px-2 py-0.5 disabled:opacity-40" aria-label="Reculer">→</button>
                       </span>
-                      <button type="button" disabled={pending} onClick={() => { if (confirm("Retirer ce média ?")) start(async () => apply(await removeMedia(m.id, d.username), "Média retiré.")); }} className="font-semibold text-red-600 hover:underline">Retirer</button>
+                      <button data-action="pro.media" type="button" disabled={pending} onClick={() => { if (confirm("Retirer ce média ?")) start(async () => apply(await removeMedia(m.id, d.username), "Média retiré.")); }} className="font-semibold text-red-600 hover:underline">Retirer</button>
                     </div>
                   </div>
                 </div>
@@ -203,11 +203,11 @@ export function ProPageEditor({ initial }: { initial: Data }) {
                   ))}
                 </div>
               ) : null}
-              <button type="button" disabled={pending || !pasted.some((x) => x.v) || videos >= s.maxVideos} onClick={addLinks} className="mt-3 rounded-xl bg-ink px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Ajouter {pasted.filter((x) => x.v).length > 1 ? `les ${pasted.filter((x) => x.v).length} vidéos` : "la vidéo"}</button>
+              <button data-action="pro.media" type="button" disabled={pending || !pasted.some((x) => x.v) || videos >= s.maxVideos} onClick={addLinks} className="mt-3 rounded-xl bg-ink px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Ajouter {pasted.filter((x) => x.v).length > 1 ? `les ${pasted.filter((x) => x.v).length} vidéos` : "la vidéo"}</button>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <button type="button" disabled={photos >= s.maxPhotos || progress !== null} onClick={() => photoInput.current?.click()} className="rounded-xl border border-ink px-4 py-2 text-sm font-bold text-ink hover:bg-slate-50 disabled:opacity-40">+ Photo ({photos}/{s.maxPhotos})</button>
+              <button data-action="pro.media" type="button" disabled={photos >= s.maxPhotos || progress !== null} onClick={() => photoInput.current?.click()} className="rounded-xl border border-ink px-4 py-2 text-sm font-bold text-ink hover:bg-slate-50 disabled:opacity-40">+ Photo ({photos}/{s.maxPhotos})</button>
               <span className="text-xs text-muted">JPG, PNG ou WEBP, réduite automatiquement.</span>
               <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { const x = e.target.files?.[0]; if (x) void upload(x); e.target.value = ""; }} />
             </div>
@@ -233,7 +233,7 @@ export function ProPageEditor({ initial }: { initial: Data }) {
               {d.agency ? (
                 <div className="mt-1 flex flex-wrap items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 ring-1 ring-emerald-200">
                   <span className="text-emerald-900">✓ Membre de <strong>{d.agency.name}</strong> · {d.agency.role}</span>
-                  <button type="button" className="ml-auto text-xs font-semibold text-red-600 hover:underline" onClick={() => { if (confirm(`Quitter l’équipe de ${d.agency!.name} ?`)) start(async () => apply(await leaveAgency(d.username), "Vous avez quitté l’équipe.", setMsg)); }}>Quitter</button>
+                  <button data-action="pro.leaveAgency" type="button" className="ml-auto text-xs font-semibold text-red-600 hover:underline" onClick={() => { if (confirm(`Quitter l’équipe de ${d.agency!.name} ?`)) start(async () => apply(await leaveAgency(d.username), "Vous avez quitté l’équipe.", setMsg)); }}>Quitter</button>
                 </div>
               ) : <p className="mt-1 rounded-xl bg-slate-50 px-3 py-2 text-xs text-muted">Indépendant. Pour apparaître « Membre de … », votre agence vous ajoute à son équipe depuis son espace, avec votre numéro de téléphone.</p>}
             </div>
@@ -272,7 +272,7 @@ export function ProPageEditor({ initial }: { initial: Data }) {
       </Card>
 
       <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-3 rounded-2xl bg-white p-3 shadow-lg ring-1 ring-slate-200">
-        <button type="button" disabled={pending} onClick={save} className="rounded-xl bg-gradient-to-r from-accent-500 to-accent-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">{pending ? "Enregistrement…" : "Enregistrer ma page"}</button>
+        <button data-action="pro.edit" type="button" disabled={pending} onClick={save} className="rounded-xl bg-gradient-to-r from-accent-500 to-accent-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">{pending ? "Enregistrement…" : "Enregistrer ma page"}</button>
         {msg ? <span className={"text-sm " + (msg.ok ? "text-emerald-700" : "text-red-600")}>{msg.text}</span> : null}
       </div>
     </div>

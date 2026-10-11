@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession, displayName, initials } from "@/lib/session";
 import { accountLabel, isPublisher } from "@/lib/accounts";
-import { spaceMenu } from "@/lib/member-space";
+import { blockedActions, blockedActionsCss, spaceMenu } from "@/lib/member-space";
 import { DashboardSideNav, DashboardTabs } from "@/components/dashboard-nav";
 import { FavoritesSync } from "@/components/favorites-sync";
 import { logoutAction } from "@/app/compte/actions";
@@ -28,6 +28,8 @@ export default async function EspaceLayout({ children }: { children: React.React
 
   const type = account.accountType ?? "particulier";
   const settings = await getSiteSettings();
+  // Actions coupées ou réservées (back-office → Formulaires) : boutons masqués.
+  const hideCss = blockedActionsCss(await blockedActions(type));
   const items = (await spaceMenu(type))
     .filter((i) => settings.packages.enabled || (i.key !== "forfait" && i.key !== "factures"))
     .filter((i) => i.key !== "publicite" || settings.ads.enabled !== false)
@@ -48,6 +50,7 @@ export default async function EspaceLayout({ children }: { children: React.React
   return (
     <div className="container-page py-6 lg:py-8">
       <FavoritesSync />
+      {hideCss ? <style dangerouslySetInnerHTML={{ __html: hideCss }} /> : null}
       <div className="lg:grid lg:grid-cols-[250px_1fr] lg:gap-8 print:block">
         {/* Barre latérale (desktop) */}
         <aside className="hidden lg:block print:!hidden">

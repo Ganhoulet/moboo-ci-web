@@ -42,7 +42,7 @@ export function VerificationForm({ level, docTypes, defaultName, defaultCompany 
   );
 
   return (
-    <form className="space-y-4 rounded-2xl bg-white p-5 shadow-card"
+    <form data-action="verification.submit" className="space-y-4 rounded-2xl bg-white p-5 shadow-card"
       onSubmit={(e) => {
         e.preventDefault();
         if (!front) { setErr(biz ? "Ajoutez le document." : "Ajoutez la pièce (recto)."); return; }

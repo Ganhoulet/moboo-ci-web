@@ -19,6 +19,8 @@ export interface ListingFormConfig {
 }
 export interface MemberSpaceConfig {
   items: Record<string, { enabled?: boolean; label?: string; types?: string[] }>;
+  /** Actions à l'intérieur des pages (catalogue : lib/member-actions.ts). */
+  actions: Record<string, { enabled?: boolean; types?: string[] }>;
 }
 
 export type StepId = "essentiel" | "details" | "equipements" | "localisation" | "medias" | "plans" | "contact";
@@ -93,7 +95,7 @@ export function parseListingForm(raw: unknown): ListingFormConfig {
 }
 
 export function parseMemberSpace(raw: unknown): MemberSpaceConfig {
-  return { items: obj(obj(raw).items) };
+  return { items: obj(obj(raw).items), actions: obj(obj(raw).actions) };
 }
 
 export interface FieldCtx { accountType?: string | null; transaction?: string | null; propertyType?: string | null; team?: boolean }
@@ -132,6 +134,14 @@ export function memberItemOn(cfg: MemberSpaceConfig, key: string, accountType?: 
   if (!it) return true;
   if (it.enabled === false && key !== "tableau" && key !== "profil") return false;
   return !it.types?.length || key === "tableau" || key === "profil" || it.types.includes(accountType || "particulier");
+}
+
+/** Action de l'espace membre permise pour ce profil ? */
+export function memberActionOn(cfg: MemberSpaceConfig, key: string, accountType?: string | null) {
+  const a = cfg.actions[key];
+  if (!a) return true;
+  if (a.enabled === false) return false;
+  return !a.types?.length || a.types.includes(accountType || "particulier");
 }
 
 /** Valeur lisible d'un champ créé (fiche publique, aperçu). */

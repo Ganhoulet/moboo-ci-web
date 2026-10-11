@@ -12,6 +12,8 @@ const d = (s: string | null) => (s ? new Date(s).toLocaleDateString("fr-FR", { d
 const ctr = (clicks: number, views: number) => (views ? `${((clicks / views) * 100).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %` : "—");
 
 type Tab = "boost" | "showcase" | "partner" | "banner" | "history";
+/** Action réglable dans le back-office (Formulaires → Espace membre) pour chaque onglet. */
+const TAB_ACTION: Partial<Record<Tab, string>> = { boost: "ads.boost", showcase: "ads.showcase", partner: "ads.partner", banner: "ads.campaigns" };
 const TABS: [Tab, string, string][] = [
   ["boost", "Boost par zone", "En tête des résultats d’une commune ou d’une ville"],
   ["showcase", "Vitrine premium", "Grand format et badge « Vitrine »"],
@@ -101,7 +103,7 @@ export function AdsHub({ data, zones, isPro, initialTab, initialListing }: { dat
             <div><p className="font-display text-xl font-extrabold">{n(totals.clicks)}</p><p className="text-[11px] text-white/70">clics</p></div>
           </div>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow-card">
+        <div data-action="ads.topup" className="rounded-2xl bg-white p-5 shadow-card">
           <p className="font-semibold text-ink">Recharger mon solde</p>
           <p className="text-sm text-muted">Paiement par Wave, Orange Money, MTN MoMo, Moov Money ou carte. Plus vous rechargez, plus le bonus est grand.</p>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
@@ -122,7 +124,7 @@ export function AdsHub({ data, zones, isPro, initialTab, initialListing }: { dat
       {/* Onglets */}
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" role="tablist">
         {TABS.map(([k, label]) => (
-          <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+          <button key={k} data-action={TAB_ACTION[k]} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
             className={"shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition " + (tab === k ? "bg-brand-800 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50")}>{label}</button>
         ))}
       </div>
@@ -157,7 +159,7 @@ export function AdsHub({ data, zones, isPro, initialTab, initialListing }: { dat
                   <p className="font-semibold text-ink">Ce que vous obtenez</p>
                   <p>Votre annonce en tête des résultats « {wholeCity ? bl?.city : bl?.commune} », mention « Sponsorisé », rotation équitable avec les autres annonceurs.</p>
                 </div>
-                <div className="md:col-span-3"><BuyBtn price={bPrice} label="Booster" onClick={() => run(() => boostAction(bListing, wholeCity ? "city" : "commune", bDays))} /></div>
+                <div data-action="ads.boost" className="md:col-span-3"><BuyBtn price={bPrice} label="Booster" onClick={() => run(() => boostAction(bListing, wholeCity ? "city" : "commune", bDays))} /></div>
               </div>
             ) : <p className="text-sm text-muted">Aucune annonce en ligne à booster pour le moment.</p>}
           </div>
@@ -195,7 +197,7 @@ export function AdsHub({ data, zones, isPro, initialTab, initialListing }: { dat
                     <p className="truncate font-medium text-ink">{l.title}</p>
                     <p className="text-xs text-muted">{[l.commune, l.city].filter(Boolean).join(", ")} · {n(l.views)} vues{l.showcaseUntil ? ` · Vitrine jusqu’au ${d(l.showcaseUntil)}` : ""}</p>
                   </div>
-                  <button type="button" disabled={pending || !l.online || short(p.showcase.price30)} onClick={() => run(() => showcaseAction(l.id), `Mettre « ${l.title} » en vitrine pour ${n(p.showcase.price30)} crédits ?`)}
+                  <button data-action="ads.showcase" type="button" disabled={pending || !l.online || short(p.showcase.price30)} onClick={() => run(() => showcaseAction(l.id), `Mettre « ${l.title} » en vitrine pour ${n(p.showcase.price30)} crédits ?`)}
                     className="rounded-full bg-accent-600 px-4 py-2 text-xs font-bold text-white hover:bg-accent-700 disabled:opacity-50">{l.showcaseUntil ? "Prolonger 30 j" : "Mettre en vitrine"}</button>
                 </li>
               ))}
@@ -216,7 +218,7 @@ export function AdsHub({ data, zones, isPro, initialTab, initialListing }: { dat
                     <optgroup label={`Villes entières (×${p.partner.cityFactor})`}>{zones.filter((z) => z.kind === "city").map((z) => <option key={z.zone} value={z.zone}>{z.label} — {z.listings} annonce(s)</option>)}</optgroup>
                   </select>
                 </label>
-                <BuyBtn price={pPrice} label="Devenir partenaire 30 j" onClick={() => run(() => partnerAction(pZone))} />
+                <span data-action="ads.partner" className="contents"><BuyBtn price={pPrice} label="Devenir partenaire 30 j" onClick={() => run(() => partnerAction(pZone))} /></span>
               </div>
             ) : <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Réservé aux comptes agent ou agence. Changez votre type de compte dans « Mon profil ».</p>}
           </div>
@@ -236,7 +238,7 @@ export function AdsHub({ data, zones, isPro, initialTab, initialListing }: { dat
 
       {tab === "banner" ? (
         <div className="space-y-4">
-          <form className="grid gap-3 rounded-2xl bg-white p-5 shadow-card md:grid-cols-2" onSubmit={(e) => {
+          <form data-action="ads.campaigns" className="grid gap-3 rounded-2xl bg-white p-5 shadow-card md:grid-cols-2" onSubmit={(e) => {
             e.preventDefault();
             run(() => campaignAction({ title: ban.title, text: ban.text, imageUrl: ban.imageUrl, ctaLabel: ban.ctaLabel, ctaUrl: ban.ctaUrl, days: ban.days, placements: [...(ban.site ? ["site_banner"] : []), ...(ban.app ? ["app_banner"] : [])], zones: ban.zones }));
           }}>

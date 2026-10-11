@@ -66,7 +66,7 @@ export function DealsManager({ initial }: { initial: Data }) {
                 <p className="line-clamp-1 font-semibold text-ink">{x.title}</p>
                 <p className="text-sm text-slate-600">{x.price ? fmt(x.price) : "Prix non affiché"}</p>
                 <p className="text-xs text-muted">{x.place}{x.place ? " · " : ""}{new Date(x.closedAt).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</p>
-                <button type="button" disabled={pending} onClick={() => { if (confirm("Retirer cette réalisation ?")) start(async () => apply(await removeDeal(x.id), "Réalisation retirée.")); }} className="mt-2 text-xs font-semibold text-red-600 hover:underline">Retirer</button>
+                <button data-action="deals.manage" type="button" disabled={pending} onClick={() => { if (confirm("Retirer cette réalisation ?")) start(async () => apply(await removeDeal(x.id), "Réalisation retirée.")); }} className="mt-2 text-xs font-semibold text-red-600 hover:underline">Retirer</button>
               </div>
             </article>
           ))}
@@ -74,7 +74,7 @@ export function DealsManager({ initial }: { initial: Data }) {
         {!d.deals.length ? <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-muted">Aucune réalisation pour l’instant.</p> : null}
       </section>
 
-      <section className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
+      <section data-action="deals.manage" className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div><h2 className="font-display text-lg font-bold text-ink">Marquer une de mes annonces</h2><p className="text-sm text-muted">Annonces en ligne, masquées ou déjà retirées du site.</p></div>
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher…" className="w-48 rounded-full border border-slate-300 px-3 py-1.5 text-sm" />
@@ -100,7 +100,7 @@ export function DealsManager({ initial }: { initial: Data }) {
         </ul>
       </section>
 
-      <section className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
+      <section data-action="deals.manage" className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
         <h2 className="font-display text-lg font-bold text-ink">Ajouter un bien conclu hors du site</h2>
         <p className="text-sm text-muted">Photos ou affiche du bien (6 maximum).</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">

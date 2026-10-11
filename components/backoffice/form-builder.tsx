@@ -7,6 +7,7 @@ import {
   BUILTIN_FIELDS, CUSTOM_TYPE_LABEL, FORM_STEPS, MODE_LABEL,
   type CustomField, type CustomType, type FieldMode, type FieldRule, type ListingFormConfig, type MemberSpaceConfig, type StepId,
 } from "@/lib/listing-form";
+import { MEMBER_ACTIONS } from "@/lib/member-actions";
 
 const input = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand-600 focus:outline-none";
 const PUBLISHERS: [string, string][] = [["proprietaire", "Propriétaires"], ["agent", "Agents"], ["entreprise", "Agences / promoteurs"]];
@@ -232,7 +233,8 @@ export function MemberSpaceBuilder({ initial, items }: { initial: MemberSpaceCon
   const [cfg, setCfg] = useState<MemberSpaceConfig>(initial);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
-  const set = (key: string, v: MemberSpaceConfig["items"][string]) => { setCfg({ items: { ...cfg.items, [key]: v } }); setMsg(null); };
+  const set = (key: string, v: MemberSpaceConfig["items"][string]) => { setCfg({ ...cfg, items: { ...cfg.items, [key]: v } }); setMsg(null); };
+  const setAction = (key: string, v: MemberSpaceConfig["actions"][string]) => { setCfg({ ...cfg, actions: { ...cfg.actions, [key]: v } }); setMsg(null); };
   const save = () => start(async () => {
     const r = await saveSettingsAction("forms", { memberSpace: JSON.stringify(cfg) });
     setMsg(r.ok ? { ok: true, text: "Espace membre enregistré (site et application Moboo.ci)." } : { ok: false, text: r.error ?? "Erreur." });
@@ -258,6 +260,28 @@ export function MemberSpaceBuilder({ initial, items }: { initial: MemberSpaceCon
                   <Chips options={allowed} value={c.types} onChange={(v) => set(it.key, { ...c, types: v })} allLabel={`Tous (${allowed.map(([, l]) => l.toLowerCase()).join(", ")})`} />
                 )}
               </div>
+              {MEMBER_ACTIONS.some((a) => a.tab === it.key) ? (
+                <div className={"sm:col-span-2 sm:ml-6 " + (c.enabled === false ? "opacity-50" : "")}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Actions dans cet onglet</p>
+                  <ul className="mt-1 divide-y divide-slate-100 rounded-md bg-slate-50 px-3">
+                    {MEMBER_ACTIONS.filter((a) => a.tab === it.key).map((a) => {
+                      const ac = cfg.actions[a.key] ?? {};
+                      return (
+                        <li key={a.key} className="grid gap-1.5 py-2 sm:grid-cols-[minmax(0,22rem)_1fr] sm:items-center">
+                          <label className="flex items-center gap-2 text-sm text-ink">
+                            <input type="checkbox" className="h-4 w-4" aria-label={`Action : ${a.label}`} checked={ac.enabled !== false}
+                              onChange={(e) => setAction(a.key, { ...ac, enabled: e.target.checked ? undefined : false })} />
+                            <span>{a.label}{a.hint ? <span className="ml-1 text-xs text-muted">({a.hint})</span> : null}</span>
+                          </label>
+                          <div className={ac.enabled === false ? "opacity-40" : ""}>
+                            <Chips options={allowed} value={ac.types} onChange={(v) => setAction(a.key, { ...ac, types: v })} allLabel="Tous" />
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : null}
             </li>
           );
         })}

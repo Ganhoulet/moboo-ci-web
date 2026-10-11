@@ -51,7 +51,7 @@ export function SecuritySettings({ hasPassword, googleLinked, username, email, p
       <p className="mt-1 text-sm text-muted">Choisissez comment vous connecter : code sur votre numéro, identifiant + mot de passe, ou Google.</p>
 
       <div className="mt-5 divide-y divide-slate-100">
-        <div className="flex items-center justify-between gap-3 py-3">
+        <div data-action="profile.google" className="flex items-center justify-between gap-3 py-3">
           <div className="min-w-0">
             <p className="font-semibold text-ink">Code par téléphone</p>
             <p className="truncate text-sm text-muted">{phone}</p>
@@ -65,7 +65,7 @@ export function SecuritySettings({ hasPassword, googleLinked, username, email, p
               <p className="font-semibold text-ink">Identifiant + mot de passe</p>
               <p className="truncate text-sm text-muted">{pwd ? `Identifiants : ${identifiers}` : "Pas encore de mot de passe."}</p>
             </div>
-            <button type="button" onClick={() => { setOpen((v) => !v); setMsg(null); }}
+            <button data-action="profile.password" type="button" onClick={() => { setOpen((v) => !v); setMsg(null); }}
               className="shrink-0 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-ink hover:bg-slate-50">
               {open ? "Fermer" : pwd ? "Changer" : "Créer"}
             </button>
@@ -123,7 +123,7 @@ export function SecuritySettings({ hasPassword, googleLinked, username, email, p
           ) : null}
         </div>
         {!linked && googleClientId ? (
-          <div className="pb-2">
+          <div data-action="profile.google" className="pb-2">
             <GoogleButton clientId={googleClientId} text="signin_with" onCredential={(c) => start(async () => {
               const r = await linkGoogleAction(c);
               if (r.ok) { setLinked(true); setMsg({ ok: true, text: "Compte Google relié." }); }
