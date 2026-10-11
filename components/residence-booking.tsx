@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitReservation, type ReserveState } from "@/app/reserver/actions";
 import { useBookingContact } from "./use-booking-contact";
+import { useLiveOccupied } from "./use-live-occupied";
 import { AvailabilityCalendar, type CalendarSelection } from "./availability-calendar";
 import { formatXOF, type OccupiedRange } from "@/lib/api";
 
@@ -32,6 +33,8 @@ export function ResidenceBooking({
   depositPercent?: number;
 }) {
   const [aptId, setAptId] = useState(apartments[0]?.id ?? "");
+  // Calendrier en direct : réservations Moboo Resi, site et application.
+  const liveOcc = useLiveOccupied("apt", occupiedByApt);
   const [sel, setSel] = useState<CalendarSelection>({ checkIn: null, checkOut: null, nights: 0 });
   const [state, action] = useFormState<ReserveState, FormData>(submitReservation, null);
   const contact = useBookingContact();
@@ -83,7 +86,7 @@ export function ResidenceBooking({
       <div className="rounded-xl border border-slate-200 p-3">
         <AvailabilityCalendar
           key={aptId}
-          occupied={occupiedByApt[aptId] ?? []}
+          occupied={liveOcc[aptId] ?? []}
           onChange={setSel}
         />
       </div>

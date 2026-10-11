@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { OccupiedRange } from "@/lib/api";
 
 const WD = ["L", "M", "M", "J", "V", "S", "D"];
@@ -49,6 +49,19 @@ export function AvailabilityCalendar({
     return false;
   };
 
+  // Dates prises entre-temps (réservation en direct ailleurs) : la sélection est annulée.
+  const [lost, setLost] = useState(false);
+  useEffect(() => {
+    if (!checkIn) return;
+    if (isOccupied(checkIn) || (checkOut && rangeHasOccupied(checkIn, checkOut))) {
+      setCheckIn(null);
+      setCheckOut(null);
+      setLost(true);
+      onChange?.({ checkIn: null, checkOut: null, nights: 0 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [occupied]);
+
   const nights = checkIn && checkOut
     ? Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000)
     : 0;
@@ -59,6 +72,7 @@ export function AvailabilityCalendar({
   };
 
   const pick = (iso: string) => {
+    setLost(false);
     if (!checkIn || checkOut) {
       setCheckIn(iso); setCheckOut(null); emit(iso, null);
     } else if (iso <= checkIn) {
@@ -100,6 +114,12 @@ export function AvailabilityCalendar({
           aria-label="Mois suivant"
         >›</button>
       </div>
+
+      {lost ? (
+        <p role="status" className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+          Ces dates viennent d’être réservées. Choisissez d’autres dates.
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-7 text-center text-xs font-semibold text-muted">
         {WD.map((w, i) => <div key={i} className="py-1">{w}</div>)}

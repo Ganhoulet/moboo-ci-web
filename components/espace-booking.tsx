@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitEventReservation, type ReserveState } from "@/app/reserver/actions";
 import { useBookingContact } from "./use-booking-contact";
+import { useLiveOccupied } from "./use-live-occupied";
 import { AvailabilityCalendar, type CalendarSelection } from "./availability-calendar";
 import { formatXOF, type OccupiedRange } from "@/lib/api";
 
@@ -28,6 +29,8 @@ export function EspaceBooking({
   fromPrice?: number | null;
 }) {
   const [sel, setSel] = useState<CalendarSelection>({ checkIn: null, checkOut: null, nights: 0 });
+  // Calendrier en direct : réservations Moboo Event, site et application.
+  const liveOcc = useLiveOccupied("esp", { [espaceId]: occupied })[espaceId] ?? occupied;
   const [state, action] = useFormState<ReserveState, FormData>(submitEventReservation, null);
   const contact = useBookingContact();
   const ready = !!(sel.checkIn && sel.checkOut);
@@ -57,7 +60,7 @@ export function EspaceBooking({
       ) : null}
 
       <div className="rounded-xl border border-slate-200 p-3">
-        <AvailabilityCalendar occupied={occupied} onChange={setSel} />
+        <AvailabilityCalendar occupied={liveOcc} onChange={setSel} />
       </div>
 
       <div className="mt-4 grid gap-3">
