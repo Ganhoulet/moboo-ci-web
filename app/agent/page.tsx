@@ -58,7 +58,7 @@ export default async function AgentDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/publier" className="btn-primary bg-accent-600 hover:bg-accent-700">+ Publier une annonce</Link>
+          <Link href="/publier/annonce" className="btn-primary bg-accent-600 hover:bg-accent-700">+ Publier une annonce</Link>
           <form action={agentLogoutAction}><button className="btn-ghost">Déconnexion</button></form>
         </div>
       </div>

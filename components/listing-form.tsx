@@ -18,7 +18,7 @@ const TYPES: [string, string][] = [
   ["autre", "Autre"],
 ];
 
-type Category = "sale" | "rent" | "short";
+export type Category = "sale" | "rent" | "short";
 type ShortType = "furnished" | "event" | "coworking";
 
 const CATS: { key: Category; label: string; desc: string }[] = [
@@ -71,9 +71,9 @@ function AppRedirect({ short }: { short: ShortType }) {
   );
 }
 
-export function ListingForm({ defaults }: { defaults?: { contactName?: string; contactPhone?: string } } = {}) {
+export function ListingForm({ defaults }: { defaults?: { contactName?: string; contactPhone?: string; category?: Category; propertyType?: string } } = {}) {
   const [state, action] = useFormState<SubmitState, FormData>(submitListing, null);
-  const [cat, setCat] = useState<Category>("rent");
+  const [cat, setCat] = useState<Category>(defaults?.category ?? "rent");
   const [short, setShort] = useState<ShortType>("furnished");
 
   if (state?.ok) {
@@ -145,7 +145,7 @@ export function ListingForm({ defaults }: { defaults?: { contactName?: string; c
       ) : (
         <>
           <Field label="Type de bien">
-            <select name="propertyType" className="input" defaultValue="appartement">
+            <select name="propertyType" className="input" defaultValue={defaults?.propertyType && TYPES.some(([v]) => v === defaults.propertyType) ? defaults.propertyType : "appartement"}>
               {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </Field>
