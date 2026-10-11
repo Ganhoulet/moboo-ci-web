@@ -149,6 +149,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Application mobile Moboo.ci : statistiques, passerelle Houzi, push, contacts.
     { href: "/admin/application", label: "Application mobile", icon: "phone", group: "application" },
     ...[
+      ["/admin/application/builder", "Builder de l’application"],
       ["/admin/application/reglages", "Réglages"],
       ["/admin/application/passerelle", "Passerelle Houzi"],
       ["/admin/application/push", "Notifications push"],
