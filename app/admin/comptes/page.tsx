@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { AutoRefresh, PendingBookingCard, type PendingBooking } from "@/components/backoffice/am-ui";
 import { getAm } from "./actions";
+import { PhoneChangeQueue } from "@/components/backoffice/am-access";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +11,7 @@ const KIND_LABEL: Record<string, string> = { org: "Résidences (Moboo Resi)", ev
 /** Account manager : à appeler maintenant, tâches du jour, portefeuille. */
 export default async function AmDashboard() {
   const d = await getAm<any>("/overview");
+  const phoneChanges = d?.canSeeAll ? await getAm<any[]>("/phone-changes") : null;
   if (!d) return <p className="rounded-lg bg-white p-6 text-sm text-red-600 ring-1 ring-slate-200">Suivi des comptes indisponible.</p>;
   return (
     <div className="space-y-6">
@@ -21,6 +24,7 @@ export default async function AmDashboard() {
         </p>
       </div>
 
+      <PhoneChangeQueue items={phoneChanges ?? []} meId={getSession()?.id ?? ""} />
       <section className="space-y-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-display text-lg font-bold text-ink">📞 À appeler maintenant ({d.urgent.length})</h2>

@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { startAssist } from "@/lib/assist";
 import { authedFetch } from "@/lib/server-api";
 
 /** Account managers (back-office → Suivi des comptes). */
@@ -65,4 +67,24 @@ export async function sendRecoAction(kind: string, id: string, input: { code: st
 }
 export async function dismissRecoAction(kind: string, id: string, input: { code: string; itemId: string; note?: string }): Promise<R> {
   return send(`/accounts/${kind}/${encodeURIComponent(id)}/recommendations/dismiss`, "POST", input);
+}
+
+// ─── Accès au compte d'un client ───
+export async function requestAssistAction(accountId: string): Promise<R & { data?: any }> {
+  return send(`/accounts/site/${encodeURIComponent(accountId)}/assist`, "POST", {});
+}
+export async function openAssistAction(sessionId: string, code: string, accountId: string, name: string): Promise<R> {
+  const { ok, data } = await authedFetch(`/site/admin/am/assist/${encodeURIComponent(sessionId)}/verify`, { method: "POST", body: JSON.stringify({ code }) });
+  if (!ok) return { ok: false, error: err(data, "Code refusé.") };
+  startAssist({ accessToken: data.accessToken, expiresIn: data.expiresIn }, data.account, { id: data.sessionId, accountId, name, endsAt: new Date(data.endsAt).toISOString() });
+  redirect("/mon-espace");
+}
+export async function recoveryAction(accountId: string): Promise<R & { data?: any }> {
+  return send(`/accounts/site/${encodeURIComponent(accountId)}/recovery`, "POST", {});
+}
+export async function phoneChangeAction(accountId: string, newPhone: string, reason: string): Promise<R> {
+  return send(`/accounts/site/${encodeURIComponent(accountId)}/phone-change`, "POST", { newPhone, reason });
+}
+export async function decidePhoneAction(id: string, approve: boolean, note = ""): Promise<R> {
+  return send(`/phone-changes/${encodeURIComponent(id)}/decide`, "POST", { approve, note });
 }

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { ActivityForm, AssignControl, ChangeDates, DisputeReply, TaskCheck } from "@/components/backoffice/am-ui";
 import { fcfa } from "@/lib/am";
 import { RecoList } from "@/components/backoffice/am-reco";
+import { AccessPanel } from "@/components/backoffice/am-access";
 import { getAm } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -15,10 +16,11 @@ const STATUS: Record<string, string> = { PENDING: "Demande", ACCEPTED: "Accepté
 const dt = (d: string) => new Date(d).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
 
 /** Fiche de suivi d'un compte (account manager). */
-export default async function AmAccount({ params }: { params: { kind: string; id: string } }) {
+export default async function AmAccount({ params, searchParams }: { params: { kind: string; id: string }; searchParams: { assist?: string } }) {
   const [d, managers] = await Promise.all([getAm<any>(`/accounts/${params.kind}/${encodeURIComponent(params.id)}`), getAm<{ id: string; name: string }[]>("/managers")]);
   if (!d) notFound();
   // Litiges de l'hôte (résidences et espaces) : ouverts en détail, pour répondre à sa place.
+  const access = d.kind === "site" ? await getAm<any>(`/accounts/site/${encodeURIComponent(d.id)}/access`) : null;
   const reco = await getAm<any>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/recommendations`);
   const disputes = d.kind === "site" ? null : await getAm<{ items: any[]; awaitingReply: number }>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/disputes`);
   const openDisputes = await Promise.all((disputes?.items ?? []).filter((x) => x.open).slice(0, 5).map((x) => getAm<any>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/disputes/${x.id}`)));
@@ -29,6 +31,7 @@ export default async function AmAccount({ params }: { params: { kind: string; id
   return (
     <div className="space-y-5">
       <Link href={`/admin/comptes/portefeuille?kind=${d.kind}`} className="text-sm font-semibold text-brand-800 hover:underline">← Portefeuille</Link>
+      {searchParams.assist === "fin" ? <p className="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">Accès assisté terminé : le récapitulatif des modifications a été envoyé au client.</p> : null}
       <div className="flex flex-wrap items-start justify-between gap-4 rounded-lg bg-white p-5 ring-1 ring-slate-200">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">{p.type}</p>
@@ -103,6 +106,7 @@ export default async function AmAccount({ params }: { params: { kind: string; id
           </section>
         </div>
         <aside className="space-y-4">
+          {access ? <AccessPanel accountId={d.id} name={p.name} history={access} /> : null}
           <ActivityForm kind={d.kind} id={d.id} />
           <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
             <h2 className="font-display text-base font-bold text-ink">Tâches</h2>

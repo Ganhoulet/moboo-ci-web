@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
+import { AssistBanner } from "@/components/assist-banner";
 import { TopBar } from "@/components/top-bar";
 import { BackToTop, ClientSettings } from "@/components/site-chrome";
 import { getSiteSettings } from "@/lib/settings";
@@ -67,6 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ClientSettings favoritesLoginRequired={general.favoritesLoginRequired} loggedIn={!!getSession()} />
         {notices.bandeau.length ? <NoticeBar items={notices.bandeau} /> : null}
         {header.topBarEnabled && (header.topBarText || header.topBarPhone || header.topBarEmail) ? <TopBar h={header} /> : null}
+        <AssistBanner />
         <SiteHeader settings={settings} nav={{ items: menuAt(chrome.menus, chrome.locations, "header"), mobile: menuAt(chrome.menus, chrome.locations, "mobile"), style: chrome.menuStyle }} />
         {settings.search.headerSearch !== "none" ? <SearchStrip variant={settings.search.headerSearch} pages={settings.search.headerSearchPages} types={(await getTaxonomies()).type} /> : null}
         <main>{children}</main>
