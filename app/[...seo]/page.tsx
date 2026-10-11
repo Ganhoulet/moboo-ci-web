@@ -236,6 +236,20 @@ function GenSections({ ins, slug, pricePage, agentsPage }: { ins: SeoInsights; s
         </section>
       ) : null}
 
+      {ins.videos?.length ? (
+        <section className="mt-12 border-t border-slate-200 pt-8">
+          <h2 className="font-display text-xl font-bold text-ink">{z} en vidéo</h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {ins.videos.map((v) => (
+              <figure key={v.videoId} className="overflow-hidden rounded-2xl bg-black ring-1 ring-slate-200">
+                <iframe src={`https://www.tiktok.com/embed/v2/${v.videoId}`} title={v.title || `Vidéo ${z}`} loading="lazy" allow="encrypted-media; fullscreen" className="aspect-[9/16] w-full" />
+                {v.title ? <figcaption className="bg-white px-3 py-2 text-sm text-ink">{v.title}</figcaption> : null}
+              </figure>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {ins.faq.length ? (
         <section className="mt-12 border-t border-slate-200 pt-8">
           <div className="mx-auto max-w-3xl">

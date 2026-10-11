@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getSeoLinks } from "@/lib/seo";
+import { getListingUrls, getSeoLinks } from "@/lib/seo";
 import { getPriceCommunes } from "@/lib/prices";
 import { getHelpSitemap } from "@/lib/help";
 import { getZones } from "@/lib/pro-reviews";
@@ -35,5 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/agents-immobiliers`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 },
     ...(await getZones()).map((z) => ({ url: `${BASE}/agents-immobiliers/${z.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 })),
   ];
-  return [...main, ...seo, ...prices, ...help, ...pros, ...agents];
+  // Annonces en ligne (adresses descriptives).
+  const listings = (await getListingUrls()).map((l) => ({ url: `${BASE}${l.path}`, lastModified: new Date(l.updatedAt), changeFrequency: "weekly" as const, priority: 0.5 }));
+  return [...main, ...seo, ...prices, ...help, ...pros, ...agents, ...listings];
 }

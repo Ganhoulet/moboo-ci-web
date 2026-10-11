@@ -91,6 +91,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/seo/nouvelle?type=page", label: "SEO d’une page du site", icon: "search", child: true, group: "seo" },
     { href: "/admin/seo/generateur", label: "Générateur SEO", icon: "search", child: true, group: "seo" },
     { href: "/admin/seo/quartiers", label: "Guides de quartier", icon: "search", child: true, group: "seo" },
+    { href: "/admin/seo/console", label: "Search Console", icon: "search", child: true, group: "seo" },
+    { href: "/admin/seo/backlinks", label: "Backlinks", icon: "search", child: true, group: "seo" },
+    { href: "/admin/seo/tiktok", label: "Vidéos TikTok", icon: "search", child: true, group: "seo" },
     { href: "/admin/seo/redirections", label: "Redirections et 404", icon: "search", child: true, group: "seo" },
     // Marketing : bannières, flyers et pop-ups (application mobile + site).
     { href: "/admin/marketing", label: "Marketing", icon: "megaphone", group: "marketing" },

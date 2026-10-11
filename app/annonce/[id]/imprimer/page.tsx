@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { formatXOF, getListing } from "@/lib/api";
+import { listingIdFrom, listingPath } from "@/lib/listing-url";
 import { getSiteSettings } from "@/lib/settings";
 import { getTaxonomies, typeLabel } from "@/lib/taxonomies";
 import { MobooLogo } from "@/components/logo";
@@ -16,7 +17,7 @@ export const metadata: Metadata = { robots: { index: false } };
  * logo, photo, prix, détails, description, équipements, galerie, contact.
  */
 export default async function PrintListing({ params }: { params: { id: string } }) {
-  const [l, settings, tax] = await Promise.all([getListing(params.id), getSiteSettings(), getTaxonomies()]);
+  const [l, settings, tax] = await Promise.all([getListing(listingIdFrom(params.id)), getSiteSettings(), getTaxonomies()]);
   const cfg = settings.print;
   if (!l || !cfg.enabled) notFound();
 
@@ -50,7 +51,7 @@ export default async function PrintListing({ params }: { params: { id: string } 
       {/* Feuille A4 avec de vraies marges : rien ne touche les bords à l'impression / en PDF. */}
       <style>{`@page { size: A4; margin: 16mm 14mm; } @media print { html, body { background: #fff !important; } }`}</style>
       <div className="mb-6 flex items-center justify-between gap-3 print:hidden">
-        <Link href={`/annonce/${l.id}`} className="text-sm font-semibold text-brand-800 hover:underline">← Retour à l’annonce</Link>
+        <Link href={listingPath(l)} className="text-sm font-semibold text-brand-800 hover:underline">← Retour à l’annonce</Link>
         <PrintButton />
       </div>
 

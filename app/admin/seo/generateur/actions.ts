@@ -62,3 +62,8 @@ export async function saveGuideAction(slug: string, body: Partial<ZoneGuide>): P
   done();
   return { ok: true };
 }
+
+export async function draftGuideAction(slug: string): Promise<{ ok: boolean; draft?: Record<string, string>; error?: string }> {
+  const r = await authedFetch(`${BASE}/guides/${encodeURIComponent(slug)}/draft`, { method: "POST" });
+  return r.ok ? { ok: true, draft: r.data } : { ok: false, error: msg(r.data, "Rédaction impossible pour le moment.") };
+}

@@ -29,6 +29,8 @@ export interface SeoInsights {
   hub: string | null;
   guide: { name: string; summary: string; sections: Record<string, string>; image: string | null; updatedAt: string } | null;
   faq: { q: string; a: string }[];
+  /** Vidéos TikTok du quartier (back-office › Vidéos TikTok). */
+  videos?: { videoId: string; title: string; url: string; platform: string }[];
 }
 
 export async function getSeoInsights(slug: string): Promise<SeoInsights | null> {
@@ -105,4 +107,14 @@ export async function withSeoOverride(path: string, base: import("next").Metadat
       ...(o.ogImage ? { images: [o.ogImage] } : {}),
     },
   };
+}
+
+/** Annonces en ligne (plan du site), adresses descriptives. */
+export async function getListingUrls(): Promise<{ path: string; updatedAt: string }[]> {
+  try {
+    const r = await fetch(`${API_URL}/site/seo/listing-urls`, { next: { revalidate: 600 }, headers: { Accept: "application/json", ...relayHeaders(false) } });
+    return r.ok ? ((await r.json()).items ?? []) : [];
+  } catch {
+    return [];
+  }
 }

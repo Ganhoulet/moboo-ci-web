@@ -2,7 +2,8 @@ import { ConversionSignals } from "@/components/conversion-signals";
 import { getSignals } from "@/lib/signals";
 import { ReviewsSection } from "@/components/reviews";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+import { listingIdFrom, listingPath } from "@/lib/listing-url";
 import { formatXOF, getListing } from "@/lib/api";
 import { mapListing, similarListings } from "@/lib/property";
 import { ReadMore } from "@/components/detail-actions";
@@ -35,20 +36,24 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const l = await getListing(params.id);
+  const l = await getListing(listingIdFrom(params.id));
   if (!l) return { title: "Annonce" };
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ");
   const description = `${TYPE_LABEL[l.propertyType] ?? "Bien"} ${l.transaction === "rent" ? "à louer" : "à vendre"} à ${zone} — ${formatXOF(l.price)}${l.transaction === "rent" ? " / mois" : ""}. Contact direct sur Moboo.ci.`;
   return {
     title: l.title,
     description,
-    openGraph: { title: l.title, description, images: l.photos?.slice(0, 1) },
+    alternates: { canonical: listingPath(l) },
+    openGraph: { title: l.title, description, url: listingPath(l), images: l.photos?.slice(0, 1) },
   };
 }
 
 export default async function AnnoncePage({ params, searchParams }: { params: { id: string }; searchParams: { sp?: string } }) {
-  const l = await getListing(params.id);
+  const l = await getListing(listingIdFrom(params.id));
   if (!l) notFound();
+  // Ancienne adresse (identifiant seul) ou titre modifié : redirection 301 vers l'adresse descriptive.
+  const path = listingPath(l);
+  if (`/annonce/${decodeURIComponent(params.id)}` !== path) permanentRedirect(searchParams?.sp ? `${path}?sp=${encodeURIComponent(searchParams.sp)}` : path);
   // Arrivée depuis une annonce sponsorisée : clic compté pour l'annonceur.
   if (searchParams?.sp) trackAdClick("boost", searchParams.sp);
   const [partners, signals, market] = await Promise.all([getZonePartners(l.id), getSignals("listing", l.id), isOn("prix.repere-fiche").then((on) => (on ? getMarketEstimate(l.id) : null))]);
@@ -134,7 +139,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
 
       <DetailHero
         bannerStyle={cfg.bannerStyle}
-        printHref={print.enabled ? `/annonce/${l.id}/imprimer` : undefined}
+        printHref={print.enabled ? `${path}/imprimer` : undefined}
         photos={l.photos}
         videoUrl={cfg.showVideo ? l.videoUrl : null}
         backHref={`/annonces?transaction=${l.transaction}`}
@@ -219,7 +224,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
             </Section>
           ) : null}
 
-          {l.listingKind === "classic" || !l.listingKind ? <ReviewsSection type="listing" id={l.id} path={`/annonce/${l.id}`} /> : null}
+          {l.listingKind === "classic" || !l.listingKind ? <ReviewsSection type="listing" id={l.id} path={path} /> : null}
 
           {!isReservable ? (
             <Section title="Conseils avant de vous engager">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { saveGuideAction, type ZoneGuide } from "@/app/admin/seo/generateur/actions";
+import { draftGuideAction, saveGuideAction, type ZoneGuide } from "@/app/admin/seo/generateur/actions";
 
 const SECTIONS: [string, string, string][] = [
   ["vivre", "Vivre ici", "Ambiance, profil des habitants, points forts et points faibles du quartier."],
@@ -33,8 +33,24 @@ export function ZoneGuideEditor({ initial }: { initial: ZoneGuide }) {
     });
     setMsg(r.ok ? { ok: true, text: status === "published" ? "Guide publié : il apparaît sur toutes les pages de la zone." : "Brouillon enregistré." } : { ok: false, text: r.error ?? "Enregistrement impossible." });
   });
+  const draft = () => {
+    const filled = g.summary.trim() || SECTIONS.some(([k]) => (g.sections[k] ?? "").trim());
+    if (filled && !confirm("Remplacer le texte actuel par le brouillon proposé ?")) return;
+    start(async () => {
+      setMsg({ ok: true, text: "Rédaction en cours (30 secondes à 1 minute)…" });
+      const r = await draftGuideAction(initial.slug);
+      if (!r.ok || !r.draft) { setMsg({ ok: false, text: r.error ?? "Rédaction impossible." }); return; }
+      const d = r.draft;
+      setG((cur) => ({ ...cur, summary: d.summary ?? "", sections: Object.fromEntries(SECTIONS.map(([k]) => [k, d[k] ?? ""])) }));
+      setMsg({ ok: true, text: "Brouillon proposé : relisez, corrigez les noms et les faits locaux, puis publiez. Rien n’est enregistré tant que vous n’avez pas cliqué." });
+    });
+  };
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-brand-50 p-3 ring-1 ring-brand-200">
+        <button type="button" disabled={pending} onClick={draft} className="rounded-md bg-ink px-4 py-2 text-sm font-bold text-white hover:bg-black disabled:opacity-50">✦ Proposer un brouillon (IA)</button>
+        <p className="min-w-0 flex-1 text-xs text-ink">Claude rédige les 7 rubriques à partir des chiffres réels de la zone. Relisez toujours avant de publier : l’IA peut se tromper sur des noms ou des faits locaux.</p>
+      </div>
       {msg ? <p className={"rounded-md px-3 py-2 text-sm " + (msg.ok ? "bg-emerald-50 text-emerald-900" : "bg-red-50 text-red-800")}>{msg.text}</p> : null}
       <section className="grid gap-3 rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:grid-cols-3">
         <label className="space-y-1"><span className="text-xs font-semibold text-ink">Nom affiché</span><input className="input text-sm" value={g.name} onChange={(e) => setG({ ...g, name: e.target.value })} /></label>

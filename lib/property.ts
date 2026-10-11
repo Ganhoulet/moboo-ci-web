@@ -1,3 +1,4 @@
+import { listingPath } from "./listing-url";
 import { listEspaces, listListings, listResidences } from "./api";
 import type { NearQuery } from "./types";
 
@@ -172,7 +173,7 @@ export function mapListing(l: import("./types").ListingItem): Property {
   return {
     id: `lst-${l.id}`,
     // Clic sur une annonce sponsorisée : compté sur la fiche (?sp=).
-    href: l.boostId ? `/annonce/${l.id}?sp=${l.boostId}` : `/annonce/${l.id}`,
+    href: l.boostId ? `${listingPath(l)}?sp=${l.boostId}` : listingPath(l),
     title: l.title,
     zone: [l.quartier || l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire",
     image: l.photos?.[0] ?? null,
@@ -256,7 +257,7 @@ async function generalListings(transaction?: "rent" | "sale"): Promise<Property[
   const { items } = await listListings({ transaction, perPage: 24 });
   return items.map((l) => ({
     id: `lst-${l.id}`,
-    href: `/annonce/${l.id}`,
+    href: listingPath(l),
     title: l.title,
     zone: [l.quartier || l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire",
     image: l.photos?.[0] ?? null,
