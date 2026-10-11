@@ -1,3 +1,4 @@
+import { requireSpace } from "@/lib/member-space";
 import Link from "next/link";
 import { EmptyState, PageHeader } from "@/components/dashboard-ui";
 import { getSession } from "@/lib/session";
@@ -48,6 +49,7 @@ function Row({ c }: { c: ConversationSummary }) {
 }
 
 export default async function Messages() {
+  await requireSpace(getSession()?.accountType, "messages");
   const account = getSession()!;
   const items = await listConversations();
   const publisher = isPublisher(account.accountType ?? "particulier");

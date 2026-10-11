@@ -1,7 +1,7 @@
+import { requireSpace } from "@/lib/member-space";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { canAccess } from "@/lib/accounts";
 import { EmptyState, PageHeader, STATUS_LABEL, StatCard, ViewsChart } from "@/components/dashboard-ui";
 import { getStats } from "../actions";
 
@@ -9,7 +9,7 @@ const PERIODS = [7, 30, 90];
 
 export default async function Statistiques({ searchParams }: { searchParams: { jours?: string } }) {
   const account = getSession()!;
-  if (!canAccess(account.accountType, "statistiques")) redirect("/mon-espace");
+  await requireSpace(account.accountType, "statistiques");
   const days = PERIODS.includes(Number(searchParams.jours)) ? Number(searchParams.jours) : 30;
   const stats = await getStats(days);
   const contacts = stats ? stats.totals.inquiries + stats.totals.calls + stats.totals.whatsapp : 0;

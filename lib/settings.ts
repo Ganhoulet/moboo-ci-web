@@ -33,6 +33,8 @@ export interface SiteSettings {
     showContactForm: boolean; showSimilar: boolean; similarCount: number; contactNotice: string;
   };
   submit: { maxPhotos: number; submitIntro: string };
+  /** Formulaire de publication et onglets de l'espace membre (JSON, back-office → Formulaires). */
+  forms: { listingForm: string; memberSpace: string };
   search: {
     perPage: number; headerSearch: "none" | "simple" | "filters"; headerSearchPages: "details" | "all";
     resultsView: "standard" | "halfmap"; resultsLayout: "grid" | "list";
@@ -106,6 +108,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     showSimilar: true, similarCount: 4,
     contactNotice: "Mise en relation directe avec l’annonceur — Moboo ne prend pas de commission sur les ventes et locations classiques.",
   },
+  forms: { listingForm: "", memberSpace: "" },
   submit: { maxPhotos: 12, submitIntro: "Publiez votre bien en quelques minutes : les intéressés vous contactent directement, sans commission." },
   search: {
     perPage: 24, headerSearch: "none", headerSearchPages: "details",

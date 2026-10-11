@@ -1,3 +1,5 @@
+import { requireSpace } from "@/lib/member-space";
+import { getSession } from "@/lib/session";
 import type { Metadata } from "next";
 import { authedFetch } from "@/lib/server-api";
 import type { SiteNotice } from "@/lib/notices";
@@ -8,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 /** Mon espace → Infos Moboo : messages de l'équipe Moboo.ci et conseils personnalisés. */
 export default async function Infos() {
+  await requireSpace(getSession()?.accountType, "infos");
   const r = await authedFetch("/site/me/notices", { method: "GET" });
   const items: SiteNotice[] = r.ok ? r.data.items : [];
   return (

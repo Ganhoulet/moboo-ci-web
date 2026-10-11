@@ -155,6 +155,7 @@ export interface ListingItem {
     virtualTour?: string;
     floorPlans?: { title: string; price: string; size: string; rooms: string; baths: string; image: string; description: string }[];
     postalCode?: string; disclaimer?: string; privateNote?: string;
+    custom?: Record<string, string | number | boolean | string[]>;
   };
   reference?: number | null;
   views?: number;

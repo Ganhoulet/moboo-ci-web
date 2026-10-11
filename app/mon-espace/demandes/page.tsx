@@ -1,13 +1,13 @@
+import { requireSpace } from "@/lib/member-space";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { canAccess } from "@/lib/accounts";
 import { EmptyState, PageHeader } from "@/components/dashboard-ui";
 import { InquiryBoard } from "@/components/inquiry-board";
 import { listMyInquiries } from "../actions";
 
 export default async function Demandes() {
   const account = getSession()!;
-  if (!canAccess(account.accountType, "demandes")) redirect("/mon-espace");
+  await requireSpace(account.accountType, "demandes");
   const items = await listMyInquiries();
   return (
     <div>

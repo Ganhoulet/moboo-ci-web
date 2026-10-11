@@ -1,9 +1,9 @@
+import { requireSpace } from "@/lib/member-space";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { authedFetch } from "@/lib/server-api";
-import { canAccess } from "@/lib/accounts";
 import { EmptyState, PageHeader } from "@/components/dashboard-ui";
 import { Stars } from "@/components/reviews";
 import { ReviewReply } from "@/components/pro-reviews/review-reply";
@@ -17,7 +17,7 @@ const fmt = (n: number) => n.toLocaleString("fr-FR", { minimumFractionDigits: 1,
 /** Mon espace → Avis clients : note, critères, avis reçus (site + application) et réponses. */
 export default async function Avis() {
   const account = getSession()!;
-  if (!canAccess(account.accountType, "avis")) redirect("/mon-espace");
+  await requireSpace(account.accountType, "avis");
   const r = await authedFetch("/site/me/reviews/received", { method: "GET" });
   const agg: Aggregates | null = r.ok ? r.data.aggregates : null;
   const items: AvisItem[] = r.ok ? r.data.items : [];

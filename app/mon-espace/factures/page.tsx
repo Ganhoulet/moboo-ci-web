@@ -1,14 +1,14 @@
+import { requireSpace } from "@/lib/member-space";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { canAccess } from "@/lib/accounts";
 import { EmptyState, PageHeader } from "@/components/dashboard-ui";
 import { fcfa, INVOICE_STATUS } from "@/lib/community";
 import { listMyInvoices } from "../actions";
 
 export default async function MesFactures() {
   const account = getSession()!;
-  if (!canAccess(account.accountType, "factures")) redirect("/mon-espace");
+  await requireSpace(account.accountType, "factures");
   const items = await listMyInvoices();
   return (
     <div>

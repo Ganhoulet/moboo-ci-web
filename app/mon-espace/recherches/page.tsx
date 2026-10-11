@@ -1,9 +1,12 @@
+import { requireSpace } from "@/lib/member-space";
+import { getSession } from "@/lib/session";
 import Link from "next/link";
 import { EmptyState, PageHeader } from "@/components/dashboard-ui";
 import { SavedSearches } from "@/components/saved-searches";
 import { listSearches } from "@/app/compte/searches-actions";
 
 export default async function Recherches() {
+  await requireSpace(getSession()?.accountType, "recherches");
   const has = (await listSearches()).length > 0;
   return (
     <div className="max-w-3xl">

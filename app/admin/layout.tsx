@@ -135,6 +135,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/immobilier/forfaits", "Forfaits"],
       ["/admin/immobilier/factures", "Factures"],
     ].map(([href, label]) => ({ href, label, icon: "building", child: true, group: "immobilier" })),
+    // Formulaires : champs de publication et onglets de l'espace membre.
+    { href: "/admin/formulaires", label: "Formulaires", icon: "layout", group: "formulaires" },
+    { href: "/admin/formulaires", label: "Publication d’annonce", icon: "layout", child: true, group: "formulaires" },
+    { href: "/admin/formulaires/espace-membre", label: "Espace membre", icon: "layout", child: true, group: "formulaires" },
     // Réservations faites sur Moboo.ci et litiges (médiation, gel du reversement).
     { href: "/admin/reservations", label: "Réservations", icon: "calendar", group: "reservations", badge: disputes?.open ?? 0 },
     { href: "/admin/litiges", label: "Litiges", icon: "scale", child: true, group: "reservations", badge: disputes?.open ?? 0 },

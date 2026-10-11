@@ -1,8 +1,8 @@
+import { requireSpace } from "@/lib/member-space";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { authedFetch } from "@/lib/server-api";
-import { canAccess } from "@/lib/accounts";
 import { PageHeader } from "@/components/dashboard-ui";
 import { TeamManager } from "@/components/pro-page/team-manager";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 /** Mon espace → Mon équipe (agences) : agents et agents commerciaux de l'agence. */
 export default async function Equipe() {
   const account = getSession()!;
-  if (!canAccess(account.accountType, "equipe")) redirect("/mon-espace");
+  await requireSpace(account.accountType, "equipe");
   const r = await authedFetch("/site/me/team", { method: "GET" });
   return (
     <div className="max-w-4xl">

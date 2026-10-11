@@ -1,3 +1,4 @@
+import { parseListingForm } from "@/lib/listing-form";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ListingEditor } from "@/components/listing-editor";
@@ -29,7 +30,7 @@ export default async function AdminEditListing({ params, searchParams }: { param
           expiresAt: l.expiresAt ?? null, ownerPhone: l.ownerPhone ?? null, ownerName: l.ownerName ?? null,
         }}
       />
-      <ListingEditor id={l.id} initial={draftFromListing(l)} maxPhotos={settings.submit.maxPhotos} saveAction={saveAdminListingAction} {...editorLists(tax)} />
+      <ListingEditor id={l.id} initial={draftFromListing(l)} maxPhotos={settings.submit.maxPhotos} form={parseListingForm(settings.forms.listingForm)} team saveAction={saveAdminListingAction} {...editorLists(tax)} />
     </div>
   );
 }

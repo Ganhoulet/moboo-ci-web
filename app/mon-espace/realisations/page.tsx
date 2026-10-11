@@ -1,8 +1,8 @@
+import { requireSpace } from "@/lib/member-space";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { authedFetch } from "@/lib/server-api";
-import { canAccess } from "@/lib/accounts";
 import { PageHeader } from "@/components/dashboard-ui";
 import { DealsManager } from "@/components/pro-page/deals-manager";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 /** Mon espace → Biens vendus et loués : réalisations affichées sur la page pro (et dans l'application). */
 export default async function Realisations() {
   const account = getSession()!;
-  if (!canAccess(account.accountType, "realisations")) redirect("/mon-espace");
+  await requireSpace(account.accountType, "realisations");
   const r = await authedFetch("/site/me/deals", { method: "GET" });
   return (
     <div className="max-w-5xl">

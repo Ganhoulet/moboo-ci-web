@@ -5,9 +5,9 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { COMMUNES, LISTING_FEATURES, PROPERTY_TYPES } from "@/lib/accounts";
 import { saveListingAction, uploadImageAction } from "@/app/mon-espace/actions";
+import { BUILTIN_FIELDS, fieldView, visibleSteps, type CustomField, type ListingFormConfig, type StepId } from "@/lib/listing-form";
 
-const STEPS = ["L'essentiel", "Détails", "Équipements", "Localisation", "Photos & vidéo", "Plans & lots", "Contact"];
-const CONTACT_STEP = STEPS.length - 1;
+const NO_FORM: ListingFormConfig = { steps: {}, fields: {}, custom: [] };
 const AREA_UNITS = ["m²", "ha", "are", "lot"];
 const FREQ = ["", "par mois", "par jour", "par semaine", "par an", "à débattre"];
 
@@ -49,7 +49,11 @@ export type ListingDraft = {
   postalCode: string;
   disclaimer: string;
   privateNote: string;
+  /** Champs créés dans le back-office (Formulaires) : publics / visibles de l'annonceur seul. */
+  custom: Record<string, CustomValue>;
+  customPrivate: Record<string, CustomValue>;
 };
+export type CustomValue = string | number | boolean | string[];
 export type FloorPlanDraft = { title: string; price: string; size: string; rooms: string; baths: string; image: string; description: string };
 export type UnitDraft = { title: string; price: string; priceUnit: string; beds: string; baths: string; size: string; sizeUnit: string; type: string; availability: string };
 const EMPTY_PLAN: FloorPlanDraft = { title: "", price: "", size: "", rooms: "", baths: "", image: "", description: "" };
@@ -94,7 +98,14 @@ export function ListingEditor({
   id, initial, maxPhotos: MAX_PHOTOS = 12,
   saveAction = saveListingAction, createdHref = "/mon-espace/annonces?publiee={id}",
   types = PROPERTY_TYPES, features: FEATURES = LISTING_FEATURES, communes: AREAS = COMMUNES, labels: LABELS = [],
+  form = NO_FORM, accountType, team = false,
 }: {
+  /** Règles du formulaire (back-office → Formulaires). */
+  form?: ListingFormConfig;
+  /** Profil de l'annonceur (champs réservés à certains profils). */
+  accountType?: string | null;
+  /** Éditeur du back-office : champs réservés à l'équipe visibles, rien d'obligatoire en plus. */
+  team?: boolean;
   /** Étiquettes du back-office (Exclusivité, Nouveau…), 5 au plus. */
   labels?: { key: string; label: string }[];
   id?: string; initial: ListingDraft;
@@ -122,14 +133,45 @@ export function ListingEditor({
   const fileRef = useRef<HTMLInputElement>(null);
   const set = (p: Partial<ListingDraft>) => { setD((x) => ({ ...x, ...p })); setError(null); setSaved(false); };
 
+  const ctx = { accountType, transaction: d.transaction, propertyType: d.propertyType, team };
+  const fv = (key: string, fallback?: string) => fieldView(form, key, ctx, fallback);
+  const on = (key: string) => fv(key).show;
+  /** Libellé du champ : renommé dans le back-office, « * » si obligatoire, mention si réservé. */
+  const lab = (key: string, fallback?: string) => {
+    const v = fv(key, fallback);
+    return `${v.label}${v.required ? " *" : ""}${v.team ? " · réservé à l'équipe" : ""}`;
+  };
+  const customs = (st: StepId) => form.custom.filter((c) => c.step === st && on(c.key));
+  // Étapes affichées : réglage du back-office, et seulement si elles ont au moins un champ.
+  const STEPS = visibleSteps(form, ctx).filter((st) => st.lockable || BUILTIN_FIELDS.some((f) => f.step === st.id && on(f.key)) || customs(st.id).length > 0);
+  const CONTACT_STEP = STEPS.length - 1;
+  const stepId = STEPS[Math.min(step, STEPS.length - 1)]?.id;
+
+  const isEmpty = (key: string): boolean => {
+    const c = form.custom.find((x) => x.key === key);
+    if (c) {
+      const v = (c.visibility === "private" ? d.customPrivate : d.custom)[key];
+      return v == null || v === "" || v === false || (Array.isArray(v) && !v.length);
+    }
+    const map: Record<string, unknown> = {
+      map: d.latitude, surface: d.surface, landArea: d.landArea,
+    };
+    const v = key in map ? map[key] : (d as Record<string, unknown>)[key];
+    return v == null || (typeof v === "string" && !v.trim()) || (Array.isArray(v) && !v.length);
+  };
+
   function validate(s: number): string | null {
-    if (s === 0) {
+    const id = STEPS[s]?.id;
+    if (id === "essentiel") {
       if (d.title.trim().length < 8) return "Donnez un titre clair (8 caractères minimum).";
       if (!(Number(d.price) > 0)) return "Indiquez le prix.";
     }
-    if (s === 1 && d.description.trim().length < 40) return "Décrivez le bien (40 caractères minimum).";
-    if (s === 3 && !d.city.trim()) return "Indiquez la ville.";
-    if (s === CONTACT_STEP && d.contactPhone.replace(/[^0-9]/g, "").length < 8) return "Indiquez un numéro de contact.";
+    if (id === "details" && fv("description").required && d.description.trim().length < 40) return "Décrivez le bien (40 caractères minimum).";
+    if (id === "localisation" && !d.city.trim()) return "Indiquez la ville.";
+    if (id === "contact" && d.contactPhone.replace(/[^0-9]/g, "").length < 8) return "Indiquez un numéro de contact.";
+    for (const f of [...BUILTIN_FIELDS.filter((x) => x.step === id && !x.core), ...form.custom.filter((x) => x.step === id)]) {
+      if (fv(f.key).required && isEmpty(f.key)) return `Renseignez « ${fv(f.key).label} ».`;
+    }
     return null;
   }
 
@@ -148,6 +190,7 @@ export function ListingEditor({
         pricePrefix: d.pricePrefix, pricePostfix: d.pricePostfix, secondaryPrice: d.secondaryPrice, sizeUnit: d.sizeUnit,
         landArea: d.landArea, landAreaUnit: d.landAreaUnit, garageSize: d.garageSize, additional: d.additional, virtualTour: d.virtualTour,
         floorPlans: d.floorPlans, postalCode: d.postalCode, disclaimer: d.disclaimer, privateNote: d.privateNote,
+        custom: d.custom, customPrivate: d.customPrivate,
       },
       units: d.units,
     };
@@ -167,6 +210,21 @@ export function ListingEditor({
   }
   const setPlan = (i: number, p: Partial<FloorPlanDraft>) => set({ floorPlans: d.floorPlans.map((x, j) => (j === i ? { ...x, ...p } : x)) });
   const setUnit = (i: number, p: Partial<UnitDraft>) => set({ units: d.units.map((x, j) => (j === i ? { ...x, ...p } : x)) });
+  const setCustom = (f: CustomField, v: CustomValue) => {
+    const bag = f.visibility === "private" ? "customPrivate" : "custom";
+    set({ [bag]: { ...d[bag], [f.key]: v } } as Partial<ListingDraft>);
+  };
+  const customBlock = (st: StepId) => {
+    const list = customs(st);
+    return list.length ? (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {list.map((f) => (
+          <CustomInput key={f.key} f={f} label={lab(f.key)} help={fv(f.key).help}
+            value={(f.visibility === "private" ? d.customPrivate : d.custom)[f.key]} onChange={(v) => setCustom(f, v)} />
+        ))}
+      </div>
+    ) : null;
+  };
   const setExtra = (i: number, p: Partial<{ title: string; value: string }>) => set({ additional: d.additional.map((x, j) => (j === i ? { ...x, ...p } : x)) });
 
   function save() {
@@ -221,8 +279,8 @@ export function ListingEditor({
     <div className="rounded-3xl bg-white p-5 shadow-card sm:p-7">
       {/* Étapes */}
       <div className="-mx-1 mb-6 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {STEPS.map((s, i) => (
-          <button key={s} type="button" disabled={!edit && i > step}
+        {STEPS.map(({ id: sid, label: s }, i) => (
+          <button key={sid} type="button" disabled={!edit && i > step}
             onClick={() => { if (edit || i <= step) { setStep(i); setError(null); } }}
             className={"flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition " +
               (i === step ? "bg-ink text-white" : i < step || edit ? "bg-slate-100 text-ink hover:bg-slate-200" : "bg-slate-50 text-slate-400")}>
@@ -235,7 +293,7 @@ export function ListingEditor({
       </div>
 
       <div key={step} className="animate-[stepIn_.25s_ease-out] space-y-5">
-        {step === 0 ? (
+        {stepId === "essentiel" ? (
           <>
             <div className="grid grid-cols-2 gap-3">
               {([["rent", "À louer", "Location longue durée"], ["sale", "À vendre", "Vente"]] as const).map(([k, l, h]) => (
@@ -246,36 +304,38 @@ export function ListingEditor({
                 </button>
               ))}
             </div>
-            <Field label="Type de bien">
+            <Field label={fv("propertyType").label}>
               <div className="flex flex-wrap gap-2">
                 {types.map((t) => (
                   <Chip key={t.key} on={d.propertyType === t.key} onClick={() => set({ propertyType: t.key })}>{t.label}</Chip>
                 ))}
               </div>
             </Field>
-            <Field label="Titre de l'annonce *">
+            <Field label={lab("title")}>
               <input className="input" value={d.title} maxLength={140} placeholder="Ex. Appartement 3 pièces lumineux à Riviera 2"
                 onChange={(e) => set({ title: e.target.value })} />
             </Field>
-            <Field label={d.transaction === "rent" ? "Loyer mensuel (FCFA) *" : "Prix de vente (FCFA) *"}>
+            <Field label={fv("price").label !== "Prix" ? lab("price") : d.transaction === "rent" ? "Loyer mensuel (FCFA) *" : "Prix de vente (FCFA) *"}>
               <input className="input" inputMode="numeric" value={d.price} placeholder="Ex. 250000"
                 onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, "") })} />
               {Number(d.price) > 0 ? <p className="mt-1 text-xs text-muted">{d.pricePrefix ? `${d.pricePrefix} ` : ""}{new Intl.NumberFormat("fr-FR").format(Number(d.price))} FCFA{d.pricePostfix ? ` ${d.pricePostfix}` : d.transaction === "rent" ? " / mois" : ""}</p> : null}
             </Field>
-            <details className="rounded-2xl border border-slate-200 p-4" open={!!(d.pricePrefix || d.pricePostfix || d.secondaryPrice)}>
-              <summary className="cursor-pointer text-sm font-semibold text-ink">Options de prix (facultatif)</summary>
+            {on("pricePrefix") || on("pricePostfix") || on("secondaryPrice") ? (
+            <details className="rounded-2xl border border-slate-200 p-4" open={!!(d.pricePrefix || d.pricePostfix || d.secondaryPrice) || ["pricePrefix", "pricePostfix", "secondaryPrice"].some((k) => fv(k).required)}>
+              <summary className="cursor-pointer text-sm font-semibold text-ink">Options de prix</summary>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <Field label="Condition de prix"><input className="input" value={d.pricePrefix} maxLength={40} placeholder="Ex. À partir de" onChange={(e) => set({ pricePrefix: e.target.value })} /></Field>
-                <Field label="Fréquence de paiement">
+                {on("pricePrefix") ? <Field label={lab("pricePrefix")}><input className="input" value={d.pricePrefix} maxLength={40} placeholder="Ex. À partir de" onChange={(e) => set({ pricePrefix: e.target.value })} /></Field> : null}
+                {on("pricePostfix") ? <Field label={lab("pricePostfix")}>
                   <select className="input" value={FREQ.includes(d.pricePostfix) ? d.pricePostfix : ""} onChange={(e) => set({ pricePostfix: e.target.value })}>
                     {FREQ.map((f) => <option key={f} value={f}>{f || (d.transaction === "rent" ? "par mois (défaut)" : "—")}</option>)}
                   </select>
-                </Field>
-                <Field label="Prix promotionnel"><input className="input" inputMode="numeric" value={d.secondaryPrice} placeholder="Ex. 230000" onChange={(e) => set({ secondaryPrice: e.target.value.replace(/[^0-9]/g, "") })} /></Field>
+                </Field> : null}
+                {on("secondaryPrice") ? <Field label={lab("secondaryPrice")}><input className="input" inputMode="numeric" value={d.secondaryPrice} placeholder="Ex. 230000" onChange={(e) => set({ secondaryPrice: e.target.value.replace(/[^0-9]/g, "") })} /></Field> : null}
               </div>
             </details>
-            {LABELS.length ? (
-              <Field label="Étiquettes (5 au plus)">
+            ) : null}
+            {LABELS.length && on("labels") ? (
+              <Field label={`${lab("labels")} (5 au plus)`}>
                 <div className="flex flex-wrap gap-2">
                   {LABELS.map((t) => {
                     const on = d.labels.includes(t.key);
@@ -284,34 +344,40 @@ export function ListingEditor({
                 </div>
               </Field>
             ) : null}
+            {customBlock("essentiel")}
           </>
         ) : null}
 
-        {step === 1 ? (
+        {stepId === "details" ? (
           <>
-            <Field label="Description *">
+            {on("description") ? <Field label={lab("description")}>
               <textarea className="input min-h-[140px]" value={d.description} maxLength={4000}
                 placeholder="Pièces, état, points forts, environnement, conditions (avance, caution)…"
                 onChange={(e) => set({ description: e.target.value })} />
               <p className="mt-1 text-xs text-muted">{d.description.trim().length} caractères</p>
-            </Field>
+            </Field> : null}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Num label="Chambres" v={d.bedrooms} on={(v) => set({ bedrooms: v })} />
-              <Num label="Salles de bain" v={d.bathrooms} on={(v) => set({ bathrooms: v })} />
-              <Num label="Garages" v={d.garage} on={(v) => set({ garage: v })} />
-              <Num label={`Surface (${d.sizeUnit || "m²"})`} v={d.surface} on={(v) => set({ surface: v })} />
-              <Num label="Année de construction" v={d.yearBuilt} on={(v) => set({ yearBuilt: v })} />
-              <Field label="Unité de surface">
-                <select className="input" value={d.sizeUnit} onChange={(e) => set({ sizeUnit: e.target.value })}>{AREA_UNITS.map((u) => <option key={u}>{u}</option>)}</select>
-              </Field>
-              <Num label={`Terrain (${d.landAreaUnit || "m²"})`} v={d.landArea} on={(v) => set({ landArea: v })} />
-              <Field label="Unité du terrain">
-                <select className="input" value={d.landAreaUnit} onChange={(e) => set({ landAreaUnit: e.target.value })}>{AREA_UNITS.map((u) => <option key={u}>{u}</option>)}</select>
-              </Field>
-              <Field label="Taille du garage"><input className="input" value={d.garageSize} maxLength={40} placeholder="Ex. 2 voitures" onChange={(e) => set({ garageSize: e.target.value })} /></Field>
+              {on("bedrooms") ? <Num label={lab("bedrooms")} v={d.bedrooms} on={(v) => set({ bedrooms: v })} /> : null}
+              {on("bathrooms") ? <Num label={lab("bathrooms")} v={d.bathrooms} on={(v) => set({ bathrooms: v })} /> : null}
+              {on("garage") ? <Num label={lab("garage")} v={d.garage} on={(v) => set({ garage: v })} /> : null}
+              {on("surface") ? <>
+                <Num label={`${lab("surface", "Surface").replace(" (et unité)", "")} (${d.sizeUnit || "m²"})`} v={d.surface} on={(v) => set({ surface: v })} />
+                <Field label="Unité de surface">
+                  <select className="input" value={d.sizeUnit} onChange={(e) => set({ sizeUnit: e.target.value })}>{AREA_UNITS.map((u) => <option key={u}>{u}</option>)}</select>
+                </Field>
+              </> : null}
+              {on("yearBuilt") ? <Num label={lab("yearBuilt")} v={d.yearBuilt} on={(v) => set({ yearBuilt: v })} /> : null}
+              {on("landArea") ? <>
+                <Num label={`${lab("landArea", "Terrain").replace(" (et unité)", "")} (${d.landAreaUnit || "m²"})`} v={d.landArea} on={(v) => set({ landArea: v })} />
+                <Field label="Unité du terrain">
+                  <select className="input" value={d.landAreaUnit} onChange={(e) => set({ landAreaUnit: e.target.value })}>{AREA_UNITS.map((u) => <option key={u}>{u}</option>)}</select>
+                </Field>
+              </> : null}
+              {on("garageSize") ? <Field label={lab("garageSize")}><input className="input" value={d.garageSize} maxLength={40} placeholder="Ex. 2 voitures" onChange={(e) => set({ garageSize: e.target.value })} /></Field> : null}
             </div>
-            <div>
-              <p className="mb-2 text-sm font-semibold text-ink">Détails supplémentaires</p>
+            {customBlock("details")}
+            {on("additional") ? <div>
+              <p className="mb-2 text-sm font-semibold text-ink">{lab("additional", "Détails supplémentaires").replace(" (libres)", "")}</p>
               <div className="space-y-2">
                 {d.additional.map((a, i) => (
                   <div key={i} className="flex gap-2">
@@ -322,12 +388,13 @@ export function ListingEditor({
                 ))}
               </div>
               {d.additional.length < 20 ? <button type="button" className="btn-ghost mt-2" onClick={() => set({ additional: [...d.additional, { title: "", value: "" }] })}>＋ Ajouter un détail</button> : null}
-            </div>
+            </div> : null}
           </>
         ) : null}
 
-        {step === 2 ? (
+        {stepId === "equipements" ? (
           <>
+            {on("features") ? <>
             <p className="text-sm text-muted">Cochez ce qui s'applique : c'est ce que les visiteurs regardent en premier.</p>
             <div className="flex flex-wrap gap-2">
               {[...FEATURES, ...d.features.filter((f) => !FEATURES.includes(f))].map((f) => {
@@ -340,25 +407,29 @@ export function ListingEditor({
                 onKeyDown={(e) => { if (e.key === "Enter" && customFeature.trim()) { e.preventDefault(); set({ features: [...d.features, customFeature.trim()] }); setCustomFeature(""); } }} />
               <button type="button" className="btn-ghost shrink-0" onClick={() => { if (customFeature.trim()) { set({ features: [...d.features, customFeature.trim()] }); setCustomFeature(""); } }}>Ajouter</button>
             </div>
+            </> : null}
+            {customBlock("equipements")}
           </>
         ) : null}
 
-        {step === 3 ? (
+        {stepId === "localisation" ? (
           <>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Ville *"><input className="input" value={d.city} onChange={(e) => set({ city: e.target.value })} /></Field>
-              <Field label="Commune">
+              <Field label={lab("city")}><input className="input" value={d.city} onChange={(e) => set({ city: e.target.value })} /></Field>
+              {on("commune") ? <Field label={lab("commune")}>
                 <select className="input" value={AREAS.includes(d.commune) || !d.commune ? d.commune : "__autre"} onChange={(e) => set({ commune: e.target.value === "__autre" ? "" : e.target.value })}>
                   <option value="">— Choisir —</option>
                   {AREAS.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
-              </Field>
-              <Field label="Quartier"><input className="input" value={d.quartier} placeholder="Ex. Riviera 2, Zone 4…" onChange={(e) => set({ quartier: e.target.value })} /></Field>
-              <Field label="Adresse (non affichée)"><input className="input" value={d.address} placeholder="Rue, repère…" onChange={(e) => set({ address: e.target.value })} /></Field>
-              <Field label="Code postal / boîte postale"><input className="input" value={d.postalCode} maxLength={12} placeholder="Ex. 01 BP 1234" onChange={(e) => set({ postalCode: e.target.value })} /></Field>
+              </Field> : null}
+              {on("quartier") ? <Field label={lab("quartier")}><input className="input" value={d.quartier} placeholder="Ex. Riviera 2, Zone 4…" onChange={(e) => set({ quartier: e.target.value })} /></Field> : null}
+              {on("address") ? <Field label={lab("address")}><input className="input" value={d.address} placeholder="Rue, repère…" onChange={(e) => set({ address: e.target.value })} /></Field> : null}
+              {on("postalCode") ? <Field label={lab("postalCode")}><input className="input" value={d.postalCode} maxLength={12} placeholder="Ex. 01 BP 1234" onChange={(e) => set({ postalCode: e.target.value })} /></Field> : null}
             </div>
+            {customBlock("localisation")}
+            {on("map") ? <>
             <AddressSearch onPick={(h) => { set({ latitude: h.lat, longitude: h.lng }); setMapsLink(`${h.lat.toFixed(6)}, ${h.lng.toFixed(6)}`); }} />
-            <Field label="Position sur la carte (recommandé)">
+            <Field label={fv("map").required ? lab("map") : `${lab("map")} (recommandé)`}>
               <input className="input" value={mapsLink} placeholder="Collez un lien Google Maps ou « latitude, longitude »"
                 onChange={(e) => { setMapsLink(e.target.value); const p = parseCoords(e.target.value); if (p) set({ latitude: p[0], longitude: p[1] }); }} />
               {d.latitude != null && d.longitude != null ? (
@@ -368,13 +439,15 @@ export function ListingEditor({
                 </p>
               ) : mapsLink ? <p className="mt-1 text-xs text-amber-700">Lien court non reconnu : ouvrez-le puis copiez l'adresse complète de la page.</p> : null}
             </Field>
+            </> : null}
           </>
         ) : null}
 
-        {step === 4 ? (
+        {stepId === "medias" ? (
           <>
+            {on("photos") ? <>
             <p className="text-sm text-muted">
-              Jusqu'à {MAX_PHOTOS} photos, compressées automatiquement. La 1re est la couverture — utilisez ◀ ▶ pour l'ordre.
+              {fv("photos").required ? "Au moins une photo. " : ""}Jusqu'à {MAX_PHOTOS} photos, compressées automatiquement. La 1re est la couverture — utilisez ◀ ▶ pour l'ordre.
             </p>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {d.photos.map((src, i) => (
@@ -401,19 +474,21 @@ export function ListingEditor({
               ) : null}
             </div>
             <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => addPhotos(e.target.files)} />
-            <Field label="Vidéo (optionnel)">
+            </> : null}
+            {on("videoUrl") ? <Field label={fv("videoUrl").required ? lab("videoUrl") : `${lab("videoUrl")} (optionnel)`}>
               <input className="input" value={d.videoUrl} placeholder="Lien YouTube ou TikTok" onChange={(e) => set({ videoUrl: e.target.value })} />
-            </Field>
-            <Field label="Visite virtuelle 360° (optionnel)">
+            </Field> : null}
+            {on("virtualTour") ? <Field label={fv("virtualTour").required ? lab("virtualTour") : `${lab("virtualTour")} (optionnel)`}>
               <input className="input" value={d.virtualTour} placeholder="Lien Matterport, Kuula… ou code <iframe> à coller" onChange={(e) => set({ virtualTour: e.target.value })} />
-            </Field>
+            </Field> : null}
+            {customBlock("medias")}
           </>
         ) : null}
 
-        {step === 5 ? (
+        {stepId === "plans" ? (
           <>
-            <div>
-              <p className="font-display text-base font-bold text-ink">Plans (facultatif)</p>
+            {on("floorPlans") ? <div>
+              <p className="font-display text-base font-bold text-ink">{fv("floorPlans").required ? lab("floorPlans") : `${lab("floorPlans")} (facultatif)`}</p>
               <p className="text-sm text-muted">Plan de chaque niveau ou de chaque type de logement (image).</p>
               <div className="mt-3 space-y-3">
                 {d.floorPlans.map((pl, i) => (
@@ -436,9 +511,9 @@ export function ListingEditor({
                 ))}
               </div>
               {d.floorPlans.length < 10 ? <button type="button" className="btn-ghost mt-2" onClick={() => set({ floorPlans: [...d.floorPlans, { ...EMPTY_PLAN }] })}>＋ Ajouter un plan</button> : null}
-            </div>
-            <div>
-              <p className="font-display text-base font-bold text-ink">Lots et sous-annonces (facultatif)</p>
+            </div> : null}
+            {on("units") ? <div>
+              <p className="font-display text-base font-bold text-ink">{fv("units").required ? lab("units") : `${lab("units")} (facultatif)`}</p>
               <p className="text-sm text-muted">Immeuble, résidence ou programme : chaque logement disponible avec son prix.</p>
               <div className="mt-3 space-y-3">
                 {d.units.map((u, i) => (
@@ -456,15 +531,16 @@ export function ListingEditor({
                 ))}
               </div>
               {d.units.length < 30 ? <button type="button" className="btn-ghost mt-2" onClick={() => set({ units: [...d.units, { ...EMPTY_UNIT }] })}>＋ Ajouter un lot</button> : null}
-            </div>
+            </div> : null}
+            {customBlock("plans")}
           </>
         ) : null}
 
-        {step === CONTACT_STEP ? (
+        {stepId === "contact" ? (
           <>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Nom affiché"><input className="input" value={d.contactName} onChange={(e) => set({ contactName: e.target.value })} /></Field>
-              <Field label="Téléphone / WhatsApp *"><input className="input" inputMode="tel" value={d.contactPhone} onChange={(e) => set({ contactPhone: e.target.value })} /></Field>
+              {on("contactName") ? <Field label={lab("contactName")}><input className="input" value={d.contactName} onChange={(e) => set({ contactName: e.target.value })} /></Field> : null}
+              <Field label={lab("contactPhone")}><input className="input" inputMode="tel" value={d.contactPhone} onChange={(e) => set({ contactPhone: e.target.value })} /></Field>
             </div>
             <div className="flex gap-4 rounded-2xl bg-slate-50 p-4">
               {d.photos[0] ? (
@@ -478,12 +554,13 @@ export function ListingEditor({
                 <p className="truncate text-xs text-muted">{[d.quartier, d.commune, d.city].filter(Boolean).join(", ")} · {d.photos.length} photo(s) · {d.features.length} équipement(s)</p>
               </div>
             </div>
-            <Field label="Mention légale (facultatif)">
+            {customBlock("contact")}
+            {on("disclaimer") ? <Field label={fv("disclaimer").required ? lab("disclaimer") : `${lab("disclaimer")} (facultatif)`}>
               <textarea className="input" rows={2} value={d.disclaimer} maxLength={600} placeholder="Ex. Prix hors frais d’agence, sous réserve de disponibilité." onChange={(e) => set({ disclaimer: e.target.value })} />
-            </Field>
-            <Field label="Note privée (visible par vous seul)">
+            </Field> : null}
+            {on("privateNote") ? <Field label={`${lab("privateNote")} (visible par vous seul)`}>
               <textarea className="input" rows={2} value={d.privateNote} maxLength={2000} placeholder="Ex. Clés chez le gardien, propriétaire joignable le soir…" onChange={(e) => set({ privateNote: e.target.value })} />
-            </Field>
+            </Field> : null}
           </>
         ) : null}
       </div>
@@ -521,6 +598,52 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1 block text-sm font-semibold text-ink">{label}</span>
       {children}
     </label>
+  );
+}
+
+function CustomInput({ f, label, help, value, onChange }: { f: CustomField; label: string; help?: string; value: CustomValue | undefined; onChange: (v: CustomValue) => void }) {
+  const v = value ?? "";
+  const wide = f.type === "textarea" || f.type === "multiselect";
+  const box = (() => {
+    switch (f.type) {
+      case "textarea": return <textarea className="input" rows={3} maxLength={1000} value={String(v)} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} />;
+      case "number": return <input className="input" inputMode="decimal" value={String(v)} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value.replace(/[^0-9.,]/g, ""))} />;
+      case "date": return <input className="input" type="date" value={String(v)} onChange={(e) => onChange(e.target.value)} />;
+      case "url": return <input className="input" type="url" value={String(v)} placeholder={f.placeholder || "https://"} onChange={(e) => onChange(e.target.value)} />;
+      case "select": return (
+        <select className="input" value={String(v)} onChange={(e) => onChange(e.target.value)}>
+          <option value="">— Choisir —</option>
+          {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+        </select>
+      );
+      case "multiselect": {
+        const cur = Array.isArray(v) ? v : [];
+        return (
+          <div className="flex flex-wrap gap-2">
+            {f.options.map((o) => {
+              const sel = cur.includes(o);
+              return <Chip key={o} on={sel} onClick={() => onChange(sel ? cur.filter((x) => x !== o) : [...cur, o])}>{sel ? "✓ " : ""}{o}</Chip>;
+            })}
+          </div>
+        );
+      }
+      case "checkbox": return null;
+      default: return <input className="input" maxLength={300} value={String(v)} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} />;
+    }
+  })();
+  if (f.type === "checkbox") {
+    return (
+      <label className="flex items-start gap-2.5 rounded-xl border border-slate-200 p-3 text-sm">
+        <input type="checkbox" className="mt-0.5 h-4 w-4" checked={value === true} onChange={(e) => onChange(e.target.checked)} />
+        <span><span className="font-semibold text-ink">{label}</span>{help ? <span className="block text-xs text-muted">{help}</span> : null}</span>
+      </label>
+    );
+  }
+  return (
+    <div className={wide ? "sm:col-span-2" : ""}>
+      <Field label={`${label}${f.unit && f.type === "number" ? ` (${f.unit})` : ""}${f.visibility === "private" ? " · privé" : ""}`}>{box}</Field>
+      {help ? <p className="mt-1 text-xs text-muted">{help}</p> : null}
+    </div>
   );
 }
 

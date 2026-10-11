@@ -20,6 +20,7 @@ const EMPTY_EXTRAS = {
   labels: [] as string[], pricePrefix: "", pricePostfix: "", secondaryPrice: "", sizeUnit: "m²", landArea: "", landAreaUnit: "m²", garageSize: "",
   additional: [] as { title: string; value: string }[], virtualTour: "", floorPlans: [] as FloorPlanDraft[], units: [] as UnitDraft[],
   postalCode: "", disclaimer: "", privateNote: "",
+  custom: {} as ListingDraft["custom"], customPrivate: {} as ListingDraft["customPrivate"],
 };
 
 const s = (v: unknown) => (v == null ? "" : String(v));
@@ -52,5 +53,7 @@ function extrasFromListing(l: Record<string, any>) {
     floorPlans: arr(x.floorPlans).map((p: any) => ({ title: s(p?.title), price: s(p?.price), size: s(p?.size), rooms: s(p?.rooms), baths: s(p?.baths), image: s(p?.image), description: s(p?.description) })),
     units: arr(l.units).map((u: any) => ({ title: s(u?.title), price: s(u?.price), priceUnit: s(u?.priceUnit), beds: s(u?.beds), baths: s(u?.baths), size: s(u?.size), sizeUnit: s(u?.sizeUnit), type: s(u?.type), availability: s(u?.availability) })),
     postalCode: s(x.postalCode), disclaimer: s(x.disclaimer), privateNote: s(x.privateNote),
+    custom: x.custom && typeof x.custom === "object" ? x.custom : {},
+    customPrivate: x.customPrivate && typeof x.customPrivate === "object" ? x.customPrivate : {},
   };
 }

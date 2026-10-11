@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession, displayName, initials } from "@/lib/session";
-import { accountLabel, isPublisher, menuFor } from "@/lib/accounts";
+import { accountLabel, isPublisher } from "@/lib/accounts";
+import { spaceMenu } from "@/lib/member-space";
 import { DashboardSideNav, DashboardTabs } from "@/components/dashboard-nav";
 import { FavoritesSync } from "@/components/favorites-sync";
 import { logoutAction } from "@/app/compte/actions";
@@ -27,7 +28,7 @@ export default async function EspaceLayout({ children }: { children: React.React
 
   const type = account.accountType ?? "particulier";
   const settings = await getSiteSettings();
-  const items = menuFor(type)
+  const items = (await spaceMenu(type))
     .filter((i) => settings.packages.enabled || (i.key !== "forfait" && i.key !== "factures"))
     .filter((i) => i.key !== "publicite" || settings.ads.enabled !== false)
     // Vérification : seulement si activée pour ce type de compte (back-office).

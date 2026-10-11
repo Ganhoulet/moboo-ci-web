@@ -21,6 +21,7 @@ import { VisitForm } from "@/components/visit-form";
 import { MobileContactBar } from "@/components/mobile-contact-bar";
 import { ContactLink } from "@/components/contact-link";
 import { getSiteSettings } from "@/lib/settings";
+import { customDisplay, parseListingForm } from "@/lib/listing-form";
 import { getTaxonomies, typeLabel } from "@/lib/taxonomies";
 import { ListingReservation } from "@/components/listing-reservation";
 import { MarketPrice } from "@/components/market-price";
@@ -61,7 +62,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");
   // Sections affichées, extrait, biens similaires : back-office → Détails de la propriété.
-  const { listing: cfg, general, print, moderation } = await getSiteSettings();
+  const { listing: cfg, general, print, moderation, forms } = await getSiteSettings();
   const tax = await getTaxonomies();
   const TYPE = (slug: string) => typeLabel(tax, slug);
   const similar = cfg.showSimilar
@@ -101,7 +102,12 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
     </>
   );
   const floorPlans = (dt.floorPlans ?? []).filter((p) => p.title || p.image);
-  const additional = dt.additional ?? [];
+  // Champs créés dans le back-office (Formulaires) : seulement les champs publics encore actifs.
+  const customRows = parseListingForm(forms.listingForm).custom
+    .filter((f) => f.visibility !== "private" && f.mode !== "hidden")
+    .map((f) => ({ title: f.label, value: customDisplay(f, dt.custom?.[f.key]) }))
+    .filter((r) => r.value);
+  const additional = [...customRows, ...(dt.additional ?? [])];
   const tour = dt.virtualTour?.startsWith("https://") ? dt.virtualTour : null;
   const units = (l.units ?? []).filter((u) => u?.title);
   const txLabel = l.transaction === "rent" ? "À louer" : "À vendre";

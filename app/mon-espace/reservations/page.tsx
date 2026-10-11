@@ -1,3 +1,5 @@
+import { requireSpace } from "@/lib/member-space";
+import { getSession } from "@/lib/session";
 import Link from "next/link";
 import { EmptyState, PageHeader } from "@/components/dashboard-ui";
 import { DisputePill, StagePill, fcfa, frDay } from "@/components/booking-ui";
@@ -7,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 /** Mon espace → Mes réservations : séjours meublés et espaces réservés sur Moboo.ci. */
 export default async function MyBookings() {
+  await requireSpace(getSession()?.accountType, "reservations");
   const data = await listMyBookings();
   const items = data?.items ?? [];
   const upcoming = items.filter((b) => !["completed", "cancelled", "no_show"].includes(b.stage));

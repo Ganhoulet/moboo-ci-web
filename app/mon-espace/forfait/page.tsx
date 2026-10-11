@@ -1,7 +1,7 @@
+import { requireSpace } from "@/lib/member-space";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { canAccess } from "@/lib/accounts";
 import { PageHeader } from "@/components/dashboard-ui";
 import { PackageCards } from "@/components/package-cards";
 import { fcfa, getPackages } from "@/lib/community";
@@ -11,7 +11,7 @@ const d = (s: string) => new Date(s).toLocaleDateString("fr-FR", { day: "numeric
 
 export default async function MonForfait({ searchParams }: { searchParams: { facture?: string } }) {
   const account = getSession()!;
-  if (!canAccess(account.accountType, "forfait")) redirect("/mon-espace");
+  await requireSpace(account.accountType, "forfait");
   const [plan, packages, invoice] = await Promise.all([
     getMySubscription(), getPackages(), searchParams.facture ? getMyInvoice(searchParams.facture) : Promise.resolve(null),
   ]);

@@ -1,3 +1,4 @@
+import { requireSpace } from "@/lib/member-space";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession, displayName } from "@/lib/session";
@@ -42,6 +43,7 @@ const stateOf = (lv: VerificationLevel, locked = false) =>
 
 /** Mon espace → Vérification : téléphone, identité (pièce + selfie), activité professionnelle. */
 export default async function Verification() {
+  await requireSpace(getSession()?.accountType, "verification");
   const account = getSession()!;
   const v = await getMyVerification();
   if (!v?.enabled || !v.concerned) redirect("/mon-espace");

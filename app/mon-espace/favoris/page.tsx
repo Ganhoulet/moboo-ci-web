@@ -1,9 +1,12 @@
+import { requireSpace } from "@/lib/member-space";
+import { getSession } from "@/lib/session";
 import Link from "next/link";
 import { EmptyState, PageHeader } from "@/components/dashboard-ui";
 import { PropertyCard } from "@/components/property-card";
 import { listAccountFavorites } from "../actions";
 
 export default async function Favoris() {
+  await requireSpace(getSession()?.accountType, "favoris");
   const favs = await listAccountFavorites();
   return (
     <div>

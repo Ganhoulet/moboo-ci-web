@@ -1,7 +1,7 @@
+import { requireSpace } from "@/lib/member-space";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { canAccess } from "@/lib/accounts";
 import { PageHeader } from "@/components/dashboard-ui";
 import { AdsHub } from "@/components/ads-hub";
 import { getAdZones } from "@/lib/ads";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 /** Espace annonceur (façon Zillow) : Crédits Moboo, boost par zone, vitrine, partenaire de zone, bannières. */
 export default async function Publicite({ searchParams }: { searchParams: { facture?: string; tab?: string; annonce?: string } }) {
   const account = getSession()!;
-  if (!canAccess(account.accountType, "publicite")) redirect("/mon-espace");
+  await requireSpace(account.accountType, "publicite");
   const [data, zones, invoice] = await Promise.all([
     getAdsOverview(), getAdZones(), searchParams.facture ? getMyInvoice(searchParams.facture) : Promise.resolve(null),
   ]);

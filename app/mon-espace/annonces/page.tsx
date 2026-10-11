@@ -1,3 +1,4 @@
+import { requireSpace } from "@/lib/member-space";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
@@ -16,7 +17,7 @@ const TABS = [
 
 export default async function MesAnnonces({ searchParams }: { searchParams: { statut?: string; q?: string; publiee?: string; facture?: string } }) {
   const account = getSession()!;
-  if (!canAccess(account.accountType, "annonces")) redirect("/mon-espace");
+  await requireSpace(account.accountType, "annonces");
 
   // Retour de paiement (publication / vedette) : la facture est re-vérifiée auprès de Money Fusion.
   const invoice = searchParams.facture ? await getMyInvoice(searchParams.facture) : null;

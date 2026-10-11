@@ -1,3 +1,5 @@
+import { requireSpace } from "@/lib/member-space";
+import { getSession } from "@/lib/session";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard-ui";
 import { ApiIntegrations } from "@/components/api-integrations";
@@ -7,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 /** Mon espace → API & intégrations (agences partenaires). */
 export default async function MyApiPage() {
+  await requireSpace(getSession()?.accountType, "api");
   const d = await getMyApi();
   return (
     <div className="space-y-6">
