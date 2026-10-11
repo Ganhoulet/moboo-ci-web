@@ -12,7 +12,7 @@ export interface Backlink {
 export interface BacklinkStats { total: number; obtenu: number; enCours: number; perdu: number; live: number; follow: number }
 export interface SocialVideo {
   id: string; platform: string; url: string; videoId: string; title: string; zoneSlug: string | null; targetPath: string;
-  code: string; clicks: number; views: number; showOnSite: boolean; createdAt: string;
+  code: string; number: number; clicks: number; views: number; showOnSite: boolean; createdAt: string;
 }
 type R = { ok: boolean; error?: string };
 const msg = (d: any, f: string) => (Array.isArray(d?.message) ? d.message[0] : d?.message) || d?.error?.message || f;

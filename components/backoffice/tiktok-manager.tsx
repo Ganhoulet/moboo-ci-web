@@ -16,7 +16,7 @@ export function TiktokManager({ items, zones }: { items: SocialVideo[]; zones: {
   const totalViews = items.reduce((n, v) => n + v.views, 0);
   const save = () => start(async () => {
     const r = await saveVideoAction(form.id ?? null, { ...form, zoneSlug: form.zoneSlug || null });
-    setMsg(r.ok ? { ok: true, text: "Vidéo enregistrée : copiez son lien court pour la description ou la bio." } : { ok: false, text: r.error ?? "Enregistrement impossible." });
+    setMsg(r.ok ? { ok: true, text: "Vidéo enregistrée : son numéro apparaît dans la liste, à annoncer dans la vidéo (« Vidéo n°… — lien en bio »)." } : { ok: false, text: r.error ?? "Enregistrement impossible." });
     if (r.ok) setForm(empty);
   });
   return (
@@ -27,6 +27,16 @@ export function TiktokManager({ items, zones }: { items: SocialVideo[]; zones: {
         ))}
       </div>
       {msg ? <p className={"rounded-md px-3 py-2 text-sm " + (msg.ok ? "bg-emerald-50 text-emerald-900" : "bg-red-50 text-red-800")}>{msg.text}</p> : null}
+      <section className="rounded-lg bg-brand-50 p-4 ring-1 ring-brand-200">
+        <h2 className="font-semibold text-ink">Comment ça marche avec TikTok</h2>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-ink">
+          <li>Les liens ne sont cliquables que dans la <b>bio</b> du profil (compte Professionnel, ou 1 000 abonnés). Mettez-y une fois pour toutes : <button type="button" className="font-mono font-semibold text-brand-800 hover:underline" onClick={() => { void navigator.clipboard?.writeText(`${SITE}/tiktok`); setCopied("bio"); }}>{SITE.replace(/^https?:\/\//, "")}/tiktok</button>{copied === "bio" ? <span className="ml-2 text-xs text-emerald-700">copié</span> : null}</li>
+          <li>Chaque vidéo a un <b>numéro</b>. Dites-le et écrivez-le à l’écran : « Vidéo n°12 — lien en bio ». Sur la page de la bio, la personne touche le n°12 et arrive sur les annonces.</li>
+          <li>Pour ceux qui préfèrent taper l’adresse : <b>moboo.ci/v/12</b> (à écrire en fin de vidéo).</li>
+          <li>Les publicités TikTok (Promote) ont un vrai bouton cliquable : utilisez-y le lien direct de la vidéo.</li>
+        </ol>
+        <a href="/tiktok" target="_blank" className="mt-2 inline-block text-sm font-semibold text-brand-800 hover:underline">Voir la page de la bio →</a>
+      </section>
       <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
         <h2 className="font-semibold text-ink">{form.id ? "Modifier la vidéo" : "Ajouter une vidéo TikTok"}</h2>
         <div className="mt-3 grid gap-3 md:grid-cols-3">
@@ -48,14 +58,19 @@ export function TiktokManager({ items, zones }: { items: SocialVideo[]; zones: {
       </section>
       <section className="overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs text-muted"><tr><th className="px-3 py-2">Vidéo</th><th className="px-3 py-2">Lien court (bio / description)</th><th className="px-3 py-2 text-right">Vues</th><th className="px-3 py-2 text-right">Visites</th><th className="px-3 py-2" /></tr></thead>
+          <thead className="bg-slate-50 text-left text-xs text-muted"><tr><th className="px-3 py-2">Vidéo</th><th className="px-3 py-2">À dire / écrire dans la vidéo</th><th className="px-3 py-2 text-right">Vues</th><th className="px-3 py-2 text-right">Visites</th><th className="px-3 py-2" /></tr></thead>
           <tbody className="divide-y divide-slate-100">
             {items.map((v) => {
               const short = `${SITE}/go/${v.code}`;
               return (
                 <tr key={v.id}>
                   <td className="px-3 py-2"><a href={v.url} target="_blank" rel="noopener" className="font-semibold text-ink hover:underline">{v.title || `Vidéo ${v.videoId}`}</a><p className="text-xs text-muted">{v.zoneSlug ? `Quartier : ${zones.find((z) => z.slug === v.zoneSlug)?.name ?? v.zoneSlug}` : "Sans quartier"} · vers {v.targetPath}{v.showOnSite ? "" : " · masquée du site"}</p></td>
-                  <td className="px-3 py-2"><button type="button" className="font-mono text-xs text-brand-800 hover:underline" onClick={() => { void navigator.clipboard?.writeText(short); setCopied(v.id); }}>{short}</button>{copied === v.id ? <span className="ml-2 text-xs text-emerald-700">copié</span> : null}</td>
+                  <td className="px-3 py-2">
+                    <p className="font-semibold text-ink">« Vidéo n°{v.number} — lien en bio »</p>
+                    <button type="button" className="font-mono text-xs text-brand-800 hover:underline" onClick={() => { void navigator.clipboard?.writeText(`${SITE.replace(/^https?:\/\//, "")}/v/${v.number}`); setCopied(v.id); }}>{SITE.replace(/^https?:\/\//, "")}/v/{v.number}</button>
+                    {copied === v.id ? <span className="ml-2 text-xs text-emerald-700">copié</span> : null}
+                    <p className="text-[11px] text-muted">Lien direct (publicités) : {short}</p>
+                  </td>
                   <td className="px-3 py-2 text-right tabular-nums">{v.views.toLocaleString("fr-FR")}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{v.clicks.toLocaleString("fr-FR")}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-right text-xs">
