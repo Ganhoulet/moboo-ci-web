@@ -6,7 +6,7 @@ import { relayHeaders } from "./relay";
 
 export const SEO_TAG = "site-seo";
 
-export interface SeoFilters { transaction?: "rent" | "sale" | "furnished" | "event"; propertyType?: string; q?: string; priceMin?: number; priceMax?: number }
+export interface SeoFilters { transaction?: "rent" | "sale" | "furnished" | "event"; propertyType?: string; q?: string; priceMin?: number; priceMax?: number; bedrooms?: number }
 
 export interface SeoPage {
   id: string; slug: string; kind: "landing" | "override"; status: "draft" | "published";
@@ -14,6 +14,32 @@ export interface SeoPage {
   canonical: string | null; noindex: boolean; ogImage: string | null; intro: string | null; content: string | null;
   filters: SeoFilters; perPage: number; sort: string | null;
   hubTab: string | null; hubColumn: string | null; hubLabel: string | null; hubOrder: number; updatedAt: string;
+  /** Générateur SEO : page créée automatiquement depuis les annonces. */
+  source?: "manual" | "generator"; listingCount?: number;
+  genMeta?: { tx: string; type: string | null; zone: string; zoneName: string; city: string; level: string; mod: string | null } | null;
+}
+
+/** Page générée : chiffres réels, liens internes, guide de quartier, FAQ. */
+export interface SeoInsights {
+  tx: string; type: string | null; mod: string | null; zone: { slug: string; name: string; city: string; level: string };
+  count: number; median: number | null; p25: number | null; p75: number | null; agencies: number;
+  bedrooms: { bedrooms: number; count: number }[]; intro: string;
+  sameZone: { slug: string; title: string; count: number; tx: string | null }[];
+  nearby: { slug: string; title: string; count: number }[];
+  hub: string | null;
+  guide: { name: string; summary: string; sections: Record<string, string>; image: string | null; updatedAt: string } | null;
+  faq: { q: string; a: string }[];
+}
+
+export async function getSeoInsights(slug: string): Promise<SeoInsights | null> {
+  try {
+    const r = await fetch(`${API_URL}/site/seo/insights?slug=${encodeURIComponent(slug)}`, {
+      next: { revalidate: 300, tags: [SEO_TAG] }, headers: { Accept: "application/json", ...relayHeaders(false) },
+    });
+    return r.ok ? ((await r.json()) as SeoInsights) : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface SeoLink { slug: string; kind: string; title: string; hubLabel: string | null; hubTab: string | null; hubColumn: string | null; hubOrder: number; noindex: boolean; updatedAt: string }
@@ -29,9 +55,10 @@ export async function getSeoPage(slug: string): Promise<SeoPage | null> {
   }
 }
 
-export async function getSeoLinks(): Promise<SeoLink[]> {
+/** Pages publiées ; `generated` : avec les pages du générateur indexables (plan du site). */
+export async function getSeoLinks(generated = false): Promise<SeoLink[]> {
   try {
-    const r = await fetch(`${API_URL}/site/seo/links`, {
+    const r = await fetch(`${API_URL}/site/seo/links${generated ? "?generated=1" : ""}`, {
       next: { revalidate: 60, tags: [SEO_TAG] }, headers: { Accept: "application/json", ...relayHeaders(false) },
     });
     return r.ok ? ((await r.json()).items as SeoLink[]) : [];

@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const main = ["/", "/annonces", "/annonces?transaction=rent", "/annonces?transaction=sale", "/annonces?transaction=furnished", "/annonces?transaction=event", "/forfaits", "/publier", "/confidentialite", "/suppression-compte"]
     .map((p, i) => ({ url: `${BASE}${p === "/" ? "" : p}`, lastModified: now, changeFrequency: "daily" as const, priority: i === 0 ? 1 : 0.8 }));
-  const seo = (await getSeoLinks())
+  const seo = (await getSeoLinks(true))
     .filter((l) => l.kind === "landing" && !l.noindex)
     .map((l) => ({ url: `${BASE}/${l.slug}`, lastModified: new Date(l.updatedAt), changeFrequency: "daily" as const, priority: 0.7 }));
   // Indice des prix : page générale + une page par commune.

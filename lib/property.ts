@@ -213,9 +213,11 @@ export async function listListingsPage(opts: {
   map?: boolean;
   featured?: boolean;
   agent?: string;
+  bedrooms?: number;
   near?: NearQuery;
 }): Promise<PagedProperties> {
   const { items, total, page, perPage, correctedQuery } = await listListings({
+    bedrooms: opts.bedrooms,
     near: opts.near,
     sort: opts.sort,
     bbox: opts.bbox,
