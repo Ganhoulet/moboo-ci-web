@@ -22,7 +22,8 @@ const viewOnce = (id: string) => {
   } catch { /* */ }
   void trackNotice(id, "view").catch(() => {});
 };
-const hidden = (p: string) => p.startsWith("/admin") || p.startsWith("/administration") || p.startsWith("/connexion");
+// Formulaires publics des conseillers (QR, liens partagés) : rien par-dessus.
+const hidden = (p: string) => p.startsWith("/admin") || p.startsWith("/administration") || p.startsWith("/connexion") || p.startsWith("/demande") || p.startsWith("/confier-mon-bien");
 
 function Cta({ n, className, onClick }: { n: LiveNotice; className: string; onClick?: () => void }) {
   if (!n.ctaUrl) return null;

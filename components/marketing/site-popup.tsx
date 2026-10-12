@@ -19,7 +19,7 @@ export function SitePopup({ items, loggedIn }: { items: LiveCampaign[]; loggedIn
 
   useEffect(() => {
     // Pas de pop-up publicitaire dans le back-office, à la connexion ni dans le centre d'aide.
-    if (path.startsWith("/admin") || path.startsWith("/administration") || path.startsWith("/connexion") || path.startsWith("/aide")) return;
+    if (path.startsWith("/admin") || path.startsWith("/administration") || path.startsWith("/connexion") || path.startsWith("/aide") || path.startsWith("/demande") || path.startsWith("/confier-mon-bien")) return;
     const seen = read();
     const next = items.find((x) => {
       if (x.audience === "guests" && loggedIn) return false;
