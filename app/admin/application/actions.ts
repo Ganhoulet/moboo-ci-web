@@ -59,21 +59,27 @@ export async function sendPushAction(input: { title: string; body: string; url?:
 }
 
 // ─── Bascule de Moboo Pro (WordPress → Render) ────────────────────────────
-export interface BasculeDomain { key: string; label: string; detail: string; open: boolean; migrated: number }
-export interface BasculeMigration { organizationId: string; name: string; domain: string; status: string; counts: Record<string, number>; migratedAt: string }
+export type BasculeMode = "off" | "pilot" | "on";
+export interface BasculeOrg { id: string; name: string; contact: string | null }
+export interface BasculeDomain { key: string; label: string; detail: string; mode: BasculeMode; open: boolean; migrated: number; pilots: (BasculeOrg & { migrated: boolean })[] }
+export interface BasculeMigration { organizationId: string; name: string; contact: string | null; domain: string; status: string; counts: Record<string, number>; migratedAt: string }
+const PB = "/site/admin/pro-bascule";
 export const getProBascule = async () => {
-  const { ok, data } = await authedFetch("/site/admin/pro-bascule", { method: "GET" });
+  const { ok, data } = await authedFetch(PB, { method: "GET" });
   return ok ? (data as { domains: BasculeDomain[]; migrations: BasculeMigration[] }) : null;
 };
 
-export async function setBasculeOpenAction(domain: string, open: boolean): Promise<{ ok: boolean; error?: string }> {
-  const { ok, data } = await authedFetch(`/site/admin/pro-bascule/${encodeURIComponent(domain)}`, { method: "PUT", body: JSON.stringify({ open }) });
+async function basculeCall(path: string, method: string, body?: unknown): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await authedFetch(`${PB}${path}`, { method, ...(body ? { body: JSON.stringify(body) } : {}) });
   revalidatePath("/admin/application/bascule-pro");
-  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Modification impossible.") };
+  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Action impossible.") };
 }
+export const setBasculeModeAction = async (domain: string, mode: BasculeMode) => basculeCall(`/${encodeURIComponent(domain)}`, "PUT", { mode });
+export const addBasculePilotAction = async (domain: string, orgId: string) => basculeCall(`/${encodeURIComponent(domain)}/pilots/${encodeURIComponent(orgId)}`, "POST");
+export const removeBasculePilotAction = async (domain: string, orgId: string) => basculeCall(`/${encodeURIComponent(domain)}/pilots/${encodeURIComponent(orgId)}`, "DELETE");
+export const resetBasculeAction = async (domain: string, orgId: string) => basculeCall(`/${encodeURIComponent(domain)}/reset/${encodeURIComponent(orgId)}`, "POST");
 
-export async function resetBasculeAction(domain: string, orgId: string): Promise<{ ok: boolean; error?: string }> {
-  const { ok, data } = await authedFetch(`/site/admin/pro-bascule/${encodeURIComponent(domain)}/reset/${encodeURIComponent(orgId)}`, { method: "POST" });
-  revalidatePath("/admin/application/bascule-pro");
-  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Remise à zéro impossible.") };
+export async function searchBasculeOrgsAction(q: string): Promise<BasculeOrg[]> {
+  const { ok, data } = await authedFetch(`${PB}/orgs?q=${encodeURIComponent(q)}`, { method: "GET" });
+  return ok && Array.isArray(data) ? (data as BasculeOrg[]) : [];
 }

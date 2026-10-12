@@ -1,5 +1,5 @@
 import { getProBascule } from "../actions";
-import { BasculeToggle, BasculeReset } from "./controls";
+import { BasculeModeSwitch, BasculeReset, PilotAdd, PilotRemove } from "./controls";
 
 export const dynamic = "force-dynamic";
 
@@ -19,24 +19,41 @@ export default async function BasculePro() {
         <p className="max-w-3xl text-sm text-muted">
           Moboo Pro passe de WordPress à la base Moboo (Render), domaine par domaine. Quand un domaine est ouvert, chaque agence qui se connecte
           envoie une fois ses données WordPress, puis utilise Render pour ce domaine. Tant qu’il est fermé, rien ne change pour les agences.
+          Commencez par le mode « Agences pilotes » avec un ou deux comptes, vérifiez, puis ouvrez à toutes.
         </p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        {data.domains.map((d) => (
-          <section key={d.key} className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="font-semibold text-ink">{d.label}</h2>
-                <p className="text-xs text-muted">{d.detail}</p>
-              </div>
-              <span className={"rounded-full px-2.5 py-0.5 text-xs font-semibold " + (d.open ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600")}>{d.open ? "Ouvert" : "Fermé"}</span>
+      {data.domains.map((d) => (
+        <section key={d.key} className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-ink">{d.label}</h2>
+              <p className="text-xs text-muted">{d.detail}</p>
+              <p className="mt-2 text-sm text-ink"><strong>{d.migrated}</strong> agence(s) reprise(s)</p>
             </div>
-            <p className="mt-3 text-sm text-ink"><strong>{d.migrated}</strong> agence(s) reprise(s)</p>
-            <div className="mt-3"><BasculeToggle domain={d.key} open={d.open} /></div>
-          </section>
-        ))}
-      </div>
+            <BasculeModeSwitch domain={d.key} mode={d.mode} />
+          </div>
+
+          <div className="mt-4 border-t border-slate-100 pt-3">
+            <h3 className="text-sm font-semibold text-ink">Agences pilotes</h3>
+            <p className="text-xs text-muted">{d.mode === "pilot" ? "Seules ces agences utilisent Render pour ce domaine." : d.mode === "on" ? "Le domaine est ouvert à toutes les agences : la liste n’a plus d’effet." : "Passez en mode « Agences pilotes » pour que ces agences basculent."}</p>
+            {d.pilots.length ? (
+              <ul className="mt-2 divide-y divide-slate-100 rounded-md ring-1 ring-slate-200">
+                {d.pilots.map((p) => (
+                  <li key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                    <span><span className="font-semibold text-ink">{p.name}</span>{p.contact ? <span className="block text-xs text-muted">{p.contact}</span> : null}</span>
+                    <span className="flex items-center gap-3">
+                      <span className={"rounded-full px-2 py-0.5 text-xs font-semibold " + (p.migrated ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600")}>{p.migrated ? "Reprise faite" : "En attente de connexion"}</span>
+                      <PilotRemove domain={d.key} orgId={p.id} name={p.name} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="mt-2 text-xs text-muted">Aucune agence pilote.</p>}
+            <PilotAdd domain={d.key} existing={d.pilots.map((p) => p.id)} />
+          </div>
+        </section>
+      ))}
 
       <section className="overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
         <h2 className="border-b border-slate-200 px-4 py-3 font-semibold text-ink">Agences reprises</h2>
@@ -46,7 +63,7 @@ export default async function BasculePro() {
             <tbody className="divide-y divide-slate-100">
               {data.migrations.map((m) => (
                 <tr key={m.organizationId + m.domain}>
-                  <td className="px-4 py-2.5 font-semibold text-ink">{m.name}</td>
+                  <td className="px-4 py-2.5"><span className="font-semibold text-ink">{m.name}</span>{m.contact ? <span className="block text-xs text-muted">{m.contact}</span> : null}</td>
                   <td className="px-4 py-2.5">{data.domains.find((d) => d.key === m.domain)?.label ?? m.domain}</td>
                   <td className="px-4 py-2.5 text-xs text-slate-600">{countsText(m.counts)}</td>
                   <td className="px-4 py-2.5 text-xs text-muted">{new Date(m.migratedAt).toLocaleString("fr-FR")}</td>
