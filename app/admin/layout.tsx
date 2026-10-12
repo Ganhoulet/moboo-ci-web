@@ -180,6 +180,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/application/push", "Notifications push"],
       ["/admin/application/contacts", "Contacts"],
       ["/admin/application/appareils", "Appareils"],
+      ["/admin/application/bascule-pro", "Bascule Moboo Pro"],
     ].map(([href, label]) => ({ href, label, icon: "phone", child: true, group: "application" })),
     // Rubriques, chacune suivie de ses sous-rubriques (ex. modèles d'e-mails).
     ...(settings?.schema ?? []).filter((s) => !s.parent && !s.hidden).flatMap((s) => {

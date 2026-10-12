@@ -57,3 +57,23 @@ export async function sendPushAction(input: { title: string; body: string; url?:
   revalidatePath("/admin/application/push");
   return ok ? { ok: true, recipients: data?.recipients ?? null } : { ok: false, error: errMsg(data, "Envoi impossible.") };
 }
+
+// ─── Bascule de Moboo Pro (WordPress → Render) ────────────────────────────
+export interface BasculeDomain { key: string; label: string; detail: string; open: boolean; migrated: number }
+export interface BasculeMigration { organizationId: string; name: string; domain: string; status: string; counts: Record<string, number>; migratedAt: string }
+export const getProBascule = async () => {
+  const { ok, data } = await authedFetch("/site/admin/pro-bascule", { method: "GET" });
+  return ok ? (data as { domains: BasculeDomain[]; migrations: BasculeMigration[] }) : null;
+};
+
+export async function setBasculeOpenAction(domain: string, open: boolean): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await authedFetch(`/site/admin/pro-bascule/${encodeURIComponent(domain)}`, { method: "PUT", body: JSON.stringify({ open }) });
+  revalidatePath("/admin/application/bascule-pro");
+  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Modification impossible.") };
+}
+
+export async function resetBasculeAction(domain: string, orgId: string): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await authedFetch(`/site/admin/pro-bascule/${encodeURIComponent(domain)}/reset/${encodeURIComponent(orgId)}`, { method: "POST" });
+  revalidatePath("/admin/application/bascule-pro");
+  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Remise à zéro impossible.") };
+}
