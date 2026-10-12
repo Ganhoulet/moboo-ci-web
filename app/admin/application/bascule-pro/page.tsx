@@ -4,7 +4,7 @@ import { BasculeToggle, BasculeReset } from "./controls";
 export const dynamic = "force-dynamic";
 
 const COUNT_LABELS: Record<string, string> = {
-  properties: "biens", owners: "propriétaires", tenants: "locataires", leases: "baux", payments: "loyers", leads: "prospects", contracts: "contrats", qr_scans: "scans QR",
+  properties: "biens", owners: "propriétaires", tenants: "locataires", leases: "baux", payments: "loyers", leads: "prospects", contracts: "contrats", qr_scans: "scans QR", errors: "non reprises",
 };
 const countsText = (c: Record<string, number> | null) =>
   Object.entries(c ?? {}).filter(([, n]) => Number(n) > 0).map(([k, n]) => `${n} ${COUNT_LABELS[k] ?? k}`).join(" · ") || "aucune donnée";
