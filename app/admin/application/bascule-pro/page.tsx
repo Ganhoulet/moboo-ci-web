@@ -3,6 +3,8 @@ import { BasculeModeSwitch, BasculeReset, PilotAdd, PilotRemove } from "./contro
 
 export const dynamic = "force-dynamic";
 
+/** Domaines sans reprise de données par l'application (servis dès leur ouverture). */
+const NO_REPRISE = new Set(["support", "partages"]);
 const COUNT_LABELS: Record<string, string> = {
   properties: "biens", owners: "propriétaires", tenants: "locataires", leases: "baux", payments: "loyers", leads: "prospects", contracts: "contrats", qr_scans: "scans QR", edl: "états des lieux", devis: "devis", foncier: "transactions foncières", encaissements: "encaissements", depenses: "dépenses", agents: "agents", demandes: "demandes", mandats: "mandats web", errors: "non reprises",
 };
@@ -29,7 +31,11 @@ export default async function BasculePro() {
             <div>
               <h2 className="font-semibold text-ink">{d.label}</h2>
               <p className="text-xs text-muted">{d.detail}</p>
-              <p className="mt-2 text-sm text-ink"><strong>{d.migrated}</strong> agence(s) reprise(s)</p>
+              {NO_REPRISE.has(d.key) ? (
+                <p className="mt-2 text-sm text-ink">Actif dès l’ouverture, sans reprise par l’application.</p>
+              ) : (
+                <p className="mt-2 text-sm text-ink"><strong>{d.migrated}</strong> agence(s) reprise(s)</p>
+              )}
             </div>
             <BasculeModeSwitch domain={d.key} mode={d.mode} />
           </div>
@@ -43,7 +49,9 @@ export default async function BasculePro() {
                   <li key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
                     <span><span className="font-semibold text-ink">{p.name}</span>{p.contact ? <span className="block text-xs text-muted">{p.contact}</span> : null}</span>
                     <span className="flex items-center gap-3">
-                      <span className={"rounded-full px-2 py-0.5 text-xs font-semibold " + (p.migrated ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600")}>{p.migrated ? "Reprise faite" : "En attente de connexion"}</span>
+                      {NO_REPRISE.has(d.key) ? null : (
+                        <span className={"rounded-full px-2 py-0.5 text-xs font-semibold " + (p.migrated ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600")}>{p.migrated ? "Reprise faite" : "En attente de connexion"}</span>
+                      )}
                       <PilotRemove domain={d.key} orgId={p.id} name={p.name} />
                     </span>
                   </li>
