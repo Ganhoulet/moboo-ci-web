@@ -4,7 +4,7 @@ import { BasculeModeSwitch, BasculeReset, PilotAdd, PilotRemove } from "./contro
 export const dynamic = "force-dynamic";
 
 /** Domaines sans reprise de données par l'application (servis dès leur ouverture). */
-const NO_REPRISE = new Set(["support", "partages", "compte", "services", "vf"]);
+const NO_REPRISE = new Set(["support", "partages", "compte", "services", "vf", "syndic"]);
 const COUNT_LABELS: Record<string, string> = {
   properties: "biens", owners: "propriétaires", tenants: "locataires", leases: "baux", payments: "loyers", leads: "prospects", contracts: "contrats", qr_scans: "scans QR", edl: "états des lieux", devis: "devis", foncier: "transactions foncières", encaissements: "encaissements", depenses: "dépenses", agents: "agents", demandes: "demandes", mandats: "mandats web", tickets: "tickets", projet: "projets", lot: "lots", phase: "phases", acquereur: "acquéreurs", reservation: "réservations", versement: "versements", depense: "dépenses", errors: "non reprises",
 };
