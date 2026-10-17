@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 /** Domaines sans reprise de données par l'application (servis dès leur ouverture). */
 const NO_REPRISE = new Set(["support", "partages", "compte", "services"]);
 const COUNT_LABELS: Record<string, string> = {
-  properties: "biens", owners: "propriétaires", tenants: "locataires", leases: "baux", payments: "loyers", leads: "prospects", contracts: "contrats", qr_scans: "scans QR", edl: "états des lieux", devis: "devis", foncier: "transactions foncières", encaissements: "encaissements", depenses: "dépenses", agents: "agents", demandes: "demandes", mandats: "mandats web", errors: "non reprises",
+  properties: "biens", owners: "propriétaires", tenants: "locataires", leases: "baux", payments: "loyers", leads: "prospects", contracts: "contrats", qr_scans: "scans QR", edl: "états des lieux", devis: "devis", foncier: "transactions foncières", encaissements: "encaissements", depenses: "dépenses", agents: "agents", demandes: "demandes", mandats: "mandats web", tickets: "tickets", errors: "non reprises",
 };
 const countsText = (c: Record<string, number> | null) =>
   Object.entries(c ?? {}).filter(([, n]) => Number(n) > 0).map(([k, n]) => `${n} ${COUNT_LABELS[k] ?? k}`).join(" · ") || "aucune donnée";
