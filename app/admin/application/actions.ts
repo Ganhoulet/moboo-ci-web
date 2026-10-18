@@ -64,9 +64,11 @@ export interface BasculeOrg { id: string; name: string; contact: string | null }
 export interface BasculeDomain { key: string; label: string; detail: string; mode: BasculeMode; open: boolean; migrated: number; pilots: (BasculeOrg & { migrated: boolean })[] }
 export interface BasculeMigration { organizationId: string; name: string; contact: string | null; domain: string; status: string; counts: Record<string, number>; migratedAt: string }
 const PB = "/site/admin/pro-bascule";
+export interface BasculeAppPolicy { minProtocol: number; androidUrl: string; iosUrl: string; message: string }
+export interface BasculePreparation { domainsNotOn: string[]; orgsStarted: number; orgsComplete: number; invitationsPending: number; proAccounts: number; appSeen30: number }
 export const getProBascule = async () => {
   const { ok, data } = await authedFetch(PB, { method: "GET" });
-  return ok ? (data as { domains: BasculeDomain[]; migrations: BasculeMigration[] }) : null;
+  return ok ? (data as { domains: BasculeDomain[]; migrations: BasculeMigration[]; wordpress?: { off: boolean; at: string | null }; app?: BasculeAppPolicy; preparation?: BasculePreparation }) : null;
 };
 
 async function basculeCall(path: string, method: string, body?: unknown): Promise<{ ok: boolean; error?: string }> {
@@ -74,6 +76,8 @@ async function basculeCall(path: string, method: string, body?: unknown): Promis
   revalidatePath("/admin/application/bascule-pro");
   return ok ? { ok: true } : { ok: false, error: errMsg(data, "Action impossible.") };
 }
+export const setWordpressOffAction = async (off: boolean) => basculeCall("/arret-wordpress", "PUT", { off });
+export const setProAppPolicyAction = async (p: Partial<BasculeAppPolicy>) => basculeCall("/version-app", "PUT", p);
 export const setBasculeModeAction = async (domain: string, mode: BasculeMode) => basculeCall(`/${encodeURIComponent(domain)}`, "PUT", { mode });
 export const addBasculePilotAction = async (domain: string, orgId: string) => basculeCall(`/${encodeURIComponent(domain)}/pilots/${encodeURIComponent(orgId)}`, "POST");
 export const removeBasculePilotAction = async (domain: string, orgId: string) => basculeCall(`/${encodeURIComponent(domain)}/pilots/${encodeURIComponent(orgId)}`, "DELETE");

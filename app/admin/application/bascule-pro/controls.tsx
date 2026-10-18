@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import {
   addBasculePilotAction, removeBasculePilotAction, resetBasculeAction, searchBasculeOrgsAction, setBasculeModeAction,
-  type BasculeMode, type BasculeOrg,
+  setProAppPolicyAction, setWordpressOffAction,
+  type BasculeAppPolicy, type BasculeMode, type BasculeOrg,
 } from "../actions";
 
 const MODES: { mode: BasculeMode; label: string; confirm: string }[] = [
@@ -80,5 +81,58 @@ export function BasculeReset({ domain, orgId, name }: { domain: string; orgId: s
       if (!confirm(`Refaire la reprise de « ${name} » ?`)) return;
       start(async () => { const r = await resetBasculeAction(domain, orgId); if (!r.ok) alert(r.error); });
     }} className="text-xs font-semibold text-brand-800 hover:underline">{pending ? "…" : "Refaire la reprise"}</button>
+  );
+}
+
+export function WordpressSwitch({ off, blockers }: { off: boolean; blockers: number }) {
+  const [pending, start] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
+  const next = !off;
+  const ask = next
+    ? (blockers ? `Attention : ${blockers} point(s) de contrôle ne sont pas au vert. ` : "") +
+      "Passer Moboo Pro en mode « WordPress arrêté » ? L’application n’appellera plus du tout moboo.ci/wp-json : connexion, inscription, invitations et mot de passe oublié passent par Render, et tous les domaines sont forcés sur Render."
+    : "Revenir au fonctionnement avec WordPress ? À ne faire que si WordPress est encore en ligne.";
+  return (
+    <div>
+      <button type="button" disabled={pending}
+        onClick={() => { if (confirm(ask)) start(async () => { const r = await setWordpressOffAction(next); setErr(r.ok ? null : r.error ?? "Erreur."); }); }}
+        className={"rounded-md px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 " + (off ? "bg-slate-600 hover:bg-slate-700" : "bg-red-700 hover:bg-red-800")}>
+        {pending ? "…" : off ? "Réactiver WordPress" : "Arrêter WordPress pour Moboo Pro"}
+      </button>
+      {err ? <p className="mt-1 text-xs text-red-700">{err}</p> : null}
+    </div>
+  );
+}
+
+export function AppPolicyForm({ policy, current }: { policy: BasculeAppPolicy; current: number }) {
+  const [p, setP] = useState(policy);
+  const [pending, start] = useTransition();
+  const [msg, setMsg] = useState<string | null>(null);
+  const field = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm";
+  return (
+    <form className="grid gap-3 sm:grid-cols-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (p.minProtocol > current && !confirm(`Le minimum ${p.minProtocol} dépasse la dernière version connue (${current}) : toutes les applications seront bloquées. Continuer ?`)) return;
+        start(async () => { const r = await setProAppPolicyAction(p); setMsg(r.ok ? "Enregistré." : r.error ?? "Erreur."); });
+      }}>
+      <label className="text-xs font-semibold text-ink">Version minimale (protocole)
+        <input type="number" min={0} max={1000} value={p.minProtocol} onChange={(e) => setP({ ...p, minProtocol: Number(e.target.value) || 0 })} className={field} />
+        <span className="mt-0.5 block font-normal text-muted">0 = aucune obligation. La version actuelle de l’application porte le protocole {current}.</span>
+      </label>
+      <label className="text-xs font-semibold text-ink">Message affiché
+        <input value={p.message} onChange={(e) => setP({ ...p, message: e.target.value })} maxLength={300} className={field} />
+      </label>
+      <label className="text-xs font-semibold text-ink">Lien Play Store
+        <input value={p.androidUrl} onChange={(e) => setP({ ...p, androidUrl: e.target.value })} className={field} />
+      </label>
+      <label className="text-xs font-semibold text-ink">Lien App Store
+        <input value={p.iosUrl} onChange={(e) => setP({ ...p, iosUrl: e.target.value })} placeholder="https://apps.apple.com/…" className={field} />
+      </label>
+      <div className="flex items-center gap-3 sm:col-span-2">
+        <button type="submit" disabled={pending} className="rounded-md bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Enregistrer</button>
+        {msg ? <span className="text-xs text-muted">{msg}</span> : null}
+      </div>
+    </form>
   );
 }

@@ -1,7 +1,10 @@
 import { getProBascule } from "../actions";
-import { BasculeModeSwitch, BasculeReset, PilotAdd, PilotRemove } from "./controls";
+import { AppPolicyForm, BasculeModeSwitch, BasculeReset, PilotAdd, PilotRemove, WordpressSwitch } from "./controls";
 
 export const dynamic = "force-dynamic";
+
+/** Protocole de la dernière version de Moboo Pro (RenderBascule.protocol dans l’application). */
+const APP_PROTOCOL = 1;
 
 /** Domaines sans reprise de données par l'application (servis dès leur ouverture). */
 const NO_REPRISE = new Set(["support", "partages", "compte", "services", "vf", "syndic", "plateforme"]);
@@ -24,6 +27,8 @@ export default async function BasculePro() {
           Commencez par le mode « Agences pilotes » avec un ou deux comptes, vérifiez, puis ouvrez à toutes.
         </p>
       </div>
+
+      <ArretWordpress data={data} />
 
       {data.domains.map((d) => (
         <section key={d.key} className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -84,5 +89,81 @@ export default async function BasculePro() {
       </section>
       <p className="text-xs text-muted">« Refaire la reprise » : l’agence renverra ses données WordPress à sa prochaine connexion (les fiches déjà reprises sont mises à jour, pas dupliquées).</p>
     </div>
+  );
+}
+
+type Data = NonNullable<Awaited<ReturnType<typeof getProBascule>>>;
+
+function Check({ ok, title, children }: { ok: boolean; title: string; children: React.ReactNode }) {
+  return (
+    <li className="flex gap-2 py-2">
+      <span aria-hidden className={"mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold " + (ok ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800")}>{ok ? "✓" : "!"}</span>
+      <span><span className="font-semibold text-ink">{title}</span><span className="block text-xs text-muted">{children}</span></span>
+    </li>
+  );
+}
+
+function ArretWordpress({ data }: { data: Data }) {
+  const off = data.wordpress?.off === true;
+  const p = data.preparation;
+  const app = data.app ?? { minProtocol: 0, androidUrl: "", iosUrl: "", message: "" };
+  const checks = [
+    app.minProtocol >= APP_PROTOCOL,
+    !!p && p.domainsNotOn.length === 0,
+  ];
+  const blockers = checks.filter((c) => !c).length;
+  return (
+    <section className={"rounded-lg p-4 shadow-sm ring-1 " + (off ? "bg-slate-50 ring-slate-300" : "bg-white ring-red-200")}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-semibold text-ink">Arrêt de WordPress</h2>
+          <p className="max-w-2xl text-xs text-muted">
+            {off
+              ? `WordPress est arrêté pour Moboo Pro${data.wordpress?.at ? ` depuis le ${new Date(data.wordpress.at).toLocaleString("fr-FR")}` : ""} : l’application n’utilise plus que Render.`
+              : "Dernière étape : quand tout est au vert, l’application cesse d’appeler WordPress. Les anciennes versions reçoivent un message de mise à jour."}
+          </p>
+        </div>
+        <WordpressSwitch off={off} blockers={blockers} />
+      </div>
+
+      {p ? (
+        <ul className="mt-3 divide-y divide-slate-100 border-t border-slate-100">
+          <Check ok={checks[0]} title="Version minimale de l’application">
+            {app.minProtocol >= APP_PROTOCOL ? `Protocole ${app.minProtocol} exigé : les anciennes versions sont bloquées et renvoyées vers le store.` : `À régler sur ${APP_PROTOCOL} une fois la nouvelle version publiée sur le Play Store et l’App Store.`}
+          </Check>
+          <Check ok={checks[1]} title="Tous les domaines sur « Ouvert à toutes »">
+            {p.domainsNotOn.length ? `Encore fermés ou en pilote : ${p.domainsNotOn.join(", ")}.` : "Tous les domaines sont ouverts."}
+          </Check>
+          <Check ok={p.orgsStarted === 0 || p.orgsComplete === p.orgsStarted} title="Reprise des agences">
+            {`${p.orgsComplete} agence(s) entièrement reprise(s) sur ${p.orgsStarted} commencée(s). Lancez « Reprendre les agences restantes » dans Moboo Migration (WordPress en lecture seule) pour reprendre celles qui ne se sont pas reconnectées.`}
+          </Check>
+          <Check ok title="Invitations">
+            {p.invitationsPending ? `${p.invitationsPending} invitation(s) pas encore acceptée(s) : elles restent valables sur moboo.ci (pages /rejoindre, /proprietaire, /rattachement). Cliquez sur « Envoyer les invitations en attente » dans Moboo Migration juste avant l’arrêt.` : "Aucune invitation en attente."}
+          </Check>
+          <Check ok title="Comptes Moboo Pro">
+            {`${p.proAccounts} compte(s) connu(s) de Render, dont ${p.appSeen30} actif(s) dans l’application ces 30 derniers jours.`}
+          </Check>
+        </ul>
+      ) : null}
+
+      <details className="mt-3 rounded-md bg-slate-50 p-3 text-sm">
+        <summary className="cursor-pointer font-semibold text-ink">Version minimale de l’application</summary>
+        <div className="mt-3"><AppPolicyForm policy={app} current={APP_PROTOCOL} /></div>
+      </details>
+
+      <details className="mt-2 rounded-md bg-slate-50 p-3 text-sm">
+        <summary className="cursor-pointer font-semibold text-ink">Procédure d’arrêt, dans l’ordre</summary>
+        <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-slate-700">
+          <li>Publier la nouvelle version de Moboo Pro (Play Store et App Store), attendre qu’elle soit disponible, puis régler la version minimale ci-dessus.</li>
+          <li>Ouvrir tous les domaines à toutes les agences (sections ci-dessous).</li>
+          <li>Dans WordPress › Moboo Migration › « 5. Arrêt de WordPress » : activer la lecture seule (plus aucune écriture Moboo Pro sur WordPress).</li>
+          <li>Renvoyer depuis Moboo Migration : Comptes, Services, Plateforme Moboo Pro, Syndic, Vérification foncière, Support, puis « Envoyer les invitations en attente ».</li>
+          <li>Cliquer sur « Reprendre les agences restantes » et attendre « terminée ✔ » (agences, puis agents).</li>
+          <li>Cliquer sur « Arrêter WordPress pour Moboo Pro » ci-dessus.</li>
+          <li>Vérifier sur un téléphone : connexion, un bien, un état des lieux, une invitation, mot de passe oublié.</li>
+          <li>Faire pointer moboo.ci vers le nouveau site (DNS) et garder une sauvegarde complète de WordPress (fichiers + base) avant de l’éteindre.</li>
+        </ol>
+      </details>
+    </section>
   );
 }
