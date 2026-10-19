@@ -44,9 +44,13 @@ export interface DirectoryPro {
   zones: string[]; rating: number; reviews: number; recommend: number | null; listings: number;
   verified: boolean; businessVerified: boolean; phone: string | null; whatsapp: string | null; since: string; bio: string | null;
 }
-export interface DirectoryResult { total: number; page: number; perPage: number; pages: number; counts: { agent: number; agence: number }; items: DirectoryPro[] }
+export interface DirectoryResult {
+  /** Forme unique de la zone cherchée (« rivera » → riviera) : le site redirige vers sa page. */
+  zone?: { slug: string; label: string } | null;
+  total: number; page: number; perPage: number; pages: number; counts: { agent: number; agence: number }; items: DirectoryPro[] }
 export interface DirectoryQuery { q?: string; zone?: string; type?: string; sort?: string; verified?: string; minRating?: string; page?: string | number }
-export interface Zone { slug: string; label: string; n: number }
+/** `indexable` : assez de professionnels pour être proposée à Google (seuil du générateur SEO). */
+export interface Zone { slug: string; label: string; n: number; indexable?: boolean }
 
 export async function searchPros(q: DirectoryQuery): Promise<DirectoryResult> {
   const p = new URLSearchParams();
@@ -54,6 +58,19 @@ export async function searchPros(q: DirectoryQuery): Promise<DirectoryResult> {
   return (await get<DirectoryResult>(`/site/pros/directory?${p}`, 60)) ?? { total: 0, page: 1, perPage: 18, pages: 1, counts: { agent: 0, agence: 0 }, items: [] };
 }
 export const getZones = async () => (await get<{ items: Zone[] }>(`/site/pros/zones`, 300))?.items ?? [];
+
+/** Chiffres propres à Moboo pour une zone : professionnels, avis, prix, guide de quartier, introduction. */
+export interface PriceStat { n: number; median: number | null; p25: number | null; p75: number | null }
+export interface ZoneSummary {
+  zone: { slug: string; name: string; city: string };
+  listings: { rent: number; sale: number; furnished: number };
+  rent: PriceStat; sale: PriceStat; owners: number;
+  pros: { pros: number; agents: number; agences: number; listings: number; reviews: number; rating: number | null; verified: number } | null;
+  guide: { name: string; summary: string; image: string | null; updatedAt: string } | null;
+  hub: string | null;
+  intro: string[];
+}
+export const getZoneSummary = (slug: string) => get<ZoneSummary>(`/site/seo/zone-summary?slug=${encodeURIComponent(slug)}`, 300);
 
 export const slugZone = (s: string) =>
   String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");

@@ -2,7 +2,10 @@ import Link from "next/link";
 import { img } from "@/lib/img";
 import { Stars } from "@/components/reviews";
 import { VerifiedBadge } from "@/components/verified-badge";
-import { searchPros, getZones, slugZone, type DirectoryPro, type DirectoryQuery } from "@/lib/pro-reviews";
+import { searchPros, getZones, slugZone, type DirectoryPro, type DirectoryQuery, type ZoneSummary } from "@/lib/pro-reviews";
+import { breadcrumbLd, ldJson } from "@/lib/structured-data";
+
+const fcfa = (n: number) => `${Math.round(n).toLocaleString("fr-FR")} FCFA`;
 
 const SORTS = [
   { v: "", l: "Recommandés" }, { v: "rating", l: "Mieux notés" }, { v: "reviews", l: "Plus d’avis" },
@@ -61,14 +64,25 @@ function ProCard({ p }: { p: DirectoryPro }) {
  * Annuaire des agents et agences (façon Zillow « Trouver un agent ») :
  * recherche par zone d'intervention, nom, type ; notes des avis certifiés.
  */
-export async function DirectoryView({ base, query, zoneLabel }: { base: string; query: DirectoryQuery; zoneLabel?: string | null }) {
+export async function DirectoryView({ base, query, zoneLabel, summary }: { base: string; query: DirectoryQuery; zoneLabel?: string | null; summary?: ZoneSummary | null }) {
   const [res, zones] = await Promise.all([searchPros(query), getZones()]);
   const place = zoneLabel || null;
+  const crumbs = [{ label: "Accueil", href: "/" }, { label: "Agents immobiliers", href: "/agents-immobiliers" }, ...(place ? [{ label: place, href: base }] : [])];
+  // Introduction propre à la zone (chiffres Moboo), rendue côté serveur : visible sans JavaScript.
+  const intro = summary?.intro?.length ? summary.intro : null;
+  const facts = summary ? [
+    summary.pros?.pros ? { k: "Professionnels", v: `${summary.pros.agents} agent${summary.pros.agents > 1 ? "s" : ""} · ${summary.pros.agences} agence${summary.pros.agences > 1 ? "s" : ""}` } : null,
+    summary.pros?.reviews && summary.pros.rating ? { k: "Avis certifiés", v: `${String(summary.pros.rating).replace(".", ",")}/5 · ${summary.pros.reviews} avis` } : null,
+    summary.rent.median ? { k: "Loyer médian", v: `${fcfa(summary.rent.median)} / mois` } : null,
+    summary.rent.p25 && summary.rent.p75 && summary.rent.p25 < summary.rent.p75 ? { k: "La moitié des loyers entre", v: `${fcfa(summary.rent.p25)} et ${fcfa(summary.rent.p75)}` } : null,
+    summary.sale.median ? { k: "Prix de vente médian", v: fcfa(summary.sale.median) } : null,
+  ].filter(Boolean) as { k: string; v: string }[] : [];
   const type = query.type === "agent" || query.type === "agence" ? query.type : "";
   const page = Number(query.page) || 1;
 
   return (
     <div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd(crumbs)) }} />
       <div className="bg-gradient-to-br from-brand-800 to-brand-900 text-white">
         <div className="container-page py-10 sm:py-14">
           <nav className="text-sm text-white/70" aria-label="Fil d’Ariane">
@@ -77,9 +91,13 @@ export async function DirectoryView({ base, query, zoneLabel }: { base: string; 
           <h1 className="mt-3 max-w-3xl font-display text-3xl font-extrabold sm:text-4xl">
             {place ? `Agents et agences immobilières à ${place}` : "Trouvez un agent immobilier près de chez vous"}
           </h1>
-          <p className="mt-2 max-w-2xl text-white/80">
-            Comparez les agents et agences de Côte d’Ivoire selon leur zone d’intervention, leurs avis certifiés et leurs annonces en ligne. Les avis viennent de vrais clients qui les ont contactés via Moboo.
-          </p>
+          {intro ? (
+            <div className="mt-2 max-w-3xl space-y-2 text-white/85">{intro.slice(0, 2).map((t) => <p key={t}>{t}</p>)}</div>
+          ) : (
+            <p className="mt-2 max-w-2xl text-white/80">
+              Comparez les agents et agences de Côte d’Ivoire selon leur zone d’intervention, leurs avis certifiés et leurs annonces en ligne. Les avis viennent de vrais clients qui les ont contactés via Moboo.
+            </p>
+          )}
           <form action="/agents-immobiliers" method="get" className="mt-6 grid max-w-4xl gap-2 rounded-2xl bg-white p-2 text-ink shadow-xl sm:grid-cols-[1.3fr_1fr_auto_auto]">
             <label className="flex items-center gap-2 rounded-xl px-3">
               <span aria-hidden="true">📍</span>
@@ -120,6 +138,14 @@ export async function DirectoryView({ base, query, zoneLabel }: { base: string; 
           </div>
         </div>
 
+        {facts.length ? (
+          <dl className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {facts.map((f) => (
+              <div key={f.k} className="rounded-2xl bg-white px-4 py-3 shadow-card"><dt className="text-xs text-muted">{f.k}</dt><dd className="mt-0.5 font-display font-bold text-ink">{f.v}</dd></div>
+            ))}
+          </dl>
+        ) : null}
+
         <p className="mt-5 text-sm text-muted">
           <strong className="text-ink">{res.total}</strong> professionnel{res.total > 1 ? "s" : ""}{place ? ` à ${place}` : ""}
           {" "}({res.counts.agent} agent{res.counts.agent > 1 ? "s" : ""}, {res.counts.agence} agence{res.counts.agence > 1 ? "s" : ""})
@@ -145,11 +171,20 @@ export async function DirectoryView({ base, query, zoneLabel }: { base: string; 
           </nav>
         ) : null}
 
+        {summary && ((intro?.length ?? 0) > 2 || summary.hub) ? (
+          <section className="mt-12 max-w-3xl">
+            <h2 className="font-display text-xl font-bold text-ink">Vivre et investir à {summary.zone.name}</h2>
+            {intro && intro.length > 2 ? intro.slice(2).map((t) => <p key={t} className="mt-2 text-slate-700">{t}</p>) : null}
+            {summary.hub ? <Link href={summary.hub} className="mt-3 inline-block text-sm font-semibold text-brand-800 hover:underline">Annonces, prix et guide du quartier →</Link> : null}
+          </section>
+        ) : null}
+
         {zones.length ? (
           <section className="mt-14">
             <h2 className="font-display text-xl font-bold text-ink">Agents immobiliers par zone</h2>
             <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3 lg:grid-cols-4">
-              {zones.slice(0, 48).map((z) => (
+              {/* Seules les zones assez fournies sont proposées (pas de liens vers des pages maigres). */}
+              {zones.filter((z) => z.indexable !== false).slice(0, 48).map((z) => (
                 <li key={z.slug}><Link href={`/agents-immobiliers/${z.slug}`} className={`hover:text-brand-800 hover:underline ${slugZone(place ?? "") === z.slug ? "font-semibold text-brand-800" : "text-slate-700"}`}>Agents à {z.label} <span className="text-muted">({z.n})</span></Link></li>
               ))}
             </ul>

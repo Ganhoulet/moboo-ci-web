@@ -10,6 +10,9 @@ export interface GscOverview {
   pages?: (GscRow & { url: string; path: string; generated: boolean })[];
   queries?: (GscRow & { query: string })[];
   opportunities?: { query: string; impressions: number; clicks: number; position: number }[];
+  /** Apparitions spéciales dans Google (étoiles d'avis, vidéo, aperçus IA…) ; `ai` : fonctionnalités d'IA générative. */
+  appearances?: (GscRow & { key: string; label: string; ai: boolean })[];
+  aiReportUrl?: string;
   sitemaps?: { path: string; lastSubmitted: string | null; lastDownloaded: string | null; isPending: boolean; errors: number; warnings: number; submitted: number }[];
 }
 const msg = (d: any, f: string) => (Array.isArray(d?.message) ? d.message[0] : d?.message) || d?.error?.message || f;

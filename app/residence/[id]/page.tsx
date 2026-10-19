@@ -1,4 +1,5 @@
 import { ConversionSignals } from "@/components/conversion-signals";
+import { videoLd } from "@/lib/structured-data";
 import { getSignals } from "@/lib/signals";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -124,6 +125,10 @@ export default async function ResidencePage({ params, searchParams }: { params: 
           priceRange: r.minNightlyPrice ? `${formatXOF(r.minNightlyPrice)} / nuit` : undefined,
         }}
       />
+      {(() => {
+        const v = videoLd({ url: r.videoUrl, name: `Vidéo : ${r.name}`, description: r.description, thumbnail: photos[0], uploadDate: r.updatedAt });
+        return v ? <JsonLd data={v} /> : null;
+      })()}
 
       <DetailHero
         bannerStyle={(await getSiteSettings()).listing.bannerStyle}

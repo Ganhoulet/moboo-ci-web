@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { breadcrumbLd } from "@/lib/structured-data";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSeoInsights, getSeoLinks, getSeoPage, searchHref, seoLinkLabel, type SeoInsights } from "@/lib/seo";
@@ -75,10 +76,7 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
 
   const crumbs = genCrumbs(page.slug, page.title, ins);
   const jsonLd = [
-    {
-      "@context": "https://schema.org", "@type": "BreadcrumbList",
-      itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, item: c.href })),
-    },
+    breadcrumbLd(crumbs.map((c) => ({ label: c.name, href: c.href }))),
     ins?.faq.length ? {
       "@context": "https://schema.org", "@type": "FAQPage",
       mainEntity: ins.faq.map((x) => ({ "@type": "Question", name: x.q, acceptedAnswer: { "@type": "Answer", text: x.a } })),
@@ -131,7 +129,7 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
         </section>
       ) : null}
 
-      {ins ? <GenSections ins={ins} slug={page.slug} pricePage={!!priceZones?.some((z) => z.slug === ins.zone.slug)} agentsPage={agentZones.some((z) => z.slug === ins.zone.slug)} /> : null}
+      {ins ? <GenSections ins={ins} slug={page.slug} pricePage={!!priceZones?.some((z) => z.slug === ins.zone.slug)} agentsPage={agentZones.some((z) => z.slug === ins.zone.slug && z.indexable !== false)} /> : null}
 
       {related.length ? (
         <section className="mt-12 border-t border-slate-200 pt-8">

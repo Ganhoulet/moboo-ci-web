@@ -63,6 +63,27 @@ export default async function SearchConsolePage({ searchParams }: { searchParams
               head={["Requête", "Impr.", "Clics", "Pos."]}
               rows={(o.opportunities ?? []).map((q) => [q.query, n(q.impressions), n(q.clicks), q.position.toLocaleString("fr-FR")])} />
           </div>
+          <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h2 className="font-semibold text-ink">Dans l’IA générative de Google (aperçus IA, mode IA)</h2>
+                <p className="max-w-3xl text-xs text-muted">
+                  Google compte les clics et impressions venus des aperçus IA dans les totaux ci-dessus. Le détail (« Performances dans l’IA générative »)
+                  n’est disponible que dans Search Console : l’accès automatique ne le fournit pas encore. Ci-dessous, les apparitions spéciales que Google transmet.
+                </p>
+              </div>
+              {o.aiReportUrl ? <a href={o.aiReportUrl} target="_blank" rel="noopener" className="rounded-md bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">Ouvrir le rapport dans Search Console ↗</a> : null}
+            </div>
+            <ul className="mt-3 divide-y divide-slate-100 text-sm">
+              {(o.appearances ?? []).map((a) => (
+                <li key={a.key} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span className="text-ink">{a.label}{a.ai ? <span className="ml-2 rounded bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-800">IA</span> : null}</span>
+                  <span className="tabular-nums text-muted">{n(a.clicks)} clic(s) · {n(a.impressions)} impr. · pos. {a.position.toLocaleString("fr-FR")}</span>
+                </li>
+              ))}
+              {!o.appearances?.length ? <li className="py-2 text-muted">Aucune apparition spéciale sur la période (ou API pas encore à jour).</li> : null}
+            </ul>
+          </section>
           <Table title="Pages" sub="« Générée » : page créée par le générateur SEO"
             head={["Page", "Clics", "Impr.", "CTR", "Pos."]}
             rows={(o.pages ?? []).slice(0, 150).map((p) => [

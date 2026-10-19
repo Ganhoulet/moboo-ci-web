@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Host } from "@/lib/types";
+import { breadcrumbLd, ldJson } from "@/lib/structured-data";
 
 /**
  * Briques communes des fiches (annonce, résidence meublée, espace événementiel),
@@ -127,6 +128,7 @@ export function BookingSteps({ steps }: { steps: { title: string; text: string }
 export function Breadcrumbs({ items }: { items: { label: string; href?: string }[] }) {
   return (
     <nav aria-label="Fil d'Ariane" className="text-sm text-muted">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd(items)) }} />
       <ol className="flex flex-wrap items-center gap-1.5">
         {items.map((it, i) => (
           <li key={it.label + i} className="flex items-center gap-1.5">

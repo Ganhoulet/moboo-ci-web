@@ -1,4 +1,5 @@
 import { ConversionSignals } from "@/components/conversion-signals";
+import { videoLd } from "@/lib/structured-data";
 import { getSignals } from "@/lib/signals";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -115,6 +116,10 @@ export default async function EspacePage({ params }: { params: { slug: string } 
           address: { "@type": "PostalAddress", addressLocality: e.commune, addressCountry: "CI" },
         }}
       />
+      {(() => {
+        const v = videoLd({ url: e.videoUrl, name: `Vidéo : ${e.nom}`, description: e.description, thumbnail: photos[0], uploadDate: e.updatedAt });
+        return v ? <JsonLd data={v} /> : null;
+      })()}
 
       <DetailHero
         bannerStyle={(await getSiteSettings()).listing.bannerStyle}

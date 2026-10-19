@@ -1,4 +1,5 @@
 import { ConversionSignals } from "@/components/conversion-signals";
+import { videoLd } from "@/lib/structured-data";
 import { getSignals } from "@/lib/signals";
 import { ReviewsSection } from "@/components/reviews";
 import type { Metadata } from "next";
@@ -159,6 +160,11 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
           address: { "@type": "PostalAddress", addressLocality: l.commune ?? l.city, addressRegion: l.city, addressCountry: "CI" },
         }}
       />
+      {(() => {
+        // Vidéo de l'annonce : éligible aux résultats vidéo de Google.
+        const v = cfg.showVideo ? videoLd({ url: l.videoUrl, name: `Vidéo : ${l.title}`, description: l.description, thumbnail: l.photos?.[0], uploadDate: l.createdAt ?? l.updatedAt }) : null;
+        return v ? <JsonLd data={v} /> : null;
+      })()}
 
       <DetailHero
         bannerStyle={cfg.bannerStyle}

@@ -4,6 +4,8 @@ import { authedFetch } from "@/lib/server-api";
 import { getHomeData, getHomePage } from "@/lib/pages";
 import { normalizeHome } from "@/lib/page-blocks";
 import { HomeSection } from "@/components/home/sections";
+import { getSiteSettings } from "@/lib/settings";
+import { ldJson, organizationLd } from "@/lib/structured-data";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +22,17 @@ export default async function HomePage({ searchParams }: { searchParams: { aperc
     const r = await authedFetch("/site/admin/pages/home", { method: "GET" });
     if (r.ok && r.data?.draft) page = normalizeHome(r.data.draft);
   }
-  const data = await getHomeData();
+  const [data, settings] = await Promise.all([getHomeData(), getSiteSettings()]);
+  const { branding, header } = settings;
+  // Moboo (éditeur du site) pour Google : nom, logo, réseaux sociaux.
+  const org = organizationLd({
+    name: branding.siteName, logoUrl: branding.logoUrl,
+    sameAs: [header.facebookUrl, header.instagramUrl, header.tiktokUrl, header.linkedinUrl, header.youtubeUrl],
+  });
 
   return (
     <div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(org) }} />
       {preview ? (
         <div className="sticky top-16 z-30 bg-amber-400 px-4 py-2 text-center text-sm font-semibold text-amber-950">
           Aperçu du brouillon — non visible des visiteurs. <Link href="/admin/accueil" className="underline">Retour au constructeur</Link>

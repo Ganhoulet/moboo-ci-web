@@ -1,4 +1,5 @@
 import { ProReviewsSection } from "@/components/pro-reviews/pro-reviews-section";
+import { breadcrumbLd, ldJson } from "@/lib/structured-data";
 import { Stars } from "@/components/reviews";
 import { getProReviews, slugZone } from "@/lib/pro-reviews";
 import Link from "next/link";
@@ -132,6 +133,11 @@ export default async function ProPage({ params }: { params: { username: string }
   return (
     <div className="bg-white pb-24 lg:pb-0">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd([
+        { label: "Agents et agences", href: "/agents-immobiliers" },
+        ...(zones[0] ? [{ label: zones[0], href: `/agents-immobiliers/${slugZone(zones[0])}` }] : []),
+        { label: p.name, href: `/pro/${p.username}` },
+      ])) }} />
       {/* Bandeau : image de couverture choisie par le pro, sinon dégradé de marque. */}
       <div className="relative h-40 overflow-hidden bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 sm:h-56">
         {prof?.coverUrl ? (

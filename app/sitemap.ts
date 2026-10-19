@@ -33,7 +33,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Annuaire des agents : page générale + une page par zone couverte.
   const agents = [
     { url: `${BASE}/agents-immobiliers`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 },
-    ...(await getZones()).map((z) => ({ url: `${BASE}/agents-immobiliers/${z.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 })),
+    // Seules les zones assez fournies (les autres sont en noindex).
+    ...(await getZones()).filter((z) => z.indexable !== false).map((z) => ({ url: `${BASE}/agents-immobiliers/${z.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 })),
   ];
   // Annonces en ligne (adresses descriptives).
   const listings = (await getListingUrls()).map((l) => ({ url: `${BASE}${l.path}`, lastModified: new Date(l.updatedAt), changeFrequency: "weekly" as const, priority: 0.5 }));
