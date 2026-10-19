@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useTransition } from "react";
 import QRCode from "qrcode";
-import { SeoPoster, type SeoTexts } from "./qr-poster";
+import { SEO_TEMPLATES, SeoPoster, type SeoTexts } from "./qr-poster";
 import { QrPrintToolbar } from "./qr-print-toolbar";
 import { seoCodeAction, type SeoPlacement } from "@/app/admin/affiches-qr/actions";
 
 const FIELDS: { key: keyof SeoTexts; label: string; area?: boolean; group: string }[] = [
   { key: "kicker", label: "Petit titre (tout en haut)", group: "Haut de l’affiche" },
-  { key: "headline", label: "Titre", group: "Haut de l’affiche" },
+  { key: "headline", label: "Titre (mots entre *étoiles* en couleur)", group: "Haut de l’affiche" },
   { key: "text", label: "Texte court", area: true, group: "Haut de l’affiche" },
   { key: "cta", label: "Appel à l’action sous le QR code", group: "QR code" },
   { key: "contactLabel", label: "Texte du contact", group: "Contact Moboo (bas)" },
@@ -38,6 +38,19 @@ export function SeoPosterBuilder({ pageId, defaults, placements }: { pageId: str
   }, []);
 
   const set = (k: keyof SeoTexts, v: string) => { setT((x) => ({ ...x, [k]: v })); setReady(null); };
+  /** Change de modèle : couleurs et textes du modèle, le titre et le numéro sont gardés. */
+  const pickTemplate = (v: string) => {
+    const tpl = SEO_TEMPLATES.find((x) => x.v === v);
+    if (!tpl) return;
+    setT((x) => {
+      const bare = x.headline.replace(/\*/g, "").trim();
+      // Affiche de rue / claire : « *Scannez* pour trouver … » comme les affiches posées en ville.
+      const headline = (v === "rue" || v === "clair") && !/^scannez/i.test(bare) ? `*Scannez* pour trouver ${bare.charAt(0).toLowerCase()}${bare.slice(1)}` : x.headline;
+      return { ...x, ...tpl.preset, template: v, headline, contactPhone: x.contactPhone };
+    });
+    setReady(null);
+  };
+  const current = t.template || "classique";
   const prepare = () => start(async () => {
     setError(null);
     const r = await seoCodeAction(pageId, placement, t);
@@ -48,7 +61,24 @@ export function SeoPosterBuilder({ pageId, defaults, placements }: { pageId: str
 
   return (
     <div className="qr-builder grid gap-5 xl:grid-cols-[minmax(0,26rem)_1fr]">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" />
       <div className="qr-toolbar space-y-4">
+        <fieldset className="space-y-2 rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <legend className="px-1 text-xs font-bold uppercase tracking-wide text-slate-500">Modèle d’affiche</legend>
+          <div className="grid grid-cols-2 gap-2">
+            {SEO_TEMPLATES.map((m) => (
+              <button key={m.v} type="button" onClick={() => pickTemplate(m.v)}
+                className={"rounded-lg p-2 text-left ring-1 transition hover:ring-[#0555CC] " + (current === m.v ? "ring-2 ring-[#0555CC] bg-blue-50" : "ring-slate-200 bg-white")}>
+                <span className="flex h-7 overflow-hidden rounded">
+                  <span className="flex-[3]" style={{ background: m.v === "clair" ? "#ffffff" : m.preset.bgColor, boxShadow: m.v === "clair" ? `inset 0 0 0 2px ${m.preset.bgColor}` : undefined }} />
+                  <span className="flex-1" style={{ background: m.preset.accentColor }} />
+                </span>
+                <span className="mt-1 block text-sm font-bold text-ink">{m.l}</span>
+                <span className="block text-[11px] leading-tight text-muted">{m.d}</span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
         {Array.from(new Set(FIELDS.map((f) => f.group))).map((g) => (
           <fieldset key={g} className="space-y-2 rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <legend className="px-1 text-xs font-bold uppercase tracking-wide text-slate-500">{g}</legend>

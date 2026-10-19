@@ -17,8 +17,10 @@ export const PAPER: Record<PaperFormat, { w: number; h: number; label: string }>
 /** Taille en points du PDF de l'application → longueur CSS au format choisi. */
 const pt = (n: number) => `calc(var(--u) * ${n}mm)`;
 const FONT = "Helvetica, Arial, sans-serif"; // police par défaut du PDF de l'application
+/** Affiches de rue : police grasse et ronde (lisible de loin), repli Arial Black. */
+const FONT_BOLD = "'Nunito', 'Arial Rounded MT Bold', 'Arial Black', Helvetica, Arial, sans-serif";
 
-export interface SeoTexts { kicker: string; headline: string; text: string; cta: string; contactLabel: string; contactPhone: string; footer: string; bgColor: string; accentColor: string; textColor: string }
+export interface SeoTexts { template?: string; kicker: string; headline: string; text: string; cta: string; contactLabel: string; contactPhone: string; footer: string; bgColor: string; accentColor: string; textColor: string }
 
 export type PosterData =
   | { kind: "agent" | "agency"; title: string; phone: string; url: string; qrSvg: string }
@@ -105,7 +107,143 @@ export function ListingPoster({ d }: { d: Extract<PosterData, { kind: "listing" 
  * Affiche de rue d'une page SEO (« Maisons à louer à Yopougon ») : texte en haut,
  * QR code au centre, contact Moboo en bas. Tous les textes et couleurs sont modifiables.
  */
+/** Modèles d'affiche de rue des pages SEO (choix dans le builder ou le modèle par défaut). */
+export const SEO_TEMPLATES: { v: string; l: string; d: string; preset: Partial<SeoTexts> }[] = [
+  { v: "rue", l: "Affiche de rue", d: "Fond bleu, titre en gras, numéro dans un cadre rouge",
+    preset: { kicker: "", text: "", cta: "", contactLabel: "ou appelez", footer: "Moboo.ci", bgColor: "#2F4FD8", accentColor: "#E8553D", textColor: "#FFFFFF" } },
+  { v: "classique", l: "Classique", d: "Petit titre, cadre orange, encart contact blanc",
+    preset: { kicker: "NOUVEAU SUR MOBOO.CI", cta: "SCANNEZ-MOI", contactLabel: "Besoin d’aide pour trouver ? Appelez Moboo", footer: "www.moboo.ci", bgColor: "#0555CC", accentColor: "#FE6600", textColor: "#FFFFFF" } },
+  { v: "clair", l: "Clair", d: "Fond blanc : économise l’encre, lisible de loin",
+    preset: { kicker: "", text: "", cta: "", contactLabel: "ou appelez", footer: "Moboo.ci", bgColor: "#1E2F8F", accentColor: "#E8553D", textColor: "#0F172A" } },
+  { v: "bandeau", l: "Bandeau", d: "Titre sur un bandeau de couleur, bas blanc",
+    preset: { kicker: "", cta: "", contactLabel: "Appelez-nous", footer: "Moboo.ci", bgColor: "#0555CC", accentColor: "#FE6600", textColor: "#FFFFFF" } },
+];
+
+/** Assombrit (#RRGGBB, amount < 0) ou éclaircit une couleur. */
+function shade(hex: string, amount: number) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const ch = (v: number) => Math.max(0, Math.min(255, Math.round(v + (amount / 100) * 255)));
+  return `#${[ch(n >> 16), ch((n >> 8) & 255), ch(n & 255)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/** Titre : mots entre *étoiles* en couleur ; sans étoiles, le premier mot si autoFirst. */
+function Rich({ text, accent, autoFirst }: { text: string; accent: string; autoFirst?: boolean }) {
+  const t = text.trim();
+  if (!t.includes("*")) {
+    if (!autoFirst) return <>{t}</>;
+    const i = t.search(/\s/);
+    return i < 0 ? <span style={{ color: accent }}>{t}</span> : <><span style={{ color: accent }}>{t.slice(0, i)}</span>{t.slice(i)}</>;
+  }
+  return <>{t.split(/(\*[^*]+\*)/).map((part, i) => (/^\*[^*]+\*$/.test(part) ? <span key={i} style={{ color: accent }}>{part.slice(1, -1)}</span> : <span key={i}>{part}</span>))}</>;
+}
+
+const plain = (s: string) => s.replace(/\*/g, "");
+const titleSize = (s: string, big: number) => { const n = plain(s).length; return n > 70 ? big * 0.66 : n > 52 ? big * 0.76 : n > 38 ? big * 0.88 : big; };
+
+/** Symbole Moboo (trois anneaux), en tracé : blanc sur fond foncé, couleur du texte sinon. */
+function MobooMark({ size, color }: { size: number; color: string }) {
+  return (
+    <svg viewBox="0 0 100 92" style={{ width: pt(size), height: pt(size * 0.92) }} aria-hidden="true">
+      {[[50, 28], [27, 64], [73, 64]].map(([cx, cy]) => <circle key={`${cx}`} cx={cx} cy={cy} r={19} fill="none" stroke={color} strokeWidth={11} />)}
+    </svg>
+  );
+}
+
+function Logo({ footer, size = 28 }: { footer: string; white?: boolean; size?: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: pt(10) }}>
+      <MobooMark size={size * 1.35} color="currentColor" />
+      <span style={{ fontSize: pt(size), fontWeight: 900, letterSpacing: pt(0.3) }}>{footer || "Moboo.ci"}</span>
+    </div>
+  );
+}
+
+function PhonePill({ phone, bg, size = 44 }: { phone: string; bg: string; size?: number }) {
+  return (
+    <p style={{ margin: 0, background: bg, color: "#fff", borderRadius: pt(14), padding: `${pt(6)} ${pt(22)}`, fontSize: pt(size), fontWeight: 900, letterSpacing: pt(1), whiteSpace: "nowrap", lineHeight: 1.15 }}>{phone}</p>
+  );
+}
+
+/** Affiche de rue (comme celles posées à Yopougon) : fond bleu, titre gras, QR, « ou appelez », numéro en rouge, logo. */
+function SeoStreetPoster({ d }: { d: Extract<PosterData, { kind: "seo" }> }) {
+  const t = d.t;
+  return (
+    <Sheet bg={t.bgColor}>
+      <div style={{ height: "100%", boxSizing: "border-box", padding: `${pt(46)} ${pt(38)} ${pt(30)}`, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", color: t.textColor, fontFamily: FONT_BOLD,
+        background: `radial-gradient(ellipse at 50% 35%, ${shade(t.bgColor, 8)} 0%, ${t.bgColor} 45%, ${shade(t.bgColor, -16)} 100%)` }}>
+        {t.kicker.trim() ? <p style={{ margin: `0 0 ${pt(10)}`, fontSize: pt(16), fontWeight: 800, letterSpacing: pt(2), opacity: 0.9 }}>{t.kicker}</p> : null}
+        <p style={{ margin: 0, fontSize: pt(titleSize(t.headline, 66)), fontWeight: 900, lineHeight: 1.04 }}><Rich text={t.headline} accent={t.accentColor} autoFirst /></p>
+        {t.text.trim() ? <p style={{ margin: `${pt(12)} 0 0`, fontSize: pt(17), lineHeight: 1.3, fontWeight: 600, opacity: 0.95, maxWidth: pt(480) }}>{t.text}</p> : null}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: `${pt(18)} 0` }}>
+          <div style={{ background: "#fff", borderRadius: pt(24), padding: pt(22) }}><Qr svg={d.qrSvg} size={320} /></div>
+        </div>
+        {t.cta.trim() ? <p style={{ margin: `0 0 ${pt(6)}`, fontSize: pt(26), fontWeight: 900, color: t.accentColor }}>{t.cta}</p> : null}
+        {t.contactLabel.trim() ? <p style={{ margin: `0 0 ${pt(10)}`, fontSize: pt(38), fontWeight: 900 }}>{t.contactLabel}</p> : null}
+        {t.contactPhone.trim() ? <PhonePill phone={t.contactPhone} bg={t.accentColor} size={46} /> : null}
+        <div style={{ marginTop: pt(18) }}><Logo footer={t.footer} white /></div>
+      </div>
+    </Sheet>
+  );
+}
+
+/** Clair : fond blanc, titre bleu foncé, QR encadré, numéro dans un cadre de couleur (économise l'encre). */
+function SeoLightPoster({ d }: { d: Extract<PosterData, { kind: "seo" }> }) {
+  const t = d.t;
+  return (
+    <Sheet bg="#ffffff">
+      <div style={{ height: "100%", boxSizing: "border-box", padding: `${pt(46)} ${pt(38)} ${pt(30)}`, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", color: t.textColor, fontFamily: FONT_BOLD, borderTop: `${pt(14)} solid ${t.bgColor}`, borderBottom: `${pt(14)} solid ${t.bgColor}` }}>
+        {t.kicker.trim() ? <p style={{ margin: `0 0 ${pt(10)}`, fontSize: pt(16), fontWeight: 800, letterSpacing: pt(2), color: t.accentColor }}>{t.kicker}</p> : null}
+        <p style={{ margin: 0, fontSize: pt(titleSize(t.headline, 62)), fontWeight: 900, lineHeight: 1.04, color: t.bgColor }}><Rich text={t.headline} accent={t.accentColor} autoFirst /></p>
+        {t.text.trim() ? <p style={{ margin: `${pt(12)} 0 0`, fontSize: pt(17), lineHeight: 1.3, fontWeight: 600, maxWidth: pt(480) }}>{t.text}</p> : null}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: `${pt(18)} 0` }}>
+          <div style={{ background: "#fff", borderRadius: pt(22), padding: pt(18), border: `${pt(6)} solid ${t.bgColor}` }}><Qr svg={d.qrSvg} size={310} /></div>
+        </div>
+        {t.cta.trim() ? <p style={{ margin: `0 0 ${pt(6)}`, fontSize: pt(26), fontWeight: 900, color: t.accentColor }}>{t.cta}</p> : null}
+        {t.contactLabel.trim() ? <p style={{ margin: `0 0 ${pt(10)}`, fontSize: pt(36), fontWeight: 900, color: t.bgColor }}>{t.contactLabel}</p> : null}
+        {t.contactPhone.trim() ? <PhonePill phone={t.contactPhone} bg={t.accentColor} size={46} /> : null}
+        <div style={{ marginTop: pt(18), color: t.bgColor }}><Logo footer={t.footer} /></div>
+      </div>
+    </Sheet>
+  );
+}
+
+/** Bandeau : titre sur un bandeau de couleur en haut, QR et numéro sur fond blanc. */
+function SeoBandPoster({ d }: { d: Extract<PosterData, { kind: "seo" }> }) {
+  const t = d.t;
+  return (
+    <Sheet bg="#ffffff">
+      <div style={{ height: "100%", display: "flex", flexDirection: "column", textAlign: "center", fontFamily: FONT_BOLD }}>
+        <div style={{ background: `linear-gradient(160deg, ${t.bgColor}, ${shade(t.bgColor, -14)})`, color: t.textColor, padding: `${pt(42)} ${pt(36)} ${pt(34)}`, borderBottom: `${pt(10)} solid ${t.accentColor}` }}>
+          {t.kicker.trim() ? <p style={{ margin: `0 0 ${pt(10)}`, fontSize: pt(16), fontWeight: 800, letterSpacing: pt(2), opacity: 0.9 }}>{t.kicker}</p> : null}
+          <p style={{ margin: 0, fontSize: pt(titleSize(t.headline, 50)), fontWeight: 900, lineHeight: 1.06 }}><Rich text={t.headline} accent={t.accentColor} autoFirst /></p>
+          {t.text.trim() ? <p style={{ margin: `${pt(10)} 0 0`, fontSize: pt(16), lineHeight: 1.3, fontWeight: 600, opacity: 0.95 }}>{t.text}</p> : null}
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-evenly", padding: `${pt(20)} ${pt(36)} ${pt(26)}`, color: "#0f172a" }}>
+          <div style={{ background: "#fff", borderRadius: pt(20), padding: pt(16), boxShadow: `0 0 0 ${pt(5)} ${t.bgColor}` }}><Qr svg={d.qrSvg} size={260} /></div>
+          {t.cta.trim() ? <p style={{ margin: 0, fontSize: pt(24), fontWeight: 900, color: t.accentColor }}>{t.cta}</p> : null}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: pt(8) }}>
+            {t.contactLabel.trim() ? <p style={{ margin: 0, fontSize: pt(30), fontWeight: 900, color: t.bgColor }}>{t.contactLabel}</p> : null}
+            {t.contactPhone.trim() ? <PhonePill phone={t.contactPhone} bg={t.accentColor} size={42} /> : null}
+          </div>
+          <div style={{ color: t.bgColor }}><Logo footer={t.footer} /></div>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
 export function SeoPoster({ d }: { d: Extract<PosterData, { kind: "seo" }> }) {
+  const tpl = d.t.template || "classique";
+  if (tpl === "rue") return <SeoStreetPoster d={d} />;
+  if (tpl === "clair") return <SeoLightPoster d={d} />;
+  if (tpl === "bandeau") return <SeoBandPoster d={d} />;
+  return <SeoClassicPoster d={d} />;
+}
+
+/** Classique (premier modèle) : petit titre, cadre orange, encart contact blanc. */
+function SeoClassicPoster({ d }: { d: Extract<PosterData, { kind: "seo" }> }) {
   const t = d.t;
   const long = t.headline.length > 40;
   return (
@@ -114,7 +252,7 @@ export function SeoPoster({ d }: { d: Extract<PosterData, { kind: "seo" }> }) {
         {t.kicker.trim() ? (
           <p style={{ margin: 0, background: t.accentColor, color: "#fff", borderRadius: pt(30), padding: `${pt(6)} ${pt(18)}`, fontSize: pt(14), fontWeight: 700, letterSpacing: pt(1.5) }}>{t.kicker}</p>
         ) : null}
-        <p style={{ margin: `${pt(16)} 0 0`, fontSize: pt(long ? 38 : 48), fontWeight: 800, lineHeight: 1.08 }}>{t.headline}</p>
+        <p style={{ margin: `${pt(16)} 0 0`, fontSize: pt(long ? 38 : 48), fontWeight: 800, lineHeight: 1.08 }}><Rich text={t.headline} accent={t.accentColor} /></p>
         {t.text.trim() ? <p style={{ margin: `${pt(12)} 0 0`, fontSize: pt(16), lineHeight: 1.35, opacity: 0.95, maxWidth: pt(470) }}>{t.text}</p> : null}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%" }}>
           <div style={{ background: "#fff", borderRadius: pt(22), padding: pt(16), border: `${pt(6)} solid ${t.accentColor}` }}>
