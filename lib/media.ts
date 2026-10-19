@@ -50,6 +50,10 @@ export function videoMedia(url: string | null | undefined, fallbackPoster: strin
   if (tt) {
     return { kind: "video", player: "iframe", src: `https://www.tiktok.com/embed/v2/${tt}`, url, poster: fallbackPoster, vertical: true };
   }
+  // Vidéo hébergée chez Bunny Stream (envoyée depuis l'application ou le site).
+  if (/^https:\/\/(iframe|player)\.mediadelivery\.net\/(embed|play)\//i.test(url)) {
+    return { kind: "video", player: "iframe", src: url.replace("/play/", "/embed/") + (url.includes("?") ? "&" : "?") + "autoplay=true&preload=true", url, poster: fallbackPoster, vertical: false };
+  }
   if (/\.(mp4|webm|mov)(\?|$)/i.test(url)) {
     return { kind: "video", player: "file", src: url, url, poster: fallbackPoster, vertical: false };
   }

@@ -87,3 +87,36 @@ export async function searchBasculeOrgsAction(q: string): Promise<BasculeOrg[]> 
   const { ok, data } = await authedFetch(`${PB}/orgs?q=${encodeURIComponent(q)}`, { method: "GET" });
   return ok && Array.isArray(data) ? (data as BasculeOrg[]) : [];
 }
+
+/* ─── Vidéos des annonces ──────────────────────────────────────────────── */
+
+export interface AdminVideo {
+  id: string; appId: number; title: string; city: string; transaction: "rent" | "sale"; status: string; featured: boolean;
+  provider: "r2" | "bunny" | "youtube"; videoStatus: string | null; size: number | null; length: number | null;
+  uploadedAt: string | null; keep: boolean; notifiedAt: string | null; deleteOn: string | null; thumbnail: string | null; url: string | null;
+}
+export interface AdminVideoList {
+  page: number; perPage: number; total: number; provider: "r2" | "bunny"; providerReady: boolean; quotaBytes: number;
+  usage: { r2: { bytes: number; count: number }; bunny: { bytes: number; count: number } };
+  items: AdminVideo[];
+}
+export const getAdminVideos = async (params: Record<string, string | undefined>) =>
+  get<AdminVideoList>(`/video/list?${new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][])}`);
+
+export interface VideoStatus {
+  provider: "r2" | "bunny"; providerReady: boolean; appUpload: boolean; webUpload: boolean; aiRooms: boolean; maxSeconds: number; maxMb: number;
+  cleanup: { enabled: boolean; days: number; target: "rent" | "closed" | "all"; keepFeatured: boolean; noticeDays: number };
+  r2: { configured: boolean; bucket: string; publicHost: string };
+  bunny: { configured: boolean; library: string; cdnHost: string; apiKeySet: boolean; webhookSecretSet: boolean };
+  workerKeySet: boolean; videos: number; ready_videos: number; jobs: Record<string, number>;
+}
+export const getVideoStatus = async () => get<VideoStatus>("/video");
+
+export interface VideoLogEntry { id: number; listingId: string; appId: number | null; title: string; provider: string; size: number | null; reason: string; reasonLabel: string; actor: string | null; createdAt: string }
+export const getVideoLog = async (page?: string) => get<{ page: number; total: number; items: VideoLogEntry[] }>(`/video/log${page ? `?page=${encodeURIComponent(page)}` : ""}`);
+
+export async function deleteVideosAction(ids: string[]): Promise<{ ok: boolean; removed?: number; error?: string }> {
+  const { ok, data } = await authedFetch(`${BASE}/video/delete`, { method: "POST", body: JSON.stringify({ ids }) });
+  revalidatePath("/admin/application/videos");
+  return ok ? { ok: true, removed: data?.removed ?? 0 } : { ok: false, error: errMsg(data, "Suppression impossible.") };
+}

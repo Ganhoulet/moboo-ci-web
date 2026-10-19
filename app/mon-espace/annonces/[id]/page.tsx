@@ -8,6 +8,8 @@ import { getSiteSettings } from "@/lib/settings";
 import { editorLists, getTaxonomies } from "@/lib/taxonomies";
 import { draftFromListing } from "@/lib/listing-draft";
 import { parseListingForm } from "@/lib/listing-form";
+import { ListingVideoCard } from "@/components/listing-video-card";
+import { getListingVideo } from "../../video-actions";
 
 
 export default async function ModifierAnnonce({ params }: { params: { id: string } }) {
@@ -18,7 +20,7 @@ export default async function ModifierAnnonce({ params }: { params: { id: string
   const l = await getMyListing(params.id);
   if (!l) notFound();
 
-  const settings = await getSiteSettings();
+  const [settings, video] = await Promise.all([getSiteSettings(), getListingVideo(params.id)]);
   const draft: ListingDraft = draftFromListing(l);
   const st = STATUS_LABEL[l.status] ?? STATUS_LABEL.ACTIVE;
 
@@ -30,6 +32,7 @@ export default async function ModifierAnnonce({ params }: { params: { id: string
         action={<span className={`rounded-full px-3 py-1 text-xs font-semibold ${st.cls}`}>{st.label}</span>}
       />
       <ListingEditor {...editorLists(await getTaxonomies())} id={params.id} initial={draft} maxPhotos={settings.submit.maxPhotos} form={parseListingForm(settings.forms.listingForm)} accountType={account.accountType} />
+      {video && (video.uploadEnabled || video.video) ? <ListingVideoCard listingId={params.id} info={video} /> : null}
     </div>
   );
 }

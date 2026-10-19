@@ -178,6 +178,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/application/reglages", "Réglages"],
       ["/admin/application/passerelle", "Passerelle Houzi"],
       ["/admin/application/push", "Notifications push"],
+      ["/admin/application/videos", "Vidéos des annonces"],
       ["/admin/application/contacts", "Contacts"],
       ["/admin/application/appareils", "Appareils"],
       ["/admin/application/bascule-pro", "Bascule Moboo Pro"],
