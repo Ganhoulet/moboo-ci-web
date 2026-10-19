@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: { params: { username: string 
   const zones = (p.serviceAreas ?? []).slice(0, 3).join(", ");
   const rating = r?.aggregates.nb_avis && r.aggregates.assez_d_avis ? ` Note ${r.aggregates.note_globale.toLocaleString("fr-FR")}/5 (${r.aggregates.nb_avis} avis).` : "";
   const label = p.profile?.title || accountLabel(p, roleNames(await getSiteSettings()));
-  const description = `${p.name} — ${label} sur Moboo.ci${zones ? ` à ${zones}` : ""}.${rating} ${p.listings.length} annonce(s) en ligne${p.stats?.closedTotal ? `, ${p.stats.closedTotal} transaction(s) réalisée(s)` : ""}.`;
+  const description = `${p.name} — ${label} sur Moboo.ci${zones ? ` à ${zones}` : ""}.${rating} ${Math.max((p.stats?.activeSale ?? 0) + (p.stats?.activeRent ?? 0), p.listings.length)} annonce(s) en ligne${p.stats?.closedTotal ? `, ${p.stats.closedTotal} transaction(s) réalisée(s)` : ""}.`;
   return {
     title: `${p.name} · ${label}`, description, alternates: { canonical: `/pro/${p.canonical || p.username}` },
     openGraph: { title: p.name, description, images: p.avatarUrl ? [p.avatarUrl] : undefined },
@@ -96,6 +96,8 @@ export default async function ProPage({ params }: { params: { username: string }
   const names = roleNames(settings);
   const prof = p.profile;
   const stats = p.stats;
+  // Total réel des annonces en ligne : la page n’en charge qu’une partie (60 au plus).
+  const onlineTotal = Math.max((stats?.activeSale ?? 0) + (stats?.activeRent ?? 0), p.listings.length);
   const isAgency = p.accountType === "entreprise";
   const title = prof?.title || p.position || accountLabel(p, names);
   const first = p.firstName || p.name.split(" ")[0];
@@ -191,7 +193,7 @@ export default async function ProPage({ params }: { params: { username: string }
                 <div className="mt-5 grid grid-cols-3 gap-2">
                   <Fact value={prof?.experienceYears != null ? `${prof.experienceYears} an${prof.experienceYears > 1 ? "s" : ""}` : `${new Date().getFullYear() - memberYear || "<1"} an`} label={prof?.experienceYears != null ? "Expérience" : "Sur Moboo"} />
                   <Fact value={stats?.closedLast12 ?? 0} label="Transactions 12 mois" />
-                  <Fact value={p.listings.length} label="Annonces" />
+                  <Fact value={onlineTotal} label="Annonces" />
                 </div>
 
                 {prof?.licenseNumber ? (
@@ -270,8 +272,8 @@ export default async function ProPage({ params }: { params: { username: string }
 
             <Section id="annonces" title="Annonces et transactions">
               <ListingTabs tabs={[
-                { key: "sale", label: "À vendre", count: sale.length, content: grid(sale) },
-                { key: "rent", label: "À louer", count: rent.length, content: grid(rent) },
+                { key: "sale", label: "À vendre", count: Math.max(stats?.activeSale ?? 0, sale.length), content: grid(sale) },
+                { key: "rent", label: "À louer", count: Math.max(stats?.activeRent ?? 0, rent.length), content: grid(rent) },
                 { key: "closed", label: "Vendus et loués", count: closed.length, content: <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">{closed.map((d) => <ClosedCard key={d.id} d={d} />)}</div> },
               ]} />
             </Section>
