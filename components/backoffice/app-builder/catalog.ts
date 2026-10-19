@@ -82,7 +82,9 @@ export const NAV_TYPES: { type: string; hook?: string; l: string; title: string;
   { type: "web_url", l: "Page web", title: "Moboo.ci", icon: "language", d: "Ouvre une adresse (https://…)" },
 ];
 export const navTypeOf = (item: Cfg) =>
-  NAV_TYPES.find((t) => t.type === item.section_type && (t.type !== "place_holder" || t.hook === (item.url || item.title))) ?? null;
+  String(item.url ?? "").startsWith(PAGE_HOOK)
+    ? { type: "place_holder", hook: item.url, l: "Page de rangées", title: item.title, icon: "grid_view", d: "Page créée dans « Rangées et pages »" }
+    : NAV_TYPES.find((t) => t.type === item.section_type && (t.type !== "place_holder" || t.hook === (item.url || item.title))) ?? null;
 
 export function newNavItem(t: (typeof NAV_TYPES)[number]): Cfg {
   return {
@@ -113,6 +115,50 @@ export const HOME_TYPES: { key: string; l: string; d: string; make: () => Cfg }[
   { key: "hook:estimation", l: "Estimation (foncier / loyer)", d: "Outils d'estimation Moboo", make: () => home({ section_type: "place_holder", title: "estimation" }) },
   { key: "hook:nearby", l: "Bannière « Près de chez vous »", d: "Incite à activer la position", make: () => home({ section_type: "place_holder", title: "nearby" }) },
   { key: "hook:infinite_properties", l: "Fil d'annonces infini", d: "À placer en dernier", make: () => home({ section_type: "place_holder", title: "infinite_properties" }) },
+  { key: "hook:moboo_meubles", l: "Meublés populaires (par commune)", d: "Rangées façon Airbnb des meublés réservables", make: () => home({ section_type: "place_holder", title: "moboo_meubles" }) },
+  { key: "hook:moboo_espaces", l: "Espaces événementiels", d: "Rangée des espaces réservables", make: () => home({ section_type: "place_holder", title: "moboo_espaces" }) },
+];
+
+// ───────────── Rangées « façon Airbnb » et pages d'onglet (moboo_rows / moboo_pages) ─────────────
+// Lues par le serveur (moboo/v1/rows/…) : créer, modifier ou retirer une rangée ne demande aucune
+// mise à jour de l'application. Accueil : « moboo_row:<id> » ; onglet : url « moboo_page:<id> ».
+export const ROW_HOOK = "moboo_row:";
+export const PAGE_HOOK = "moboo_page:";
+export const ROW_SOURCES = [
+  { v: "annonces", l: "Annonces (maisons, terrains, appartements…)" },
+  { v: "meubles", l: "Meublés réservables (Moboo Resi)" },
+  { v: "espaces", l: "Espaces événementiels (Moboo Event)" },
+];
+export const ROW_TYPES = [
+  { v: "appartement", l: "Appartement" }, { v: "studio", l: "Studio" }, { v: "maison", l: "Maison" }, { v: "villa", l: "Villa" },
+  { v: "terrain", l: "Terrain" }, { v: "bureau", l: "Bureau" }, { v: "magasin", l: "Magasin" }, { v: "autre", l: "Autre" },
+];
+export const ROW_DESIGNS = [
+  { v: "grande", l: "Grande carte (façon Airbnb)", d: "Photo carrée 270 px, badge" },
+  { v: "compacte", l: "Petite carte carrée", d: "Comme « Meublés populaires »" },
+  { v: "paysage", l: "Carte paysage", d: "Photo large 16:10" },
+  { v: "liste", l: "Liste verticale", d: "5 lignes : photo à gauche, texte à droite" },
+];
+export const ROW_TRANSACTIONS = [{ v: "", l: "Location et vente" }, { v: "rent", l: "À louer" }, { v: "sale", l: "À vendre" }];
+
+export const slugify = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "rangee";
+export function uniqueId(base: string, taken: string[]) {
+  let id = slugify(base);
+  for (let i = 2; taken.includes(id); i++) id = `${slugify(base).slice(0, 36)}-${i}`;
+  return id;
+}
+
+export const ROW_PRESETS: { l: string; d: string; row: Cfg }[] = [
+  { l: "Terrains à vendre", d: "Une rangée par commune", row: { title: "Terrains à vendre", source: "annonces", types: ["terrain"], transaction: "sale", by_zone: true, zones: 3, design: "grande", limit: 10 } },
+  { l: "Maisons et villas à louer", d: "Une rangée par commune", row: { title: "Maisons et villas à louer", source: "annonces", types: ["maison", "villa"], transaction: "rent", by_zone: true, zones: 3, design: "compacte", limit: 10 } },
+  { l: "Villas à vendre", d: "Toutes communes", row: { title: "Villas à vendre", source: "annonces", types: ["villa"], transaction: "sale", design: "grande", limit: 10 } },
+  { l: "Appartements à louer", d: "Toutes communes", row: { title: "Appartements à louer", source: "annonces", types: ["appartement", "studio"], transaction: "rent", design: "paysage", limit: 10 } },
+  { l: "Bureaux et magasins", d: "Location et vente", row: { title: "Bureaux et commerces", source: "annonces", types: ["bureau", "magasin"], design: "liste", limit: 5 } },
+  { l: "Biens en vedette", d: "Annonces mises en avant", row: { title: "En vedette", source: "annonces", featured: true, design: "grande", limit: 10 } },
+  { l: "Meublés par commune", d: "Réservables en ligne", row: { title: "Meublés populaires", source: "meubles", by_zone: true, zones: 3, design: "compacte", limit: 10 } },
+  { l: "Espaces événementiels", d: "Salles, jardins, rooftops", row: { title: "Espaces événementiels", source: "espaces", design: "grande", limit: 10 } },
+  { l: "Rangée vide", d: "À régler soi-même", row: { title: "Nouvelle rangée", source: "annonces", design: "compacte", limit: 10 } },
 ];
 function home(p: Cfg): Cfg {
   return {
@@ -122,8 +168,14 @@ function home(p: Cfg): Cfg {
 }
 export const HOOK_LABEL: Record<string, string> = {
   moboo_marketing: "Bannières Moboo", qr_scanner: "Scanner un QR code", estimation: "Estimation", nearby: "Près de chez vous", infinite_properties: "Fil d'annonces infini",
+  moboo_meubles: "Meublés populaires", moboo_espaces: "Espaces événementiels",
 };
-export function homeLabel(s: Cfg): string {
+export function homeLabel(s: Cfg, cfg?: Cfg): string {
+  if (s.section_type === "place_holder" && String(s.title).startsWith(ROW_HOOK)) {
+    const id = String(s.title).slice(ROW_HOOK.length);
+    const row = (Array.isArray(cfg?.moboo_rows) ? cfg!.moboo_rows : []).find((r: Cfg) => r.id === id);
+    return row ? `Rangée « ${row.title} »` : `Rangée supprimée (${id})`;
+  }
   if (s.section_type === "place_holder") return HOOK_LABEL[s.title] ?? `Écran « ${s.title} »`;
   const m: Record<string, string> = {
     property: "Annonces", term: "Explorer par terme", term_with_icons: "Catégories à icônes", agents: "Agents", agencies: "Agences",

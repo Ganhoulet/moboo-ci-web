@@ -10,13 +10,15 @@ import {
   CARD_DESIGNS, COLORS_BUTTONS, COLORS_DARK, COLORS_LIGHT, COLORS_MAIN, DETAIL_LABEL, DETAIL_TYPES, DRAWER_LABEL, FILTER_KIND, FILTER_TYPES,
   FONTS, HOME_DESIGNS, HOME_TYPES, ICONS, LISTING_VIEWS, NAV_TYPES, NAVBAR_DESIGNS, PICKER_TYPES, PRESETS, SORTS, SUB_TYPES, TOGGLES,
   alphaOf, applyPreset, homeLabel, iconJson, iconName, navTypeOf, newNavItem, toCss, toHex6, type Cfg,
+  PAGE_HOOK, ROW_DESIGNS, ROW_HOOK, ROW_PRESETS, ROW_SOURCES, ROW_TRANSACTIONS, ROW_TYPES, uniqueId,
 } from "./catalog";
 import { MIcon, PhonePreview, type PreviewScreen } from "./phone-preview";
 
-type Tab = "theme" | "home" | "nav" | "drawer" | "results" | "filters" | "features" | "advanced";
+type Tab = "theme" | "home" | "rows" | "nav" | "drawer" | "results" | "filters" | "features" | "advanced";
 const TABS: { id: Tab; l: string; screen: PreviewScreen }[] = [
   { id: "theme", l: "Thème et couleurs", screen: "home" },
   { id: "home", l: "Accueil", screen: "home" },
+  { id: "rows", l: "Rangées et pages", screen: "home" },
   { id: "nav", l: "Barre du bas", screen: "home" },
   { id: "drawer", l: "Menu", screen: "drawer" },
   { id: "results", l: "Résultats et fiche", screen: "results" },
@@ -264,6 +266,7 @@ export function AppBuilder({ initial }: { initial: BuilderState }) {
         <div className="min-w-0 space-y-5">
           {tab === "theme" ? <ThemeTab cfg={cfg} set={set} setCfg={setCfg} /> : null}
           {tab === "home" ? <HomeTab cfg={cfg} set={set} setList={setList} /> : null}
+          {tab === "rows" ? <RowsTab cfg={cfg} setCfg={setCfg} /> : null}
           {tab === "nav" ? <NavTab cfg={cfg} set={set} setList={setList} /> : null}
           {tab === "drawer" ? <DrawerTab cfg={cfg} setList={setList} /> : null}
           {tab === "results" ? <ResultsTab cfg={cfg} set={set} setList={setList} setScreen={setScreen} /> : null}
@@ -379,9 +382,9 @@ function HomeTab({ cfg, set, setList }: { cfg: Cfg; set: (k: string, v: unknown)
       </Box>
       <Box title="Sections de l'accueil" help="Glissez-déposez pour réordonner, cliquez une section pour la régler." action={<AddMenu label="Ajouter une section" options={HOME_TYPES} onPick={(o) => setList("home_layout", [...items, o.make()])} />}>
         <SortableList items={items} onChange={(v) => setList("home_layout", v)}
-          title={(s) => <><span className="font-semibold text-ink">{s.section_type === "place_holder" ? homeLabel(s) : s.title || homeLabel(s)}</span> <span className="text-xs text-muted">· {homeLabel(s)}</span></>}
+          title={(s) => <><span className="font-semibold text-ink">{s.section_type === "place_holder" ? homeLabel(s, cfg) : s.title || homeLabel(s, cfg)}</span> <span className="text-xs text-muted">· {homeLabel(s, cfg)}</span></>}
           render={(s, up) => s.section_type === "place_holder" ? (
-            <p className="text-xs text-muted">Bloc Moboo intégré à l'application : il se place où vous voulez, sans réglage.</p>
+            <p className="text-xs text-muted">{String(s.title).startsWith(ROW_HOOK) ? "Rangée personnalisée : réglez-la dans l'onglet « Rangées et pages »." : "Bloc Moboo intégré à l'application : il se place où vous voulez, sans réglage."}</p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Titre"><input className="input text-sm" value={s.title ?? ""} onChange={(e) => up({ title: e.target.value })} /></Field>
@@ -413,6 +416,135 @@ function HomeTab({ cfg, set, setList }: { cfg: Cfg; set: (k: string, v: unknown)
             </div>
           )} />
       </Box>
+    </>
+  );
+}
+
+function RowsTab({ cfg, setCfg }: { cfg: Cfg; setCfg: (f: (c: Cfg) => Cfg) => void }) {
+  const rows = list(cfg, "moboo_rows");
+  const pages = list(cfg, "moboo_pages");
+  const home = list(cfg, "home_layout");
+  const nav = list(cfg, "bottom_navigation_bar_layout");
+  const onHome = (id: string) => home.some((h) => h.section_type === "place_holder" && h.title === ROW_HOOK + id);
+  const inNav = (id: string) => nav.some((n) => n.url === PAGE_HOOK + id);
+  const edit = (f: (c: Cfg) => Cfg) => setCfg(f);
+
+  const setRows = (next: Cfg[]) => edit((c) => {
+    // Une rangée supprimée disparaît aussi de l'accueil et des pages.
+    const ids = new Set(next.map((r) => r.id));
+    const keep = (h: Cfg) => !(h.section_type === "place_holder" && String(h.title).startsWith(ROW_HOOK) && !ids.has(String(h.title).slice(ROW_HOOK.length)));
+    return { ...c, moboo_rows: next, home_layout: list(c, "home_layout").filter(keep), moboo_pages: list(c, "moboo_pages").map((p) => ({ ...p, rows: (p.rows ?? []).filter((r: string) => ids.has(r)) })) };
+  });
+  const setPages = (next: Cfg[]) => edit((c) => {
+    const ids = new Set(next.map((p) => p.id));
+    return { ...c, moboo_pages: next, bottom_navigation_bar_layout: list(c, "bottom_navigation_bar_layout").filter((n) => !String(n.url ?? "").startsWith(PAGE_HOOK) || ids.has(String(n.url).slice(PAGE_HOOK.length))) };
+  });
+  const toggleHome = (id: string) => edit((c) => {
+    const h = list(c, "home_layout");
+    if (h.some((x) => x.title === ROW_HOOK + id)) return { ...c, home_layout: h.filter((x) => x.title !== ROW_HOOK + id) };
+    // Placée avant les carrousels d'annonces (comme les rangées de meublés), sinon à la fin.
+    const at = h.findIndex((x) => x.section_type === "property");
+    const item = { section_type: "place_holder", title: ROW_HOOK + id, layout_design: "", sub_type: "", sub_type_value: "", section_listing_view: "", show_featured: false, show_nearby: false, sub_type_list: [], sub_type_value_list: [], search_api_map: {}, search_route_map: {}, terms_with_icon_layout: [] };
+    const next = [...h];
+    next.splice(at < 0 ? next.length : at, 0, item);
+    return { ...c, home_layout: next };
+  });
+  const toggleNav = (p: Cfg) => edit((c) => {
+    const n = list(c, "bottom_navigation_bar_layout");
+    if (n.some((x) => x.url === PAGE_HOOK + p.id)) return { ...c, bottom_navigation_bar_layout: n.filter((x) => x.url !== PAGE_HOOK + p.id) };
+    const item = { section_type: "place_holder", title: String(p.title || "Page").slice(0, 18), url: PAGE_HOOK + p.id, check_login: false, sub_type_list: null, sub_type_value_list: null, search_api_map: {}, icon_data: iconJson("grid_view") };
+    return { ...c, bottom_navigation_bar_layout: [...n.slice(0, Math.max(0, n.length - 1)), item, ...n.slice(-1)] };
+  });
+
+  return (
+    <>
+      <Box title="Rangées façon Airbnb" help="Chaque rangée montre des biens filtrés (type, zone, location ou vente) avec la présentation choisie. Publiée, elle apparaît dans l'application sans mise à jour du Play Store."
+        action={<AddMenu label="Ajouter une rangée" options={ROW_PRESETS} onPick={(o) => setRows([...rows, { ...o.row, id: uniqueId(o.row.title, rows.map((r) => r.id)) }])} />}>
+        {rows.length ? (
+          <SortableList items={rows} onChange={setRows}
+            title={(r) => <><span className="font-semibold text-ink">{r.title}</span> <span className="text-xs text-muted">· {ROW_SOURCES.find((x) => x.v === r.source)?.l.split(" (")[0] ?? "Annonces"} · {ROW_DESIGNS.find((x) => x.v === r.design)?.l ?? "Petite carte"}{onHome(r.id) ? " · sur l'accueil" : ""}{r.enable === false ? " · masquée" : ""}</span></>}
+            render={(r, up) => (
+              <div className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Titre" help={r.by_zone ? "La commune est ajoutée : « Titre · Cocody »." : undefined}><input className="input text-sm" maxLength={80} value={r.title ?? ""} onChange={(e) => up({ title: e.target.value })} /></Field>
+                  <Field label="Sous-titre (facultatif)"><input className="input text-sm" maxLength={140} value={r.subtitle ?? ""} onChange={(e) => up({ subtitle: e.target.value })} /></Field>
+                  <Field label="Biens affichés"><Select value={r.source ?? "annonces"} options={ROW_SOURCES} onChange={(v) => up({ source: v })} /></Field>
+                  <Field label="Présentation"><Select value={r.design ?? "compacte"} options={ROW_DESIGNS} onChange={(v) => up({ design: v })} /></Field>
+                </div>
+                {(r.source ?? "annonces") === "annonces" ? (
+                  <div className="space-y-2">
+                    <Field label="Types de bien" help="Aucun coché : tous les types.">
+                      <div className="flex flex-wrap gap-1.5">
+                        {ROW_TYPES.map((t) => {
+                          const on = (r.types ?? []).includes(t.v);
+                          return (
+                            <button key={t.v} type="button" onClick={() => up({ types: on ? (r.types ?? []).filter((x: string) => x !== t.v) : [...(r.types ?? []), t.v] })}
+                              className={"rounded-full px-3 py-1 text-xs font-semibold ring-1 " + (on ? "bg-brand-600 text-white ring-brand-600" : "bg-white text-ink ring-slate-300")}>{t.l}</button>
+                          );
+                        })}
+                      </div>
+                    </Field>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <Field label="Transaction"><Select value={r.transaction ?? ""} options={ROW_TRANSACTIONS} onChange={(v) => up({ transaction: v })} /></Field>
+                      <Field label="Prix maximum (FCFA)"><input className="input text-sm" inputMode="numeric" value={r.price_max ?? ""} onChange={(e) => up({ price_max: e.target.value.replace(/\D/g, "") ? Number(e.target.value.replace(/\D/g, "")) : null })} /></Field>
+                      <div className="pt-5"><Toggle on={!!r.featured} onChange={(v) => up({ featured: v })} label="Seulement les biens en vedette" /></div>
+                    </div>
+                  </div>
+                ) : null}
+                {(r.source ?? "annonces") !== "espaces" ? (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Field label="Ville (facultatif)"><input className="input text-sm" placeholder="Abidjan" value={r.city ?? ""} onChange={(e) => up({ city: e.target.value })} /></Field>
+                    <Field label="Commune (facultatif)"><input className="input text-sm" placeholder="Cocody" value={r.commune ?? ""} onChange={(e) => up({ commune: e.target.value })} /></Field>
+                    <Field label="Nombre de biens par rangée"><input type="number" min={4} max={20} className="input text-sm" value={r.limit ?? 10} onChange={(e) => up({ limit: Math.max(4, Math.min(20, Number(e.target.value) || 10)) })} /></Field>
+                    <div className="sm:col-span-2"><Toggle on={!!r.by_zone} onChange={(v) => up({ by_zone: v })} label="Une rangée par commune (les plus fournies d'abord)" /></div>
+                    {r.by_zone ? <Field label="Nombre de communes"><input type="number" min={1} max={6} className="input text-sm" value={r.zones ?? 3} onChange={(e) => up({ zones: Math.max(1, Math.min(6, Number(e.target.value) || 3)) })} /></Field> : null}
+                  </div>
+                ) : null}
+                <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+                  <button type="button" onClick={() => toggleHome(r.id)} className={"rounded-md px-3 py-2 text-sm font-semibold " + (onHome(r.id) ? "border border-slate-300 text-ink" : "bg-brand-600 text-white")}>{onHome(r.id) ? "Retirer de l'accueil" : "Ajouter à l'accueil"}</button>
+                  <div className="min-w-48"><Toggle on={r.enable !== false} onChange={(v) => up({ enable: v })} label="Visible" /></div>
+                  <span className="ml-auto font-mono text-[11px] text-muted">identifiant : {r.id}</span>
+                </div>
+              </div>
+            )} />
+        ) : <p className="text-sm text-muted">Aucune rangée. Ajoutez-en une : terrains à vendre, maisons à louer, villas…</p>}
+      </Box>
+
+      <Box title="Pages (onglets de la barre du bas)" help="Une page regroupe plusieurs rangées. Mettez-la en onglet : « Acheter », « Terrains », « Louer »…"
+        action={<button type="button" className="rounded-md border border-dashed border-brand-400 px-3 py-2 text-sm font-semibold text-brand-800 hover:bg-brand-50"
+          onClick={() => setPages([...pages, { id: uniqueId("page", pages.map((p) => p.id)), title: "Nouvelle page", subtitle: "", rows: rows.slice(0, 1).map((r) => r.id) }])}>+ Ajouter une page</button>}>
+        {pages.length ? (
+          <SortableList items={pages} onChange={setPages}
+            title={(p) => <><span className="font-semibold text-ink">{p.title}</span> <span className="text-xs text-muted">· {(p.rows ?? []).length} rangée(s){inNav(p.id) ? " · onglet" : ""}</span></>}
+            render={(p, up) => (
+              <div className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Titre (et libellé de l'onglet)"><input className="input text-sm" maxLength={40} value={p.title ?? ""} onChange={(e) => up({ title: e.target.value })} /></Field>
+                  <Field label="Sous-titre (facultatif)"><input className="input text-sm" maxLength={140} value={p.subtitle ?? ""} onChange={(e) => up({ subtitle: e.target.value })} /></Field>
+                </div>
+                <Field label="Rangées de la page (dans l'ordre cliqué)">
+                  <div className="flex flex-wrap gap-1.5">
+                    {rows.map((r) => {
+                      const i = (p.rows ?? []).indexOf(r.id);
+                      return (
+                        <button key={r.id} type="button" onClick={() => up({ rows: i >= 0 ? p.rows.filter((x: string) => x !== r.id) : [...(p.rows ?? []), r.id] })}
+                          className={"rounded-full px-3 py-1 text-xs font-semibold ring-1 " + (i >= 0 ? "bg-brand-600 text-white ring-brand-600" : "bg-white text-ink ring-slate-300")}>{i >= 0 ? `${i + 1}. ` : ""}{r.title}</button>
+                      );
+                    })}
+                    {!rows.length ? <span className="text-xs text-muted">Créez d'abord des rangées ci-dessus.</span> : null}
+                  </div>
+                </Field>
+                <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+                  <button type="button" disabled={!inNav(p.id) && nav.length >= 5} onClick={() => toggleNav(p)}
+                    className={"rounded-md px-3 py-2 text-sm font-semibold disabled:opacity-40 " + (inNav(p.id) ? "border border-slate-300 text-ink" : "bg-brand-600 text-white")}>{inNav(p.id) ? "Retirer de la barre du bas" : "Mettre en onglet"}</button>
+                  {!inNav(p.id) && nav.length >= 5 ? <span className="text-xs text-muted">5 onglets au maximum : retirez-en un dans « Barre du bas ».</span> : null}
+                  <span className="ml-auto font-mono text-[11px] text-muted">identifiant : {p.id}</span>
+                </div>
+              </div>
+            )} />
+        ) : <p className="text-sm text-muted">Aucune page.</p>}
+      </Box>
+      <p className="text-xs text-muted">Les présentations (grande carte, petite carte, paysage, liste) sont intégrées à l'application à partir de la version 1.0.10. Toute combinaison se publie ensuite sans mise à jour.</p>
     </>
   );
 }

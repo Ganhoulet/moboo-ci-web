@@ -82,13 +82,49 @@ export function PhonePreview({ cfg, screen, dark }: { cfg: Cfg; screen: PreviewS
             </div>
           </div>
         );
-      case "place_holder":
+      case "place_holder": {
+        const rowId = String(s.title).startsWith("moboo_row:") ? String(s.title).slice(10) : null;
+        const row = rowId ? (Array.isArray(cfg.moboo_rows) ? cfg.moboo_rows : []).find((r: Cfg) => r.id === rowId) : null;
+        if (row || s.title === "moboo_meubles" || s.title === "moboo_espaces") {
+          const design = row?.design ?? (s.title === "moboo_espaces" ? "grande" : "compacte");
+          const w = design === "grande" ? 112 : design === "paysage" ? 124 : 76;
+          const h = design === "grande" ? 112 : design === "paysage" ? 76 : 76;
+          const label = row ? `${row.title}${row.by_zone ? " · Cocody" : ""}` : s.title === "moboo_espaces" ? "Espaces événementiels" : "Meublés populaires · Yopougon";
+          return (
+            <div>
+              <p className="mb-1.5 flex items-center justify-between px-3 text-[11px] font-bold" style={{ color: text }}>
+                {label}<span className="grid h-4 w-4 place-items-center rounded-full text-[9px]" style={{ background: tagBg }}>→</span>
+              </p>
+              {design === "liste" ? (
+                <div className="space-y-1.5 px-3">
+                  {[0, 1].map((j) => (
+                    <div key={j} className="flex gap-2">
+                      <span className="h-10 w-12 shrink-0 rounded-md" style={{ background: PHOTOS[(j + i) % 5] }} />
+                      <span className="flex-1 space-y-1 pt-1"><span className="block h-1.5 w-3/4 rounded" style={{ background: tagBg }} /><span className="block h-1.5 w-1/2 rounded" style={{ background: tagBg }} /></span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex gap-2 overflow-hidden px-3">
+                  {[0, 1, 2].map((j) => (
+                    <div key={j} className="shrink-0" style={{ width: w }}>
+                      <span className="block rounded-lg" style={{ height: h, background: PHOTOS[(j + i) % 5] }} />
+                      <span className="mt-1 block h-1.5 w-3/4 rounded" style={{ background: tagBg }} />
+                      <span className="mt-1 block h-1.5 w-1/2 rounded" style={{ background: tagBg }} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        }
         return (
           <div className="mx-3 flex items-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-semibold text-white" style={{ background: s.title === "qr_scanner" ? secondary : s.title === "estimation" ? primary : accent }}>
             <Icon name={s.title === "qr_scanner" ? "qr_code_scanner" : s.title === "estimation" ? "payments" : "campaign"} color="#fff" size={16} />
             {HOOK_LABEL[s.title] ?? s.title}
           </div>
         );
+      }
       case "ad":
         return <div className="mx-3 grid h-12 place-items-center rounded-lg text-[9px] opacity-60" style={{ background: tagBg, color: text }}>Publicité</div>;
       case "agents":
