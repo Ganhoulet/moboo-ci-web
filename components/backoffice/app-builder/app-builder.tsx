@@ -11,6 +11,7 @@ import {
   FONTS, HOME_DESIGNS, HOME_TYPES, ICONS, LISTING_VIEWS, NAV_TYPES, NAVBAR_DESIGNS, PICKER_TYPES, PRESETS, SORTS, SUB_TYPES, TOGGLES,
   alphaOf, applyPreset, homeLabel, iconJson, iconName, navTypeOf, newNavItem, toCss, toHex6, type Cfg,
   PAGE_HOOK, ROW_DESIGNS, ROW_HOOK, ROW_PRESETS, ROW_SOURCES, ROW_TRANSACTIONS, ROW_TYPES, uniqueId,
+  DEFAULT_RESERVER_TABS, ESPACE_TYPES, TAB_ICONS, TAB_KINDS,
 } from "./catalog";
 import { MIcon, PhonePreview, type PreviewScreen } from "./phone-preview";
 
@@ -413,6 +414,27 @@ function HomeTab({ cfg, set, setList }: { cfg: Cfg; set: (k: string, v: unknown)
               {s.section_type === "property" ? (
                 <div className="sm:col-span-2"><Toggle on={!!s.show_nearby} onChange={(v) => up({ show_nearby: v })} label="Seulement autour de la position du téléphone" /></div>
               ) : null}
+              {s.section_type === "term_with_icons" ? (
+                <div className="sm:col-span-2">
+                  <Field label="Au toucher de chaque icône" help="« Recherche d'annonces » : comme avant. Une page : rangées façon Airbnb (meublés, espaces, salles…) réglées dans « Rangées et pages ».">
+                    <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                      {list(s, "terms_with_icon_layout").map((t, i) => (
+                        <div key={i} className="flex items-center gap-3 px-3 py-2">
+                          <span className="text-brand-700"><MIcon name={iconName(t.icon_data)} /></span>
+                          <span className="min-w-24 text-sm font-semibold text-ink">{t.title}</span>
+                          <Select className="ml-auto max-w-64" value={t.moboo_page ?? ""}
+                            options={[{ v: "", l: "Recherche d'annonces" }, ...list(cfg, "moboo_pages").map((p) => ({ v: p.id, l: `Page « ${p.title} »` }))]}
+                            onChange={(v) => up({ terms_with_icon_layout: list(s, "terms_with_icon_layout").map((x, j) => {
+                              if (j !== i) return x;
+                              const { moboo_page: _old, ...rest } = x;
+                              return v ? { ...rest, moboo_page: v } : rest;
+                            }) })} />
+                        </div>
+                      ))}
+                    </div>
+                  </Field>
+                </div>
+              ) : null}
             </div>
           )} />
       </Box>
@@ -423,6 +445,8 @@ function HomeTab({ cfg, set, setList }: { cfg: Cfg; set: (k: string, v: unknown)
 function RowsTab({ cfg, setCfg }: { cfg: Cfg; setCfg: (f: (c: Cfg) => Cfg) => void }) {
   const rows = list(cfg, "moboo_rows");
   const pages = list(cfg, "moboo_pages");
+  // Catégories de l'onglet Réserver : celles par défaut tant que le builder n'en a pas enregistré.
+  const tabs = Array.isArray(cfg.moboo_reserver_tabs) ? (cfg.moboo_reserver_tabs as Cfg[]) : DEFAULT_RESERVER_TABS;
   const home = list(cfg, "home_layout");
   const nav = list(cfg, "bottom_navigation_bar_layout");
   const onHome = (id: string) => home.some((h) => h.section_type === "place_holder" && h.title === ROW_HOOK + id);
@@ -439,6 +463,7 @@ function RowsTab({ cfg, setCfg }: { cfg: Cfg; setCfg: (f: (c: Cfg) => Cfg) => vo
     const ids = new Set(next.map((p) => p.id));
     return { ...c, moboo_pages: next, bottom_navigation_bar_layout: list(c, "bottom_navigation_bar_layout").filter((n) => !String(n.url ?? "").startsWith(PAGE_HOOK) || ids.has(String(n.url).slice(PAGE_HOOK.length))) };
   });
+  const setTabs = (next: Cfg[]) => edit((c) => ({ ...c, moboo_reserver_tabs: next }));
   const toggleHome = (id: string) => edit((c) => {
     const h = list(c, "home_layout");
     if (h.some((x) => x.title === ROW_HOOK + id)) return { ...c, home_layout: h.filter((x) => x.title !== ROW_HOOK + id) };
@@ -468,7 +493,7 @@ function RowsTab({ cfg, setCfg }: { cfg: Cfg; setCfg: (f: (c: Cfg) => Cfg) => vo
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label="Titre" help={r.by_zone ? "La commune est ajoutée : « Titre · Cocody »." : undefined}><input className="input text-sm" maxLength={80} value={r.title ?? ""} onChange={(e) => up({ title: e.target.value })} /></Field>
                   <Field label="Sous-titre (facultatif)"><input className="input text-sm" maxLength={140} value={r.subtitle ?? ""} onChange={(e) => up({ subtitle: e.target.value })} /></Field>
-                  <Field label="Biens affichés"><Select value={r.source ?? "annonces"} options={ROW_SOURCES} onChange={(v) => up({ source: v })} /></Field>
+                  <Field label="Biens affichés"><Select value={r.source ?? "annonces"} options={ROW_SOURCES} onChange={(v) => up({ source: v, types: [] })} /></Field>
                   <Field label="Présentation"><Select value={r.design ?? "compacte"} options={ROW_DESIGNS} onChange={(v) => up({ design: v })} /></Field>
                 </div>
                 {(r.source ?? "annonces") === "annonces" ? (
@@ -491,15 +516,28 @@ function RowsTab({ cfg, setCfg }: { cfg: Cfg; setCfg: (f: (c: Cfg) => Cfg) => vo
                     </div>
                   </div>
                 ) : null}
-                {(r.source ?? "annonces") !== "espaces" ? (
+                {r.source === "espaces" ? (
+                  <Field label="Types d'espace" help="Aucun coché : tous les espaces (salles, jardins, coworking…).">
+                    <div className="flex flex-wrap gap-1.5">
+                      {ESPACE_TYPES.map((t) => {
+                        const on = (r.types ?? []).includes(t.v);
+                        return (
+                          <button key={t.v} type="button" onClick={() => up({ types: on ? (r.types ?? []).filter((x: string) => x !== t.v) : [...(r.types ?? []), t.v] })}
+                            className={"rounded-full px-3 py-1 text-xs font-semibold ring-1 " + (on ? "bg-brand-600 text-white ring-brand-600" : "bg-white text-ink ring-slate-300")}>{t.l}</button>
+                        );
+                      })}
+                    </div>
+                  </Field>
+                ) : null}
+                {(
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <Field label="Ville (facultatif)"><input className="input text-sm" placeholder="Abidjan" value={r.city ?? ""} onChange={(e) => up({ city: e.target.value })} /></Field>
+                    {r.source !== "espaces" ? <Field label="Ville (facultatif)"><input className="input text-sm" placeholder="Abidjan" value={r.city ?? ""} onChange={(e) => up({ city: e.target.value })} /></Field> : null}
                     <Field label="Commune (facultatif)"><input className="input text-sm" placeholder="Cocody" value={r.commune ?? ""} onChange={(e) => up({ commune: e.target.value })} /></Field>
                     <Field label="Nombre de biens par rangée"><input type="number" min={4} max={20} className="input text-sm" value={r.limit ?? 10} onChange={(e) => up({ limit: Math.max(4, Math.min(20, Number(e.target.value) || 10)) })} /></Field>
                     <div className="sm:col-span-2"><Toggle on={!!r.by_zone} onChange={(v) => up({ by_zone: v })} label="Une rangée par commune (les plus fournies d'abord)" /></div>
                     {r.by_zone ? <Field label="Nombre de communes"><input type="number" min={1} max={6} className="input text-sm" value={r.zones ?? 3} onChange={(e) => up({ zones: Math.max(1, Math.min(6, Number(e.target.value) || 3)) })} /></Field> : null}
                   </div>
-                ) : null}
+                )}
                 <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
                   <button type="button" onClick={() => toggleHome(r.id)} className={"rounded-md px-3 py-2 text-sm font-semibold " + (onHome(r.id) ? "border border-slate-300 text-ink" : "bg-brand-600 text-white")}>{onHome(r.id) ? "Retirer de l'accueil" : "Ajouter à l'accueil"}</button>
                   <div className="min-w-48"><Toggle on={r.enable !== false} onChange={(v) => up({ enable: v })} label="Visible" /></div>
@@ -508,6 +546,39 @@ function RowsTab({ cfg, setCfg }: { cfg: Cfg; setCfg: (f: (c: Cfg) => Cfg) => vo
               </div>
             )} />
         ) : <p className="text-sm text-muted">Aucune rangée. Ajoutez-en une : terrains à vendre, maisons à louer, villas…</p>}
+      </Box>
+
+      <Box title="Onglet « Réserver » : catégories" help="Les boutons en haut de l'onglet Réserver (Meublés, Espaces événementiels, Coworking…). Un espace s'affiche dans une catégorie selon son type dans Moboo Event."
+        action={<button type="button" className="rounded-md border border-dashed border-brand-400 px-3 py-2 text-sm font-semibold text-brand-800 hover:bg-brand-50"
+          onClick={() => setTabs([...tabs, { id: uniqueId("categorie", tabs.map((t) => t.id)), label: "Nouvelle catégorie", icon: "work", kind: "event", types: [] }])}>+ Ajouter une catégorie</button>}>
+        <SortableList items={tabs} onChange={setTabs}
+          title={(t) => <><span className="font-semibold text-ink">{t.label}</span> <span className="text-xs text-muted">· {t.kind === "event" ? "espaces" : "meublés"}{t.kind === "event" && (t.types ?? []).length ? ` · ${(t.types ?? []).length} type(s)` : ""}{t.enable === false ? " · masquée" : ""}</span></>}
+          render={(t, up) => (
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field label="Libellé"><input className="input text-sm" maxLength={40} value={t.label ?? ""} onChange={(e) => up({ label: e.target.value })} /></Field>
+                <Field label="Contenu"><Select value={t.kind ?? "furnished"} options={TAB_KINDS} onChange={(v) => up({ kind: v, types: [] })} /></Field>
+                <Field label="Icône"><Select value={t.icon ?? "king_bed"} options={TAB_ICONS} onChange={(v) => up({ icon: v })} /></Field>
+              </div>
+              {t.kind === "event" ? (
+                <Field label="Types d'espace" help="Aucun coché : tous les espaces.">
+                  <div className="flex flex-wrap gap-1.5">
+                    {ESPACE_TYPES.map((x) => {
+                      const on = (t.types ?? []).includes(x.v);
+                      return (
+                        <button key={x.v} type="button" onClick={() => up({ types: on ? (t.types ?? []).filter((y: string) => y !== x.v) : [...(t.types ?? []), x.v] })}
+                          className={"rounded-full px-3 py-1 text-xs font-semibold ring-1 " + (on ? "bg-brand-600 text-white ring-brand-600" : "bg-white text-ink ring-slate-300")}>{x.l}</button>
+                      );
+                    })}
+                  </div>
+                </Field>
+              ) : null}
+              <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+                <div className="min-w-48"><Toggle on={t.enable !== false} onChange={(v) => up({ enable: v })} label="Visible" /></div>
+                <span className="ml-auto font-mono text-[11px] text-muted">identifiant : {t.id}</span>
+              </div>
+            </div>
+          )} />
       </Box>
 
       <Box title="Pages (onglets de la barre du bas)" help="Une page regroupe plusieurs rangées. Mettez-la en onglet : « Acheter », « Terrains », « Louer »…"

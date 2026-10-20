@@ -133,6 +133,26 @@ export const ROW_TYPES = [
   { v: "appartement", l: "Appartement" }, { v: "studio", l: "Studio" }, { v: "maison", l: "Maison" }, { v: "villa", l: "Villa" },
   { v: "terrain", l: "Terrain" }, { v: "bureau", l: "Bureau" }, { v: "magasin", l: "Magasin" }, { v: "autre", l: "Autre" },
 ];
+/** Types d'espace de Moboo Event (champ « type » de l'espace). */
+export const ESPACE_TYPES = [
+  { v: "salle_mariage", l: "Salle de fête / mariage" }, { v: "conference", l: "Salle de conférence" }, { v: "coworking", l: "Coworking" },
+  { v: "corporate", l: "Espace pro" }, { v: "rooftop", l: "Rooftop" }, { v: "jardin", l: "Jardin" }, { v: "villa", l: "Villa" },
+  { v: "club", l: "Club" }, { v: "culturel", l: "Espace culturel" }, { v: "maquis", l: "Maquis" },
+];
+/** Icônes des catégories de l'onglet « Réserver » (connues de l'application). */
+export const TAB_ICONS = [
+  { v: "king_bed", l: "Lit" }, { v: "celebration", l: "Fête" }, { v: "meeting_room", l: "Salle" }, { v: "work", l: "Bureau / coworking" },
+  { v: "apartment", l: "Immeuble" }, { v: "villa", l: "Villa" }, { v: "deck", l: "Terrasse" }, { v: "park", l: "Jardin" },
+  { v: "nightlife", l: "Soirée" }, { v: "restaurant", l: "Restaurant" }, { v: "theater", l: "Culture" }, { v: "business", l: "Entreprise" },
+  { v: "pool", l: "Piscine" }, { v: "hotel", l: "Hôtel" },
+];
+export const TAB_KINDS = [{ v: "furnished", l: "Meublés (séjour à la nuit)" }, { v: "event", l: "Espaces (à la journée)" }];
+export const DEFAULT_RESERVER_TABS = [
+  { id: "meubles", label: "Meublés", icon: "king_bed", kind: "furnished" },
+  { id: "espaces", label: "Espaces événementiels", icon: "celebration", kind: "event" },
+  { id: "salles", label: "Salles & conférences", icon: "meeting_room", kind: "event", types: ["salle_mariage", "conference"] },
+];
+
 export const ROW_DESIGNS = [
   { v: "grande", l: "Grande carte (façon Airbnb)", d: "Photo carrée 270 px, badge" },
   { v: "compacte", l: "Petite carte carrée", d: "Comme « Meublés populaires »" },
@@ -157,7 +177,9 @@ export const ROW_PRESETS: { l: string; d: string; row: Cfg }[] = [
   { l: "Bureaux et magasins", d: "Location et vente", row: { title: "Bureaux et commerces", source: "annonces", types: ["bureau", "magasin"], design: "liste", limit: 5 } },
   { l: "Biens en vedette", d: "Annonces mises en avant", row: { title: "En vedette", source: "annonces", featured: true, design: "grande", limit: 10 } },
   { l: "Meublés par commune", d: "Réservables en ligne", row: { title: "Meublés populaires", source: "meubles", by_zone: true, zones: 3, design: "compacte", limit: 10 } },
-  { l: "Espaces événementiels", d: "Salles, jardins, rooftops", row: { title: "Espaces événementiels", source: "espaces", design: "grande", limit: 10 } },
+  { l: "Espaces événementiels", d: "Une rangée par commune", row: { title: "Espaces événementiels", source: "espaces", by_zone: true, zones: 3, design: "grande", limit: 10 } },
+  { l: "Salles de fête", d: "Mariages, anniversaires", row: { title: "Salles de mariage et de fête", source: "espaces", types: ["salle_mariage", "jardin", "rooftop"], design: "paysage", limit: 10 } },
+  { l: "Conférence et coworking", d: "Séminaires, travail", row: { title: "Salles de conférence et coworking", source: "espaces", types: ["conference", "coworking", "corporate"], design: "compacte", limit: 10 } },
   { l: "Rangée vide", d: "À régler soi-même", row: { title: "Nouvelle rangée", source: "annonces", design: "compacte", limit: 10 } },
 ];
 function home(p: Cfg): Cfg {
