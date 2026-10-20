@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ZonePartner } from "@/lib/ads";
 
 /** Encart « Agents partenaires » de la zone d'une annonce (façon Zillow Premier Agent). */
-export function ZonePartners({ zone, items }: { zone: string; items: ZonePartner[] }) {
+export function ZonePartners({ zone, items, waText }: { zone: string; items: ZonePartner[]; /** Message WhatsApp pré-rempli (encodé), ex. intérêt pour l'annonce. */ waText?: string }) {
   if (!items.length) return null;
   return (
     <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
@@ -28,7 +28,7 @@ export function ZonePartners({ zone, items }: { zone: string; items: ZonePartner
               </div>
               {n ? (
                 <div className="flex shrink-0 gap-1.5">
-                  <a href={`/api/ads/partner/${a.id}?to=wa&n=${n}`} target="_blank" rel="noopener noreferrer nofollow" className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700" aria-label={`WhatsApp ${a.name}`}>WhatsApp</a>
+                  <a href={`/api/ads/partner/${a.id}?to=wa&n=${n}${waText ? `&t=${waText}` : ""}`} target="_blank" rel="noopener noreferrer nofollow" className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700" aria-label={`WhatsApp ${a.name}`}>WhatsApp</a>
                   <a href={`/api/ads/partner/${a.id}?to=tel&n=${n}`} rel="nofollow" className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-brand-800 ring-1 ring-slate-300 hover:bg-slate-50" aria-label={`Appeler ${a.name}`}>Appeler</a>
                 </div>
               ) : null}

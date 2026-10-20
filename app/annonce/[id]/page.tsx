@@ -375,7 +375,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
             </div>
           ) : null}
 
-          {partners.zone ? <ZonePartners zone={partners.zone} items={partners.items} /> : null}
+          {partners.zone ? <ZonePartners zone={partners.zone} items={partners.items} waText={encodeURIComponent(`Bonjour, j’ai vu sur Moboo.ci l’annonce « ${l.title} » (réf. ${l.id.slice(0, 8).toUpperCase()}) : ${SITE_URL}${listingPath(l)}. Je cherche un bien de ce type à ${partners.zone}, pouvez-vous m’aider ?`)} /> : null}
 
           {moderation.reportsEnabled ? (
             <div className="mt-4 text-center">

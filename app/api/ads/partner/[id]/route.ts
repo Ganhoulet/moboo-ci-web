@@ -8,5 +8,7 @@ export function GET(req: NextRequest, { params }: { params: { id: string } }) {
   if (digits.length < 8) return NextResponse.redirect(new URL("/annonces", req.url));
   trackAdClick("partner", params.id);
   const intl = digits.length === 10 ? `225${digits}` : digits;
-  return NextResponse.redirect(to === "tel" ? `tel:+${intl}` : `https://wa.me/${intl}`, 302);
+  // Message pré-rempli (intérêt pour l'annonce, titre, lien), limité et réencodé.
+  const text = (req.nextUrl.searchParams.get("t") || "").slice(0, 600);
+  return NextResponse.redirect(to === "tel" ? `tel:+${intl}` : `https://wa.me/${intl}${text ? `?text=${encodeURIComponent(text)}` : ""}`, 302);
 }
