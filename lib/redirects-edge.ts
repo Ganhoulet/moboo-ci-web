@@ -74,7 +74,8 @@ export async function findRedirect(api: string, pathname: string, search: URLSea
   try {
     const qs = new URLSearchParams({ path: pathname });
     for (const k of ["p", "t", "property_id", "post", "listing_id"]) { const v = search.get(k); if (v) qs.set(k, v); }
-    const r = await fetch(`${api}/site/redirects/resolve?${qs}`, { headers: relayHeaders(ip), signal: AbortSignal.timeout(2500) });
+    // Ancienne adresse WordPress seulement : on attend davantage (sinon la 1re visite, Google compris, tombe en 404).
+    const r = await fetch(`${api}/site/redirects/resolve?${qs}`, { headers: relayHeaders(ip), signal: AbortSignal.timeout(6000) });
     if (!r.ok) return null;
     const d = (await r.json()) as { target: string; code: number };
     if (!d.target || d.code === 404) return null;
