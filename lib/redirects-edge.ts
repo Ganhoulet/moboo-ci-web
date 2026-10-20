@@ -6,8 +6,11 @@ type Entry = [target: string, code: number];
 let cache: { at: number; map: Map<string, Entry> } | null = null;
 let loading: Promise<void> | null = null;
 
-const WP_LIKE = /^\/(property|properties|propriete|listing|agent|agency|agence|property-(type|status|city|area|state|feature|label)|author|my-account|mon-compte|dashboard|tableau-de-bord|user-dashboard|my-profile|my-properties|favorite-properties|saved-searches|add-new-property|create-listing|submit-property|packages|membership|memberships|abonnement|abonnements|tarifs-abonnement|login|register|sign-up|wp-login\.php|wp-admin|privacy-policy|politique-de-confidentialite|search-results|advanced-search|half-map|for-rent|for-sale|a-louer|a-vendre)(\/|$)/;
-const SKIP = /^\/(_next|api|admin|administration|mon-espace|annonce\/|connexion|compte)(\/|$)/;
+const WP_LIKE = /^\/(bien|property|properties|propriete|listing|agent|agency|agence|property-(type|status|city|area|state|feature|label)|author|my-account|mon-compte|dashboard|tableau-de-bord|user-dashboard|my-profile|my-properties|favorite-properties|saved-searches|add-new-property|create-listing|submit-property|packages|membership|memberships|abonnement|abonnements|tarifs-abonnement|login|register|sign-up|wp-login\.php|wp-admin|privacy-policy|politique-de-confidentialite|search-results|advanced-search|half-map|for-rent|for-sale|a-louer|a-vendre|connexion-2|se-connecter-et-sinscrire)(\/|$)/;
+// Anciennes pages WordPress à l'adresse exacte (sans sous-pages : « /en-vente/… » est une page du nouveau site).
+const WP_EXACT = /^\/(connexion|politique-de-confidentialite-2|politique-generale-de-protection-des-donnees|privacy|suppression-de-compte|telecharger-application|frequently-asked-questions|biens|compare-properties|recherche-de-propriete|a-louer-2|acheter|en-vente|en-vente-2|vendre|agents|agences|agencies|nos-agents|trouver-un-agent|utilisateurs|mes-proprietes|mes-biens|modifier-le-profil|biens-favoris|saved-search|membership-info|les-factures|select-your-package|creer-une-annonce|publier-une-annonce|soumettre|faire-louer|typography|grid-full-width-4-cols|listings-with-elementor|with-content-bottom|board|en-maintenance|thank-you|remerciement)$/;
+// « /connexion » seul est une ancienne adresse (→ /compte) ; ses sous-pages sont celles du nouveau site.
+const SKIP = /^\/(_next|api|admin|administration|mon-espace|compte)(\/|$)|^\/annonce\/|^\/connexion\//;
 
 export function normalizePath(raw: string): string {
   let p = raw.split("?")[0];
@@ -67,7 +70,7 @@ export async function findRedirect(api: string, pathname: string, search: URLSea
   const hit = cache?.map.get(shortLink ? shortKey : path);
   if (hit) return hit;
   // Liens courts WordPress (?p=123) ou adresse au format WordPress pas encore connue.
-  if (!shortLink && !WP_LIKE.test(path)) return null;
+  if (!shortLink && !WP_LIKE.test(path) && !WP_EXACT.test(path)) return null;
   try {
     const qs = new URLSearchParams({ path: pathname });
     for (const k of ["p", "t", "property_id", "post", "listing_id"]) { const v = search.get(k); if (v) qs.set(k, v); }
