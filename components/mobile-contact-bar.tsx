@@ -11,8 +11,11 @@ export function MobileContactBar({
   phone,
   whatsapp,
   listingId,
+  waText,
 }: {
   listingId?: string;
+  /** Message WhatsApp pré-rempli (déjà encodé pour une URL). */
+  waText?: string;
   price: number;
   transaction: "rent" | "sale";
   phone?: string | null;
@@ -43,7 +46,7 @@ export function MobileContactBar({
           <ContactLink
             listingId={listingId}
             channel="whatsapp"
-            href={`https://wa.me/${waDigits}`}
+            href={`https://wa.me/${waDigits}${waText ? `?text=${waText}` : ""}`}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="WhatsApp"

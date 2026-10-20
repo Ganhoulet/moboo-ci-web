@@ -1,5 +1,5 @@
 import { ConversionSignals } from "@/components/conversion-signals";
-import { videoLd } from "@/lib/structured-data";
+import { videoLd, SITE_URL } from "@/lib/structured-data";
 import { getSignals } from "@/lib/signals";
 import { ReviewsSection } from "@/components/reviews";
 import type { Metadata } from "next";
@@ -61,7 +61,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
   const [partners, signals, market] = await Promise.all([getZonePartners(l.id), getSignals("listing", l.id), isOn("prix.repere-fiche").then((on) => (on ? getMarketEstimate(l.id) : null))]);
 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
-  const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || "").replace(/[^0-9]/g, "");
+  const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || l.owner?.whatsapp || l.owner?.phone || "").replace(/[^0-9]/g, "");
   // Sections affichées, extrait, biens similaires : back-office → Détails de la propriété.
   const { listing: cfg, general, print, moderation, forms } = await getSiteSettings();
   const tax = await getTaxonomies();
@@ -113,8 +113,10 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
   const units = (l.units ?? []).filter((u) => u?.title);
   const txLabel = l.transaction === "rent" ? "À louer" : "À vendre";
 
-  const barPhone = l.agent?.phone || l.contactPhone;
-  const barWhatsapp = l.agent?.whatsapp || l.contactPhone;
+  const barPhone = l.agent?.phone || l.contactPhone || l.owner?.phone;
+  const barWhatsapp = l.agent?.whatsapp || l.contactPhone || l.owner?.whatsapp || l.owner?.phone;
+  // Message WhatsApp pré-rempli (comme l'application) : intérêt, titre, référence et lien de l'annonce.
+  const waText = encodeURIComponent(`Bonjour, je suis intéressé(e) par votre annonce « ${l.title} » (${txLabel.toLowerCase()}, réf. ${l.id.slice(0, 8).toUpperCase()}) vue sur Moboo.ci : ${SITE_URL}${listingPath(l)}`);
   const isReservable = l.listingKind === "furnished" || l.listingKind === "event";
 
   // Agent / agence rattaché (reprise WP), sinon l'annonceur particulier.
@@ -350,7 +352,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
               {phoneDigits ? (
                 <div className="mt-4 grid gap-2">
                   <ContactLink listingId={l.id} channel="call" href={`tel:${barPhone}`} className="btn-primary w-full bg-brand-800 hover:bg-brand-900">Appeler</ContactLink>
-                  <ContactLink listingId={l.id} channel="whatsapp" href={`https://wa.me/${phoneDigits}`} className="btn-ghost w-full" target="_blank" rel="noopener noreferrer">WhatsApp</ContactLink>
+                  <ContactLink listingId={l.id} channel="whatsapp" href={`https://wa.me/${phoneDigits}?text=${waText}`} className="btn-ghost w-full" target="_blank" rel="noopener noreferrer">WhatsApp</ContactLink>
                 </div>
               ) : (
                 <p className="mt-3 text-sm text-muted">Contact communiqué par l'annonceur.</p>
@@ -394,7 +396,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
         </section>
       ) : null}
 
-      <MobileContactBar listingId={l.id} price={l.price} transaction={l.transaction} phone={barPhone} whatsapp={barWhatsapp} />
+      <MobileContactBar listingId={l.id} price={l.price} transaction={l.transaction} phone={barPhone} whatsapp={barWhatsapp} waText={waText} />
     </div>
   );
 }
