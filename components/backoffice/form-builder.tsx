@@ -135,6 +135,18 @@ export function ListingFormBuilder({ initial, propertyTypes }: { initial: Listin
         {MODES.map((m) => <span key={m} className={"rounded-full px-2.5 py-1 font-bold " + MODE_STYLE[m]}>{MODE_LABEL[m]}</span>)}
         <span className="text-muted">« Réservé à l’équipe » : visible seulement dans le back-office (Immobilier → annonce) ; l’annonceur ne le voit pas et ne peut pas le remplir.</span>
       </div>
+      <div className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
+        <p className="font-display text-base font-bold text-ink">Présentation du formulaire</p>
+        <p className="mt-0.5 text-xs text-muted">Une seule page : toutes les rubriques s’affichent à la suite, sans passer d’onglet en onglet (plus rapide sur téléphone). Les étapes décochées ci-dessous restent masquées dans les deux cas.</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {([["steps", "Par étapes (onglets)", "L’annonceur avance étape par étape."], ["single", "Une seule page", "Tout le formulaire défile sur une page, un seul bouton « Publier »."]] as const).map(([k, l, h]) => (
+            <label key={k} className={"flex cursor-pointer items-start gap-2.5 rounded-lg p-3 ring-1 " + ((cfg.layout ?? "steps") === k ? "bg-brand-50 ring-brand-600" : "ring-slate-200 hover:bg-slate-50")}>
+              <input type="radio" name="form-layout" className="mt-0.5" checked={(cfg.layout ?? "steps") === k} onChange={() => change({ ...cfg, layout: k === "single" ? "single" : undefined })} />
+              <span><span className="block text-sm font-semibold text-ink">{l}</span><span className="block text-xs text-muted">{h}</span></span>
+            </label>
+          ))}
+        </div>
+      </div>
       {FORM_STEPS.map((st) => {
         const stepCfg = cfg.steps[st.id] ?? {};
         const builtins = BUILTIN_FIELDS.filter((f) => f.step === st.id);

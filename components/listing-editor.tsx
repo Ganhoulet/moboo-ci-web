@@ -130,6 +130,8 @@ export function ListingEditor({
   const [uploading, setUploading] = useState<string | null>(null);
   const [customFeature, setCustomFeature] = useState("");
   const [mapsLink, setMapsLink] = useState("");
+  // Meublés et espaces événementiels : publiés dans Moboo Resi / Moboo Event, pas sur le site.
+  const [shortStay, setShortStay] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const set = (p: Partial<ListingDraft>) => { setD((x) => ({ ...x, ...p })); setError(null); setSaved(false); };
 
@@ -146,6 +148,10 @@ export function ListingEditor({
   const STEPS = visibleSteps(form, ctx).filter((st) => st.lockable || BUILTIN_FIELDS.some((f) => f.step === st.id && on(f.key)) || customs(st.id).length > 0);
   const CONTACT_STEP = STEPS.length - 1;
   const stepId = STEPS[Math.min(step, STEPS.length - 1)]?.id;
+  // Back-office → Formulaires : « une seule page » (toutes les rubriques à la suite, sans onglets).
+  const single = form.layout === "single";
+  const shown = (id: StepId) => (single ? STEPS.some((st) => st.id === id) : stepId === id);
+  const heading = (id: StepId) => (single ? <h3 className="border-t border-slate-100 pt-5 font-display text-lg font-bold text-ink first:border-0 first:pt-0">{STEPS.find((st) => st.id === id)?.label}</h3> : null);
 
   const isEmpty = (key: string): boolean => {
     const c = form.custom.find((x) => x.key === key);
@@ -230,7 +236,7 @@ export function ListingEditor({
   function save() {
     for (let s = 0; s < STEPS.length; s++) {
       const err = validate(s);
-      if (err) { setStep(s); setError(err); return; }
+      if (err) { setStep(s); setError(err); if (single) setTimeout(() => document.getElementById("listing-error")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0); return; }
     }
     start(async () => {
       const r = await saveAction(id ?? null, payload());
@@ -278,7 +284,7 @@ export function ListingEditor({
   return (
     <div className="rounded-3xl bg-white p-5 shadow-card sm:p-7">
       {/* Étapes */}
-      <div className="-mx-1 mb-6 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className={(single || shortStay ? "hidden " : "") + "-mx-1 mb-6 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"}>
         {STEPS.map(({ id: sid, label: s }, i) => (
           <button key={sid} type="button" disabled={!edit && i > step}
             onClick={() => { if (edit || i <= step) { setStep(i); setError(null); } }}
@@ -293,24 +299,32 @@ export function ListingEditor({
       </div>
 
       <div key={step} className="animate-[stepIn_.25s_ease-out] space-y-5">
-        {stepId === "essentiel" ? (
+        {shown("essentiel") ? (
           <>
+            {heading("essentiel")}
             <div className="grid grid-cols-2 gap-3">
               {([["rent", "À louer", "Location longue durée"], ["sale", "À vendre", "Vente"]] as const).map(([k, l, h]) => (
-                <button key={k} type="button" onClick={() => set({ transaction: k })}
-                  className={"rounded-2xl border-2 p-4 text-left transition " + (d.transaction === k ? "border-accent-600 bg-accent-50" : "border-slate-200 hover:border-slate-300")}>
+                <button key={k} type="button" onClick={() => { set({ transaction: k }); setShortStay(false); }}
+                  className={"rounded-2xl border-2 p-4 text-left transition " + (d.transaction === k && !shortStay ? "border-accent-600 bg-accent-50" : "border-slate-200 hover:border-slate-300")}>
                   <span className="block font-display text-lg font-bold text-ink">{l}</span>
                   <span className="block text-xs text-muted">{h}</span>
                 </button>
               ))}
+              {!edit ? (
+                <button type="button" onClick={() => setShortStay(true)}
+                  className={"col-span-2 rounded-2xl border-2 p-4 text-left transition " + (shortStay ? "border-brand-700 bg-brand-50" : "border-dashed border-slate-300 hover:border-slate-400")}>
+                  <span className="block font-display text-base font-bold text-ink">Meublé ou espace événementiel</span>
+                  <span className="block text-xs text-muted">Location courte durée (nuit, jour, week-end)</span>
+                </button>
+              ) : null}
             </div>
-            <Field label={fv("propertyType").label}>
-              <div className="flex flex-wrap gap-2">
-                {types.map((t) => (
-                  <Chip key={t.key} on={d.propertyType === t.key} onClick={() => set({ propertyType: t.key })}>{t.label}</Chip>
-                ))}
-              </div>
-            </Field>
+            {shortStay ? <ShortStayNotice /> : null}
+            {shortStay ? null : <>
+            <ChoiceField label={fv("propertyType").label}>
+              {types.map((t) => (
+                <Chip key={t.key} on={d.propertyType === t.key} onClick={() => set({ propertyType: t.key })}>{t.label}</Chip>
+              ))}
+            </ChoiceField>
             <Field label={lab("title")}>
               <input className="input" value={d.title} maxLength={140} placeholder="Ex. Appartement 3 pièces lumineux à Riviera 2"
                 onChange={(e) => set({ title: e.target.value })} />
@@ -320,36 +334,40 @@ export function ListingEditor({
                 onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, "") })} />
               {Number(d.price) > 0 ? <p className="mt-1 text-xs text-muted">{d.pricePrefix ? `${d.pricePrefix} ` : ""}{new Intl.NumberFormat("fr-FR").format(Number(d.price))} FCFA{d.pricePostfix ? ` ${d.pricePostfix}` : d.transaction === "rent" ? " / mois" : ""}</p> : null}
             </Field>
-            {on("pricePrefix") || on("pricePostfix") || on("secondaryPrice") ? (
-            <details className="rounded-2xl border border-slate-200 p-4" open={!!(d.pricePrefix || d.pricePostfix || d.secondaryPrice) || ["pricePrefix", "pricePostfix", "secondaryPrice"].some((k) => fv(k).required)}>
+            {on("pricePostfix") ? (
+              <ChoiceField label={lab("pricePostfix")}>
+                {FREQ.map((f) => {
+                  const cur = FREQ.includes(d.pricePostfix) ? d.pricePostfix : "";
+                  return <Chip key={f || "def"} on={cur === f} onClick={() => set({ pricePostfix: f })}>{f || (d.transaction === "rent" ? "par mois" : "prix fixe")}</Chip>;
+                })}
+              </ChoiceField>
+            ) : null}
+            {on("pricePrefix") || on("secondaryPrice") ? (
+            <details className="rounded-2xl border border-slate-200 p-4" open={!!(d.pricePrefix || d.secondaryPrice) || ["pricePrefix", "secondaryPrice"].some((k) => fv(k).required)}>
               <summary className="cursor-pointer text-sm font-semibold text-ink">Options de prix</summary>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {on("pricePrefix") ? <Field label={lab("pricePrefix")}><input className="input" value={d.pricePrefix} maxLength={40} placeholder="Ex. À partir de" onChange={(e) => set({ pricePrefix: e.target.value })} /></Field> : null}
-                {on("pricePostfix") ? <Field label={lab("pricePostfix")}>
-                  <select className="input" value={FREQ.includes(d.pricePostfix) ? d.pricePostfix : ""} onChange={(e) => set({ pricePostfix: e.target.value })}>
-                    {FREQ.map((f) => <option key={f} value={f}>{f || (d.transaction === "rent" ? "par mois (défaut)" : "—")}</option>)}
-                  </select>
-                </Field> : null}
                 {on("secondaryPrice") ? <Field label={lab("secondaryPrice")}><input className="input" inputMode="numeric" value={d.secondaryPrice} placeholder="Ex. 230000" onChange={(e) => set({ secondaryPrice: e.target.value.replace(/[^0-9]/g, "") })} /></Field> : null}
               </div>
             </details>
             ) : null}
             {LABELS.length && on("labels") ? (
-              <Field label={`${lab("labels")} (5 au plus)`}>
-                <div className="flex flex-wrap gap-2">
+              <ChoiceField label={`${lab("labels")} (5 au plus)`}>
                   {LABELS.map((t) => {
                     const on = d.labels.includes(t.key);
-                    return <Chip key={t.key} on={on} onClick={() => set({ labels: on ? d.labels.filter((x) => x !== t.key) : [...d.labels, t.key].slice(0, 5) })}>{on ? "✓ " : ""}{t.label}</Chip>;
+                    return <Chip key={t.key} on={on} onClick={() => set({ labels: on ? d.labels.filter((x) => x !== t.key) : [...d.labels, t.key].slice(0, 5) })} multi>{t.label}</Chip>;
                   })}
-                </div>
-              </Field>
+              </ChoiceField>
             ) : null}
             {customBlock("essentiel")}
+            {SHORT_STAY_HINT.test(`${d.title} ${d.pricePostfix}`) ? <ShortStayNotice soft /> : null}
+            </>}
           </>
         ) : null}
 
-        {stepId === "details" ? (
+        {shown("details") ? (
           <>
+            {heading("details")}
             {on("description") ? <Field label={lab("description")}>
               <textarea className="input min-h-[140px]" value={d.description} maxLength={4000}
                 placeholder="Pièces, état, points forts, environnement, conditions (avance, caution)…"
@@ -362,16 +380,16 @@ export function ListingEditor({
               {on("garage") ? <Num label={lab("garage")} v={d.garage} on={(v) => set({ garage: v })} /> : null}
               {on("surface") ? <>
                 <Num label={`${lab("surface", "Surface").replace(" (et unité)", "")} (${d.sizeUnit || "m²"})`} v={d.surface} on={(v) => set({ surface: v })} />
-                <Field label="Unité de surface">
-                  <select className="input" value={d.sizeUnit} onChange={(e) => set({ sizeUnit: e.target.value })}>{AREA_UNITS.map((u) => <option key={u}>{u}</option>)}</select>
-                </Field>
+                <ChoiceField label="Unité de surface">
+                  {AREA_UNITS.map((u) => <Chip key={u} on={(d.sizeUnit || "m²") === u} onClick={() => set({ sizeUnit: u })}>{u}</Chip>)}
+                </ChoiceField>
               </> : null}
               {on("yearBuilt") ? <Num label={lab("yearBuilt")} v={d.yearBuilt} on={(v) => set({ yearBuilt: v })} /> : null}
               {on("landArea") ? <>
                 <Num label={`${lab("landArea", "Terrain").replace(" (et unité)", "")} (${d.landAreaUnit || "m²"})`} v={d.landArea} on={(v) => set({ landArea: v })} />
-                <Field label="Unité du terrain">
-                  <select className="input" value={d.landAreaUnit} onChange={(e) => set({ landAreaUnit: e.target.value })}>{AREA_UNITS.map((u) => <option key={u}>{u}</option>)}</select>
-                </Field>
+                <ChoiceField label="Unité du terrain">
+                  {AREA_UNITS.map((u) => <Chip key={u} on={(d.landAreaUnit || "m²") === u} onClick={() => set({ landAreaUnit: u })}>{u}</Chip>)}
+                </ChoiceField>
               </> : null}
               {on("garageSize") ? <Field label={lab("garageSize")}><input className="input" value={d.garageSize} maxLength={40} placeholder="Ex. 2 voitures" onChange={(e) => set({ garageSize: e.target.value })} /></Field> : null}
             </div>
@@ -392,14 +410,15 @@ export function ListingEditor({
           </>
         ) : null}
 
-        {stepId === "equipements" ? (
+        {shown("equipements") ? (
           <>
+            {heading("equipements")}
             {on("features") ? <>
             <p className="text-sm text-muted">Cochez ce qui s'applique : c'est ce que les visiteurs regardent en premier.</p>
             <div className="flex flex-wrap gap-2">
               {[...FEATURES, ...d.features.filter((f) => !FEATURES.includes(f))].map((f) => {
                 const on = d.features.includes(f);
-                return <Chip key={f} on={on} onClick={() => set({ features: on ? d.features.filter((x) => x !== f) : [...d.features, f] })}>{on ? "✓ " : ""}{f}</Chip>;
+                return <Chip key={f} on={on} onClick={() => set({ features: on ? d.features.filter((x) => x !== f) : [...d.features, f] })} multi>{f}</Chip>;
               })}
             </div>
             <div className="flex gap-2">
@@ -412,8 +431,9 @@ export function ListingEditor({
           </>
         ) : null}
 
-        {stepId === "localisation" ? (
+        {shown("localisation") ? (
           <>
+            {heading("localisation")}
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label={lab("city")}><input className="input" value={d.city} onChange={(e) => set({ city: e.target.value })} /></Field>
               {on("commune") ? <Field label={lab("commune")}>
@@ -443,8 +463,9 @@ export function ListingEditor({
           </>
         ) : null}
 
-        {stepId === "medias" ? (
+        {shown("medias") ? (
           <>
+            {heading("medias")}
             {on("photos") ? <>
             <p className="text-sm text-muted">
               {fv("photos").required ? "Au moins une photo. " : ""}Jusqu'à {MAX_PHOTOS} photos, compressées automatiquement. La 1re est la couverture — utilisez ◀ ▶ pour l'ordre.
@@ -485,8 +506,9 @@ export function ListingEditor({
           </>
         ) : null}
 
-        {stepId === "plans" ? (
+        {shown("plans") ? (
           <>
+            {heading("plans")}
             {on("floorPlans") ? <div>
               <p className="font-display text-base font-bold text-ink">{fv("floorPlans").required ? lab("floorPlans") : `${lab("floorPlans")} (facultatif)`}</p>
               <p className="text-sm text-muted">Plan de chaque niveau ou de chaque type de logement (image).</p>
@@ -536,8 +558,9 @@ export function ListingEditor({
           </>
         ) : null}
 
-        {stepId === "contact" ? (
+        {shown("contact") ? (
           <>
+            {heading("contact")}
             <div className="grid gap-3 sm:grid-cols-2">
               {on("contactName") ? <Field label={lab("contactName")}><input className="input" value={d.contactName} onChange={(e) => set({ contactName: e.target.value })} /></Field> : null}
               <Field label={lab("contactPhone")}><input className="input" inputMode="tel" value={d.contactPhone} onChange={(e) => set({ contactPhone: e.target.value })} /></Field>
@@ -565,21 +588,21 @@ export function ListingEditor({
         ) : null}
       </div>
 
-      {error ? <p className="mt-5 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
+      {error ? <p id="listing-error" className="mt-5 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
       {saved ? <p className="mt-5 rounded-xl bg-emerald-50 p-3 text-sm font-medium text-emerald-700">Modifications enregistrées ✓</p> : null}
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        {step > 0 ? <button type="button" className="btn-ghost" onClick={() => { setStep((s) => s - 1); setError(null); }}>Retour</button> : null}
+      <div className={(shortStay ? "hidden " : "") + "mt-6 flex flex-wrap gap-3"}>
+        {step > 0 && !single ? <button type="button" className="btn-ghost" onClick={() => { setStep((s) => s - 1); setError(null); }}>Retour</button> : null}
         {edit ? (
           <>
-            {step < STEPS.length - 1 ? <button type="button" className="btn-ghost" onClick={next}>Étape suivante</button> : null}
+            {step < STEPS.length - 1 && !single ? <button type="button" className="btn-ghost" onClick={next}>Étape suivante</button> : null}
             <button type="button" onClick={save} disabled={pending || !!uploading} className="btn-primary flex-1 bg-accent-600 hover:bg-accent-700 disabled:opacity-60">
               {pending ? "Enregistrement…" : "Enregistrer les modifications"}
             </button>
           </>
         ) : (
-          <button type="button" onClick={next} disabled={pending || !!uploading} className="btn-primary flex-1 bg-accent-600 hover:bg-accent-700 disabled:opacity-60">
-            {pending ? "Publication…" : step === STEPS.length - 1 ? "Publier l'annonce" : "Continuer"}
+          <button type="button" onClick={single ? save : next} disabled={pending || !!uploading} className="btn-primary flex-1 bg-accent-600 hover:bg-accent-700 disabled:opacity-60">
+            {pending ? "Publication…" : single || step === STEPS.length - 1 ? "Publier l'annonce" : "Continuer"}
           </button>
         )}
       </div>
@@ -610,33 +633,36 @@ function CustomInput({ f, label, help, value, onChange }: { f: CustomField; labe
       case "number": return <input className="input" inputMode="decimal" value={String(v)} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value.replace(/[^0-9.,]/g, ""))} />;
       case "date": return <input className="input" type="date" value={String(v)} onChange={(e) => onChange(e.target.value)} />;
       case "url": return <input className="input" type="url" value={String(v)} placeholder={f.placeholder || "https://"} onChange={(e) => onChange(e.target.value)} />;
-      case "select": return (
+      case "select": return f.options.length <= 12 ? null : (
         <select className="input" value={String(v)} onChange={(e) => onChange(e.target.value)}>
           <option value="">— Choisir —</option>
           {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       );
-      case "multiselect": {
-        const cur = Array.isArray(v) ? v : [];
-        return (
-          <div className="flex flex-wrap gap-2">
-            {f.options.map((o) => {
-              const sel = cur.includes(o);
-              return <Chip key={o} on={sel} onClick={() => onChange(sel ? cur.filter((x) => x !== o) : [...cur, o])}>{sel ? "✓ " : ""}{o}</Chip>;
-            })}
-          </div>
-        );
-      }
+      case "multiselect": return null;
       case "checkbox": return null;
       default: return <input className="input" maxLength={300} value={String(v)} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} />;
     }
   })();
   if (f.type === "checkbox") {
     return (
-      <label className="flex items-start gap-2.5 rounded-xl border border-slate-200 p-3 text-sm">
-        <input type="checkbox" className="mt-0.5 h-4 w-4" checked={value === true} onChange={(e) => onChange(e.target.checked)} />
-        <span><span className="font-semibold text-ink">{label}</span>{help ? <span className="block text-xs text-muted">{help}</span> : null}</span>
-      </label>
+      <div>
+        <Chip on={value === true} onClick={() => onChange(value !== true)} multi>{label}</Chip>
+        {help ? <p className="mt-1 text-xs text-muted">{help}</p> : null}
+      </div>
+    );
+  }
+  if ((f.type === "select" && f.options.length <= 12) || f.type === "multiselect") {
+    const cur = Array.isArray(v) ? v : [];
+    return (
+      <div className="sm:col-span-2">
+        <ChoiceField label={`${label}${f.visibility === "private" ? " · privé" : ""}`}>
+          {f.options.map((o) => f.type === "multiselect"
+            ? <Chip key={o} on={cur.includes(o)} onClick={() => onChange(cur.includes(o) ? cur.filter((x) => x !== o) : [...cur, o])} multi>{o}</Chip>
+            : <Chip key={o} on={v === o} onClick={() => onChange(v === o ? "" : o)}>{o}</Chip>)}
+        </ChoiceField>
+        {help ? <p className="mt-1 text-xs text-muted">{help}</p> : null}
+      </div>
     );
   }
   return (
@@ -655,12 +681,54 @@ function Num({ label, v, on }: { label: string; v: string; on: (v: string) => vo
   );
 }
 
-function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+/** Pastille sélectionnable : rond = un seul choix, carré coché = plusieurs choix. */
+function Chip({ on, onClick, multi, children }: { on: boolean; onClick: () => void; multi?: boolean; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick}
-      className={"rounded-full border px-3 py-1.5 text-sm font-semibold transition " + (on ? "border-accent-600 bg-accent-50 text-accent-700" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300")}>
+    <button type="button" onClick={onClick} role={multi ? "checkbox" : "radio"} aria-checked={on}
+      className={"inline-flex min-h-[40px] items-center gap-2 rounded-full border-2 px-3.5 py-1.5 text-sm font-semibold transition active:scale-[.97] " + (on ? "border-accent-600 bg-accent-50 text-accent-700" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300")}>
+      <span aria-hidden className={"grid h-4 w-4 shrink-0 place-items-center border-2 " + (multi ? "rounded-[5px] " : "rounded-full ") + (on ? "border-accent-600 bg-accent-600 text-white" : "border-slate-300 bg-white")}>
+        {on ? (multi
+          ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="m5 12 5 5 9-10" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          : <span className="h-1.5 w-1.5 rounded-full bg-white" />) : null}
+      </span>
       {children}
     </button>
+  );
+}
+
+/** Titre ou fréquence qui évoquent la courte durée (meublé, nuitée, location au jour). */
+const SHORT_STAY_HINT = /meubl|courte dur|nuit[ée]e?s?\b|par nuit|par jour|par semaine|week-?end|espace (é|e)v(é|e)nementiel|salle des f(ê|e)tes/i;
+
+/** Meublés → Moboo Resi ; espaces événementiels → Moboo Event (règle de la plateforme). */
+function ShortStayNotice({ soft }: { soft?: boolean }) {
+  return (
+    <div className={"rounded-2xl p-4 " + (soft ? "bg-amber-50 ring-1 ring-amber-200" : "bg-brand-50 ring-1 ring-brand-200")}>
+      <p className="font-semibold text-ink">{soft ? "Location courte durée ? Elle ne se publie pas ici." : "Les locations courte durée se publient dans nos applications dédiées"}</p>
+      <p className="mt-1 text-sm text-slate-600">
+        Sur Moboo.ci, les annonces « À louer » sont des locations longue durée. Les résidences meublées et les espaces événementiels
+        se publient depuis l’application de gestion : ils apparaissent ensuite automatiquement sur Moboo.ci, avec la réservation en ligne.
+      </p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <a href="https://resi.moboo.ci/telecharger" target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-200 hover:ring-brand-600">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-800 text-white">🛏</span>
+          <span><span className="block text-sm font-bold text-ink">Résidence meublée</span><span className="block text-xs text-muted">Publier avec Moboo Resi ↗</span></span>
+        </a>
+        <a href="https://event.moboo.ci/telecharger" target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-200 hover:ring-brand-600">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent-600 text-white">🎉</span>
+          <span><span className="block text-sm font-bold text-ink">Espace événementiel</span><span className="block text-xs text-muted">Publier avec Moboo Event ↗</span></span>
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/** Groupe de pastilles (pas un <label> : chaque pastille reste cliquable seule). */
+function ChoiceField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div role="group" aria-label={label}>
+      <span className="mb-1.5 block text-sm font-semibold text-ink">{label}</span>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
   );
 }
 

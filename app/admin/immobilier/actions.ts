@@ -225,3 +225,18 @@ export async function linkLegacyListings(): Promise<{ ok: boolean; error?: strin
   revalidatePath("/admin/immobilier");
   return { ok: true, accounts: data?.accounts ?? 0, linked: data?.linked ?? 0 };
 }
+
+// ─── Courte durée mal classée (meublés / espaces publiés en « À louer ») ─────
+export interface ShortStayRow {
+  id: string; title: string; price: number; priceUnit: string | null; place: string; photo: string | null;
+  status: string; visible: boolean; owner: string | null; createdAt: string; reasons: string[]; likely: boolean;
+}
+export async function listShortStaySuspects(): Promise<{ total: number; likely: number; items: ShortStayRow[] } | null> {
+  const { ok, data } = await authedFetch(`${BASE}/short-stay`, { method: "GET" });
+  return ok ? data : null;
+}
+export async function decideShortStayAction(ids: string[], action: "furnished" | "hide" | "keep"): Promise<{ ok: boolean; error?: string; updated?: number }> {
+  const { ok, data } = await authedFetch(`${BASE}/short-stay`, { method: "POST", body: JSON.stringify({ ids, action }) });
+  if (ok) { refresh(); revalidatePath("/admin/immobilier/courte-duree"); }
+  return ok ? { ok: true, updated: data?.updated } : { ok: false, error: errMsg(data, "Action impossible.") };
+}

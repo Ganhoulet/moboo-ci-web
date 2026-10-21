@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getSession, displayName, initials } from "@/lib/session";
 import { accountLabel, isPublisher } from "@/lib/accounts";
 import { blockedActions, blockedActionsCss, spaceMenu } from "@/lib/member-space";
-import { DashboardSideNav, DashboardTabs } from "@/components/dashboard-nav";
+import { DashboardDrawer, DashboardSideNav } from "@/components/dashboard-nav";
 import { FavoritesSync } from "@/components/favorites-sync";
 import { logoutAction } from "@/app/compte/actions";
 import { listMyInquiries, unreadMessages } from "./actions";
@@ -47,6 +47,48 @@ export default async function EspaceLayout({ children }: { children: React.React
   const badges = { ...(newInquiries ? { demandes: newInquiries } : {}), ...(unread ? { messages: unread } : {}), ...(infos ? { infos } : {}) };
   const name = account.companyName && (type === "entreprise" || type === "agent") ? account.companyName : displayName(account);
 
+  // Même contenu pour la barre latérale (bureau) et le panneau « Menu » (téléphone).
+  const sidebar = (
+    <>
+      <div className="rounded-2xl bg-white p-4 shadow-card">
+        <div className="flex items-center gap-3">
+          {account.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={account.avatarUrl} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
+          ) : (
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-800 font-bold text-white">{initials(account)}</span>
+          )}
+          <div className="min-w-0">
+            <p className="truncate font-display font-bold text-ink">{name}</p>
+            <p className="truncate text-xs text-muted">{accountLabel(account, roleNames(settings))}</p>
+          </div>
+        </div>
+        {publisher && account.username ? (
+          <Link href={`/pro/${account.username}`} className="mt-3 block rounded-lg bg-slate-50 px-3 py-2 text-center text-xs font-semibold text-brand-800 hover:bg-brand-50">
+            Voir ma page publique ↗
+          </Link>
+        ) : null}
+      </div>
+      <DashboardSideNav items={menu} badges={badges} />
+      {account.isAdmin ? (
+        <Link href="/admin" className="flex items-center gap-3 rounded-xl bg-[#1f2327] px-3 py-2.5 text-sm font-semibold text-white hover:bg-black">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" /></svg>
+          Back-office du site
+        </Link>
+      ) : null}
+      <Link href="/aide" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-ink">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01" strokeLinecap="round" /></svg>
+        Centre d’aide
+      </Link>
+      <form action={logoutAction}>
+        <button type="submit" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 17l5-5-5-5M20 12H9M12 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          Se déconnecter
+        </button>
+      </form>
+    </>
+  );
+
   return (
     <div className="container-page py-6 lg:py-8">
       <FavoritesSync />
@@ -55,52 +97,14 @@ export default async function EspaceLayout({ children }: { children: React.React
         {/* Barre latérale (desktop) */}
         <aside className="hidden lg:block print:!hidden">
           <div className="sticky top-24 space-y-5">
-            <div className="rounded-2xl bg-white p-4 shadow-card">
-              <div className="flex items-center gap-3">
-                {account.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={account.avatarUrl} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
-                ) : (
-                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-800 font-bold text-white">{initials(account)}</span>
-                )}
-                <div className="min-w-0">
-                  <p className="truncate font-display font-bold text-ink">{name}</p>
-                  <p className="truncate text-xs text-muted">{accountLabel(account, roleNames(settings))}</p>
-                </div>
-              </div>
-              {publisher && account.username ? (
-                <Link href={`/pro/${account.username}`} className="mt-3 block rounded-lg bg-slate-50 px-3 py-2 text-center text-xs font-semibold text-brand-800 hover:bg-brand-50">
-                  Voir ma page publique ↗
-                </Link>
-              ) : null}
-            </div>
-            <DashboardSideNav items={menu} badges={badges} />
-            {account.isAdmin ? (
-              <Link href="/admin" className="flex items-center gap-3 rounded-xl bg-[#1f2327] px-3 py-2.5 text-sm font-semibold text-white hover:bg-black">
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" /></svg>
-                Back-office du site
-              </Link>
-            ) : null}
-            <Link href="/aide" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-ink">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01" strokeLinecap="round" /></svg>
-              Centre d’aide
-            </Link>
-            <form action={logoutAction}>
-              <button type="submit" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600">
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 17l5-5-5-5M20 12H9M12 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                Se déconnecter
-              </button>
-            </form>
+            {sidebar}
           </div>
         </aside>
 
         {/* Contenu */}
         <main className="min-w-0">
           <div className="mb-5 lg:hidden print:hidden">
-            <DashboardTabs items={menu} badges={badges} />
-            {account.isAdmin ? (
-              <Link href="/admin" className="mt-3 inline-flex rounded-full bg-[#1f2327] px-3.5 py-2 text-sm font-semibold text-white">⚙ Back-office du site</Link>
-            ) : null}
+            <DashboardDrawer items={menu} badges={badges}>{sidebar}</DashboardDrawer>
           </div>
           {children}
         </main>

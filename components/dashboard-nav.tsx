@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import type { DashItem, DashKey } from "@/lib/accounts";
 
 const sv = { width: 19, height: 19, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 } as const;
@@ -54,6 +55,57 @@ export function DashboardSideNav({ items, badges }: { items: DashItem[]; badges?
         );
       })}
     </nav>
+  );
+}
+
+/**
+ * Menu de l'espace membre sur téléphone : un bouton « Menu » (rubrique en cours)
+ * ouvre un panneau vertical depuis la gauche, avec le même contenu que la barre
+ * latérale du bureau (children). Se referme au changement de page.
+ */
+export function DashboardDrawer({ items, badges, children }: { items: DashItem[]; badges?: Partial<Record<DashKey, number>>; children: React.ReactNode }) {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [open]);
+  const current = items.find((it) => isActive(pathname, it.href));
+  const total = Object.values(badges ?? {}).reduce((s, n) => s + (n ?? 0), 0);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="espace-menu"
+        className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-card lg:hidden">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand-800"><path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" /></svg>
+        <span className="flex-1">
+          <span className="block text-[11px] font-semibold uppercase tracking-wide text-muted">Mon espace</span>
+          <span className="flex items-center gap-2 font-semibold text-ink">
+            {current ? <span className="text-slate-400">{DASH_ICONS[current.key]}</span> : null}
+            {current?.label ?? "Menu"}
+          </span>
+        </span>
+        {total ? <span className="rounded-full bg-accent-600 px-2 py-0.5 text-[11px] font-bold text-white">{total}</span> : null}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-400"><path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </button>
+      <div className={"fixed inset-0 z-[60] lg:hidden " + (open ? "" : "pointer-events-none")} aria-hidden={!open}>
+        <div onClick={() => setOpen(false)} className={"absolute inset-0 bg-slate-900/40 transition-opacity " + (open ? "opacity-100" : "opacity-0")} />
+        <div id="espace-menu" role="dialog" aria-modal="true" aria-label="Menu de mon espace"
+          className={"absolute inset-y-0 left-0 flex w-[86%] max-w-[320px] flex-col bg-slate-50 shadow-xl transition-transform duration-200 " + (open ? "translate-x-0" : "-translate-x-full")}>
+          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+            <span className="font-display font-bold text-ink">Mon espace</span>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Fermer le menu" className="grid h-9 w-9 place-items-center rounded-full text-slate-500 hover:bg-slate-100">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" /></svg>
+            </button>
+          </div>
+          <div className="flex-1 space-y-5 overflow-y-auto p-4">{children}</div>
+        </div>
+      </div>
+    </>
   );
 }
 

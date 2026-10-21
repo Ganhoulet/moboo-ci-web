@@ -13,6 +13,8 @@ export interface CustomField extends FieldRule {
   visibility: "public" | "private"; placeholder?: string; unit?: string;
 }
 export interface ListingFormConfig {
+  /** steps : étapes avec onglets (défaut) ; single : tout sur une seule page. */
+  layout?: "steps" | "single";
   steps: Partial<Record<StepId, { hidden?: boolean; label?: string }>>;
   fields: Record<string, FieldRule>;
   custom: CustomField[];
@@ -88,6 +90,7 @@ const obj = (raw: unknown): Record<string, any> => {
 export function parseListingForm(raw: unknown): ListingFormConfig {
   const o = obj(raw);
   return {
+    ...(o.layout === "single" ? { layout: "single" as const } : {}),
     steps: obj(o.steps),
     fields: obj(o.fields),
     custom: Array.isArray(o.custom) ? (o.custom as CustomField[]).filter((c) => c && c.key && c.label) : [],
