@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { COMMUNES, LISTING_FEATURES, PROPERTY_TYPES } from "@/lib/accounts";
 import { saveListingAction, uploadImageAction } from "@/app/mon-espace/actions";
@@ -323,11 +323,8 @@ export function ListingEditor({
             </div>
             {shortStay ? <ShortStayNotice /> : null}
             {shortStay ? null : <>
-            <ChoiceField label={fv("propertyType").label}>
-              {types.map((t) => (
-                <Chip key={t.key} on={d.propertyType === t.key} onClick={() => set({ propertyType: t.key })}>{t.label}</Chip>
-              ))}
-            </ChoiceField>
+            <Picker label={fv("propertyType").label} options={types.map((t) => ({ value: t.key, label: t.label }))}
+              value={d.propertyType} onChange={(v) => set({ propertyType: v as string })} />
             <Field label={lab("title")}>
               <input className="input" value={d.title} maxLength={140} placeholder="Ex. Appartement 3 pièces lumineux à Riviera 2"
                 onChange={(e) => set({ title: e.target.value })} />
@@ -338,19 +335,19 @@ export function ListingEditor({
                 onChange={(e) => set({ description: e.target.value })} />
               <p className="mt-1 text-xs text-muted">{d.description.trim().length} caractères</p>
             </Field> : null}
+            <div className={on("pricePostfix") ? "grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] items-start gap-3" : ""}>
             <Field label={fv("price").label !== "Prix" ? lab("price") : d.transaction === "rent" ? "Loyer mensuel (FCFA) *" : "Prix de vente (FCFA) *"}>
               <input className="input" inputMode="numeric" value={d.price} placeholder="Ex. 250000"
                 onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, "") })} />
               {Number(d.price) > 0 ? <p className="mt-1 text-xs text-muted">{d.pricePrefix ? `${d.pricePrefix} ` : ""}{new Intl.NumberFormat("fr-FR").format(Number(d.price))} FCFA{d.pricePostfix ? ` ${d.pricePostfix}` : d.transaction === "rent" ? " / mois" : ""}</p> : null}
             </Field>
             {on("pricePostfix") ? (
-              <ChoiceField label={lab("pricePostfix")}>
-                {FREQ.map((f) => {
-                  const cur = FREQ.includes(d.pricePostfix) ? d.pricePostfix : "";
-                  return <Chip key={f || "def"} on={cur === f} onClick={() => set({ pricePostfix: f })}>{f || (d.transaction === "rent" ? "par mois" : "prix fixe")}</Chip>;
-                })}
-              </ChoiceField>
+              <Picker label={lab("pricePostfix")}
+                // Location : « par mois » est la valeur par défaut (pas de doublon dans la liste).
+                options={FREQ.filter((f) => !(d.transaction === "rent" && f === "par mois")).map((f) => ({ value: f, label: f || (d.transaction === "rent" ? "par mois" : "prix fixe") }))}
+                value={d.transaction === "rent" && d.pricePostfix === "par mois" ? "" : FREQ.includes(d.pricePostfix) ? d.pricePostfix : ""} onChange={(v) => set({ pricePostfix: v as string })} />
             ) : null}
+            </div>
             {on("pricePrefix") || on("secondaryPrice") ? (
             <details className="rounded-2xl border border-slate-200 p-4" open={!!(d.pricePrefix || d.secondaryPrice) || ["pricePrefix", "secondaryPrice"].some((k) => fv(k).required)}>
               <summary className="cursor-pointer text-sm font-semibold text-ink">Options de prix</summary>
@@ -361,12 +358,8 @@ export function ListingEditor({
             </details>
             ) : null}
             {LABELS.length && on("labels") ? (
-              <ChoiceField label={`${lab("labels")} (5 au plus)`}>
-                  {LABELS.map((t) => {
-                    const on = d.labels.includes(t.key);
-                    return <Chip key={t.key} on={on} onClick={() => set({ labels: on ? d.labels.filter((x) => x !== t.key) : [...d.labels, t.key].slice(0, 5) })} multi>{t.label}</Chip>;
-                  })}
-              </ChoiceField>
+              <Picker label={`${lab("labels")} (5 au plus)`} multi max={5} placeholder="Aucune étiquette"
+                options={LABELS.map((t) => ({ value: t.key, label: t.label }))} value={d.labels} onChange={(v) => set({ labels: v as string[] })} />
             ) : null}
             {customBlock("essentiel")}
             {SHORT_STAY_HINT.test(`${d.title} ${d.pricePostfix}`) ? <ShortStayNotice soft /> : null}
@@ -423,16 +416,12 @@ export function ListingEditor({
               {on("garage") ? <Num label={lab("garage")} v={d.garage} on={(v) => set({ garage: v })} /> : null}
               {on("surface") ? <>
                 <Num label={`${lab("surface", "Surface").replace(" (et unité)", "")} (${d.sizeUnit || "m²"})`} v={d.surface} on={(v) => set({ surface: v })} />
-                <ChoiceField label="Unité de surface">
-                  {AREA_UNITS.map((u) => <Chip key={u} on={(d.sizeUnit || "m²") === u} onClick={() => set({ sizeUnit: u })}>{u}</Chip>)}
-                </ChoiceField>
+                <Picker label="Unité de surface" options={AREA_UNITS.map((u) => ({ value: u, label: u }))} value={d.sizeUnit || "m²"} onChange={(v) => set({ sizeUnit: v as string })} />
               </> : null}
               {on("yearBuilt") ? <Num label={lab("yearBuilt")} v={d.yearBuilt} on={(v) => set({ yearBuilt: v })} /> : null}
               {on("landArea") ? <>
                 <Num label={`${lab("landArea", "Terrain").replace(" (et unité)", "")} (${d.landAreaUnit || "m²"})`} v={d.landArea} on={(v) => set({ landArea: v })} />
-                <ChoiceField label="Unité du terrain">
-                  {AREA_UNITS.map((u) => <Chip key={u} on={(d.landAreaUnit || "m²") === u} onClick={() => set({ landAreaUnit: u })}>{u}</Chip>)}
-                </ChoiceField>
+                <Picker label="Unité du terrain" options={AREA_UNITS.map((u) => ({ value: u, label: u }))} value={d.landAreaUnit || "m²"} onChange={(v) => set({ landAreaUnit: v as string })} />
               </> : null}
               {on("garageSize") ? <Field label={lab("garageSize")}><input className="input" value={d.garageSize} maxLength={40} placeholder="Ex. 2 voitures" onChange={(e) => set({ garageSize: e.target.value })} /></Field> : null}
             </div>
@@ -457,13 +446,10 @@ export function ListingEditor({
           <>
             {heading("equipements")}
             {on("features") ? <>
-            <p className="text-sm text-muted">Cochez ce qui s'applique : c'est ce que les visiteurs regardent en premier.</p>
-            <div className="flex flex-wrap gap-2">
-              {[...FEATURES, ...d.features.filter((f) => !FEATURES.includes(f))].map((f) => {
-                const on = d.features.includes(f);
-                return <Chip key={f} on={on} onClick={() => set({ features: on ? d.features.filter((x) => x !== f) : [...d.features, f] })} multi>{f}</Chip>;
-              })}
-            </div>
+            <Picker label={lab("features")} multi placeholder="Choisir les équipements"
+              options={[...FEATURES, ...d.features.filter((f) => !FEATURES.includes(f))].map((f) => ({ value: f, label: f }))}
+              value={d.features} onChange={(v) => set({ features: v as string[] })} />
+            <p className="text-xs text-muted">C'est ce que les visiteurs regardent en premier.</p>
             <div className="flex gap-2">
               <input className="input" value={customFeature} placeholder="Autre équipement…" onChange={(e) => setCustomFeature(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && customFeature.trim()) { e.preventDefault(); set({ features: [...d.features, customFeature.trim()] }); setCustomFeature(""); } }} />
@@ -675,13 +661,7 @@ function CustomInput({ f, label, help, value, onChange }: { f: CustomField; labe
       case "number": return <input className="input" inputMode="decimal" value={String(v)} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value.replace(/[^0-9.,]/g, ""))} />;
       case "date": return <input className="input" type="date" value={String(v)} onChange={(e) => onChange(e.target.value)} />;
       case "url": return <input className="input" type="url" value={String(v)} placeholder={f.placeholder || "https://"} onChange={(e) => onChange(e.target.value)} />;
-      case "select": return f.options.length <= 12 ? null : (
-        <select className="input" value={String(v)} onChange={(e) => onChange(e.target.value)}>
-          <option value="">— Choisir —</option>
-          {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
-      );
-      case "multiselect": return null;
+      case "select": case "multiselect": return null; // champ déroulant (Picker) plus bas
       case "checkbox": return null;
       default: return <input className="input" maxLength={300} value={String(v)} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} />;
     }
@@ -694,15 +674,12 @@ function CustomInput({ f, label, help, value, onChange }: { f: CustomField; labe
       </div>
     );
   }
-  if ((f.type === "select" && f.options.length <= 12) || f.type === "multiselect") {
+  if (f.type === "select" || f.type === "multiselect") {
     const cur = Array.isArray(v) ? v : [];
     return (
       <div className="sm:col-span-2">
-        <ChoiceField label={`${label}${f.visibility === "private" ? " · privé" : ""}`}>
-          {f.options.map((o) => f.type === "multiselect"
-            ? <Chip key={o} on={cur.includes(o)} onClick={() => onChange(cur.includes(o) ? cur.filter((x) => x !== o) : [...cur, o])} multi>{o}</Chip>
-            : <Chip key={o} on={v === o} onClick={() => onChange(v === o ? "" : o)}>{o}</Chip>)}
-        </ChoiceField>
+        <Picker label={`${label}${f.visibility === "private" ? " · privé" : ""}`} multi={f.type === "multiselect"}
+          options={f.options.map((o) => ({ value: o, label: o }))} value={f.type === "multiselect" ? cur : String(v)} onChange={(x) => onChange(x)} />
         {help ? <p className="mt-1 text-xs text-muted">{help}</p> : null}
       </div>
     );
@@ -764,12 +741,65 @@ function ShortStayNotice({ soft }: { soft?: boolean }) {
   );
 }
 
-/** Groupe de pastilles (pas un <label> : chaque pastille reste cliquable seule). */
-function ChoiceField({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * Champ déroulant sur une ligne : le choix courant s'affiche dans le champ, un clic
+ * ouvre la liste (un seul choix, ou plusieurs avec « multi »).
+ */
+function Picker({ label, options, value, onChange, multi, max, placeholder = "Choisir…" }: {
+  label: string; options: { value: string; label: string }[]; value: string | string[];
+  onChange: (v: string | string[]) => void; multi?: boolean; max?: number; placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent | TouchEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", away); document.addEventListener("touchstart", away); document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("touchstart", away); document.removeEventListener("keydown", esc); };
+  }, [open]);
+  const cur = Array.isArray(value) ? value : value === "" && !options.some((o) => o.value === "") ? [] : [value];
+  const names = cur.map((v) => options.find((o) => o.value === v)?.label ?? v).filter(Boolean);
+  const pick = (v: string) => {
+    if (!multi) { onChange(v); setOpen(false); return; }
+    const list = cur.includes(v) ? cur.filter((x) => x !== v) : max && cur.length >= max ? cur : [...cur, v];
+    onChange(list);
+  };
   return (
-    <div role="group" aria-label={label}>
-      <span className="mb-1.5 block text-sm font-semibold text-ink">{label}</span>
-      <div className="flex flex-wrap gap-2">{children}</div>
+    <div ref={box} className="relative">
+      <span className="mb-1 block text-sm font-semibold text-ink">{label}</span>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-haspopup="listbox" aria-expanded={open}
+        className={"input flex min-h-[44px] w-full items-center gap-2 text-left " + (open ? "ring-2 ring-accent-600" : "")}>
+        <span className={"min-w-0 flex-1 truncate " + (names.length ? "text-ink" : "text-slate-400")}>
+          {names.length ? (multi && names.length > 2 ? `${names.slice(0, 2).join(", ")} +${names.length - 2}` : names.join(", ")) : placeholder}
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={"shrink-0 text-slate-400 transition " + (open ? "rotate-180" : "")}><path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </button>
+      {open ? (
+        <div role="listbox" aria-multiselectable={multi || undefined}
+          className="absolute left-0 right-0 z-[70] mt-1 max-h-72 overflow-y-auto rounded-xl bg-white p-1 shadow-xl ring-1 ring-slate-200">
+          {options.map((o) => {
+            const on = cur.includes(o.value);
+            return (
+              <button key={o.value || "__vide"} type="button" role="option" aria-selected={on} onClick={() => pick(o.value)}
+                className={"flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition " + (on ? "bg-accent-50 font-semibold text-accent-700" : "text-ink hover:bg-slate-50")}>
+                <span aria-hidden className={"grid h-4 w-4 shrink-0 place-items-center border-2 " + (multi ? "rounded-[5px] " : "rounded-full ") + (on ? "border-accent-600 bg-accent-600 text-white" : "border-slate-300")}>
+                  {on ? (multi
+                    ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="m5 12 5 5 9-10" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    : <span className="h-1.5 w-1.5 rounded-full bg-white" />) : null}
+                </span>
+                {o.label}
+              </button>
+            );
+          })}
+          {multi ? (
+            <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-slate-100 bg-white px-2 pb-1 pt-2">
+              <span className="text-xs text-muted">{cur.length} choisi(s){max ? ` sur ${max} au plus` : ""}</span>
+              <button type="button" onClick={() => setOpen(false)} className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white">OK</button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
