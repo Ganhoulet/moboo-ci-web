@@ -1,4 +1,5 @@
 import { actionAllowed, requireSpace } from "@/lib/member-space";
+import { siteListingForm } from "@/lib/api";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { PageHeader, STATUS_LABEL } from "@/components/dashboard-ui";
@@ -7,7 +8,6 @@ import { getMyListing } from "../../actions";
 import { getSiteSettings } from "@/lib/settings";
 import { editorLists, getTaxonomies } from "@/lib/taxonomies";
 import { draftFromListing } from "@/lib/listing-draft";
-import { parseListingForm } from "@/lib/listing-form";
 import { ListingVideoCard } from "@/components/listing-video-card";
 import { getListingVideo } from "../../video-actions";
 
@@ -31,7 +31,7 @@ export default async function ModifierAnnonce({ params }: { params: { id: string
         sub={`${l.views ?? 0} vues · publiée le ${new Date(l.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`}
         action={<span className={`rounded-full px-3 py-1 text-xs font-semibold ${st.cls}`}>{st.label}</span>}
       />
-      <ListingEditor {...editorLists(await getTaxonomies())} id={params.id} initial={draft} maxPhotos={settings.submit.maxPhotos} form={parseListingForm(settings.forms.listingForm)} accountType={account.accountType} />
+      <ListingEditor {...editorLists(await getTaxonomies())} id={params.id} initial={draft} maxPhotos={settings.submit.maxPhotos} form={await siteListingForm(settings.forms.listingForm)} accountType={account.accountType} />
       {video && (video.uploadEnabled || video.video) ? <ListingVideoCard listingId={params.id} info={video} /> : null}
     </div>
   );

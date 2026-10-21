@@ -15,7 +15,10 @@ export interface CustomField extends FieldRule {
 export interface ListingFormConfig {
   /** steps : étapes avec onglets (défaut) ; single : tout sur une seule page. */
   layout?: "steps" | "single";
-  steps: Partial<Record<StepId, { hidden?: boolean; label?: string }>>;
+  /** Ordre des étapes (pages du formulaire de l'application, Builder). */
+  order?: StepId[];
+  /** types : profils qui voient l'étape (vide : tous), repris des rôles de la page dans l'application. */
+  steps: Partial<Record<StepId, { hidden?: boolean; label?: string; types?: string[] }>>;
   fields: Record<string, FieldRule>;
   custom: CustomField[];
 }
@@ -25,15 +28,21 @@ export interface MemberSpaceConfig {
   actions: Record<string, { enabled?: boolean; types?: string[] }>;
 }
 
-export type StepId = "essentiel" | "details" | "equipements" | "localisation" | "medias" | "plans" | "contact";
+// Mêmes pages, dans le même ordre, que « Publier une annonce » de l'application Moboo.ci.
+export type StepId = "essentiel" | "medias" | "details" | "equipements" | "localisation" | "visite" | "lots" | "plans" | "contact" | "reglages" | "note" | "rgpd";
 export const FORM_STEPS: { id: StepId; label: string; lockable?: boolean }[] = [
-  { id: "essentiel", label: "L'essentiel", lockable: true },
+  { id: "essentiel", label: "Informations", lockable: true },
+  { id: "medias", label: "Photos & vidéo" },
   { id: "details", label: "Détails" },
   { id: "equipements", label: "Équipements" },
-  { id: "localisation", label: "Localisation" },
-  { id: "medias", label: "Photos & vidéo" },
-  { id: "plans", label: "Plans & lots" },
-  { id: "contact", label: "Contact", lockable: true },
+  { id: "localisation", label: "Adresse" },
+  { id: "visite", label: "Visite 360°" },
+  { id: "lots", label: "Sous-annonces" },
+  { id: "plans", label: "Plans" },
+  { id: "contact", label: "Contact" },
+  { id: "reglages", label: "Réglages" },
+  { id: "note", label: "Note privée" },
+  { id: "rgpd", label: "Accord RGPD" },
 ];
 
 export interface BuiltinField { key: string; label: string; step: StepId; core?: boolean; defaultMode?: FieldMode; hint?: string }
@@ -47,7 +56,7 @@ export const BUILTIN_FIELDS: BuiltinField[] = [
   { key: "pricePostfix", label: "Fréquence de paiement", step: "essentiel" },
   { key: "secondaryPrice", label: "Prix promotionnel", step: "essentiel" },
   { key: "labels", label: "Étiquettes", step: "essentiel", hint: "Exclusivité, Nouveau…" },
-  { key: "description", label: "Description", step: "details", defaultMode: "required" },
+  { key: "description", label: "Description", step: "essentiel", defaultMode: "required" },
   { key: "bedrooms", label: "Chambres", step: "details" },
   { key: "bathrooms", label: "Salles de bain", step: "details" },
   { key: "garage", label: "Garages", step: "details" },
@@ -65,13 +74,14 @@ export const BUILTIN_FIELDS: BuiltinField[] = [
   { key: "map", label: "Position sur la carte", step: "localisation" },
   { key: "photos", label: "Photos", step: "medias" },
   { key: "videoUrl", label: "Vidéo", step: "medias" },
-  { key: "virtualTour", label: "Visite virtuelle 360°", step: "medias" },
+  { key: "virtualTour", label: "Visite virtuelle 360°", step: "visite" },
+  { key: "units", label: "Lots et sous-annonces", step: "lots" },
   { key: "floorPlans", label: "Plans", step: "plans" },
-  { key: "units", label: "Lots et sous-annonces", step: "plans" },
   { key: "contactName", label: "Nom affiché", step: "contact" },
   { key: "contactPhone", label: "Téléphone / WhatsApp", step: "contact", core: true },
-  { key: "disclaimer", label: "Mention légale", step: "contact" },
-  { key: "privateNote", label: "Note privée", step: "contact" },
+  { key: "disclaimer", label: "Mention légale", step: "reglages" },
+  { key: "privateNote", label: "Note privée", step: "note" },
+  { key: "gdpr", label: "Accord RGPD (case à cocher)", step: "rgpd", defaultMode: "required" },
 ];
 
 export const MODE_LABEL: Record<FieldMode, string> = {
@@ -128,7 +138,48 @@ export function fieldView(cfg: ListingFormConfig, key: string, ctx: FieldCtx, fa
 
 /** Étapes visibles (toujours l'essentiel et le contact). */
 export function visibleSteps(cfg: ListingFormConfig, ctx: FieldCtx) {
-  return FORM_STEPS.filter((s) => s.lockable || ctx.team || !cfg.steps[s.id]?.hidden).map((s) => ({ ...s, label: cfg.steps[s.id]?.label || s.label }));
+  const rank = (id: StepId) => { const i = cfg.order?.indexOf(id) ?? -1; return i < 0 ? 100 + FORM_STEPS.findIndex((s) => s.id === id) : i; };
+  const forType = (id: StepId) => { const t = cfg.steps[id]?.types; return !t?.length || t.includes(ctx.accountType || "particulier"); };
+  return FORM_STEPS.filter((s) => s.lockable || ctx.team || (!cfg.steps[s.id]?.hidden && forType(s.id)))
+    .sort((a, b) => rank(a.id) - rank(b.id))
+    .map((s) => ({ ...s, label: cfg.steps[s.id]?.label || s.label }));
+}
+
+/** Formulaire de l'application (API /mobile/add-property-form, réglé dans le Builder). */
+export interface AppListingForm {
+  pages: { step: StepId; label: string; enabled: boolean; types: string[]; team: boolean; fields: { key: string; enabled: boolean; required: boolean; label?: string }[] }[];
+}
+
+/**
+ * Le site suit le formulaire de l'application : ordre des pages, pages et champs
+ * activés ou désactivés, champs obligatoires, profils autorisés. Les réglages du
+ * back-office (Formulaires) complètent : champs créés, libellés renommés, champs
+ * masqués ou réservés à l'équipe, présentation (une page / par étapes).
+ */
+export function applyAppForm(cfg: ListingFormConfig, app: AppListingForm | null): ListingFormConfig {
+  if (!app?.pages?.length) return cfg;
+  const steps: ListingFormConfig["steps"] = { ...cfg.steps };
+  const fields: ListingFormConfig["fields"] = { ...cfg.fields };
+  const known = new Set(app.pages.map((p) => p.step));
+  for (const s of FORM_STEPS) if (!known.has(s.id) && s.id !== "essentiel") steps[s.id] = { ...steps[s.id], hidden: true };
+  for (const p of app.pages) {
+    if (!p.enabled && p.step !== "essentiel") steps[p.step] = { ...steps[p.step], hidden: true };
+    if (p.types.length && p.step !== "essentiel") steps[p.step] = { ...steps[p.step], types: p.types };
+    for (const f of p.fields) {
+      const builtin = BUILTIN_FIELDS.find((b) => b.key === f.key);
+      if (!builtin) continue;
+      const r: FieldRule = { ...fields[f.key] };
+      if (!r.label && f.label && !builtin.core) r.label = f.label;
+      if (!builtin.core && r.mode !== "hidden" && r.mode !== "team") {
+        if (!f.enabled) r.mode = "hidden";
+        else if (p.team) r.mode = "team";
+        else if (f.required) r.mode = "required";
+        if (p.types.length && !r.types?.length) r.types = p.types;
+      }
+      fields[f.key] = r;
+    }
+  }
+  return { ...cfg, steps, fields, order: app.pages.map((p) => p.step) };
 }
 
 /** Onglet de l'espace membre visible pour ce profil ? */

@@ -132,6 +132,8 @@ export function ListingEditor({
   const [mapsLink, setMapsLink] = useState("");
   // Meublés et espaces événementiels : publiés dans Moboo Resi / Moboo Event, pas sur le site.
   const [shortStay, setShortStay] = useState(false);
+  // Accord RGPD (page « Accord RGPD » du formulaire de l'application) : déjà donné pour une annonce existante.
+  const [gdpr, setGdpr] = useState(!!id);
   const fileRef = useRef<HTMLInputElement>(null);
   const set = (p: Partial<ListingDraft>) => { setD((x) => ({ ...x, ...p })); setError(null); setSaved(false); };
 
@@ -172,10 +174,11 @@ export function ListingEditor({
       if (d.title.trim().length < 8) return "Donnez un titre clair (8 caractères minimum).";
       if (!(Number(d.price) > 0)) return "Indiquez le prix.";
     }
-    if (id === "details" && fv("description").required && d.description.trim().length < 40) return "Décrivez le bien (40 caractères minimum).";
+    if (id === "essentiel" && fv("description").required && d.description.trim().length < 40) return "Décrivez le bien (40 caractères minimum).";
+    if (id === "rgpd" && fv("gdpr").show && !gdpr) return "Cochez l’accord RGPD pour publier.";
     if (id === "localisation" && !d.city.trim()) return "Indiquez la ville.";
     if (id === "contact" && d.contactPhone.replace(/[^0-9]/g, "").length < 8) return "Indiquez un numéro de contact.";
-    for (const f of [...BUILTIN_FIELDS.filter((x) => x.step === id && !x.core), ...form.custom.filter((x) => x.step === id)]) {
+    for (const f of [...BUILTIN_FIELDS.filter((x) => x.step === id && !x.core && x.key !== "gdpr"), ...form.custom.filter((x) => x.step === id)]) {
       if (fv(f.key).required && isEmpty(f.key)) return `Renseignez « ${fv(f.key).label} ».`;
     }
     return null;
@@ -329,6 +332,12 @@ export function ListingEditor({
               <input className="input" value={d.title} maxLength={140} placeholder="Ex. Appartement 3 pièces lumineux à Riviera 2"
                 onChange={(e) => set({ title: e.target.value })} />
             </Field>
+            {on("description") ? <Field label={lab("description")}>
+              <textarea className="input min-h-[140px]" value={d.description} maxLength={4000}
+                placeholder="Pièces, état, points forts, environnement, conditions (avance, caution)…"
+                onChange={(e) => set({ description: e.target.value })} />
+              <p className="mt-1 text-xs text-muted">{d.description.trim().length} caractères</p>
+            </Field> : null}
             <Field label={fv("price").label !== "Prix" ? lab("price") : d.transaction === "rent" ? "Loyer mensuel (FCFA) *" : "Prix de vente (FCFA) *"}>
               <input className="input" inputMode="numeric" value={d.price} placeholder="Ex. 250000"
                 onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, "") })} />
@@ -365,15 +374,49 @@ export function ListingEditor({
           </>
         ) : null}
 
+        {shown("medias") ? (
+          <>
+            {heading("medias")}
+            {on("photos") ? <>
+            <p className="text-sm text-muted">
+              {fv("photos").required ? "Au moins une photo. " : ""}Jusqu'à {MAX_PHOTOS} photos, compressées automatiquement. La 1re est la couverture — utilisez ◀ ▶ pour l'ordre.
+            </p>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {d.photos.map((src, i) => (
+                <div key={src} className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                  {i === 0 ? <span className="absolute left-1.5 top-1.5 rounded-md bg-accent-600 px-1.5 py-0.5 text-[10px] font-bold text-white">Couverture</span> : null}
+                  <div className="absolute inset-x-0 bottom-0 flex justify-between bg-gradient-to-t from-black/60 p-1.5">
+                    <span className="flex gap-1">
+                      <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="rounded bg-white/90 px-1.5 text-xs font-bold disabled:opacity-40">◀</button>
+                      <button type="button" onClick={() => move(i, 1)} disabled={i === d.photos.length - 1} className="rounded bg-white/90 px-1.5 text-xs font-bold disabled:opacity-40">▶</button>
+                    </span>
+                    <button type="button" onClick={() => set({ photos: d.photos.filter((p) => p !== src) })} className="rounded bg-red-600 px-1.5 text-xs font-bold text-white">✕</button>
+                  </div>
+                </div>
+              ))}
+              {d.photos.length < MAX_PHOTOS ? (
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={!!uploading}
+                  className="grid aspect-[4/3] place-items-center rounded-xl border-2 border-dashed border-accent-300 bg-accent-50 text-accent-700 transition hover:border-accent-500">
+                  <span className="text-center text-sm font-semibold">
+                    {uploading ?? <>＋ Ajouter<br /><span className="text-xs font-medium">{d.photos.length}/{MAX_PHOTOS}</span></>}
+                  </span>
+                </button>
+              ) : null}
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => addPhotos(e.target.files)} />
+            </> : null}
+            {on("videoUrl") ? <Field label={fv("videoUrl").required ? lab("videoUrl") : `${lab("videoUrl")} (optionnel)`}>
+              <input className="input" value={d.videoUrl} placeholder="Lien YouTube ou TikTok" onChange={(e) => set({ videoUrl: e.target.value })} />
+            </Field> : null}
+            {customBlock("medias")}
+          </>
+        ) : null}
+
         {shown("details") ? (
           <>
             {heading("details")}
-            {on("description") ? <Field label={lab("description")}>
-              <textarea className="input min-h-[140px]" value={d.description} maxLength={4000}
-                placeholder="Pièces, état, points forts, environnement, conditions (avance, caution)…"
-                onChange={(e) => set({ description: e.target.value })} />
-              <p className="mt-1 text-xs text-muted">{d.description.trim().length} caractères</p>
-            </Field> : null}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {on("bedrooms") ? <Num label={lab("bedrooms")} v={d.bedrooms} on={(v) => set({ bedrooms: v })} /> : null}
               {on("bathrooms") ? <Num label={lab("bathrooms")} v={d.bathrooms} on={(v) => set({ bathrooms: v })} /> : null}
@@ -463,46 +506,40 @@ export function ListingEditor({
           </>
         ) : null}
 
-        {shown("medias") ? (
+        {shown("visite") ? (
           <>
-            {heading("medias")}
-            {on("photos") ? <>
-            <p className="text-sm text-muted">
-              {fv("photos").required ? "Au moins une photo. " : ""}Jusqu'à {MAX_PHOTOS} photos, compressées automatiquement. La 1re est la couverture — utilisez ◀ ▶ pour l'ordre.
-            </p>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {d.photos.map((src, i) => (
-                <div key={src} className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="h-full w-full object-cover" />
-                  {i === 0 ? <span className="absolute left-1.5 top-1.5 rounded-md bg-accent-600 px-1.5 py-0.5 text-[10px] font-bold text-white">Couverture</span> : null}
-                  <div className="absolute inset-x-0 bottom-0 flex justify-between bg-gradient-to-t from-black/60 p-1.5">
-                    <span className="flex gap-1">
-                      <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="rounded bg-white/90 px-1.5 text-xs font-bold disabled:opacity-40">◀</button>
-                      <button type="button" onClick={() => move(i, 1)} disabled={i === d.photos.length - 1} className="rounded bg-white/90 px-1.5 text-xs font-bold disabled:opacity-40">▶</button>
-                    </span>
-                    <button type="button" onClick={() => set({ photos: d.photos.filter((p) => p !== src) })} className="rounded bg-red-600 px-1.5 text-xs font-bold text-white">✕</button>
-                  </div>
-                </div>
-              ))}
-              {d.photos.length < MAX_PHOTOS ? (
-                <button type="button" onClick={() => fileRef.current?.click()} disabled={!!uploading}
-                  className="grid aspect-[4/3] place-items-center rounded-xl border-2 border-dashed border-accent-300 bg-accent-50 text-accent-700 transition hover:border-accent-500">
-                  <span className="text-center text-sm font-semibold">
-                    {uploading ?? <>＋ Ajouter<br /><span className="text-xs font-medium">{d.photos.length}/{MAX_PHOTOS}</span></>}
-                  </span>
-                </button>
-              ) : null}
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => addPhotos(e.target.files)} />
-            </> : null}
-            {on("videoUrl") ? <Field label={fv("videoUrl").required ? lab("videoUrl") : `${lab("videoUrl")} (optionnel)`}>
-              <input className="input" value={d.videoUrl} placeholder="Lien YouTube ou TikTok" onChange={(e) => set({ videoUrl: e.target.value })} />
-            </Field> : null}
+            {heading("visite")}
             {on("virtualTour") ? <Field label={fv("virtualTour").required ? lab("virtualTour") : `${lab("virtualTour")} (optionnel)`}>
               <input className="input" value={d.virtualTour} placeholder="Lien Matterport, Kuula… ou code <iframe> à coller" onChange={(e) => set({ virtualTour: e.target.value })} />
             </Field> : null}
-            {customBlock("medias")}
+            {customBlock("visite")}
+          </>
+        ) : null}
+
+        {shown("lots") ? (
+          <>
+            {heading("lots")}
+            {on("units") ? <div>
+              <p className="font-display text-base font-bold text-ink">{fv("units").required ? lab("units") : `${lab("units")} (facultatif)`}</p>
+              <p className="text-sm text-muted">Immeuble, résidence ou programme : chaque logement disponible avec son prix.</p>
+              <div className="mt-3 space-y-3">
+                {d.units.map((u, i) => (
+                  <div key={i} className="grid gap-2 rounded-2xl border border-slate-200 p-3 sm:grid-cols-4">
+                    <input className="input sm:col-span-2" value={u.title} placeholder="Titre (ex. Appartement A2)" onChange={(e) => setUnit(i, { title: e.target.value })} />
+                    <input className="input" value={u.type} placeholder="Type (ex. 3 pièces)" onChange={(e) => setUnit(i, { type: e.target.value })} />
+                    <input className="input" inputMode="numeric" value={u.price} placeholder="Prix FCFA" onChange={(e) => setUnit(i, { price: e.target.value.replace(/[^0-9]/g, "") })} />
+                    <input className="input" value={u.priceUnit} placeholder="Ex. par mois" onChange={(e) => setUnit(i, { priceUnit: e.target.value })} />
+                    <input className="input" value={u.beds} placeholder="Chambres" onChange={(e) => setUnit(i, { beds: e.target.value })} />
+                    <input className="input" value={u.baths} placeholder="Salles de bain" onChange={(e) => setUnit(i, { baths: e.target.value })} />
+                    <input className="input" value={u.size} placeholder="Surface" onChange={(e) => setUnit(i, { size: e.target.value })} />
+                    <input className="input sm:col-span-3" value={u.availability} placeholder="Disponibilité (ex. tout de suite, 1er décembre)" onChange={(e) => setUnit(i, { availability: e.target.value })} />
+                    <button type="button" className="text-sm font-semibold text-red-600" onClick={() => set({ units: d.units.filter((_, j) => j !== i) })}>Retirer</button>
+                  </div>
+                ))}
+              </div>
+              {d.units.length < 30 ? <button type="button" className="btn-ghost mt-2" onClick={() => set({ units: [...d.units, { ...EMPTY_UNIT }] })}>＋ Ajouter un lot</button> : null}
+            </div> : null}
+            {customBlock("lots")}
           </>
         ) : null}
 
@@ -534,26 +571,6 @@ export function ListingEditor({
               </div>
               {d.floorPlans.length < 10 ? <button type="button" className="btn-ghost mt-2" onClick={() => set({ floorPlans: [...d.floorPlans, { ...EMPTY_PLAN }] })}>＋ Ajouter un plan</button> : null}
             </div> : null}
-            {on("units") ? <div>
-              <p className="font-display text-base font-bold text-ink">{fv("units").required ? lab("units") : `${lab("units")} (facultatif)`}</p>
-              <p className="text-sm text-muted">Immeuble, résidence ou programme : chaque logement disponible avec son prix.</p>
-              <div className="mt-3 space-y-3">
-                {d.units.map((u, i) => (
-                  <div key={i} className="grid gap-2 rounded-2xl border border-slate-200 p-3 sm:grid-cols-4">
-                    <input className="input sm:col-span-2" value={u.title} placeholder="Titre (ex. Appartement A2)" onChange={(e) => setUnit(i, { title: e.target.value })} />
-                    <input className="input" value={u.type} placeholder="Type (ex. 3 pièces)" onChange={(e) => setUnit(i, { type: e.target.value })} />
-                    <input className="input" inputMode="numeric" value={u.price} placeholder="Prix FCFA" onChange={(e) => setUnit(i, { price: e.target.value.replace(/[^0-9]/g, "") })} />
-                    <input className="input" value={u.priceUnit} placeholder="Ex. par mois" onChange={(e) => setUnit(i, { priceUnit: e.target.value })} />
-                    <input className="input" value={u.beds} placeholder="Chambres" onChange={(e) => setUnit(i, { beds: e.target.value })} />
-                    <input className="input" value={u.baths} placeholder="Salles de bain" onChange={(e) => setUnit(i, { baths: e.target.value })} />
-                    <input className="input" value={u.size} placeholder="Surface" onChange={(e) => setUnit(i, { size: e.target.value })} />
-                    <input className="input sm:col-span-3" value={u.availability} placeholder="Disponibilité (ex. tout de suite, 1er décembre)" onChange={(e) => setUnit(i, { availability: e.target.value })} />
-                    <button type="button" className="text-sm font-semibold text-red-600" onClick={() => set({ units: d.units.filter((_, j) => j !== i) })}>Retirer</button>
-                  </div>
-                ))}
-              </div>
-              {d.units.length < 30 ? <button type="button" className="btn-ghost mt-2" onClick={() => set({ units: [...d.units, { ...EMPTY_UNIT }] })}>＋ Ajouter un lot</button> : null}
-            </div> : null}
             {customBlock("plans")}
           </>
         ) : null}
@@ -578,12 +595,37 @@ export function ListingEditor({
               </div>
             </div>
             {customBlock("contact")}
+          </>
+        ) : null}
+
+        {shown("reglages") ? (
+          <>
+            {heading("reglages")}
             {on("disclaimer") ? <Field label={fv("disclaimer").required ? lab("disclaimer") : `${lab("disclaimer")} (facultatif)`}>
               <textarea className="input" rows={2} value={d.disclaimer} maxLength={600} placeholder="Ex. Prix hors frais d’agence, sous réserve de disponibilité." onChange={(e) => set({ disclaimer: e.target.value })} />
             </Field> : null}
+            {customBlock("reglages")}
+          </>
+        ) : null}
+
+        {shown("note") ? (
+          <>
+            {heading("note")}
             {on("privateNote") ? <Field label={`${lab("privateNote")} (visible par vous seul)`}>
               <textarea className="input" rows={2} value={d.privateNote} maxLength={2000} placeholder="Ex. Clés chez le gardien, propriétaire joignable le soir…" onChange={(e) => set({ privateNote: e.target.value })} />
             </Field> : null}
+            {customBlock("note")}
+          </>
+        ) : null}
+
+        {shown("rgpd") ? (
+          <>
+            {heading("rgpd")}
+            <Chip on={gdpr} onClick={() => { setGdpr(!gdpr); setError(null); }} multi>
+              J’accepte que Moboo enregistre et publie ces informations pour diffuser mon annonce
+            </Chip>
+            <p className="text-xs text-muted">Conformément au RGPD et à la loi ivoirienne sur les données personnelles. <Link href="/confidentialite" target="_blank" className="font-semibold text-brand-800 hover:underline">Politique de confidentialité</Link></p>
+            {customBlock("rgpd")}
           </>
         ) : null}
       </div>

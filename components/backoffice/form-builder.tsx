@@ -135,6 +135,14 @@ export function ListingFormBuilder({ initial, propertyTypes }: { initial: Listin
         {MODES.map((m) => <span key={m} className={"rounded-full px-2.5 py-1 font-bold " + MODE_STYLE[m]}>{MODE_LABEL[m]}</span>)}
         <span className="text-muted">« Réservé à l’équipe » : visible seulement dans le back-office (Immobilier → annonce) ; l’annonceur ne le voit pas et ne peut pas le remplir.</span>
       </div>
+      <div className="rounded-lg bg-brand-50 p-4 text-sm text-ink ring-1 ring-brand-200">
+        <p className="font-semibold">Même formulaire que l’application Moboo.ci</p>
+        <p className="mt-0.5 text-xs text-slate-600">
+          L’ordre des pages, les champs activés ou désactivés, les champs obligatoires et les profils autorisés suivent le
+          <Link href="/admin/application/builder" className="font-semibold text-brand-800 hover:underline"> Builder de l’application</Link> (formulaire « Publier une annonce »).
+          Ici, vous ajoutez des champs (ils apparaissent aussi dans l’application, page Détails), renommez, masquez ou réservez un champ à l’équipe, et choisissez la présentation du site.
+        </p>
+      </div>
       <div className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
         <p className="font-display text-base font-bold text-ink">Présentation du formulaire</p>
         <p className="mt-0.5 text-xs text-muted">Une seule page : toutes les rubriques s’affichent à la suite, sans passer d’onglet en onglet (plus rapide sur téléphone). Les étapes décochées ci-dessous restent masquées dans les deux cas.</p>

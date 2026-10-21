@@ -1,10 +1,10 @@
 import Link from "next/link";
+import { siteListingForm } from "@/lib/api";
 import { ListingEditor } from "@/components/listing-editor";
 import { emptyDraft } from "@/lib/listing-draft";
 import { getSiteSettings } from "@/lib/settings";
 import { editorLists, getTaxonomies } from "@/lib/taxonomies";
 import { saveAdminListingAction } from "../actions";
-import { parseListingForm } from "@/lib/listing-form";
 
 export default async function AdminNewListing() {
   const [settings, tax] = await Promise.all([getSiteSettings(), getTaxonomies()]);
@@ -18,7 +18,7 @@ export default async function AdminNewListing() {
       <ListingEditor
         initial={emptyDraft({ name: "Moboo.ci", phone: "" })}
         maxPhotos={settings.submit.maxPhotos}
-        form={parseListingForm(settings.forms.listingForm)}
+        form={await siteListingForm(settings.forms.listingForm)}
         team
         saveAction={saveAdminListingAction}
         createdHref="/admin/immobilier/{id}?creee=1"

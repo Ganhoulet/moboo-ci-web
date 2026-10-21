@@ -25,6 +25,17 @@ async function apiGet<T>(path: string, revalidate = 60): Promise<T> {
   return (await res.json()) as T;
 }
 
+/** Formulaire « Publier une annonce » de l'application (Builder) : null si indisponible. */
+export async function getAppListingForm(): Promise<import("./listing-form").AppListingForm | null> {
+  try { return await apiGet("/mobile/add-property-form", 60); } catch { return null; }
+}
+
+/** Formulaire du site = celui de l'application, complété par le back-office (Formulaires). */
+export async function siteListingForm(raw: unknown) {
+  const { applyAppForm, parseListingForm } = await import("./listing-form");
+  return applyAppForm(parseListingForm(raw), await getAppListingForm());
+}
+
 /** Résidences meublées publiées sur la marketplace. Ne casse jamais le rendu. */
 export async function listResidences(params?: {
   city?: string;
