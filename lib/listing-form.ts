@@ -174,6 +174,8 @@ export function applyAppForm(cfg: ListingFormConfig, app: AppListingForm | null)
         if (!f.enabled) r.mode = "hidden";
         else if (p.team) r.mode = "team";
         else if (f.required) r.mode = "required";
+        // Facultatif dans l'application → facultatif sur le site, sauf réglage contraire du back-office.
+        else if (!r.mode) r.mode = "optional";
         if (p.types.length && !r.types?.length) r.types = p.types;
       }
       fields[f.key] = r;
