@@ -1,3 +1,4 @@
+import { getSiteVideoConfig } from "@/app/mon-espace/video-actions";
 import { requireSpace } from "@/lib/member-space";
 import { siteListingForm } from "@/lib/api";
 import { redirect } from "next/navigation";
@@ -23,7 +24,7 @@ export default async function NouvelleAnnonce({ searchParams }: { searchParams: 
   return (
     <div className="max-w-3xl">
       <PageHeader title="Publier une annonce" sub={submit.submitIntro} />
-      <ListingEditor {...editorLists(await getTaxonomies())} form={await siteListingForm(forms.listingForm)} accountType={account.accountType} maxPhotos={submit.maxPhotos} initial={{
+      <ListingEditor {...editorLists(await getTaxonomies())} form={await siteListingForm(forms.listingForm)} video={await getSiteVideoConfig()} accountType={account.accountType} maxPhotos={submit.maxPhotos} initial={{
         ...emptyDraft({ name: name !== account.phone ? name : "", phone: account.whatsapp || account.phone }),
         ...(searchParams.cat === "sale" || searchParams.cat === "rent" ? { transaction: searchParams.cat } : {}),
         ...(searchParams.type ? { propertyType: searchParams.type } : {}),

@@ -20,6 +20,12 @@ export interface ListingVideo {
 
 const path = (id: string) => `/site/video/listing/${encodeURIComponent(id)}`;
 
+/** Envoi depuis le site (nouvelle annonce, avant qu'elle existe) : activé, tailles et durées. */
+export async function getSiteVideoConfig(): Promise<ListingVideo | null> {
+  const { ok, data } = await authedFetch("/site/video/config", { method: "GET" });
+  return ok ? (data as ListingVideo) : null;
+}
+
 export async function getListingVideo(id: string): Promise<ListingVideo | null> {
   const { ok, data } = await authedFetch(path(id), { method: "GET" });
   return ok ? (data as ListingVideo) : null;

@@ -5,6 +5,8 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { COMMUNES, LISTING_FEATURES, PROPERTY_TYPES } from "@/lib/accounts";
 import { saveListingAction, uploadImageAction } from "@/app/mon-espace/actions";
+import { ListingVideoCard, uploadListingVideo } from "@/components/listing-video-card";
+import type { ListingVideo } from "@/app/mon-espace/video-actions";
 import { BUILTIN_FIELDS, fieldView, visibleSteps, type CustomField, type ListingFormConfig, type StepId } from "@/lib/listing-form";
 
 const NO_FORM: ListingFormConfig = { steps: {}, fields: {}, custom: [] };
@@ -98,8 +100,10 @@ export function ListingEditor({
   id, initial, maxPhotos: MAX_PHOTOS = 12,
   saveAction = saveListingAction, createdHref = "/mon-espace/annonces?publiee={id}",
   types = PROPERTY_TYPES, features: FEATURES = LISTING_FEATURES, communes: AREAS = COMMUNES, labels: LABELS = [],
-  form = NO_FORM, accountType, team = false,
+  form = NO_FORM, accountType, team = false, video = null,
 }: {
+  /** Envoi de vidéo depuis le site (réglages, et vidéo actuelle en modification) : null = indisponible. */
+  video?: ListingVideo | null;
   /** Règles du formulaire (back-office → Formulaires). */
   form?: ListingFormConfig;
   /** Profil de l'annonceur (champs réservés à certains profils). */
@@ -134,6 +138,9 @@ export function ListingEditor({
   const [shortStay, setShortStay] = useState(false);
   // Accord RGPD (page « Accord RGPD » du formulaire de l'application) : déjà donné pour une annonce existante.
   const [gdpr, setGdpr] = useState(!!id);
+  // Nouvelle annonce : fichier vidéo choisi, envoyé juste après l'enregistrement (il faut l'annonce).
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoProgress, setVideoProgress] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const set = (p: Partial<ListingDraft>) => { setD((x) => ({ ...x, ...p })); setError(null); setSaved(false); };
 
@@ -244,6 +251,12 @@ export function ListingEditor({
     start(async () => {
       const r = await saveAction(id ?? null, payload());
       if (!r.ok) return setError(r.error ?? "Erreur.");
+      if (!edit && videoFile && r.id) {
+        const up = await uploadListingVideo(r.id, videoFile, video?.maxMb ?? 100, setVideoProgress);
+        setVideoProgress(null);
+        // L'annonce est publiée même si la vidéo échoue : elle pourra être renvoyée depuis « Modifier ».
+        if (!up.ok) { router.push(`/mon-espace/annonces/${encodeURIComponent(r.id)}?video=echec`); return; }
+      }
       if (edit) { setSaved(true); router.refresh(); }
       // Soumission payante à l'annonce : paiement, puis mise en ligne automatique.
       else if (r.paymentUrl) window.location.href = r.paymentUrl;
@@ -403,6 +416,31 @@ export function ListingEditor({
             {on("videoUrl") ? <Field label={fv("videoUrl").required ? lab("videoUrl") : `${lab("videoUrl")} (optionnel)`}>
               <input className="input" value={d.videoUrl} placeholder="Lien YouTube ou TikTok" onChange={(e) => set({ videoUrl: e.target.value })} />
             </Field> : null}
+            {on("videoUpload") && video?.uploadEnabled && !team ? (
+              edit && id ? <ListingVideoCard listingId={id} info={video} embedded /> : (
+                <div className="rounded-2xl border border-slate-200 p-4">
+                  <p className="text-sm font-semibold text-ink">Ou envoyez la vidéo (fichier)</p>
+                  <p className="text-xs text-muted">
+                    Filmée avec votre téléphone : {video.maxMb} Mo et {Math.round(video.maxSeconds / 60) >= 1 ? `${Math.round(video.maxSeconds / 60)} min` : `${video.maxSeconds} s`} au maximum. Envoyée juste après la publication.
+                    {video.aiRooms ? " Les meilleures images sont ajoutées automatiquement à vos photos, pièce par pièce." : ""}
+                  </p>
+                  {videoFile ? (
+                    <p className="mt-2 flex items-center gap-3 text-sm">
+                      <span className="truncate font-medium text-ink">🎬 {videoFile.name} · {(videoFile.size / 1024 / 1024).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} Mo</span>
+                      <button type="button" className="font-semibold text-red-600" onClick={() => setVideoFile(null)}>Retirer</button>
+                    </p>
+                  ) : (
+                    <label className="btn-ghost mt-2 inline-flex cursor-pointer">＋ Choisir une vidéo
+                      <input type="file" accept="video/*" hidden onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        if (f && f.size > video.maxMb * 1024 * 1024) { setError(`Vidéo trop lourde : ${video.maxMb} Mo au maximum.`); return; }
+                        setVideoFile(f); setError(null);
+                      }} />
+                    </label>
+                  )}
+                </div>
+              )
+            ) : null}
             {customBlock("medias")}
           </>
         ) : null}
@@ -630,7 +668,7 @@ export function ListingEditor({
           </>
         ) : (
           <button type="button" onClick={single ? save : next} disabled={pending || !!uploading} className="btn-primary flex-1 bg-accent-600 hover:bg-accent-700 disabled:opacity-60">
-            {pending ? "Publication…" : single || step === STEPS.length - 1 ? "Publier l'annonce" : "Continuer"}
+            {videoProgress != null ? `Envoi de la vidéo… ${videoProgress} %` : pending ? "Publication…" : single || step === STEPS.length - 1 ? "Publier l'annonce" : "Continuer"}
           </button>
         )}
       </div>
