@@ -1,4 +1,5 @@
 import { authedFetch } from "@/lib/server-api";
+import { LoginTest } from "@/components/backoffice/login-test";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export default async function LoginDiagnose({ searchParams }: { searchParams: { 
         <input name="q" defaultValue={q} placeholder="ex. nom@exemple.com, 0707070707 ou identifiant" className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm" />
         <button className="rounded-md bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900">Vérifier</button>
       </form>
+      <LoginTest initialIdentifier={q} />
       {q && !d ? <p className="rounded-lg bg-red-50 p-4 text-sm text-red-700">Diagnostic indisponible.</p> : null}
       {d?.error ? <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-800">{d.error}</p> : null}
       {d && !d.error ? (
