@@ -32,6 +32,10 @@ const nextConfig = {
       beforeFiles: [
         { source: '/wp-json', destination: `${api}/wp-json` },
         { source: '/wp-json/:path*', destination: `${api}/wp-json/:path*` },
+        // Application basculée : sa configuration porte le chemin « /api/v1 » de la passerelle
+        // (resi.moboo.ci/api/v1) alors que l'interrupteur la fait passer par ce domaine.
+        { source: '/api/v1/wp-json', destination: `${api}/wp-json` },
+        { source: '/api/v1/wp-json/:path*', destination: `${api}/wp-json/:path*` },
         ...(media ? [{ source: '/wp-content/uploads/:path*', destination: `${media}/:path*` }] : []),
       ],
     };

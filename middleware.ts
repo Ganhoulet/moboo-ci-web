@@ -104,5 +104,5 @@ async function handle(req: NextRequest): Promise<NextResponse> {
 export const config = {
   // Pages uniquement (pas les fichiers statiques ni les images).
   // wp-json et wp-content : transmis tels quels (application Moboo.ci, anciens liens de photos), cf. next.config.
-  matcher: ["/((?!_next/static|img$|\\.well-known|_next/image|favicon|icon|apple-icon|robots|sitemap|wp-json|wp-content/uploads|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt|xml)$).*)"],
+  matcher: ["/((?!_next/static|img$|\\.well-known|_next/image|favicon|icon|apple-icon|robots|sitemap|wp-json|api/v1/wp-json|wp-content/uploads|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt|xml)$).*)"],
 };
