@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
@@ -13,6 +14,7 @@ import { getTaxonomies } from "@/lib/taxonomies";
 import { getChrome } from "@/lib/pages";
 import { SiteFooter } from "@/components/site-footer";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
+import { RouteProgress } from "@/components/route-progress";
 import { zonesFrom } from "@/lib/mobile-zones";
 import { menuAt } from "@/lib/menus";
 import { getCampaigns } from "@/lib/marketing";
@@ -69,6 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen font-sans" style={{ ["--container-max" as string]: `${general.containerWidth}px`, ["--m-card" as string]: `${Math.min(95, Math.max(45, Number(header.mobileCardWidth) || 70))}%` }}>
         {/* Téléphone : taille de tout le site (textes, cartes, espacements en rem), réglée dans le back-office. */}
         <style>{`@media (max-width: 767px) { html { font-size: ${["13", "14", "15", "16", "17"].includes(String(header.mobileTextSize)) ? header.mobileTextSize : "15"}px; } }`}</style>
+        <Suspense fallback={null}><RouteProgress /></Suspense>
         <ClientSettings favoritesLoginRequired={general.favoritesLoginRequired} loggedIn={!!getSession()} />
         {notices.bandeau.length ? <NoticeBar items={notices.bandeau} /> : null}
         {header.topBarEnabled && (header.topBarText || header.topBarPhone || header.topBarEmail) ? <TopBar h={header} /> : null}
