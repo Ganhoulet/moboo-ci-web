@@ -76,7 +76,7 @@ export function SiteHeader({ settings, nav }: { settings: SiteSettings; nav: Hea
   // Téléphone : en-tête façon application (recherche collante), réglé dans le back-office.
   const mobileTone: Tone = header.mobileHeaderColor === "white" ? "light" : "dark";
   const phone = header.mobileHeaderStyle === "search" || header.mobileHeaderStyle === "logo_search"
-    ? <MobileHeader settings={settings} menu={nav.mobile} actions={<Actions settings={settings} tone={mobileTone} mobile={nav.mobile} />} />
+    ? <MobileHeader settings={settings} menu={nav.mobile} actions={<Actions settings={settings} tone={mobileTone} mobile={header.mobileHeaderStyle === "logo_search" ? nav.mobile : undefined} />} />
     : null;
   const style = header.headerStyle;
   const wrap = header.headerLayout === "full" ? "w-full px-4 sm:px-6 lg:px-8" : "container-page";

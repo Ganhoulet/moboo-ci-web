@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MobooLogo } from "./logo";
 import { MobileMenu } from "./nav-menu";
+import { MobileSearchReveal } from "./mobile-search-reveal";
 import type { SiteSettings } from "@/lib/settings";
 import type { MenuItem } from "@/lib/menus";
 
@@ -33,28 +34,27 @@ export function MobileHeader({ settings, menu, actions }: { settings: SiteSettin
   const color = BG[header.mobileHeaderColor] ?? BG.brand;
   const tone = header.mobileHeaderColor === "white" ? "light" : "dark";
   const search = <SearchPill placeholder={header.mobileSearchPlaceholder || "Commune, quartier, ville…"} />;
+  // « Au défilement » : sur l'accueil, la recherche du haut n'apparaît qu'après celle de la page.
+  const reveal = header.mobileSearchReveal !== "always";
+  const logo = (
+    <Link href="/" aria-label="Accueil" className="shrink-0">
+      <MobooLogo src={branding.logoUrl} height={Math.min(branding.logoHeight, 34)} alt={branding.siteName} tone={branding.logoUrl ? "light" : tone} />
+    </Link>
+  );
   if (header.mobileHeaderStyle === "logo_search") {
     return (
       <header className={`print:hidden sticky top-0 z-40 md:hidden ${color}`}>
-        <div className="flex h-14 items-center justify-between gap-3 px-4">
-          <Link href="/" aria-label="Accueil" className="shrink-0">
-            <MobooLogo src={branding.logoUrl} height={Math.min(branding.logoHeight, 34)} alt={branding.siteName} tone={branding.logoUrl ? "light" : tone} />
-          </Link>
-          {actions}
-        </div>
-        <div className="px-4 pb-3">{search}</div>
+        <div className="flex h-14 items-center justify-between gap-3 px-4">{logo}{actions}</div>
+        <MobileSearchReveal reveal={reveal} search={<div className="flex min-w-0 flex-1 px-4 pb-3">{search}</div>} />
       </header>
     );
   }
   return (
     <header className={`print:hidden sticky top-0 z-40 md:hidden ${color}`}>
-      <div className="flex items-center gap-3 px-4 py-2.5">
-        {menu.length ? <MobileMenu items={menu} tone={tone} className={tone === "dark" ? "border-transparent" : ""} /> : (
-          <Link href="/" aria-label="Accueil" className="shrink-0">
-            <MobooLogo src={branding.logoUrl} height={28} alt={branding.siteName} tone={branding.logoUrl ? "light" : tone} />
-          </Link>
-        )}
-        {search}
+      <div className="flex min-h-[56px] items-center gap-3 px-4 py-2">
+        {menu.length ? <MobileMenu items={menu} tone={tone} className={tone === "dark" ? "border-transparent" : ""} /> : null}
+        <MobileSearchReveal reveal={reveal} search={search}
+          idle={<div className="flex min-w-0 flex-1 items-center justify-between gap-3">{logo}{actions}</div>} />
       </div>
     </header>
   );

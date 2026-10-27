@@ -138,7 +138,8 @@ export function HeroSearch({ tabs, placeholder, types, places = [] }: {
         ))}
       </div>
 
-      <form onSubmit={submit}
+      {/* id : repère pour l'en-tête du téléphone (sa recherche apparaît une fois ce formulaire dépassé). */}
+      <form id="hero-search" onSubmit={submit}
         className={"flex flex-col gap-1 rounded-3xl p-2 shadow-2xl ring-1 ring-black/5 transition sm:flex-row sm:items-center sm:rounded-full " + (panel ? "bg-slate-100" : "bg-white")}>
         {whereSeg}
         {mode === "property" ? (

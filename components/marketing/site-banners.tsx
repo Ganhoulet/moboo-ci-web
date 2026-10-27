@@ -22,7 +22,7 @@ export function SiteBanners({ items }: { items: LiveCampaign[] }) {
       {items.map((c) => {
         const card = <CreativeView c={c} variant="banner" />;
         return (
-          <div key={c.id} className={one ? "" : "w-[88%] shrink-0 snap-start sm:w-[60%] lg:w-[calc(50%-8px)]"}>
+          <div key={c.id} className={one ? "" : "w-[min(calc(var(--m-card,78%)+10%),95%)] shrink-0 snap-start sm:w-[60%] lg:w-[calc(50%-8px)]"}>
             {c.ctaUrl ? (
               <a href={c.ctaUrl} onClick={() => void trackCampaignAction(c.id, "click").catch(() => {})} className="block transition hover:opacity-95"
                 {...(/^https?:/.test(c.ctaUrl) ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{card}</a>

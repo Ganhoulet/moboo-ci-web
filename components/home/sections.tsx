@@ -64,7 +64,7 @@ function Tiles({ items, layout, label }: { items: Property[]; layout: string; la
   }
   return (
     <Carousel label={label}>
-      {items.map((p) => <PropertyTile key={p.id} p={p} className="w-[78%] shrink-0 snap-start sm:w-[45%] lg:w-[calc(25%-15px)]" />)}
+      {items.map((p) => <PropertyTile key={p.id} p={p} className="w-[var(--m-card,78%)] shrink-0 snap-start sm:w-[45%] lg:w-[calc(25%-15px)]" />)}
     </Carousel>
   );
 }
@@ -332,7 +332,7 @@ function Pros({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean })
       <Head title={p.title} subtitle={p.subtitle} dark={p.background === "brand"} />
       <Carousel label={p.title || "Professionnels"}>
         {items.map((x) => (
-          <Link key={x.href ?? x.username} href={x.href ?? `/pro/${x.username}`} className="w-[70%] shrink-0 snap-start rounded-2xl border border-slate-200 bg-white p-5 text-center transition hover:shadow-card-hover sm:w-[40%] lg:w-[calc(20%-16px)]">
+          <Link key={x.href ?? x.username} href={x.href ?? `/pro/${x.username}`} className="w-[calc(var(--m-card,78%)-8%)] shrink-0 snap-start rounded-2xl border border-slate-200 bg-white p-5 text-center transition hover:shadow-card-hover sm:w-[40%] lg:w-[calc(20%-16px)]">
             {x.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={imgSmall(x.avatarUrl)} alt="" loading="lazy" decoding="async" className="mx-auto h-20 w-20 rounded-full object-cover" />
@@ -546,7 +546,7 @@ async function ServicesRow({ s, edit }: { s: Section; edit?: boolean }) {
       <Carousel label={p.title || "Services"}>
         {items.map((x) => (
           <Link key={x.key} href={serviceHref(x.key)} data-service={x.key}
-            className="group flex w-[78%] shrink-0 snap-start flex-col rounded-2xl border border-slate-200 bg-white p-5 text-ink transition hover:-translate-y-0.5 hover:shadow-card-hover sm:w-[45%] lg:w-[calc(25%-15px)]">
+            className="group flex w-[var(--m-card,78%)] shrink-0 snap-start flex-col rounded-2xl border border-slate-200 bg-white p-5 text-ink transition hover:-translate-y-0.5 hover:shadow-card-hover sm:w-[45%] lg:w-[calc(25%-15px)]">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-2xl">{x.icon}</span>
             <span className="mt-4 font-display text-lg font-bold">{x.title}</span>
             <span className="mt-1 flex-1 text-sm text-muted">{x.tagline}</span>
