@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { fcfa, since } from "@/lib/am";
-import { addActivityAction, assignAction, bookingContactAction, changeDatesAction, confirmBookingAction, declineBookingAction, disputeReplyAction, taskDoneAction } from "@/app/admin/comptes/actions";
+import { addActivityAction, assignAction, bookingContactAction, changeDatesAction, confirmBookingAction, declineBookingAction, disputeReplyAction, sendPaymentLinkAction, taskDoneAction } from "@/app/admin/comptes/actions";
 
 const input = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand-600 focus:outline-none";
 const digits = (p?: string | null) => String(p ?? "").replace(/\D/g, "");
@@ -17,6 +17,67 @@ export function AutoRefresh({ seconds = 20 }: { seconds?: number }) {
     return () => clearInterval(t);
   }, [router, seconds]);
   return null;
+}
+
+/** Résultat de l'envoi automatique du lien de paiement au client. */
+const sentText = (sentBy?: string | null, url?: string | null) =>
+  sentBy === "whatsapp" ? " Le client a reçu son lien de paiement par WhatsApp."
+  : sentBy === "sms" ? " Le client a reçu son lien de paiement par SMS."
+  : url ? " Envoi automatique impossible : envoyez-lui le lien par WhatsApp (liste « Acompte à régler »)." : "";
+
+export interface AwaitingPayment {
+  key: string; ref: string; title: string; place: string; start: string; end: string; amount: number; deposit: number;
+  paymentUrl: string | null; host: { name: string | null; phone: string | null }; guest: { name: string; phone: string };
+  acceptedMinutes: number; managerName: string | null;
+}
+
+/** Séjour accepté, acompte pas encore payé : appeler le client et lui (r)envoyer son lien. */
+export function AwaitingPaymentCard({ b }: { b: AwaitingPayment }) {
+  const [pending, start] = useTransition();
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [url, setUrl] = useState(b.paymentUrl);
+  const guestWa = digits(b.guest.phone);
+  const first = b.guest.name.split(" ")[0] || "";
+  const waText = encodeURIComponent(
+    `Bonjour${first ? ` ${first}` : ""}, ici l’équipe Moboo.ci. Votre réservation ${b.title} du ${b.start} au ${b.end} est acceptée par l’hôte.` +
+    (url ? ` Pour la confirmer, réglez l’acompte de ${fcfa(b.deposit)} ici (Mobile Money ou carte, sans créer de compte) : ${url}` : " Nous vous recontactons pour le paiement de l’acompte."),
+  );
+  const resend = () => start(async () => {
+    const r = await sendPaymentLinkAction(b.key);
+    if (r.paymentUrl) setUrl(r.paymentUrl);
+    setMsg(r.ok ? { ok: r.sentBy !== "none", text: r.sentBy === "none" ? "Envoi automatique impossible : utilisez le bouton WhatsApp." : `Lien renvoyé par ${r.sentBy === "whatsapp" ? "WhatsApp" : "SMS"}.` } : { ok: false, text: r.error ?? "Erreur." });
+  });
+  return (
+    <article className="rounded-xl bg-white p-4 ring-1 ring-sky-200" data-booking={b.key}>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Séjour (Moboo Resi) · {b.ref}</p>
+          <p className="font-display text-base font-bold text-ink">{b.title}</p>
+          <p className="text-sm text-slate-600">{b.place ? `${b.place} · ` : ""}{b.start} → {b.end} · {fcfa(b.amount)} · acompte {fcfa(b.deposit)}</p>
+        </div>
+        <span className="shrink-0 rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-900">Acceptée · acompte à régler · {since(b.acceptedMinutes)}</span>
+      </div>
+      <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+        <div className="rounded-lg bg-slate-50 p-3">
+          <p className="text-xs font-semibold text-muted">Client</p>
+          <p className="font-semibold text-ink">{b.guest.name || "—"}</p>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {b.guest.phone ? <a href={`tel:${b.guest.phone}`} onClick={() => bookingContactAction(b.key, "call", "", "Appel au client (acompte)")} className="rounded-full bg-brand-800 px-3 py-1 text-xs font-bold text-white">📞 Appeler {b.guest.phone}</a> : <span className="text-xs text-red-600">Pas de téléphone</span>}
+            {guestWa ? <a href={`https://wa.me/${guestWa}?text=${waText}`} target="_blank" rel="noreferrer" onClick={() => bookingContactAction(b.key, "whatsapp", "", "Lien de paiement envoyé au client par WhatsApp")} className="rounded-full bg-[#25D366] px-3 py-1 text-xs font-bold text-white">WhatsApp{url ? " + lien de paiement" : ""}</a> : null}
+            <button type="button" disabled={pending} onClick={resend} className="rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300 disabled:opacity-50">{pending ? "…" : "Renvoyer le lien (SMS)"}</button>
+          </div>
+          {url ? <p className="mt-2 break-all text-xs text-muted">Lien : <a href={url} target="_blank" rel="noreferrer" className="text-brand-800 underline">{url}</a></p> : <p className="mt-2 text-xs text-amber-700">Pas encore de lien : paiement en ligne suspendu ou en cours de création.</p>}
+        </div>
+        <div className="rounded-lg bg-slate-50 p-3">
+          <p className="text-xs font-semibold text-muted">Hôte</p>
+          <p className="font-semibold text-ink">{b.host.name || "—"}</p>
+          {b.host.phone ? <a href={`tel:${b.host.phone}`} className="mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300">📞 {b.host.phone}</a> : null}
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-muted">{b.managerName ? `Account manager : ${b.managerName}` : "Sans account manager"}</p>
+      {msg ? <p className={"mt-2 text-sm font-semibold " + (msg.ok ? "text-emerald-700" : "text-red-600")}>{msg.text}</p> : null}
+    </article>
+  );
 }
 
 export interface PendingBooking {
@@ -38,9 +99,9 @@ export function PendingBookingCard({ b }: { b: PendingBooking }) {
   const [agreed, setAgreed] = useState(false);
   const [text, setText] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const run = (fn: () => Promise<{ ok: boolean; error?: string; paymentUrl?: string | null }>, okText: string) => start(async () => {
+  const run = (fn: () => Promise<{ ok: boolean; error?: string; paymentUrl?: string | null; sentBy?: string | null }>, okText: string) => start(async () => {
     const r = await fn();
-    setMsg(r.ok ? { ok: true, text: okText + (r.paymentUrl ? " Le client a reçu son lien de paiement." : "") } : { ok: false, text: r.error ?? "Erreur." });
+    setMsg(r.ok ? { ok: true, text: okText + sentText(r.sentBy, r.paymentUrl) } : { ok: false, text: r.error ?? "Erreur." });
     if (r.ok) { setMode(""); router.refresh(); }
   });
   const hostWa = digits(b.host.whatsapp || b.host.phone);
@@ -70,7 +131,8 @@ export function PendingBookingCard({ b }: { b: PendingBooking }) {
         <div className="rounded-lg bg-slate-50 p-3">
           <p className="text-xs font-semibold text-muted">Client</p>
           <p className="font-semibold text-ink">{b.guest.name || "—"}</p>
-          {b.guest.phone ? <div className="mt-1 flex flex-wrap gap-2"><a href={`tel:${b.guest.phone}`} className="rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300">📞 {b.guest.phone}</a><a href={`https://wa.me/${digits(b.guest.phone)}`} target="_blank" rel="noreferrer" className="rounded-full px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-slate-300">WhatsApp</a></div> : null}
+          {!b.guest.phone ? <span className="text-xs text-red-600">Pas de téléphone</span> : null}
+          {b.guest.phone ? <div className="mt-1 flex flex-wrap gap-2"><a href={`tel:${b.guest.phone}`} onClick={() => bookingContactAction(b.key, "call", "", "Appel au client")} className="rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300">📞 Appeler {b.guest.phone}</a><a href={`https://wa.me/${digits(b.guest.phone)}`} target="_blank" rel="noreferrer" className="rounded-full px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-slate-300">WhatsApp</a></div> : null}
         </div>
       </div>
       <p className="mt-2 text-xs text-muted">
@@ -92,7 +154,7 @@ export function PendingBookingCard({ b }: { b: PendingBooking }) {
           </label>
           <input className={input} placeholder="Note (facultatif) : ex. joint à 14 h, clés chez le gardien" value={text} onChange={(e) => setText(e.target.value)} />
           <button type="button" disabled={!agreed || pending} onClick={() => run(() => confirmBookingAction(b.key, text), "Réservation confirmée pour l’hôte.")} className="rounded-md bg-emerald-700 px-4 py-1.5 font-semibold text-white disabled:opacity-50">{pending ? "…" : "Confirmer la réservation"}</button>
-          <p className="text-xs text-emerald-900">Le client est prévenu et peut payer son acompte depuis « Mes réservations ». L’action est enregistrée à votre nom.</p>
+          <p className="text-xs text-emerald-900">Le client reçoit aussitôt son lien de paiement par WhatsApp ou SMS (pas besoin de compte). L’action est enregistrée à votre nom.</p>
         </div>
       ) : null}
       {mode === "decline" ? (

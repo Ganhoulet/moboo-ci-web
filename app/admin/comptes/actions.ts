@@ -11,7 +11,7 @@ export async function getAm<T = any>(path: string): Promise<T | null> {
   return ok ? (data as T) : null;
 }
 
-type R = { ok: boolean; error?: string; paymentUrl?: string | null };
+type R = { ok: boolean; error?: string; paymentUrl?: string | null; sentBy?: string | null };
 const err = (d: any, fb: string) => (typeof d?.error?.message === "string" ? d.error.message : typeof d?.message === "string" ? d.message : fb);
 
 async function send(path: string, method: string, body?: unknown): Promise<R & { data?: any }> {
@@ -23,7 +23,12 @@ async function send(path: string, method: string, body?: unknown): Promise<R & {
 
 export async function confirmBookingAction(key: string, note: string): Promise<R> {
   const r = await send(`/bookings/${encodeURIComponent(key)}/confirm`, "POST", { hostAgreed: true, note });
-  return { ok: r.ok, error: r.error, paymentUrl: r.data?.paymentUrl ?? null };
+  return { ok: r.ok, error: r.error, paymentUrl: r.data?.paymentUrl ?? null, sentBy: r.data?.sentBy ?? null };
+}
+/** Renvoyer au client le lien de paiement d'un séjour accepté (WhatsApp, sinon SMS). */
+export async function sendPaymentLinkAction(key: string): Promise<R> {
+  const r = await send(`/bookings/${encodeURIComponent(key)}/payment-link`, "POST", {});
+  return { ok: r.ok, error: r.error, paymentUrl: r.data?.paymentUrl ?? null, sentBy: r.data?.sentBy ?? null };
 }
 export async function declineBookingAction(key: string, reason: string): Promise<R> {
   return send(`/bookings/${encodeURIComponent(key)}/decline`, "POST", { reason });

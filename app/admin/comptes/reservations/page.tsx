@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AutoRefresh, PendingBookingCard, type PendingBooking } from "@/components/backoffice/am-ui";
+import { AutoRefresh, AwaitingPaymentCard, PendingBookingCard, type AwaitingPayment, type PendingBooking } from "@/components/backoffice/am-ui";
 import { getAm } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 /** Demandes de réservation Moboo.ci que l'hôte n'a pas encore acceptées. */
 export default async function AmBookings({ searchParams }: { searchParams: { scope?: string } }) {
   const scope = searchParams.scope === "all" ? "all" : "mine";
-  const [d, o] = await Promise.all([getAm<{ urgentMinutes: number; items: PendingBooking[] }>(`/bookings?scope=${scope}`), getAm<any>("/overview")]);
+  const [d, o] = await Promise.all([getAm<{ urgentMinutes: number; items: PendingBooking[]; awaitingPayment?: AwaitingPayment[] }>(`/bookings?scope=${scope}`), getAm<any>("/overview")]);
   if (!d) return <p className="rounded-lg bg-white p-6 text-sm text-red-600 ring-1 ring-slate-200">Réservations indisponibles.</p>;
   return (
     <div className="space-y-4">
@@ -16,7 +16,7 @@ export default async function AmBookings({ searchParams }: { searchParams: { sco
         <h1 className="font-display text-2xl font-extrabold text-ink">Réservations à confirmer</h1>
         <p className="max-w-3xl text-sm text-muted">
           Demandes faites sur Moboo.ci (séjours et espaces) que l’hôte n’a pas encore acceptées. Après {d.urgentMinutes} min, appelez l’hôte : s’il est d’accord,
-          confirmez pour lui — le client est prévenu et paie son acompte depuis son compte. S’il refuse, indiquez la raison. Chaque action est enregistrée à votre nom.
+          confirmez pour lui — le client reçoit son lien de paiement par WhatsApp ou SMS, sans avoir besoin de compte. S’il refuse, indiquez la raison. Chaque action est enregistrée à votre nom.
         </p>
       </div>
       {o?.canSeeAll ? (
@@ -30,6 +30,15 @@ export default async function AmBookings({ searchParams }: { searchParams: { sco
         {d.items.map((b) => <PendingBookingCard key={b.key} b={b} />)}
         {!d.items.length ? <p className="rounded-lg bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Aucune demande en attente.</p> : null}
       </div>
+      {d.awaitingPayment?.length ? (
+        <section className="space-y-3 pt-2">
+          <div>
+            <h2 className="font-display text-lg font-bold text-ink">Acompte à régler ({d.awaitingPayment.length})</h2>
+            <p className="max-w-3xl text-sm text-muted">Séjours acceptés par l’hôte dont le client n’a pas encore payé l’acompte. Appelez le client et renvoyez-lui son lien de paiement.</p>
+          </div>
+          {d.awaitingPayment.map((b) => <AwaitingPaymentCard key={b.key} b={b} />)}
+        </section>
+      ) : null}
     </div>
   );
 }

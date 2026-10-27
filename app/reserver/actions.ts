@@ -3,6 +3,7 @@
 import { API_URL } from "@/lib/api";
 import { relayHeaders } from "@/lib/relay";
 import "@/lib/client-ip";
+import { guestPhoneOk, GUEST_PHONE_ERROR } from "@/lib/guest-phone";
 
 export type ReserveState = {
   ok: boolean;
@@ -27,6 +28,7 @@ export async function submitReservation(
   if (!payload.apartmentId || !payload.guestName || !payload.guestPhone || !payload.checkIn) {
     return { ok: false, message: "Merci de remplir le logement, vos nom et téléphone, et la date d'arrivée." };
   }
+  if (!guestPhoneOk(payload.guestPhone)) return { ok: false, message: GUEST_PHONE_ERROR };
 
   try {
     const res = await fetch(`${API_URL}/marketplace/reserve`, {
@@ -37,13 +39,13 @@ export async function submitReservation(
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { ok: false, message: (data && data.message) || "La demande a échoué. Réessayez." };
+      return { ok: false, message: (data && (data.error?.message || data.message)) || "La demande a échoué. Réessayez." };
     }
     return {
       ok: true,
       bookingId: data.bookingId,
       message:
-        "Demande envoyée ! L'hôte va confirmer la disponibilité — vous recevrez alors le lien de paiement de l'acompte par WhatsApp/SMS. Suivez-la dans Mon espace → Mes réservations (connexion avec ce numéro).",
+        "Demande envoyée ! L'hôte va confirmer la disponibilité — vous recevrez alors sur ce numéro, par WhatsApp ou SMS, le lien pour payer l'acompte (sans créer de compte). Vous pouvez aussi la suivre dans Mon espace → Mes réservations (connexion avec ce numéro).",
     };
   } catch {
     return { ok: false, message: "Service indisponible pour le moment. Réessayez plus tard." };
@@ -68,6 +70,7 @@ export async function submitEventReservation(
   if (!espaceId || !payload.guestName || !payload.guestPhone || !payload.dateDebut || !payload.dateFin) {
     return { ok: false, message: "Merci de remplir les dates, vos nom et téléphone." };
   }
+  if (!guestPhoneOk(payload.guestPhone)) return { ok: false, message: GUEST_PHONE_ERROR };
   try {
     const res = await fetch(
       `${API_URL}/marketplace/espaces/${encodeURIComponent(espaceId)}/reserve`,
@@ -80,7 +83,7 @@ export async function submitEventReservation(
     );
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { ok: false, message: (data && data.message) || "La demande a échoué. Réessayez." };
+      return { ok: false, message: (data && (data.error?.message || data.message)) || "La demande a échoué. Réessayez." };
     }
     return {
       ok: true,
