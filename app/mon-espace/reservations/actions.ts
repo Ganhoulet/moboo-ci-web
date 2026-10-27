@@ -19,6 +19,8 @@ export interface MyBooking {
   key: string; kind: "stay" | "event"; ref: string; title: string; place: string; photo: string | null; href: string | null;
   start: string; end: string; nights: number | null; guests: number; amount: number; deposit: number; paid: number;
   stage: Stage; stageLabel: string; payUrl: string | null;
+  /** Demande acceptée : payer l'acompte avant cette date, sinon elle est annulée. */
+  payBefore?: string | null;
   escrow: { status: string; amount: number; payoutStatus: string; refunded: number | null } | null;
   canCancel: boolean; canDispute: boolean; dispute: { id: string; number: string; status: string; statusLabel: string } | null;
   guest: { name: string; phone: string }; host: { name: string | null };

@@ -15,6 +15,8 @@ const ESCROW: Record<string, string> = {
   PARTIALLY_RELEASED: "Versé à l’hôte (une partie retenue)",
   REFUNDED: "Remboursé",
   FAILED: "Paiement échoué",
+  EXPIRED: "Lien expiré : acompte non payé à temps",
+  LATE_PAID: "Payé après l’annulation : remboursement en cours par l’équipe Moboo",
 };
 
 /** Mon espace → Réservation : étapes, montants, acompte, annulation, litige. */
@@ -45,6 +47,7 @@ export default async function BookingDetail({ params }: { params: { key: string 
           {b.host.name ? <div><dt className="text-muted">Hôte</dt><dd className="font-semibold text-ink">{b.host.name}</dd></div> : null}
           {b.cancellationReason ? <div className="sm:col-span-2"><dt className="text-muted">Motif d’annulation</dt><dd className="text-ink">{b.cancellationReason}</dd></div> : null}
         </dl>
+        {b.payBefore ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-900">Payez l’acompte avant le {new Date(b.payBefore).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Abidjan" })} : passé ce délai, la demande est annulée et les dates sont libérées.</p> : null}
         <div className="flex flex-wrap gap-2">
           {b.payUrl ? <a href={b.payUrl} className="btn-primary bg-brand-800 hover:bg-brand-900" rel="noopener noreferrer">Payer l’acompte ({fcfa(b.deposit)})</a> : null}
           {b.href ? <Link href={b.href} className="rounded-full px-4 py-2 text-sm font-semibold text-brand-800 ring-1 ring-brand-200 hover:bg-brand-50">Voir l’annonce</Link> : null}

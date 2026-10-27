@@ -28,7 +28,7 @@ const sentText = (sentBy?: string | null, url?: string | null) =>
 export interface AwaitingPayment {
   key: string; ref: string; title: string; place: string; start: string; end: string; amount: number; deposit: number;
   paymentUrl: string | null; host: { name: string | null; phone: string | null }; guest: { name: string; phone: string };
-  acceptedMinutes: number; managerName: string | null;
+  acceptedMinutes: number; managerName: string | null; payBefore?: string | null;
 }
 
 /** Séjour accepté, acompte pas encore payé : appeler le client et lui (r)envoyer son lien. */
@@ -74,7 +74,10 @@ export function AwaitingPaymentCard({ b }: { b: AwaitingPayment }) {
           {b.host.phone ? <a href={`tel:${b.host.phone}`} className="mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300">📞 {b.host.phone}</a> : null}
         </div>
       </div>
-      <p className="mt-2 text-xs text-muted">{b.managerName ? `Account manager : ${b.managerName}` : "Sans account manager"}</p>
+      <p className="mt-2 text-xs text-muted">
+        {b.managerName ? `Account manager : ${b.managerName}` : "Sans account manager"}
+        {b.payBefore ? <span className="font-semibold text-amber-700"> · Annulée automatiquement le {new Date(b.payBefore).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Abidjan" })} si l’acompte n’est pas payé</span> : null}
+      </p>
       {msg ? <p className={"mt-2 text-sm font-semibold " + (msg.ok ? "text-emerald-700" : "text-red-600")}>{msg.text}</p> : null}
     </article>
   );

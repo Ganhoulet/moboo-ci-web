@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 const STAGES: [string, string][] = [["", "Toutes"], ["requested", "En attente de l’hôte"], ["accepted", "Acompte à payer"], ["confirmed", "Confirmées"], ["ongoing", "En cours"], ["completed", "Terminées"], ["cancelled", "Annulées"]];
 const KINDS: [string, string][] = [["", "Séjours et espaces"], ["stay", "Séjours meublés"], ["event", "Espaces"]];
-const ESCROW: Record<string, string> = { PENDING: "en attente", HELD: "séquestré", RELEASED: "versé", PARTIALLY_RELEASED: "versé en partie", REFUNDED: "remboursé", FAILED: "échoué" };
+const ESCROW: Record<string, string> = { PENDING: "en attente", HELD: "séquestré", RELEASED: "versé", PARTIALLY_RELEASED: "versé en partie", REFUNDED: "remboursé", FAILED: "échoué", EXPIRED: "expiré (non payé à temps)", LATE_PAID: "payé après annulation : à rembourser" };
 const short = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" });
 
 /** Back-office → Réservations : toutes les réservations faites sur Moboo.ci (séjours Moboo Resi, espaces Moboo Event). */
