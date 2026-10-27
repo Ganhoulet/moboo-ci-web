@@ -184,7 +184,7 @@ export default async function ProPage({ params }: { params: { username: string }
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={img(p.agency.avatarUrl, 64)} alt="" className="h-5 w-5 rounded object-cover" />
                       ) : null}
-                      Membre de {p.agency.name}
+                      {settings.general.memberOfLabel || "Membre de"} {p.agency.name}
                     </Link>
                   ) : p.company ? <p className="mt-1 text-sm text-muted">{p.company}</p> : null}
                   <div className="mt-2 flex flex-wrap justify-center gap-1.5">
@@ -288,7 +288,7 @@ export default async function ProPage({ params }: { params: { username: string }
             </Section>
 
             {p.team?.length ? (
-              <Section id="equipe" title={`L’équipe (${p.team.length})`}>
+              <Section id="equipe" title={`${settings.general.teamTitle || "L’équipe"} (${p.team.length})`}>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
                   {p.team.map((t, i) => {
                     const body = (

@@ -7,6 +7,7 @@ export interface SiteSettings {
   general: {
     containerWidth: string; backToTop: boolean; favoritesLoginRequired: boolean;
     excerptEnabled: boolean; excerptWords: number; readMoreText: string;
+    teamTitle: string; memberOfLabel: string; teamListings: boolean;
   };
   branding: {
     siteName: string; logoUrl: string; logoHeight: number; faviconUrl: string;
@@ -81,7 +82,7 @@ export interface MapSettings {
 
 /** Valeurs de secours (API injoignable) — les mêmes que le schéma de l'API. */
 export const DEFAULT_SETTINGS: SiteSettings = {
-  general: { containerWidth: "1270", backToTop: true, favoritesLoginRequired: false, excerptEnabled: true, excerptWords: 75, readMoreText: "Lire la suite" },
+  general: { containerWidth: "1270", backToTop: true, favoritesLoginRequired: false, excerptEnabled: true, excerptWords: 75, readMoreText: "Lire la suite", teamTitle: "L’équipe", memberOfLabel: "Membre de", teamListings: true },
   branding: {
     siteName: "Moboo.ci", logoUrl: "", logoHeight: 32, faviconUrl: "",
     footerTagline: "Louer, acheter, réserver — l’immobilier en Côte d’Ivoire.",

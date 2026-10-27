@@ -96,7 +96,9 @@ export async function removeTaxonomyAction(id: string): Promise<{ ok: boolean; e
 
 /* ─── Agences / agents ─────────────────────────────────────────────────── */
 
-export interface AdminPerson { id: string; source: "site" | "reprise"; name: string; photoUrl: string | null; phone: string | null; email: string | null; city: string; username: string | null; active: boolean; listings: number; createdAt: string }
+export interface AdminPerson { id: string; source: "site" | "reprise"; name: string; photoUrl: string | null; phone: string | null; email: string | null; city: string; username: string | null; active: boolean; listings: number; createdAt: string;
+  /** Agent : son agence (« Mon équipe ») ; agence : nombre d'agents reliés. */
+  agency?: { name: string; username: string | null } | null; teamSize?: number }
 
 export async function listPeople(kind: "agencies" | "agents", q?: string): Promise<AdminPerson[]> {
   const { ok, data } = await authedFetch(`${BASE}/people/${kind}${q ? `?q=${encodeURIComponent(q)}` : ""}`, { method: "GET" });
@@ -239,4 +241,13 @@ export async function decideShortStayAction(ids: string[], action: "furnished" |
   const { ok, data } = await authedFetch(`${BASE}/short-stay`, { method: "POST", body: JSON.stringify({ ids, action }) });
   if (ok) { refresh(); revalidatePath("/admin/immobilier/courte-duree"); }
   return ok ? { ok: true, updated: data?.updated } : { ok: false, error: errMsg(data, "Action impossible.") };
+}
+
+/** Reprise des équipes d'agence de moboo.ci (WordPress) dans « Mon équipe » ; rejouable sans doublon. */
+export async function importAgencyLinksAction(): Promise<{ ok: boolean; error?: string; data?: Record<string, number> }> {
+  const { ok, data } = await authedFetch("/site/admin/migration/agency-links", { method: "POST" });
+  if (!ok) return { ok: false, error: data?.error?.message || data?.message || "Reprise impossible." };
+  revalidatePath("/admin/immobilier/equipe/agences");
+  revalidatePath("/admin/immobilier/equipe/agents");
+  return { ok: true, data };
 }
