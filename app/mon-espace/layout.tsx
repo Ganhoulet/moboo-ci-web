@@ -11,6 +11,7 @@ import { listMyInquiries, unreadMessages } from "./actions";
 import { authedFetch } from "@/lib/server-api";
 import { getSiteSettings, roleNames } from "@/lib/settings";
 import type { SiteAccount } from "@/lib/api";
+import { ProfileSync } from "@/components/profile-sync";
 
 export const metadata: Metadata = { title: "Mon espace", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -25,6 +26,8 @@ export default async function EspaceLayout({ children }: { children: React.React
   const account: SiteAccount = me.ok ? (me.data as SiteAccount) : snapshot;
   // Pas encore de profil : on le choisit d'abord (l'espace en dépend).
   if (!account.onboarded) redirect("/inscription");
+  // Photo ou nom changés ailleurs : l'en-tête du site lit le cookie, on le remet à jour.
+  const stale = me.ok && (account.avatarUrl ?? null) !== (snapshot.avatarUrl ?? null);
 
   const type = account.accountType ?? "particulier";
   const settings = await getSiteSettings();
@@ -92,6 +95,7 @@ export default async function EspaceLayout({ children }: { children: React.React
   return (
     <div className="container-page py-6 lg:py-8">
       <FavoritesSync />
+      {stale ? <ProfileSync /> : null}
       {hideCss ? <style dangerouslySetInnerHTML={{ __html: hideCss }} /> : null}
       <div className="lg:grid lg:grid-cols-[250px_1fr] lg:gap-8 print:block">
         {/* Barre latérale (desktop) */}

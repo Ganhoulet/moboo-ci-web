@@ -167,12 +167,16 @@ function Categories({ s, data, edit }: { s: Section; data: HomeData; edit?: bool
 
 function QuickStart({ s, edit }: { s: Section; edit?: boolean }) {
   const items = (s.props.items ?? []) as P[];
+  const carousel = s.props.mobileLayout !== "list";
   return (
     <Shell s={s} edit={edit}>
       <Head title={s.props.title} subtitle={s.props.subtitle} dark={s.props.background === "brand"} />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Téléphone : carrousel (largeur des cartes réglée dans le back-office) ou liste, au choix du bloc. */}
+      <div className={carousel
+        ? "-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:scroll-px-0 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+        : "grid gap-4 sm:grid-cols-2 lg:grid-cols-4"}>
         {items.map((x, i) => (
-          <Link key={i} href={x.href || "#"} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-card-hover">
+          <Link key={i} href={x.href || "#"} className={"group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-card-hover" + (carousel ? " w-[var(--m-card,78%)] shrink-0 snap-start sm:w-auto" : "")}>
             {x.image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img {...imgProps(x.image, { width: 480, sizes: "(min-width: 1024px) 25vw, 100vw" })} alt="" loading="lazy" decoding="async" className="mb-4 h-32 w-full rounded-xl object-cover" />

@@ -293,6 +293,15 @@ export async function syncFavoritesAction(items: Property[]): Promise<Property[]
 
 /* ─── Profil ───────────────────────────────────────────────────────────── */
 
+/** Instantané du compte (cookie) remis à jour : photo ou nom changés depuis l'application ou un autre appareil. */
+export async function refreshProfileAction(): Promise<boolean> {
+  const { ok, data } = await authedFetch("/site/auth/me", { method: "GET" });
+  if (!ok || !data?.id) return false;
+  setProfile(data);
+  revalidatePath("/", "layout");
+  return true;
+}
+
 export async function saveProfileAction(payload: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
   if (!getSession()) return { ok: false, error: "Connectez-vous d'abord." };
   const { ok, data } = await authedFetch("/site/auth/me", { method: "PATCH", body: JSON.stringify(payload) });

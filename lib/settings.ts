@@ -36,6 +36,7 @@ export interface SiteSettings {
     bannerStyle: "mosaic" | "wide" | "split" | "collage";
     showVideo: boolean; showFeatures: boolean; showMap: boolean; showVisitForm: boolean;
     showContactForm: boolean; showSimilar: boolean; similarCount: number; contactNotice: string;
+    videoAutoplay: "muted" | "click";
   };
   submit: { maxPhotos: number; submitIntro: string };
   /** Formulaire de publication et onglets de l'espace membre (JSON, back-office → Formulaires). */
@@ -116,7 +117,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   listing: {
     bannerStyle: "mosaic",
     showVideo: true, showFeatures: true, showMap: true, showVisitForm: true, showContactForm: true,
-    showSimilar: true, similarCount: 4,
+    showSimilar: true, similarCount: 4, videoAutoplay: "muted",
     contactNotice: "Mise en relation directe avec l’annonceur — Moboo ne prend pas de commission sur les ventes et locations classiques.",
   },
   forms: { listingForm: "", memberSpace: "" },

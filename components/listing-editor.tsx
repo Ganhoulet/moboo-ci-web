@@ -414,7 +414,7 @@ export function ListingEditor({
             <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => addPhotos(e.target.files)} />
             </> : null}
             {on("videoUrl") ? <Field label={fv("videoUrl").required ? lab("videoUrl") : `${lab("videoUrl")} (optionnel)`}>
-              <input className="input" value={d.videoUrl} placeholder="Lien YouTube ou TikTok" onChange={(e) => set({ videoUrl: e.target.value })} />
+              <input className="input" value={d.videoUrl} placeholder="Lien YouTube, TikTok, Vimeo, Dailymotion, Facebook ou Instagram" onChange={(e) => set({ videoUrl: e.target.value })} />
             </Field> : null}
             {on("videoUpload") && video?.uploadEnabled && !team ? (
               edit && id ? <ListingVideoCard listingId={id} info={video} embedded /> : (

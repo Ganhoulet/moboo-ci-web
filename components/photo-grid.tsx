@@ -68,15 +68,19 @@ function Poster({ m, alt = "", className = "" }: { m: Extract<Media, { kind: "vi
   );
 }
 
-/** Lecteur de la vidéo de présentation (lancé au clic, jamais au chargement). */
-function VideoPlayer({ m, className = "" }: { m: Extract<Media, { kind: "video" }>; className?: string }) {
+/**
+ * Lecteur de la vidéo de présentation : au toucher (avec le son), ou `muted` = lecture
+ * automatique sans le son et en boucle (façon TikTok, réglage « Lecture des vidéos »).
+ */
+function VideoPlayer({ m, className = "", muted = false }: { m: Extract<Media, { kind: "video" }>; className?: string; muted?: boolean }) {
   if (m.player === "file") {
-    return <video src={m.src} poster={m.poster ?? undefined} controls autoPlay playsInline className={"h-full w-full bg-black object-contain " + className} />;
+    return <video key={muted ? "muted" : "sound"} src={m.src} poster={m.poster ?? undefined} controls={!muted} autoPlay muted={muted} loop={muted} playsInline className={"h-full w-full bg-black object-contain " + className} />;
   }
   return (
     <iframe
+      key={muted ? "muted" : "sound"}
       title="Vidéo de présentation"
-      src={m.src}
+      src={muted && m.mutedSrc ? m.mutedSrc : m.src}
       allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
       allowFullScreen
       className={"h-full w-full bg-black " + className}
@@ -93,12 +97,15 @@ export function MobileGallery({
   alt,
   backHref,
   property,
+  autoplay = false,
 }: {
   photos: string[];
   videoUrl?: string | null;
   alt: string;
   backHref: string;
   property: Property;
+  /** Lecture automatique sans le son (back-office → Détails de la propriété → Lecture des vidéos). */
+  autoplay?: boolean;
 }) {
   const media = buildMedia(photos, videoUrl);
   const hasVideo = media[0]?.kind === "video";
@@ -106,11 +113,26 @@ export function MobileGallery({
   const track = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  // Vidéo lancée toute seule, sans le son : un toucher sur « Activer le son » la relance avec.
+  const [muted, setMuted] = useState(false);
   const [open, setOpen] = useState<number | null>(null);
   const router = useRouter();
+  const first = media[0];
+  const canAuto = autoplay && first?.kind === "video" && !!first.mutedSrc;
 
-  // Quitter la vidéo en faisant défiler l'arrête.
-  useEffect(() => { if (index !== 0) setPlaying(false); }, [index]);
+  // Lecture automatique dès l'ouverture (sauf « économie de données » du téléphone).
+  useEffect(() => {
+    const saveData = (navigator as any).connection?.saveData === true;
+    if (canAuto && !saveData && index === 0) { setMuted(true); setPlaying(true); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canAuto]);
+
+  // Quitter la vidéo en faisant défiler l'arrête ; y revenir la relance (sans le son) en mode automatique.
+  useEffect(() => {
+    if (index !== 0) { setPlaying(false); return; }
+    if (canAuto && !playing) { setMuted(true); setPlaying(true); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
 
   const goTo = (i: number) => {
     const el = track.current;
@@ -143,15 +165,22 @@ export function MobileGallery({
               {m.kind === "video" ? (
                 playing && m.player !== "link" ? (
                   // Marge basse : la fiche arrondie chevauche la galerie de 24 px.
-                  <div className="h-full bg-black pb-6">
-                    <VideoPlayer m={m} />
+                  <div className="relative h-full bg-black pb-6">
+                    <VideoPlayer m={m} muted={muted} />
+                    {muted ? (
+                      <button type="button" onClick={() => setMuted(false)}
+                        className="absolute bottom-10 right-3 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 9h4l5-4v14l-5-4H4z" strokeLinejoin="round" /><path d="m17 9 4 6M21 9l-4 6" strokeLinecap="round" /></svg>
+                        Activer le son
+                      </button>
+                    ) : null}
                   </div>
                 ) : (
                   <button
                     type="button"
                     aria-label="Lire la vidéo"
                     className="relative block h-full w-full overflow-hidden"
-                    onClick={() => (m.player === "link" ? window.open(m.url, "_blank", "noopener,noreferrer") : setPlaying(true))}
+                    onClick={() => (m.player === "link" ? window.open(m.url, "_blank", "noopener,noreferrer") : (setMuted(false), setPlaying(true)))}
                   >
                     <Poster m={m} alt={`Vidéo — ${alt}`} className="h-full w-full object-cover" />
                     <PlayBadge size={64} />
@@ -281,8 +310,12 @@ export type BannerStyle = "mosaic" | "wide" | "split" | "collage";
  * propriété → Bannière) : mosaïque 1 + 4, grande photo + vignettes, grande
  * photo + 2 à droite, collage en colonnes.
  */
-export function PhotoGrid({ photos, alt, videoUrl, variant = "mosaic" }: { photos: string[]; alt: string; videoUrl?: string | null; variant?: BannerStyle }) {
+export function PhotoGrid({ photos, alt, videoUrl, variant = "mosaic", autoplay = false }: { photos: string[]; alt: string; videoUrl?: string | null; variant?: BannerStyle; autoplay?: boolean }) {
   const media = buildMedia(photos, videoUrl);
+  // Grand média : la vidéo tourne toute seule sans le son ; un clic l'ouvre en grand, avec le son.
+  const preview = (m: Media, i: number) => (autoplay && i === 0 && m.kind === "video" && m.mutedSrc
+    ? <span className="pointer-events-none block h-full w-full"><VideoPlayer m={m} muted className="object-cover" /></span>
+    : null);
   const [open, setOpen] = useState<number | null>(null);
   const hasVideo = media[0]?.kind === "video";
   const photoCount = media.length - (hasVideo ? 1 : 0);
@@ -298,12 +331,12 @@ export function PhotoGrid({ photos, alt, videoUrl, variant = "mosaic" }: { photo
     <button key={i} type="button" onClick={() => setOpen(i)} className={`relative min-h-0 min-w-0 overflow-hidden bg-slate-200 ${className}`}
       aria-label={m.kind === "video" ? "Lire la vidéo" : `Photo ${i + 1}`}>
       {m.kind === "video" ? (
-        <Poster m={m} alt={alt} className="h-full w-full object-cover transition hover:scale-[1.02]" />
+        preview(m, i) ?? <Poster m={m} alt={alt} className="h-full w-full object-cover transition hover:scale-[1.02]" />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img {...(m.kind === "photo" ? imgProps(m.src, { width: i === 0 ? 960 : 480, sizes: i === 0 ? "(min-width: 768px) 50vw, 100vw" : "(min-width: 768px) 25vw, 50vw" }) : { src: thumbSrc(m) ?? "" })} alt={i === 0 ? alt : ""} loading={i === 0 ? undefined : "lazy"} fetchPriority={i === 0 ? "high" : undefined} decoding="async" className="h-full w-full object-cover transition hover:scale-[1.02]" />
       )}
-      {m.kind === "video" ? <PlayBadge size={i === 0 ? 72 : 44} /> : null}
+      {m.kind === "video" && !preview(m, i) ? <PlayBadge size={i === 0 ? 72 : 44} /> : null}
     </button>
   );
 
@@ -381,12 +414,12 @@ export function PhotoGrid({ photos, alt, videoUrl, variant = "mosaic" }: { photo
           aria-label={main.kind === "video" ? "Lire la vidéo" : "Agrandir la photo"}
         >
           {main.kind === "video" ? (
-            <Poster m={main} alt={alt} className="h-full w-full object-cover transition hover:scale-[1.02]" />
+            preview(main, 0) ?? <Poster m={main} alt={alt} className="h-full w-full object-cover transition hover:scale-[1.02]" />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img {...imgProps(main.src, { width: 960, sizes: "(min-width: 1024px) 60vw, 100vw" })} alt={alt} fetchPriority="high" decoding="async" className="h-full w-full object-cover transition hover:scale-[1.02]" />
           )}
-          {main.kind === "video" ? <PlayBadge size={72} /> : null}
+          {main.kind === "video" && !preview(main, 0) ? <PlayBadge size={72} /> : null}
         </button>
         {thumbs.length > 0 && (
           <div className="grid grid-cols-2 gap-2">

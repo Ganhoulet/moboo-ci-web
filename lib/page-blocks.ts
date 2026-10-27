@@ -144,10 +144,11 @@ export const BLOCKS: BlockDef[] = [
         { key: "icon", label: "Émoji / icône", type: "text" }, { key: "title", label: "Titre", type: "text" },
         { key: "text", label: "Texte", type: "textarea" }, { key: "href", label: "Lien", type: "url" }, { key: "image", label: "Image (facultatif)", type: "image" },
       ] },
+      { key: "mobileLayout", label: "Sur téléphone", type: "select", options: [{ value: "carousel", label: "Carrousel (glisser)" }, { value: "list", label: "Liste (les tuiles l’une sous l’autre)" }] },
       ...common,
     ],
     defaults: {
-      title: "Par où commencer ?", subtitle: "Tout ce qu’il faut pour votre projet immobilier", background: "white",
+      title: "Par où commencer ?", subtitle: "Tout ce qu’il faut pour votre projet immobilier", background: "white", mobileLayout: "carousel",
       items: [
         { icon: "🔑", title: "Louer un logement", text: "Appartements, villas, studios : contact direct avec le propriétaire.", href: "/annonces?transaction=rent" },
         { icon: "🏡", title: "Acheter un bien", text: "Maisons, terrains et immeubles vérifiés par des pros.", href: "/annonces?transaction=sale" },

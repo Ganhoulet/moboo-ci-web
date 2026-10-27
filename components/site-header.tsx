@@ -38,8 +38,12 @@ function Actions({ settings, tone, mobile }: { settings: SiteSettings; tone: Ton
       ) : null}
       {account ? (
         <Link href="/mon-espace" aria-label="Mon espace"
-          className={"grid h-10 w-10 place-items-center rounded-full text-sm font-bold transition " + (tone === "dark" ? "bg-white text-brand-900 hover:bg-brand-50" : "bg-brand-800 text-white hover:bg-brand-900")}>
-          {initials(account)}
+          className={"grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full text-sm font-bold transition " + (tone === "dark" ? "bg-white text-brand-900 ring-2 ring-white/70 hover:bg-brand-50" : "bg-brand-800 text-white hover:bg-brand-900")}>
+          {/* Photo de profil (Mon espace → Profil), sinon les initiales. */}
+          {account.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={account.avatarUrl} alt="" className="h-full w-full object-cover" />
+          ) : initials(account)}
         </Link>
       ) : (
         <>

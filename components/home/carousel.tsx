@@ -12,7 +12,7 @@ export function Carousel({ children, label }: { children: React.ReactNode; label
       <button type="button" aria-label={`${label} : précédent`} onClick={() => go(-1)} className={btn + " -left-4"}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m15 18-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>
-      <div ref={ref} className="-mx-4 flex snap-x snap-mandatory gap-3 sm:gap-5 overflow-x-auto scroll-smooth px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+      <div ref={ref} className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 sm:gap-5 overflow-x-auto scroll-smooth px-4 sm:scroll-px-0 pb-2 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
         {children}
       </div>
       <button type="button" aria-label={`${label} : suivant`} onClick={() => go(1)} className={btn + " -right-4"}>

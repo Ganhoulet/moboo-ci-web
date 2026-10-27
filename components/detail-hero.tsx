@@ -1,4 +1,5 @@
 import type { Property } from "@/lib/property";
+import { getSiteSettings } from "@/lib/settings";
 import { MobileGallery, PhotoGrid, type BannerStyle } from "@/components/photo-grid";
 import { DetailActions } from "@/components/detail-actions";
 import { Breadcrumbs, PinIcon } from "@/components/detail";
@@ -21,7 +22,7 @@ export type HeroPerson = {
  *   titre centré, lieu, résumé, prix et l'hôte / l'agent ;
  * - desktop : fil d'Ariane, titre + actions, grille de photos.
  */
-export function DetailHero({
+export async function DetailHero({
   photos,
   videoUrl,
   backHref,
@@ -54,6 +55,8 @@ export function DetailHero({
   person?: HeroPerson | null;
   property: Property;
 }) {
+  // Lecture des vidéos (back-office → Détails de la propriété) : automatique sans le son, ou au toucher.
+  const autoplay = (await getSiteSettings()).listing.videoAutoplay !== "click";
   const facts = summary.filter(Boolean) as string[];
 
   return (
@@ -66,10 +69,10 @@ export function DetailHero({
       {/* Galerie */}
       <div className="order-1 lg:order-3 lg:mt-6">
         <div className="lg:hidden">
-          <MobileGallery photos={photos} videoUrl={videoUrl} alt={title} backHref={backHref} property={property} />
+          <MobileGallery photos={photos} videoUrl={videoUrl} alt={title} backHref={backHref} property={property} autoplay={autoplay} />
         </div>
         <div className="hidden lg:block">
-          <PhotoGrid photos={photos} videoUrl={videoUrl} alt={title} variant={bannerStyle} />
+          <PhotoGrid photos={photos} videoUrl={videoUrl} alt={title} variant={bannerStyle} autoplay={autoplay} />
         </div>
       </div>
 
