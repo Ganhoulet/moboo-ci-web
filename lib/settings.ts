@@ -22,6 +22,7 @@ export interface SiteSettings {
     mobileSearchPlaceholder: string; mobileBottomBar: boolean; mobileBottomBarStyle: "labels" | "icons" | "publish" | "floating";
     mobileBottomBarColor: "brand" | "accent"; mobileBottomBarItems: string;
     mobileSearchReveal: "scroll" | "always"; mobileTextSize: "13" | "14" | "15" | "16" | "17"; mobileCardWidth: number;
+    mobileHeaderZones: string[]; mobileHeaderElsewhere: "none" | "classic"; mobileBottomBarZones: string[];
   };
   auth: {
     loginPhone: boolean; loginPassword: boolean; loginGoogle: boolean; loginIntro: string;
@@ -93,6 +94,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     mobileHeaderStyle: "search", mobileHeaderColor: "brand", mobileSearchPlaceholder: "Commune, quartier, ville…",
     mobileBottomBar: true, mobileBottomBarStyle: "labels", mobileBottomBarColor: "brand",
     mobileSearchReveal: "scroll", mobileTextSize: "15", mobileCardWidth: 70,
+    mobileHeaderZones: ["home", "results", "pros", "account", "publish", "content"], mobileHeaderElsewhere: "none",
+    mobileBottomBarZones: ["home", "results", "pros", "account", "content"],
     mobileBottomBarItems: "Accueil | / | accueil\nRecherche | /annonces | recherche\nPublier | /publier | publier\nFavoris | /favoris | favoris\nCompte | /compte | compte",
   },
   auth: {

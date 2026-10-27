@@ -13,6 +13,7 @@ import { getTaxonomies } from "@/lib/taxonomies";
 import { getChrome } from "@/lib/pages";
 import { SiteFooter } from "@/components/site-footer";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
+import { zonesFrom } from "@/lib/mobile-zones";
 import { menuAt } from "@/lib/menus";
 import { getCampaigns } from "@/lib/marketing";
 import { SitePopup } from "@/components/marketing/site-popup";
@@ -73,11 +74,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {header.topBarEnabled && (header.topBarText || header.topBarPhone || header.topBarEmail) ? <TopBar h={header} /> : null}
         <AssistBanner />
         <SiteHeader settings={settings} nav={{ items: menuAt(chrome.menus, chrome.locations, "header"), mobile: menuAt(chrome.menus, chrome.locations, "mobile"), style: chrome.menuStyle }} />
-        {settings.search.headerSearch !== "none" ? <SearchStrip variant={settings.search.headerSearch} pages={settings.search.headerSearchPages} types={(await getTaxonomies()).type} /> : null}
+        {settings.search.headerSearch !== "none" ? <SearchStrip phoneHidden={header.mobileHeaderStyle !== "classic"} variant={settings.search.headerSearch} pages={settings.search.headerSearchPages} types={(await getTaxonomies()).type} /> : null}
         <main>{children}</main>
         <SeoBottom />
         <SiteFooter chrome={chrome} settings={settings} />
-        {header.mobileBottomBar ? <MobileTabBar items={header.mobileBottomBarItems} style={header.mobileBottomBarStyle} color={header.mobileBottomBarColor} loggedIn={!!getSession()} /> : null}
+        {header.mobileBottomBar ? <MobileTabBar items={header.mobileBottomBarItems} style={header.mobileBottomBarStyle} color={header.mobileBottomBarColor} loggedIn={!!getSession()} zones={zonesFrom(header.mobileBottomBarZones, ["home", "results", "pros", "account", "content"])} /> : null}
         {general.backToTop ? <BackToTop /> : null}
         {/* Une information ciblée ouverte passe avant la pop-up marketing (jamais deux fenêtres à la fois). */}
         {notices.popup.length ? <NoticePopup items={notices.popup} /> : null}

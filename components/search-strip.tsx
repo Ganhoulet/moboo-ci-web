@@ -11,14 +11,15 @@ const DETAILS = [/^\/annonce\//, /^\/residence\//, /^\/espace\//];
  * « simple » = mot-clé + type ; « filters » = + type de bien et budget.
  * Envoie vers /annonces avec les mêmes paramètres que les filtres de la liste.
  */
-export function SearchStrip({ variant, pages, types }: { variant: "simple" | "filters"; pages: "details" | "all"; types: { slug: string; label: string }[] }) {
+/** `phoneHidden` : sur téléphone, l'en-tête a déjà sa recherche (back-office → En-têtes → Téléphone). */
+export function SearchStrip({ variant, pages, types, phoneHidden = false }: { variant: "simple" | "filters"; pages: "details" | "all"; types: { slug: string; label: string }[]; phoneHidden?: boolean }) {
   const pathname = usePathname();
   if (HIDDEN.some((r) => r.test(pathname))) return null;
   if (pages === "details" && !DETAILS.some((r) => r.test(pathname))) return null;
 
   const field = "h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm text-ink focus:border-brand-500 focus:outline-none";
   return (
-    <div className="border-b border-slate-200 bg-slate-50 print:hidden">
+    <div className={"border-b border-slate-200 bg-slate-50 print:hidden" + (phoneHidden ? " hidden md:block" : "")}>
       <form action="/annonces" className="container-page flex gap-2 py-3">
         <input name="q" placeholder="Ville, commune, quartier…" className={`${field} min-w-0 flex-1`} />
         <select name="transaction" defaultValue="rent" className={`${field} hidden w-36 sm:block`} aria-label="Je cherche à">

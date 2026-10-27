@@ -7,6 +7,8 @@ import type { SiteSettings } from "@/lib/settings";
 import type { MenuItem, MenuStyle } from "@/lib/menus";
 import { MobileMenu, NavMenu } from "./nav-menu";
 import { MobileHeader } from "./mobile-header";
+import { MobileZoneGate } from "./mobile-zone-gate";
+import { zonesFrom } from "@/lib/mobile-zones";
 
 type Tone = "light" | "dark";
 
@@ -75,8 +77,21 @@ export function SiteHeader({ settings, nav }: { settings: SiteSettings; nav: Hea
   const { header, branding } = settings;
   // Téléphone : en-tête façon application (recherche collante), réglé dans le back-office.
   const mobileTone: Tone = header.mobileHeaderColor === "white" ? "light" : "dark";
+  const compact = (
+    <header className="print:hidden sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur md:hidden">
+      <div className="flex h-16 items-center justify-between px-4">
+        <Link href="/" aria-label="Accueil" className="shrink-0"><MobooLogo src={branding.logoUrl} height={branding.logoHeight} alt={branding.siteName} tone="light" /></Link>
+        <Actions settings={settings} tone="light" mobile={nav.mobile} />
+      </div>
+    </header>
+  );
+  // Pages choisies dans le back-office (fiches d'annonce exclues par défaut : bouton retour, partage, favori).
   const phone = header.mobileHeaderStyle === "search" || header.mobileHeaderStyle === "logo_search"
-    ? <MobileHeader settings={settings} menu={nav.mobile} actions={<Actions settings={settings} tone={mobileTone} mobile={header.mobileHeaderStyle === "logo_search" ? nav.mobile : undefined} />} />
+    ? (
+      <MobileZoneGate zones={zonesFrom(header.mobileHeaderZones, ["home", "results", "pros", "account", "publish", "content"])} fallback={header.mobileHeaderElsewhere === "classic" ? compact : null}>
+        <MobileHeader settings={settings} menu={nav.mobile} actions={<Actions settings={settings} tone={mobileTone} mobile={header.mobileHeaderStyle === "logo_search" ? nav.mobile : undefined} />} />
+      </MobileZoneGate>
+    )
     : null;
   const style = header.headerStyle;
   const wrap = header.headerLayout === "full" ? "w-full px-4 sm:px-6 lg:px-8" : "container-page";
