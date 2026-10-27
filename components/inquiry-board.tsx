@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { INQUIRY_STEPS } from "@/lib/accounts";
 import { openInquiryConversationAction, updateInquiryAction, type Inquiry } from "@/app/mon-espace/actions";
 import { USER_TYPES } from "@/lib/api";
+import { waNumber } from "@/lib/whatsapp";
 const USER_TYPE_LABEL = Object.fromEntries(USER_TYPES);
 
 /**
@@ -80,8 +81,7 @@ function Card({ q, compact, open, onToggle, onPatch }: {
     if (r.ok && r.id) router.push(`/mon-espace/messages/${r.id}`);
     else setChatError(r.error ?? "Conversation indisponible.");
   });
-  const digits = q.phone.replace(/[^0-9]/g, "");
-  const wa = digits.startsWith("225") ? digits : `225${digits}`;
+  const wa = waNumber(q.phone) ?? "";
   const date = new Date(q.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 
   const setStatus = (status: string) => { onPatch({ status }); start(async () => { await updateInquiryAction(q.id, { status }); }); };

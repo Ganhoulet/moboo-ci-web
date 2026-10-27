@@ -1,5 +1,5 @@
 import { ProReviewsSection } from "@/components/pro-reviews/pro-reviews-section";
-import { breadcrumbLd, ldJson } from "@/lib/structured-data";
+import { breadcrumbLd, ldJson, SITE_URL } from "@/lib/structured-data";
 import { Stars } from "@/components/reviews";
 import { getProReviews, slugZone } from "@/lib/pro-reviews";
 import Link from "next/link";
@@ -18,6 +18,7 @@ import { MediaGallery } from "@/components/pro-page/media-gallery";
 import { ListingTabs } from "@/components/pro-page/listing-tabs";
 import { ContactForm } from "@/components/pro-page/contact-card";
 import { VideoPlayer } from "@/components/pro-page/video-player";
+import { waHref, waMessage } from "@/lib/whatsapp";
 
 export const revalidate = 60;
 
@@ -102,8 +103,10 @@ export default async function ProPage({ params }: { params: { username: string }
   const isAgency = p.accountType === "entreprise";
   const title = prof?.title || p.position || accountLabel(p, names);
   const first = p.firstName || p.name.split(" ")[0];
-  const wa = (p.whatsapp || "").replace(/[^0-9]/g, "");
-  const waLink = wa ? `https://wa.me/${wa.startsWith("225") ? wa : "225" + wa}?text=${encodeURIComponent(`Bonjour ${first}, je vous contacte depuis votre page Moboo.ci.`)}` : null;
+  // Message WhatsApp : back-office → Détails de la propriété → Messages WhatsApp (agent ou agence).
+  const waLink = waHref(p.whatsapp, waMessage(isAgency ? settings.listing.waAgency : settings.listing.waAgent, {
+    prenom: first, nom: p.name, lien: `${(settings.listing.waLinkBase || SITE_URL).replace(/\/+$/, "")}/pro/${p.username}`,
+  }));
   const socials = [
     { k: "website", l: "Site web", v: p.website }, { k: "facebook", l: "Facebook", v: p.facebook },
     { k: "instagram", l: "Instagram", v: p.instagram }, { k: "tiktok", l: "TikTok", v: p.tiktok },

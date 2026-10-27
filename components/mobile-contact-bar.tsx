@@ -1,5 +1,6 @@
 import { formatXOF } from "@/lib/api";
 import { ContactLink } from "./contact-link";
+import { waNumber } from "@/lib/whatsapp";
 
 /**
  * Barre de contact flottante en bas d'écran (mobile uniquement, façon Airbnb).
@@ -22,7 +23,7 @@ export function MobileContactBar({
   whatsapp?: string | null;
 }) {
   const tel = phone || whatsapp || "";
-  const waDigits = (whatsapp || phone || "").replace(/[^0-9]/g, "");
+  const waDigits = waNumber(whatsapp || phone) ?? "";
   if (!tel && !waDigits) return null;
 
   return (

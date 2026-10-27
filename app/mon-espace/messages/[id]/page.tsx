@@ -2,13 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChatThread } from "@/components/chat-thread";
 import { getConversation } from "../../actions";
+import { waNumber } from "@/lib/whatsapp";
 
 export default async function Thread({ params }: { params: { id: string } }) {
   const c = await getConversation(params.id);
   if (!c) notFound();
   const phone = c.counterpart.phone ?? "";
-  const digits = phone.replace(/[^0-9]/g, "");
-  const wa = digits.startsWith("225") ? digits : `225${digits}`;
+  const wa = waNumber(phone) ?? "";
   const letter = (c.counterpart.name || "?").trim().charAt(0).toUpperCase();
 
   return (
@@ -32,7 +32,7 @@ export default async function Thread({ params }: { params: { id: string } }) {
           )}
           <p className="truncate text-xs text-muted">{c.role === "owner" ? "Intéressé par votre annonce" : "Annonceur"}</p>
         </div>
-        {c.role === "owner" && digits ? (
+        {c.role === "owner" && wa ? (
           <div className="flex shrink-0 gap-1.5">
             <a href={`tel:${phone}`} aria-label="Appeler" className="grid h-9 w-9 place-items-center rounded-full bg-brand-800 text-white">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" strokeLinejoin="round" /></svg>

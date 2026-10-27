@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ZonePartner } from "@/lib/ads";
+import { waNumber } from "@/lib/whatsapp";
 
 /** Encart « Agents partenaires » de la zone d'une annonce (façon Zillow Premier Agent). */
 export function ZonePartners({ zone, items, waText }: { zone: string; items: ZonePartner[]; /** Message WhatsApp pré-rempli (encodé), ex. intérêt pour l'annonce. */ waText?: string }) {
@@ -10,7 +11,7 @@ export function ZonePartners({ zone, items, waText }: { zone: string; items: Zon
       <p className="text-xs text-muted">Agents partenaires de la zone · Sponsorisé</p>
       <ul className="mt-3 space-y-3">
         {items.map((a) => {
-          const n = (a.whatsapp || a.phone || "").replace(/[^0-9]/g, "");
+          const n = waNumber(a.whatsapp || a.phone) ?? "";
           return (
             <li key={a.id} className="flex items-center gap-3">
               {a.avatarUrl ? (

@@ -22,6 +22,7 @@ import { VisitForm } from "@/components/visit-form";
 import { MobileContactBar } from "@/components/mobile-contact-bar";
 import { ContactLink } from "@/components/contact-link";
 import { getSiteSettings } from "@/lib/settings";
+import { waMessage, waNumber } from "@/lib/whatsapp";
 import { customDisplay, parseListingForm } from "@/lib/listing-form";
 import { getTaxonomies, typeLabel } from "@/lib/taxonomies";
 import { ListingReservation } from "@/components/listing-reservation";
@@ -61,7 +62,8 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
   const [partners, signals, market] = await Promise.all([getZonePartners(l.id), getSignals("listing", l.id), isOn("prix.repere-fiche").then((on) => (on ? getMarketEstimate(l.id) : null))]);
 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
-  const phoneDigits = (l.agent?.whatsapp || l.agent?.phone || l.contactPhone || l.owner?.whatsapp || l.owner?.phone || "").replace(/[^0-9]/g, "");
+  // Numéro WhatsApp au format international (premier numéro si le champ en contient deux).
+  const phoneDigits = waNumber(l.agent?.whatsapp || l.agent?.phone || l.contactPhone || l.owner?.whatsapp || l.owner?.phone) ?? "";
   // Sections affichées, extrait, biens similaires : back-office → Détails de la propriété.
   const { listing: cfg, general, print, moderation, forms } = await getSiteSettings();
   const tax = await getTaxonomies();
@@ -115,9 +117,14 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
 
   const barPhone = l.agent?.phone || l.contactPhone || l.owner?.phone;
   const barWhatsapp = l.agent?.whatsapp || l.contactPhone || l.owner?.whatsapp || l.owner?.phone;
-  // Message WhatsApp pré-rempli (comme l'application) : intérêt, titre, référence et lien de l'annonce.
-  const waText = encodeURIComponent(`Bonjour, je suis intéressé(e) par votre annonce « ${l.title} » (${txLabel.toLowerCase()}, réf. ${l.id.slice(0, 8).toUpperCase()}) vue sur Moboo.ci : ${SITE_URL}${listingPath(l)}`);
   const isReservable = l.listingKind === "furnished" || l.listingKind === "event";
+  // Message WhatsApp pré-rempli (comme Houzez) : texte du back-office → Détails de la propriété → Messages WhatsApp.
+  const contactName = (l.agent?.name || l.owner?.name || l.contactName || "").trim();
+  const waText = encodeURIComponent(waMessage(isReservable ? cfg.waFurnished : cfg.waListing, {
+    titre: l.title, type: txLabel.toLowerCase(), ref: l.id.slice(0, 8).toUpperCase(), prix: formatXOF(l.price),
+    ville: [l.commune, l.city].filter(Boolean).join(", "), lien: `${(cfg.waLinkBase || SITE_URL).replace(/\/+$/, "")}${listingPath(l)}`,
+    prenom: l.agent?.kind === "agency" ? contactName : contactName.split(" ")[0], nom: contactName,
+  }));
 
   // Agent / agence rattaché (reprise WP), sinon l'annonceur particulier.
   const person: HeroPerson | null = l.agent

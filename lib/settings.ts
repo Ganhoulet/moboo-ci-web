@@ -37,6 +37,7 @@ export interface SiteSettings {
     showVideo: boolean; showFeatures: boolean; showMap: boolean; showVisitForm: boolean;
     showContactForm: boolean; showSimilar: boolean; similarCount: number; contactNotice: string;
     videoAutoplay: "muted" | "click";
+    waListing: string; waFurnished: string; waAgent: string; waAgency: string; waLinkBase: string;
   };
   submit: { maxPhotos: number; submitIntro: string };
   /** Formulaire de publication et onglets de l'espace membre (JSON, back-office → Formulaires). */
@@ -118,6 +119,11 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     bannerStyle: "mosaic",
     showVideo: true, showFeatures: true, showMap: true, showVisitForm: true, showContactForm: true,
     showSimilar: true, similarCount: 4, videoAutoplay: "muted",
+    waListing: "Bonjour {prenom}, je suis intéressé(e) par votre annonce « {titre} » ({type}, réf. {ref}) vue sur Moboo.ci : {lien}",
+    waFurnished: "Bonjour {prenom}, je souhaite réserver « {titre} » ({ville}), vu sur Moboo.ci. Est-il disponible ? {lien}",
+    waAgent: "Bonjour {prenom}, je vous ai trouvé sur Moboo.ci et j’aimerais échanger avec vous au sujet d’un bien : {lien}",
+    waAgency: "Bonjour {nom}, j’ai découvert votre agence sur Moboo.ci et je cherche un bien. Pouvez-vous m’aider ? {lien}",
+    waLinkBase: "",
     contactNotice: "Mise en relation directe avec l’annonceur — Moboo ne prend pas de commission sur les ventes et locations classiques.",
   },
   forms: { listingForm: "", memberSpace: "" },

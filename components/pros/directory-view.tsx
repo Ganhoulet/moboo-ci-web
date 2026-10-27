@@ -4,6 +4,7 @@ import { Stars } from "@/components/reviews";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { searchPros, getZones, slugZone, type DirectoryPro, type DirectoryQuery, type ZoneSummary } from "@/lib/pro-reviews";
 import { breadcrumbLd, ldJson } from "@/lib/structured-data";
+import { waHref } from "@/lib/whatsapp";
 
 const fcfa = (n: number) => `${Math.round(n).toLocaleString("fr-FR")} FCFA`;
 
@@ -20,8 +21,7 @@ function href(base: string, q: DirectoryQuery, patch: Partial<DirectoryQuery>) {
 }
 
 function ProCard({ p }: { p: DirectoryPro }) {
-  const wa = (p.whatsapp || "").replace(/[^0-9]/g, "");
-  const waLink = wa ? `https://wa.me/${wa.startsWith("225") ? wa : "225" + wa}?text=${encodeURIComponent("Bonjour, je vous ai trouvé sur Moboo.ci.")}` : null;
+  const waLink = waHref(p.whatsapp, "Bonjour, je vous ai trouvé sur Moboo.ci.");
   return (
     <li className="flex flex-col rounded-2xl bg-white p-5 shadow-card transition hover:shadow-lg">
       <div className="flex gap-4">
