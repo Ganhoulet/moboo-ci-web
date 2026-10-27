@@ -2,6 +2,7 @@
 
 import { useFormState } from "react-dom";
 import { submitEventReservation, type ReserveState } from "@/app/reserver/actions";
+import { LoginToBook } from "@/components/login-to-book";
 import { Field, SubmitButton, SuccessCard } from "./booking-form";
 
 const TYPES: [string, string][] = [
@@ -55,7 +56,8 @@ export function EventBookingForm({ espaceId }: { espaceId: string }) {
         <input name="guestPhone" required inputMode="tel" placeholder="07 00 00 00 00" className="input" />
       </Field>
 
-      {state && !state.ok ? (
+      {state && !state.ok && state.loginRequired ? <LoginToBook message={state.message} /> : null}
+      {state && !state.ok && !state.loginRequired ? (
         <p className="text-sm font-medium text-red-600">{state.message}</p>
       ) : null}
 

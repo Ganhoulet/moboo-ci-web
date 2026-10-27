@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitEventReservation, type ReserveState } from "@/app/reserver/actions";
+import { LoginToBook } from "@/components/login-to-book";
 import { useBookingContact } from "./use-booking-contact";
 import { useLiveOccupied } from "./use-live-occupied";
 import { AvailabilityCalendar, type CalendarSelection } from "./availability-calendar";
@@ -76,7 +77,8 @@ export function EspaceBooking({
         <input ref={contact.phone} name="guestPhone" required inputMode="tel" placeholder="Téléphone" className="input" />
       </div>
 
-      {state && !state.ok ? <p className="mt-2 text-sm font-medium text-red-600">{state.message}</p> : null}
+      {state && !state.ok && state.loginRequired ? <LoginToBook message={state.message} /> : null}
+      {state && !state.ok && !state.loginRequired ? <p className="mt-2 text-sm font-medium text-red-600">{state.message}</p> : null}
 
       <div className="mt-4">
         <SubmitBtn disabled={!ready} />

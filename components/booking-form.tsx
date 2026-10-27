@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { submitReservation, type ReserveState } from "@/app/reserver/actions";
+import { LoginToBook } from "@/components/login-to-book";
 import { formatXOF } from "@/lib/api";
 
 type Apt = { id: string; type: string; nightlyPrice: number | string };
@@ -47,7 +48,8 @@ export function BookingForm({ apartments }: { apartments: Apt[] }) {
         <input name="guestPhone" required inputMode="tel" placeholder="07 00 00 00 00" className="input" />
       </Field>
 
-      {state && !state.ok ? (
+      {state && !state.ok && state.loginRequired ? <LoginToBook message={state.message} /> : null}
+      {state && !state.ok && !state.loginRequired ? (
         <p className="text-sm font-medium text-red-600">{state.message}</p>
       ) : null}
 
