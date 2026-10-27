@@ -6,6 +6,7 @@ import { getSession, initials } from "@/lib/session";
 import type { SiteSettings } from "@/lib/settings";
 import type { MenuItem, MenuStyle } from "@/lib/menus";
 import { MobileMenu, NavMenu } from "./nav-menu";
+import { MobileHeader } from "./mobile-header";
 
 type Tone = "light" | "dark";
 
@@ -72,6 +73,11 @@ const ic = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: 
  */
 export function SiteHeader({ settings, nav }: { settings: SiteSettings; nav: HeaderNav }) {
   const { header, branding } = settings;
+  // Téléphone : en-tête façon application (recherche collante), réglé dans le back-office.
+  const mobileTone: Tone = header.mobileHeaderColor === "white" ? "light" : "dark";
+  const phone = header.mobileHeaderStyle === "search" || header.mobileHeaderStyle === "logo_search"
+    ? <MobileHeader settings={settings} menu={nav.mobile} actions={<Actions settings={settings} tone={mobileTone} mobile={nav.mobile} />} />
+    : null;
   const style = header.headerStyle;
   const wrap = header.headerLayout === "full" ? "w-full px-4 sm:px-6 lg:px-8" : "container-page";
   const logo = (tone: Tone) => (
@@ -88,10 +94,12 @@ export function SiteHeader({ settings, nav }: { settings: SiteSettings; nav: Hea
     ].filter(([, u]) => u) as [string, string][];
     return (
       <>
-        {/* Téléphone : compact */}
-        <header className="print:hidden sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur md:hidden">
-          <div className={`${wrap} flex h-16 items-center justify-between`}>{logo("light")}<Actions settings={settings} tone="light" mobile={nav.mobile} /></div>
-        </header>
+        {/* Téléphone : compact, ou en-tête façon application */}
+        {phone ?? (
+          <header className="print:hidden sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur md:hidden">
+            <div className={`${wrap} flex h-16 items-center justify-between`}>{logo("light")}<Actions settings={settings} tone="light" mobile={nav.mobile} /></div>
+          </header>
+        )}
         <div className="hidden bg-white md:block print:hidden">
           <div className={`${wrap} flex h-20 items-center gap-6 ${style === "centered" ? "justify-between" : ""}`}>
             {style === "contacts" ? (
@@ -131,12 +139,15 @@ export function SiteHeader({ settings, nav }: { settings: SiteSettings; nav: Hea
   // Styles sur une ligne : classique (blanc) ou sombre.
   const tone: Tone = style === "dark" ? "dark" : "light";
   return (
-    <header className={"print:hidden sticky top-0 z-40 " + (tone === "dark" ? "bg-brand-900" : "border-b border-slate-200/70 bg-white/90 backdrop-blur")}>
+    <>
+    {phone}
+    <header className={"print:hidden sticky top-0 z-40 " + (phone ? "hidden md:block " : "") + (tone === "dark" ? "bg-brand-900" : "border-b border-slate-200/70 bg-white/90 backdrop-blur")}>
       <div className={`${wrap} flex h-16 items-center justify-between gap-6`}>
         {logo(tone)}
         <NavMenu items={nav.items} style={nav.style} tone={tone} align={header.navAlign} className="hidden md:flex" />
         <Actions settings={settings} tone={tone} mobile={nav.mobile} />
       </div>
     </header>
+    </>
   );
 }

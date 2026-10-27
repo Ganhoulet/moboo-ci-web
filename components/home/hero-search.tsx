@@ -129,7 +129,7 @@ export function HeroSearch({ tabs, placeholder, types, places = [] }: {
 
   return (
     <div ref={box} className="relative mx-auto w-full max-w-5xl [&_.absolute]:text-ink">
-      <div className="mb-3 flex justify-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist">
+      <div className="mb-3 flex justify-start gap-1 overflow-x-auto [scrollbar-width:none] sm:justify-center [&::-webkit-scrollbar]:hidden" role="tablist">
         {list.map((t) => (
           <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => changeTab(t)}
             className={"shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition " + (tab === t ? "bg-white text-ink shadow-md" : "text-white/90 hover:bg-white/15")}>

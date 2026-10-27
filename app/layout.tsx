@@ -12,6 +12,7 @@ import { SearchStrip } from "@/components/search-strip";
 import { getTaxonomies } from "@/lib/taxonomies";
 import { getChrome } from "@/lib/pages";
 import { SiteFooter } from "@/components/site-footer";
+import { MobileTabBar } from "@/components/mobile-tab-bar";
 import { menuAt } from "@/lib/menus";
 import { getCampaigns } from "@/lib/marketing";
 import { SitePopup } from "@/components/marketing/site-popup";
@@ -74,6 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main>{children}</main>
         <SeoBottom />
         <SiteFooter chrome={chrome} settings={settings} />
+        {header.mobileBottomBar ? <MobileTabBar items={header.mobileBottomBarItems} style={header.mobileBottomBarStyle} color={header.mobileBottomBarColor} loggedIn={!!getSession()} /> : null}
         {general.backToTop ? <BackToTop /> : null}
         {/* Une information ciblée ouverte passe avant la pop-up marketing (jamais deux fenêtres à la fois). */}
         {notices.popup.length ? <NoticePopup items={notices.popup} /> : null}

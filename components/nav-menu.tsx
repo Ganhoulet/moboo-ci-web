@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { safeHref, type MenuItem, type MenuStyle } from "@/lib/menus";
 
 type Tone = "light" | "dark";
@@ -169,8 +170,11 @@ export function NavMenu({ items, style, tone, align = "left", className = "" }: 
   );
 }
 
-/** Menu du téléphone : bouton ☰ + panneau avec sous-menus en accordéon. */
-export function MobileMenu({ items, tone }: { items: MenuItem[]; tone: Tone }) {
+/**
+ * Menu du téléphone : bouton ☰ + panneau avec sous-menus en accordéon.
+ * Le panneau est rendu dans <body> : l'en-tête (flou, collant) l'enfermerait sinon dans ses 64 px.
+ */
+export function MobileMenu({ items, tone, className = "" }: { items: MenuItem[]; tone: Tone; className?: string }) {
   const [open, setOpen] = useState(false);
   const [exp, setExp] = useState<string | null>(null);
   useEffect(() => {
@@ -182,11 +186,11 @@ export function MobileMenu({ items, tone }: { items: MenuItem[]; tone: Tone }) {
   return (
     <>
       <button type="button" aria-label="Ouvrir le menu" onClick={() => setOpen(true)}
-        className={"grid h-10 w-10 place-items-center rounded-full border transition md:hidden " + (tone === "dark" ? "border-white/25 text-white" : "border-slate-200 text-ink")}>
+        className={"grid h-10 w-10 shrink-0 place-items-center rounded-full border transition md:hidden " + (tone === "dark" ? "border-white/25 text-white" : "border-slate-200 text-ink") + (className ? ` ${className}` : "")}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" /></svg>
       </button>
-      {open ? (
-        <div className="fixed inset-0 z-[60] md:hidden" role="dialog" aria-modal="true">
+      {open ? createPortal(
+        <div className="fixed inset-0 z-[70] md:hidden" role="dialog" aria-modal="true">
           <button type="button" aria-label="Fermer" onClick={close} className="absolute inset-0 bg-black/40" />
           <div className="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
@@ -221,7 +225,8 @@ export function MobileMenu({ items, tone }: { items: MenuItem[]; tone: Tone }) {
               })}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </>
   );

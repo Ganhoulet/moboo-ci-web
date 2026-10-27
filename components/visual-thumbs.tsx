@@ -105,8 +105,36 @@ function provider(v: string) {
   );
 }
 
+/** Écran de téléphone (en-tête et menu du bas façon application). */
+const Phone = ({ children }: { children: React.ReactNode }) => (
+  <g>
+    <rect x={80} y={4} width={80} height={122} rx={10} fill="#fff" stroke={LINE} strokeWidth={2} />
+    {children}
+  </g>
+);
+const PhoneBody = ({ y, h }: { y: number; h: number }) => (
+  <g><Photo x={88} y={y} w={64} h={h * 0.55} /><rect x={88} y={y + h * 0.62} width={50} height={4} rx={2} fill={SOFT} /><rect x={88} y={y + h * 0.75} width={36} height={4} rx={2} fill={SOFT} /></g>
+);
+const Pill = ({ x, y, w }: { x: number; y: number; w: number }) => <g><rect x={x} y={y} width={w} height={11} rx={5.5} fill="#fff" /><circle cx={x + 7} cy={y + 5.5} r={2.2} fill={ORANGE} /><rect x={x + 13} y={y + 4} width={w * 0.45} height={3} rx={1.5} fill={LINE} /></g>;
+
+function mobileHeader(v: string) {
+  if (v === "classic") return (<Phone><rect x={82} y={10} width={76} height={18} fill="#fff" stroke={SOFT} /><Logo x={86} y={15} /><circle cx={150} cy={19} r={4} fill="none" stroke={LINE} strokeWidth={1.5} /><PhoneBody y={34} h={80} /></Phone>);
+  if (v === "logo_search") return (<Phone><rect x={82} y={10} width={76} height={32} fill={BLUE} /><Logo x={86} y={14} color="#fff" /><circle cx={150} cy={18} r={4} fill="none" stroke="#fff" strokeWidth={1.5} /><Pill x={86} y={27} w={68} /><PhoneBody y={48} h={70} /></Phone>);
+  return (<Phone><rect x={82} y={10} width={76} height={20} fill={BLUE} /><Dots x={86} y={15} n={3} gap={0} w={9} color="#fff" /><rect x={86} y={19} width={9} height={2} fill="#fff" /><rect x={86} y={23} width={9} height={2} fill="#fff" /><Pill x={99} y={14} w={55} /><PhoneBody y={36} h={80} /></Phone>);
+}
+
+function mobileBar(v: string) {
+  const tabs = [96, 112, 128, 144];
+  const icon = (x: number, y: number, on = false) => <rect key={x} x={x - 4} y={y} width={8} height={8} rx={2} fill={on ? BLUE : LINE} />;
+  const label = (x: number, y: number) => <rect key={"l" + x} x={x - 5} y={y} width={10} height={2.5} rx={1} fill={SOFT} />;
+  const body = <PhoneBody y={14} h={78} />;
+  if (v === "floating") return (<Phone>{body}<rect x={86} y={100} width={68} height={18} rx={6} fill="#fff" stroke={LINE} />{tabs.map((x, i) => icon(x, 105, i === 0))}</Phone>);
+  if (v === "publish") return (<Phone>{body}<rect x={82} y={104} width={76} height={18} fill="#fff" stroke={SOFT} />{[94, 108, 132, 146].map((x, i) => icon(x, 108, i === 0))}<circle cx={120} cy={106} r={7} fill={ORANGE} stroke="#fff" strokeWidth={2} /></Phone>);
+  return (<Phone>{body}<rect x={82} y={102} width={76} height={20} fill="#fff" stroke={SOFT} />{tabs.map((x, i) => icon(x, 105, i === 0))}{v === "labels" ? tabs.map((x) => label(x, 116)) : null}</Phone>);
+}
+
 export function VisualThumb({ field, value }: { field: string; value: string }) {
-  const draw = field === "headerStyle" ? header(value) : field === "bannerStyle" ? banner(value) : field === "headerSearch" ? search(value)
+  const draw = field === "mobileHeaderStyle" ? mobileHeader(value) : field === "mobileBottomBarStyle" ? mobileBar(value) : field === "headerStyle" ? header(value) : field === "bannerStyle" ? banner(value) : field === "headerSearch" ? search(value)
     : field === "resultsView" || field === "resultsLayout" ? results(field, value) : field === "provider" ? provider(value) : null;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full rounded bg-white" aria-hidden="true">

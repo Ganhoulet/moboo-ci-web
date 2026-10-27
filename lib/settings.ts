@@ -18,6 +18,9 @@ export interface SiteSettings {
     showPublishButton: boolean; publishButtonText: string; showSignupButton: boolean;
     topBarEnabled: boolean; topBarText: string; topBarPhone: string; topBarWhatsapp: string; topBarEmail: string;
     facebookUrl: string; instagramUrl: string; tiktokUrl: string; linkedinUrl: string; youtubeUrl: string;
+    mobileHeaderStyle: "classic" | "search" | "logo_search"; mobileHeaderColor: "brand" | "accent" | "dark" | "white";
+    mobileSearchPlaceholder: string; mobileBottomBar: boolean; mobileBottomBarStyle: "labels" | "icons" | "publish" | "floating";
+    mobileBottomBarColor: "brand" | "accent"; mobileBottomBarItems: string;
   };
   auth: {
     loginPhone: boolean; loginPassword: boolean; loginGoogle: boolean; loginIntro: string;
@@ -86,6 +89,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     showPublishButton: true, publishButtonText: "Publier", showSignupButton: true,
     topBarEnabled: false, topBarText: "", topBarPhone: "", topBarWhatsapp: "", topBarEmail: "",
     facebookUrl: "", instagramUrl: "", tiktokUrl: "", linkedinUrl: "", youtubeUrl: "",
+    mobileHeaderStyle: "search", mobileHeaderColor: "brand", mobileSearchPlaceholder: "Commune, quartier, ville…",
+    mobileBottomBar: true, mobileBottomBarStyle: "labels", mobileBottomBarColor: "brand",
+    mobileBottomBarItems: "Accueil | / | accueil\nRecherche | /annonces | recherche\nPublier | /publier | publier\nFavoris | /favoris | favoris\nCompte | /compte | compte",
   },
   auth: {
     loginPhone: true, loginPassword: true, loginGoogle: true,
