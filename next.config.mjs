@@ -50,6 +50,7 @@ const nextConfig = {
       { protocol: 'https', hostname: '**.onrender.com' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: '**.r2.dev' }, // photos rangées chez Cloudflare R2
     ],
   },
 };
