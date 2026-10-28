@@ -377,7 +377,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
           ) : null}
 
           {cfg.showContactForm ? (
-            <div className="mt-4">
+            <div id="message" className="mt-4 scroll-mt-4">
               <InquiryForm listingId={l.id} title={l.title} />
             </div>
           ) : null}
@@ -404,8 +404,9 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
       ) : null}
 
       <MobileContactBar listingId={l.id} phone={barPhone} whatsapp={barWhatsapp} waText={waText}
+        bar={cfg} price={l.price} transaction={l.transaction} messageHref={cfg.showContactForm ? "#message" : null}
         person={person ? {
-          name: person.name, role: person.role, photoUrl: person.photoUrl, verified: !!(person.verified || person.businessVerified),
+          name: person.name, role: person.role, photoUrl: person.photoUrl, verified: !!(person.verified || person.businessVerified), agency: person.role === "Agence",
           // Toucher le nom : page pro de l'agent, de l'agence ou de l'annonceur.
           href: l.agent?.username ? `/pro/${l.agent.username}` : l.owner?.username ? `/pro/${l.owner.username}` : null,
         } : null} />
