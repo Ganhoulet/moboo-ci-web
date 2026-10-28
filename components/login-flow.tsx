@@ -146,13 +146,21 @@ export function LoginFlow({ googleTicket, next, firebase, phone: presetPhone }: 
             autoComplete="tel"
             placeholder="07 07 12 34 56"
             className="input"
-            defaultValue={presetPhone}
+            defaultValue={phoneState?.step === "phone" && phoneState.phone ? phoneState.phone : presetPhone}
             required
           />
           <p className="mt-1 text-xs text-muted">
             Vous recevrez un code par SMS{firebase ? "" : " ou WhatsApp"} (ou par e-mail si votre compte en a un).
           </p>
         </div>
+        {/* En attendant les SMS : nouveau numéro → code envoyé par e-mail. */}
+        {phoneState?.step === "phone" && phoneState.needEmail ? (
+          <div className="rounded-xl bg-brand-50 p-3 ring-1 ring-brand-100">
+            <label htmlFor="email" className="mb-1 block text-sm font-semibold text-ink">Votre adresse e-mail</label>
+            <input id="email" name="email" type="email" autoComplete="email" placeholder="vous@exemple.com" className="input" required autoFocus />
+            <p className="mt-1 text-xs text-muted">L’envoi par SMS arrive bientôt : nous vous envoyons le code par e-mail pour créer votre compte.</p>
+          </div>
+        ) : null}
         {fbNotice ? <p className="text-sm font-medium text-amber-700">{fbNotice}</p> : null}
         {phoneState?.step === "phone" && phoneState.error ? (
           <p className="text-sm font-medium text-red-600">{phoneState.error}</p>

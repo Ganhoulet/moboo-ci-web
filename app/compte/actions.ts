@@ -11,7 +11,7 @@ const errMsg = (data: any, fallback: string) =>
   || (Array.isArray(data?.error?.message) ? data.error.message[0] : data?.error?.message) || fallback;
 
 export type OtpState =
-  | { step: "phone"; error?: string; googleTicket?: string }
+  | { step: "phone"; error?: string; googleTicket?: string; needEmail?: boolean; phone?: string }
   | { step: "code"; phone: string; error?: string; devCode?: string; googleTicket?: string; channel?: "whatsapp" | "sms" | "email" | "none"; emailHint?: string | null }
   | { step: "done"; redirectTo?: string }
   | null;
@@ -21,15 +21,20 @@ export async function sendOtpAction(_prev: OtpState, formData: FormData): Promis
   const phone = String(formData.get("phone") || "").trim();
   const googleTicket = String(formData.get("googleTicket") || "") || undefined;
   const byEmail = formData.get("channel") === "email";
+  const email = String(formData.get("email") || "").trim() || undefined;
   if (phone.replace(/[^0-9]/g, "").length < 8) {
     return { step: "phone", error: "Entrez un numéro de téléphone valide.", googleTicket };
   }
   try {
-    const { ok, data } = await siteRequestOtp(phone, undefined, byEmail ? "email" : "auto");
+    const { ok, data } = await siteRequestOtp(phone, undefined, byEmail ? "email" : "auto", { email, googleTicket });
     if (!ok) {
       // « Recevoir par e-mail » refusé : on reste sur l'étape du code, avec le message.
       if (byEmail) return { step: "code", phone, error: errMsg(data, "Envoi par e-mail impossible."), googleTicket };
       return { step: "phone", error: errMsg(data, "Envoi impossible. Réessayez."), googleTicket };
+    }
+    // Aucun SMS ni WhatsApp pour ce nouveau numéro : on demande une adresse e-mail pour le code.
+    if (data?.channel === "none" && !data?.devCode) {
+      return { step: "phone", phone, needEmail: true, googleTicket, error: email ? "Envoi impossible à cette adresse : vérifiez-la et réessayez." : undefined };
     }
     // devCode renvoyé uniquement en dev/staging (pas de SMS configuré).
     return { step: "code", phone, devCode: data?.devCode, googleTicket, channel: data?.channel, emailHint: data?.emailHint };

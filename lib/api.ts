@@ -297,10 +297,11 @@ export async function apiPost<T>(path: string, body: unknown, token?: string): P
   return { ok: res.ok, status: res.status, data };
 }
 
-export function siteRequestOtp(phone: string, deviceId?: string, channel?: "auto" | "email") {
+/** `extra` : en attendant les SMS, un nouveau numéro reçoit son code par e-mail (Gmail de Google, ou adresse saisie). */
+export function siteRequestOtp(phone: string, deviceId?: string, channel?: "auto" | "email", extra: { email?: string; googleTicket?: string } = {}) {
   return apiPost<{ sent: boolean; channel: "whatsapp" | "sms" | "email" | "none"; emailHint?: string | null; expiresIn: number; devCode?: string }>(
     "/site/auth/request-otp",
-    { phone, deviceId, ...(channel === "email" ? { channel } : {}) },
+    { phone, deviceId, ...(channel === "email" ? { channel } : {}), ...(extra.email ? { email: extra.email } : {}), ...(extra.googleTicket ? { googleTicket: extra.googleTicket } : {}) },
   );
 }
 

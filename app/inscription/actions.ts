@@ -31,8 +31,12 @@ export async function sendSignupCodeAction(input: { phone: string; username?: st
     }
     // SMS Firebase : le navigateur envoie le code ; ici on ne fait que les contrôles.
     if (input.checkOnly) return { ok: true, phoneRegistered: check.ok ? check.data.phoneRegistered : false };
-    const { ok, data } = await siteRequestOtp(input.phone);
+    const { ok, data } = await siteRequestOtp(input.phone, undefined, "auto", { email: input.email });
     if (!ok) return { ok: false, error: data?.message || "Envoi du code impossible. Réessayez." };
+    // Pas encore de SMS : le code part par e-mail ; sans adresse, on la demande.
+    if (data?.channel === "none" && !data?.devCode) {
+      return { ok: false, error: "L’envoi par SMS arrive bientôt : indiquez votre adresse e-mail (champ E-mail) pour recevoir le code, puis réessayez." };
+    }
     return { ok: true, devCode: data?.devCode, phoneRegistered: check.ok ? check.data.phoneRegistered : false };
   } catch {
     return { ok: false, error: "Service indisponible. Réessayez plus tard." };
