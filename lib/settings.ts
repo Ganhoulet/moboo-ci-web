@@ -45,6 +45,7 @@ export interface SiteSettings {
     cbCallColor: string; cbWhatsappColor: string; cbMessageColor: string;
     cbName: "full" | "first" | "hidden"; cbNameLines: "1" | "2"; cbNameMax: number;
     cbInfo: "role_profile" | "role" | "price" | "none"; cbPhoto: boolean; cbBackground: "white" | "soft" | "brand" | "dark"; cbLayout: "auto" | "one_row" | "two_rows";
+    cbOrder: string; cbPersonSide: "left" | "right";
   };
   submit: { maxPhotos: number; submitIntro: string };
   /** Formulaire de publication et onglets de l'espace membre (JSON, back-office → Formulaires). */
@@ -133,7 +134,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     waLinkBase: "",
     cbButtons: ["call", "whatsapp"], cbButtonSize: "md", cbCallShape: "round", cbWhatsappShape: "pill", cbMessageShape: "round",
     cbCallColor: "outline", cbWhatsappColor: "green", cbMessageColor: "brand",
-    cbName: "full", cbNameLines: "2", cbNameMax: 32, cbInfo: "role_profile", cbPhoto: true, cbBackground: "white", cbLayout: "auto",
+    cbName: "full", cbNameLines: "2", cbNameMax: 32, cbInfo: "role_profile", cbPhoto: true, cbBackground: "white", cbLayout: "auto", cbOrder: "call,message,whatsapp", cbPersonSide: "left",
     contactNotice: "Mise en relation directe avec l’annonceur — Moboo ne prend pas de commission sur les ventes et locations classiques.",
   },
   forms: { listingForm: "", memberSpace: "" },

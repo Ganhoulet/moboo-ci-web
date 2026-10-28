@@ -7,7 +7,7 @@ import type { SiteSettings } from "@/lib/settings";
 /** Annonceur affiché à gauche de la barre : photo, nom, rôle, lien vers sa page pro. */
 export interface ContactPerson { name: string; role: string; photoUrl?: string | null; href?: string | null; verified?: boolean; agency?: boolean }
 
-type Bar = Pick<SiteSettings["listing"], "cbButtons" | "cbButtonSize" | "cbCallShape" | "cbWhatsappShape" | "cbMessageShape" | "cbCallColor" | "cbWhatsappColor" | "cbMessageColor" | "cbName" | "cbNameLines" | "cbNameMax" | "cbInfo" | "cbPhoto" | "cbBackground" | "cbLayout">;
+type Bar = Pick<SiteSettings["listing"], "cbButtons" | "cbButtonSize" | "cbCallShape" | "cbWhatsappShape" | "cbMessageShape" | "cbCallColor" | "cbWhatsappColor" | "cbMessageColor" | "cbName" | "cbNameLines" | "cbNameMax" | "cbInfo" | "cbPhoto" | "cbBackground" | "cbLayout" | "cbOrder" | "cbPersonSide">;
 
 const IconPhone = (s: number) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
@@ -69,11 +69,10 @@ export function MobileContactBar({
   const tel = phone || whatsapp || "";
   const waDigits = waNumber(whatsapp || phone) ?? "";
   const want = new Set(bar.cbButtons?.length ? bar.cbButtons : ["call", "whatsapp"]);
-  const buttons = [
-    want.has("call") && tel ? "call" : null,
-    want.has("message") && messageHref ? "message" : null,
-    want.has("whatsapp") && waDigits ? "whatsapp" : null,
-  ].filter(Boolean) as ("call" | "message" | "whatsapp")[];
+  const available = { call: !!tel, message: !!messageHref, whatsapp: !!waDigits } as Record<string, boolean>;
+  // Ordre choisi dans le back-office (de gauche à droite), les trois boutons toujours présents une fois.
+  const order = [...new Set([...String(bar.cbOrder || "").split(","), "call", "message", "whatsapp"])].filter((b) => b in available);
+  const buttons = order.filter((b) => want.has(b) && available[b]) as ("call" | "message" | "whatsapp")[];
   if (!buttons.length) return null;
 
   const bg = BG[bar.cbBackground] ?? BG.white;
@@ -87,6 +86,7 @@ export function MobileContactBar({
       (labelled(b) ? `rounded-xl ${size.pill}` : `rounded-full ${size.round}`);
   };
 
+  const right = bar.cbPersonSide === "right";
   const showName = person && bar.cbName !== "hidden";
   const rawName = person ? (bar.cbName === "first" && !person.agency ? person.name.split(" ")[0] : person.name) : "";
   const name = shorten(rawName, Math.max(8, Number(bar.cbNameMax) || 32));
@@ -95,7 +95,7 @@ export function MobileContactBar({
     : person ? `${person.role}${bar.cbInfo === "role_profile" && person.href ? " · Voir le profil ›" : ""}` : null;
 
   const who = showName ? (
-    <span className="flex min-w-0 items-center gap-2.5">
+    <span className={"flex min-w-0 items-center gap-2.5" + (right ? " flex-row-reverse" : "")}>
       {bar.cbPhoto !== false ? (person!.photoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={person!.photoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover shadow ring-2 ring-white" />
@@ -135,13 +135,14 @@ export function MobileContactBar({
     <div className={`fixed inset-x-0 bottom-0 z-40 border-t shadow-[0_-6px_20px_rgba(15,23,42,.08)] backdrop-blur lg:hidden ${bg.bar}`}>
       {twoRows ? (
         <div className="container-page space-y-2 py-2.5" style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
-          <div className="min-w-0">{person_}</div>
+          <div className={"min-w-0" + (right ? " flex justify-end text-right" : "")}>{person_}</div>
           <div className="flex items-center gap-2 [&>a]:flex-1">{actions}</div>
         </div>
       ) : (
-        <div className="container-page flex items-center gap-2 py-2.5" style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
-          <div className="min-w-0 flex-1">{person_}</div>
-          {actions}
+        <div className={"container-page flex items-center gap-2 py-2.5" + (right ? " flex-row-reverse" : "")} style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
+          <div className={"min-w-0 flex-1" + (right ? " flex justify-end text-right" : "")}>{person_}</div>
+          {/* Boutons dans l'ordre choisi, quel que soit le côté de l'annonceur. */}
+          <div className="flex shrink-0 items-center gap-2">{actions}</div>
         </div>
       )}
     </div>
