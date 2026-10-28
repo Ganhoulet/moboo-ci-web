@@ -403,7 +403,12 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
         </section>
       ) : null}
 
-      <MobileContactBar listingId={l.id} price={l.price} transaction={l.transaction} phone={barPhone} whatsapp={barWhatsapp} waText={waText} />
+      <MobileContactBar listingId={l.id} phone={barPhone} whatsapp={barWhatsapp} waText={waText}
+        person={person ? {
+          name: person.name, role: person.role, photoUrl: person.photoUrl, verified: !!(person.verified || person.businessVerified),
+          // Toucher le nom : page pro de l'agent, de l'agence ou de l'annonceur.
+          href: l.agent?.username ? `/pro/${l.agent.username}` : l.owner?.username ? `/pro/${l.owner.username}` : null,
+        } : null} />
     </div>
   );
 }

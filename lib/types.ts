@@ -171,6 +171,8 @@ export interface ListingItem {
     position?: string | null;
     company?: string | null;
     serviceArea?: string | null;
+    /** Page pro (« agent-123 » pour un agent repris de moboo.ci). */
+    username?: string | null;
   } | null;
   /** Back-office : « en vedette » et étiquettes (nom + couleur). */
   featured?: boolean;
