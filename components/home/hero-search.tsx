@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DatePicker, isoDay, nightsBetween, parseDay, shortDay } from "./date-picker";
+import { SiteIcon } from "@/components/site-icon";
 
 type Mode = "property" | "stay" | "event";
 const TABS: Record<string, { label: string; params: Record<string, string>; mode: Mode }> = {
@@ -38,7 +39,7 @@ function Seg({ label, value, placeholder, active, onClick, className = "", onCle
         <span className={"block truncate text-sm " + (value ? "font-medium text-ink" : "text-slate-400")}>{value || placeholder}</span>
       </button>
       {value && onClear && active ? (
-        <button type="button" aria-label="Effacer" onClick={onClear} className="absolute right-3 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full bg-slate-200 text-xs text-slate-600 hover:bg-slate-300">✕</button>
+        <button type="button" aria-label="Effacer" onClick={onClear} className="absolute right-3 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full bg-slate-200 text-xs text-slate-600 hover:bg-slate-300"><SiteIcon value="✕" size={16} className="mr-1 inline-block align-[-3px]" /></button>
       ) : null}
     </div>
   );
@@ -184,7 +185,7 @@ export function HeroSearch({ tabs, placeholder, types, places = [] }: {
           {suggestions.map((p) => (
             <button key={p} type="button" onClick={() => { setQ(p); setPanel(mode === "property" ? null : mode === "stay" ? "dates" : "dates"); }}
               className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left hover:bg-slate-50">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100">📍</span>
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100"><SiteIcon value="📍" size={18} /></span>
               <span className="text-sm font-medium text-ink">{p}</span>
             </button>
           ))}

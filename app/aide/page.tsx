@@ -5,6 +5,7 @@ import { HelpSearch } from "@/components/help/help-search";
 import { HelpIcon } from "@/components/help/help-icon";
 import { HelpContact } from "@/components/help/help-contact";
 import { FaqList } from "@/components/help/faq-list";
+import { SiteIcon } from "@/components/site-icon";
 
 export const revalidate = 60;
 export const metadata: Metadata = {
@@ -51,7 +52,7 @@ export default async function HelpHome() {
             <div className="mt-6 grid gap-3 md:grid-cols-2">
               {d.popular.map((a) => (
                 <Link key={a.slug} href={`/aide/article/${a.slug}`} className="flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-slate-200 transition hover:ring-brand-300">
-                  <span className="mt-0.5 text-brand-700">📘</span>
+                  <span className="mt-0.5 text-brand-700"><SiteIcon value="📘" size={18} /></span>
                   <span><span className="block font-semibold text-ink">{a.title}</span><span className="block text-sm text-muted">{a.summary}</span></span>
                 </Link>
               ))}

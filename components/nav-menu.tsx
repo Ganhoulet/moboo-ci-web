@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { safeHref, type MenuItem, type MenuStyle } from "@/lib/menus";
+import { SiteIcon } from "@/components/site-icon";
 
 type Tone = "light" | "dark";
 const ALIGN = { left: "justify-start", center: "justify-center", right: "justify-end" } as const;
@@ -25,7 +26,7 @@ const Caret = ({ open }: { open: boolean }) => (
 function SubLink({ it, close, strong = false }: { it: MenuItem; close: () => void; strong?: boolean }) {
   return (
     <A item={it} onClick={close} className="group/l flex items-start gap-3 rounded-xl px-3 py-2 transition hover:bg-slate-50">
-      {it.icon ? <span className="mt-0.5 text-lg leading-none">{it.icon}</span> : null}
+      {it.icon ? <span className="mt-0.5 text-brand-700"><SiteIcon value={it.icon} size={18} /></span> : null}
       <span className="min-w-0">
         <span className={"flex items-center text-sm text-ink group-hover/l:text-brand-800 " + (strong ? "font-semibold" : "font-medium")}>{it.label}<Badge text={it.badge} /></span>
         {it.description ? <span className="mt-0.5 block text-xs text-muted">{it.description}</span> : null}
@@ -45,7 +46,7 @@ function MegaPanel({ item, close, full }: { item: MenuItem; close: () => void; f
             col.children?.length ? (
               <div key={col.id} className="min-w-0">
                 <A item={col} onClick={close} className="mb-1 flex items-center px-3 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-ink">
-                  {col.icon ? <span className="mr-1.5 text-sm">{col.icon}</span> : null}{col.label}<Badge text={col.badge} />
+                  {col.icon ? <span className="mr-1.5 inline-block align-[-3px] text-brand-700"><SiteIcon value={col.icon} size={15} /></span> : null}{col.label}<Badge text={col.badge} />
                 </A>
                 <div>{col.children.map((l) => <SubLink key={l.id} it={l} close={close} />)}</div>
               </div>
@@ -139,7 +140,7 @@ export function NavMenu({ items, style, tone, align = "left", className = "" }: 
       {items.map((it) => {
         const has = !!it.children?.length;
         const isOpen = open === it.id;
-        const label = <>{it.icon ? <span>{it.icon}</span> : null}{it.label}<Badge text={it.badge} />{has && style.showCaret ? <Caret open={isOpen} /> : null}</>;
+        const label = <>{it.icon ? <SiteIcon value={it.icon} size={16} /> : null}{it.label}<Badge text={it.badge} />{has && style.showCaret ? <Caret open={isOpen} /> : null}</>;
         if (it.highlight) {
           return <A key={it.id} item={it} className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-accent-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-accent-700">{label}</A>;
         }
@@ -204,10 +205,10 @@ export function MobileMenu({ items, tone, className = "" }: { items: MenuItem[];
                   <div key={it.id} className="border-b border-slate-100 last:border-0">
                     {has ? (
                       <button type="button" onClick={() => setExp(exp === it.id ? null : it.id)} className="flex w-full items-center justify-between px-2 py-3.5 text-left font-semibold text-ink">
-                        <span className="flex items-center gap-2">{it.icon}{it.label}<Badge text={it.badge} /></span><Caret open={exp === it.id} />
+                        <span className="flex items-center gap-2">{it.icon ? <SiteIcon value={it.icon} size={18} className="text-brand-700" /> : null}{it.label}<Badge text={it.badge} /></span><Caret open={exp === it.id} />
                       </button>
                     ) : (
-                      <A item={it} onClick={close} className={"flex items-center gap-2 px-2 py-3.5 font-semibold " + (it.highlight ? "text-accent-700" : "text-ink")}>{it.icon}{it.label}<Badge text={it.badge} /></A>
+                      <A item={it} onClick={close} className={"flex items-center gap-2 px-2 py-3.5 font-semibold " + (it.highlight ? "text-accent-700" : "text-ink")}>{it.icon ? <SiteIcon value={it.icon} size={18} className="text-brand-700" /> : null}{it.label}<Badge text={it.badge} /></A>
                     )}
                     {has && exp === it.id ? (
                       <div className="pb-3">

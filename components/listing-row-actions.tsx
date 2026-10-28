@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { deleteListingAction, duplicateListingAction, featureListingAction, payListingAction, setListingStatusAction } from "@/app/mon-espace/actions";
+import { SiteIcon } from "@/components/site-icon";
 
 /** Menu « ⋯ » d'une annonce : modifier, voir, vendu/loué, masquer, dupliquer, supprimer. */
 export function ListingRowActions({ id, status, transaction, featured, awaitingPayment, featuredPrice = 0 }: {
@@ -56,26 +57,26 @@ export function ListingRowActions({ id, status, transaction, featured, awaitingP
       </button>
       {open ? (
         <div className="absolute right-0 top-10 z-30 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-          <Link data-action="listing.edit" href={`/mon-espace/annonces/${id}`} className={item + " sm:hidden"}>✏️ Modifier</Link>
-          {status === "ACTIVE" ? <Link href={`/annonce/${id}`} target="_blank" className={item}>👁 Voir sur le site</Link> : null}
+          <Link data-action="listing.edit" href={`/mon-espace/annonces/${id}`} className={item + " sm:hidden"}><SiteIcon value="✏" size={16} className="mr-1 inline-block align-[-3px]" />Modifier</Link>
+          {status === "ACTIVE" ? <Link href={`/annonce/${id}`} target="_blank" className={item}><SiteIcon value="👁" size={16} className="mr-1 inline-block align-[-3px]" />Voir sur le site</Link> : null}
           {status === "ACTIVE" ? (
             <>
               <button data-action="listing.status" type="button" className={item} onClick={() => run(() => setListingStatusAction(id, closed))}>
-                ✅ {transaction === "sale" ? "Marquer vendu" : "Marquer loué"}
+                <SiteIcon value="✅" size={16} className="mr-1 inline-block align-[-3px]" />{transaction === "sale" ? "Marquer vendu" : "Marquer loué"}
               </button>
-              <button data-action="listing.status" type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "DISABLED"))}>🙈 Masquer du site</button>
+              <button data-action="listing.status" type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "DISABLED"))}><SiteIcon value="🙈" size={16} className="mr-1 inline-block align-[-3px]" />Masquer du site</button>
               <button data-action="listing.feature" type="button" className={item} onClick={() => (featured ? run(() => featureListingAction(id, false)) : feature())}>{featured ? "☆ Arrêter la sponsorisation" : "⭐ Sponsoriser"}</button>
-              <Link data-action="ads.boost" href={`/mon-espace/publicite?tab=boost&annonce=${id}`} className={item}>📣 Booster par zone / vitrine</Link>
+              <Link data-action="ads.boost" href={`/mon-espace/publicite?tab=boost&annonce=${id}`} className={item}><SiteIcon value="📣" size={16} className="mr-1 inline-block align-[-3px]" />Booster par zone / vitrine</Link>
             </>
           ) : awaitingPayment ? (
-            <button type="button" className={item} onClick={() => run(() => payListingAction(id))}>💳 Payer la publication</button>
+            <button type="button" className={item} onClick={() => run(() => payListingAction(id))}><SiteIcon value="💳" size={16} className="mr-1 inline-block align-[-3px]" />Payer la publication</button>
           ) : (
-            <button data-action="listing.status" type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "ACTIVE"))}>🚀 Remettre en ligne</button>
+            <button data-action="listing.status" type="button" className={item} onClick={() => run(() => setListingStatusAction(id, "ACTIVE"))}><SiteIcon value="🚀" size={16} className="mr-1 inline-block align-[-3px]" />Remettre en ligne</button>
           )}
-          <button data-action="listing.duplicate" type="button" className={item} onClick={() => run(() => duplicateListingAction(id))}>📄 Dupliquer</button>
+          <button data-action="listing.duplicate" type="button" className={item} onClick={() => run(() => duplicateListingAction(id))}><SiteIcon value="📄" size={16} className="mr-1 inline-block align-[-3px]" />Dupliquer</button>
           <button data-action="listing.delete" type="button" className={item + " text-red-600"}
             onClick={() => { if (confirm("Supprimer cette annonce ? Elle sera retirée du site.")) run(() => deleteListingAction(id)); }}>
-            🗑 Supprimer
+            <SiteIcon value="🗑" size={16} className="mr-1 inline-block align-[-3px]" />Supprimer
           </button>
         </div>
       ) : null}

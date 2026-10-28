@@ -5,6 +5,7 @@ import { EdlForm, FoncierForm, LoyerForm, SolvencyForm } from "@/components/serv
 import { MissionForm } from "@/components/services/mission-form";
 import { MISSION_POINTS } from "@/lib/missions";
 import { getServiceZones, getSiteServices, isMissionKey, serviceBySlug, serviceHref, type ServiceKey, type ServiceTile, type ToolKey } from "@/lib/site-services";
+import { SiteIcon } from "@/components/site-icon";
 
 export const revalidate = 120;
 
@@ -42,7 +43,7 @@ export default async function ServicePage({ params }: { params: { slug: string }
         <div className="container-page grid gap-8 py-12 sm:py-16 lg:grid-cols-[1fr_1.2fr] lg:items-start">
           <div>
             <nav className="text-xs text-white/70"><Link href="/" className="hover:underline">Accueil</Link> › Services</nav>
-            <p className="mt-4 text-5xl" aria-hidden>{t.icon}</p>
+            <p className="mt-4 text-brand-800" aria-hidden><SiteIcon value={t.icon} fallback="outils" size={48} /></p>
             <h1 className="mt-3 font-display text-3xl font-black leading-tight sm:text-4xl">{t.landingTitle || t.title}</h1>
             <p className="mt-4 text-white/85">{t.landingIntro}</p>
             {t.price ? <p className="mt-4 inline-block rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold">{t.price}</p> : null}
@@ -65,7 +66,7 @@ export default async function ServicePage({ params }: { params: { slug: string }
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {others.map((o) => (
               <Link key={o.key} href={serviceHref(o.key)} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-card-hover">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-100 text-2xl">{o.icon}</span>
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-800"><SiteIcon value={o.icon} fallback="outils" size={24} /></span>
                 <span><span className="block font-display font-bold text-ink">{o.title}</span><span className="block text-sm text-muted">{o.tagline}</span>{o.price ? <span className="mt-1 block text-xs font-semibold text-brand-700">{o.price}</span> : null}</span>
               </Link>
             ))}

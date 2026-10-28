@@ -5,6 +5,7 @@ import { Faq } from "@/components/home/faq";
 import { getProStats } from "@/lib/pros";
 import { getSiteSettings } from "@/lib/settings";
 import { getSession } from "@/lib/session";
+import { SiteIcon } from "@/components/site-icon";
 
 export const metadata: Metadata = {
   title: "Publier une annonce gratuite — louer ou vendre votre bien",
@@ -82,7 +83,7 @@ export default async function PublierLanding() {
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {WHY.map((x) => (
               <div key={x.t} className="rounded-2xl border border-slate-200 p-6">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-2xl">{x.i}</span>
+                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-800"><SiteIcon value={x.i} size={24} /></span>
                 <p className="mt-4 font-display text-lg font-bold text-ink">{x.t}</p>
                 <p className="mt-1 text-sm text-muted">{x.d}</p>
               </div>
@@ -153,7 +154,7 @@ export default async function PublierLanding() {
           </div>
           <ul className="grid gap-3 sm:grid-cols-2">
             {[["📸", "5 photos ou plus, en journée, une par pièce"], ["📍", "Commune et quartier précis"], ["💰", "Un prix juste : comparez avec l’estimation de loyer"], ["📝", "Équipements, eau, électricité, accès : tout ce qui rassure"]].map(([i, t]) => (
-              <li key={t} className="flex gap-3 rounded-xl bg-white p-4 text-sm text-ink ring-1 ring-slate-200"><span className="text-xl">{i}</span>{t}</li>
+              <li key={t} className="flex gap-3 rounded-xl bg-white p-4 text-sm text-ink ring-1 ring-slate-200"><span className="text-brand-700"><SiteIcon value={i} size={20} /></span>{t}</li>
             ))}
           </ul>
         </div>

@@ -5,15 +5,16 @@ import { getSession, displayName } from "@/lib/session";
 import { PageHeader } from "@/components/dashboard-ui";
 import { VerificationForm } from "@/components/verification-form";
 import { getMyVerification, type VerificationLevel } from "../actions";
+import { SiteIcon } from "@/components/site-icon";
 
 const fr = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
 function Step({ n, title, sub, state }: { n: number; title: string; sub: string; state: "done" | "pending" | "todo" | "locked" }) {
   const badge = {
     done: ["✓ Validé", "bg-emerald-50 text-emerald-700 ring-emerald-200"],
-    pending: ["⏳ En cours d’examen", "bg-amber-50 text-amber-800 ring-amber-200"],
+    pending: ["En cours d’examen", "bg-amber-50 text-amber-800 ring-amber-200"],
     todo: ["À faire", "bg-slate-100 text-slate-700 ring-slate-200"],
-    locked: ["🔒 Après l’étape précédente", "bg-slate-50 text-slate-500 ring-slate-200"],
+    locked: ["Après l’étape précédente", "bg-slate-50 text-slate-500 ring-slate-200"],
   }[state];
   return (
     <div className="flex items-start gap-3">

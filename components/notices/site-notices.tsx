@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { trackNotice } from "@/app/notice-actions";
 import { NOTICE_TONE } from "@/lib/notice-tone";
 import { NoticeBody } from "./notice-body";
+import { SiteIcon } from "@/components/site-icon";
 
 export interface LiveNotice {
   id: string; title: string; body: string; kind: string; ctaLabel: string; ctaUrl: string; dismissible: boolean; version: string;
@@ -49,7 +50,7 @@ export function NoticeBar({ items }: { items: LiveNotice[] }) {
   return (
     <div className={tone.bar} role="status">
       <div className="container-page flex items-center gap-3 py-2 text-sm">
-        <span aria-hidden className="hidden sm:inline">{tone.icon}</span>
+        <span aria-hidden className="hidden sm:inline"><SiteIcon value={tone.icon} size={16} /></span>
         <p className="min-w-0 flex-1">
           <strong className="font-semibold">{n.title}</strong>
           {firstLine ? <span className="hidden opacity-90 md:inline"> — {firstLine.length > 140 ? firstLine.slice(0, 140) + "…" : firstLine}</span> : null}
@@ -89,7 +90,7 @@ export function NoticePopup({ items }: { items: LiveNotice[] }) {
   return (
     <div data-notice-popup className="fixed inset-0 z-[70] grid place-items-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="notice-title" onClick={() => shut(true)}>
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <span className={"inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold " + tone.chip}>{tone.icon} {tone.label}</span>
+        <span className={"inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold " + tone.chip}><SiteIcon value={tone.icon} size={13} className="-mt-0.5 mr-0.5 inline" /> {tone.label}</span>
         <h2 id="notice-title" className="mt-3 font-display text-xl font-extrabold text-ink">{n.title}</h2>
         <NoticeBody text={n.body} className="mt-2 text-sm text-slate-600" />
         <div className="mt-5 flex flex-wrap justify-end gap-2">

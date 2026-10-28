@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { publishStartHref } from "@/lib/publish-route";
+import { SiteIcon } from "@/components/site-icon";
 
 const WHO: [string, string][] = [["proprietaire", "Propriétaire"], ["agent", "Agent"], ["agence", "Agence / promoteur"]];
 const GOAL: [string, string, string][] = [["rent", "Louer", "🔑"], ["sale", "Vendre", "🏷️"], ["short", "Meublé / espace", "🛏️"]];
@@ -35,7 +36,7 @@ export function PublishStarter({ phone, loggedIn }: { phone?: string; loggedIn: 
           {GOAL.map(([k, l, i]) => (
             <button key={k} type="button" aria-pressed={goal === k} onClick={() => setGoal(k)}
               className={"rounded-2xl border p-3 text-center text-sm font-semibold transition " + (goal === k ? "border-accent-600 bg-accent-50 text-accent-800" : "border-slate-200 hover:border-slate-400")}>
-              <span className="block text-xl">{i}</span>{l}
+              <span className="mb-1 flex justify-center"><SiteIcon value={i} size={24} /></span>{l}
             </button>
           ))}
         </div>

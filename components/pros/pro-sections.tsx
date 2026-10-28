@@ -4,6 +4,7 @@ import { PRO_PAGES } from "@/lib/pro-blocks";
 import type { ProStats } from "@/lib/pros";
 import { getHelpAudience } from "@/lib/help";
 import { ProLeadForm } from "./pro-lead-form";
+import { SiteIcon } from "@/components/site-icon";
 
 /* Rendu des blocs de l'espace professionnels (façon Zillow Partners). */
 
@@ -115,7 +116,7 @@ export async function ProSection({ s, stats, slug }: { s: Section; stats: ProSta
                   {i.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={i.image} alt="" className="mb-4 h-32 w-full rounded-xl object-cover" />
-                  ) : i.icon ? <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-2xl">{i.icon}</span> : null}
+                  ) : i.icon ? <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-800"><SiteIcon value={i.icon} size={24} /></span> : null}
                   <h3 className="mt-4 font-display text-lg font-bold text-ink">{i.title}</h3>
                   <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{i.text}</p>
                   {i.href ? <span className="mt-4 inline-block text-sm font-semibold text-brand-700 group-hover:underline">{s.type === "proAudiences" ? "Découvrir →" : "En savoir plus →"}</span> : null}
@@ -164,7 +165,7 @@ export async function ProSection({ s, stats, slug }: { s: Section; stats: ProSta
             {(p.items ?? []).map((i: any, k: number) => (
               <div key={k} className={"relative flex flex-col rounded-2xl bg-white p-6 shadow-card ring-1 " + (i.badge ? "ring-2 ring-accent-500" : "ring-slate-100")}>
                 {i.badge ? <span className="absolute -top-3 left-6 rounded-full bg-accent-600 px-3 py-1 text-xs font-bold text-white">{i.badge}</span> : null}
-                <span className="text-3xl">{i.icon}</span>
+                <span className="text-brand-800"><SiteIcon value={i.icon} size={30} /></span>
                 <h3 className="mt-3 font-display text-xl font-bold text-ink">{i.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{i.text}</p>
                 {i.price ? <p className="mt-4 font-display text-lg font-extrabold text-brand-800">{i.price}</p> : null}

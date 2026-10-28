@@ -8,6 +8,7 @@ import { EmptyState, PageHeader } from "@/components/dashboard-ui";
 import { Stars } from "@/components/reviews";
 import { ReviewReply } from "@/components/pro-reviews/review-reply";
 import { CATEGORIES, type Aggregates, type AvisItem } from "@/lib/pro-reviews";
+import { SiteIcon } from "@/components/site-icon";
 
 export const metadata: Metadata = { title: "Avis clients", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -72,7 +73,7 @@ export default async function Avis() {
               {Object.keys(i.categories).length ? (
                 <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
                   {CATEGORIES.filter((c) => i.categories[c.key]).map((c) => <span key={c.key}>{c.label} <strong className="text-ink">{i.categories[c.key]}/5</strong></span>)}
-                  {i.recommande !== null ? <span className="font-semibold">{i.recommande ? "👍 Vous recommande" : "Ne recommande pas"}</span> : null}
+                  {i.recommande !== null ? <span className="font-semibold">{i.recommande ? <><SiteIcon value="👍" size={14} className="mr-1 inline-block align-[-3px]" />Vous recommande</> : "Ne recommande pas"}</span> : null}
                 </p>
               ) : null}
               {i.commentaire ? <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{i.commentaire}</p> : null}

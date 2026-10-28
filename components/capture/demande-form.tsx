@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { API_URL } from "@/lib/api";
+import { SiteIcon } from "@/components/site-icon";
 
 export type Objectif = "demande" | "estimation" | "alerte" | "rdv" | "interet";
 const TEXTS: Record<Objectif, [string, string, string]> = {
@@ -52,7 +53,7 @@ export function DemandeForm({ token, objectif, src, propertyId, propertyTitle }:
   if (state === "done") {
     return (
       <div className="py-6 text-center" role="status">
-        <p className="text-4xl" aria-hidden="true">✅</p>
+        <p className="text-4xl" aria-hidden="true"><SiteIcon value="✅" size={16} className="mr-1 inline-block align-[-3px]" /></p>
         <h1 className="mt-2 font-display text-xl font-extrabold text-ink">Merci, c’est envoyé !</h1>
         <p className="mt-1 text-sm text-slate-600">Votre conseiller vous recontacte très prochainement.</p>
       </div>
@@ -65,7 +66,7 @@ export function DemandeForm({ token, objectif, src, propertyId, propertyTitle }:
         <h1 className="font-display text-2xl font-extrabold text-ink">{titre}</h1>
         <p className="text-sm text-muted">{sousTitre}</p>
       </div>
-      {propertyId || propertyTitle ? <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">🏠 Concerne le bien : {propertyTitle || `Bien n° ${propertyId}`}</p> : null}
+      {propertyId || propertyTitle ? <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900"><SiteIcon value="🏠" size={16} className="mr-1 inline-block align-[-3px]" />Concerne le bien : {propertyTitle || `Bien n° ${propertyId}`}</p> : null}
 
       {objectif === "interet" ? (
         <>

@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/dashboard-ui";
 import { DisputePill, fcfa } from "@/components/booking-ui";
 import { DisputeReply } from "@/components/booking-dispute";
 import { getMyDispute } from "../../actions";
+import { SiteIcon } from "@/components/site-icon";
 
 export const dynamic = "force-dynamic";
 const when = (d: string) => new Date(d).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
@@ -41,7 +42,7 @@ export default async function DisputePage({ params }: { params: { id: string } }
                 <div className="mt-2 flex flex-wrap gap-2">
                   {m.files.filter((f) => f.url).map((f, i) => (
                     <a key={i} href={f.url!} target="_blank" rel="noopener noreferrer" className="block h-20 w-24 overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200">
-                      {/\.pdf(\?|$)/i.test(f.url!) ? <span className="grid h-full place-items-center text-xs">📄 PDF</span> : (
+                      {/\.pdf(\?|$)/i.test(f.url!) ? <span className="grid h-full place-items-center text-xs"><SiteIcon value="📄" size={16} className="mr-1 inline-block align-[-3px]" />PDF</span> : (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={f.url!} alt={`Pièce jointe ${i + 1}`} className="h-full w-full object-cover" />
                       )}

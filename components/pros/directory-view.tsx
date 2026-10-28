@@ -5,6 +5,7 @@ import { VerifiedBadge } from "@/components/verified-badge";
 import { searchPros, getZones, slugZone, type DirectoryPro, type DirectoryQuery, type ZoneSummary } from "@/lib/pro-reviews";
 import { breadcrumbLd, ldJson } from "@/lib/structured-data";
 import { waHref } from "@/lib/whatsapp";
+import { SiteIcon } from "@/components/site-icon";
 
 const fcfa = (n: number) => `${Math.round(n).toLocaleString("fr-FR")} FCFA`;
 
@@ -50,7 +51,7 @@ function ProCard({ p }: { p: DirectoryPro }) {
         <div className="rounded-xl bg-slate-50 px-2 py-2"><dt className="text-[11px] text-muted">Recommandent</dt><dd className="font-display text-lg font-bold text-emerald-700">{p.recommend !== null ? `${p.recommend} %` : "—"}</dd></div>
       </dl>
       {p.zones.length ? (
-        <p className="mt-3 line-clamp-2 text-sm text-slate-600">📍 {p.zones.slice(0, 5).join(" · ")}{p.zones.length > 5 ? ` +${p.zones.length - 5}` : ""}</p>
+        <p className="mt-3 line-clamp-2 text-sm text-slate-600"><SiteIcon value="📍" size={16} className="mr-1 inline-block align-[-3px]" />{p.zones.slice(0, 5).join(" · ")}{p.zones.length > 5 ? ` +${p.zones.length - 5}` : ""}</p>
       ) : null}
       <div className="mt-auto flex gap-2 pt-4">
         <Link href={p.href} className="btn-primary flex-1 bg-brand-800 py-2 text-center text-sm hover:bg-brand-900">Voir le profil</Link>
@@ -100,11 +101,11 @@ export async function DirectoryView({ base, query, zoneLabel, summary }: { base:
           )}
           <form action="/agents-immobiliers" method="get" className="mt-6 grid max-w-4xl gap-2 rounded-2xl bg-white p-2 text-ink shadow-xl sm:grid-cols-[1.3fr_1fr_auto_auto]">
             <label className="flex items-center gap-2 rounded-xl px-3">
-              <span aria-hidden="true">📍</span>
+              <span aria-hidden="true"><SiteIcon value="📍" size={16} className="mr-1 inline-block align-[-3px]" /></span>
               <input name="zone" list="dir-zones" defaultValue={place ?? query.zone ?? ""} placeholder="Commune, quartier ou ville" className="w-full py-3 outline-none" aria-label="Zone" />
             </label>
             <label className="flex items-center gap-2 rounded-xl px-3 sm:border-l sm:border-slate-200">
-              <span aria-hidden="true">🔎</span>
+              <span aria-hidden="true"><SiteIcon value="🔎" size={16} className="mr-1 inline-block align-[-3px]" /></span>
               <input name="q" defaultValue={query.q ?? ""} placeholder="Nom de l’agent ou de l’agence" className="w-full py-3 outline-none" aria-label="Nom" />
             </label>
             <select name="type" defaultValue={type} className="rounded-xl bg-slate-50 px-3 py-3 text-sm font-medium outline-none" aria-label="Type">
@@ -126,9 +127,9 @@ export async function DirectoryView({ base, query, zoneLabel, summary }: { base:
                 className={`rounded-full px-4 py-1.5 text-sm font-semibold ${type === t.v ? "bg-brand-800 text-white" : "bg-white text-slate-700 shadow-card hover:text-brand-800"}`}>{t.l}</Link>
             ))}
             <Link href={href(base, query, { verified: query.verified === "1" ? "" : "1", page: "" })}
-              className={`rounded-full px-4 py-1.5 text-sm font-semibold ${query.verified === "1" ? "bg-emerald-700 text-white" : "bg-white text-slate-700 shadow-card hover:text-brand-800"}`}>✓ Vérifiés</Link>
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold ${query.verified === "1" ? "bg-emerald-700 text-white" : "bg-white text-slate-700 shadow-card hover:text-brand-800"}`}><SiteIcon value="✓" size={16} className="mr-1 inline-block align-[-3px]" />Vérifiés</Link>
             <Link href={href(base, query, { minRating: query.minRating === "4" ? "" : "4", page: "" })}
-              className={`rounded-full px-4 py-1.5 text-sm font-semibold ${query.minRating === "4" ? "bg-amber-500 text-white" : "bg-white text-slate-700 shadow-card hover:text-brand-800"}`}>★ 4 et plus</Link>
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold ${query.minRating === "4" ? "bg-amber-500 text-white" : "bg-white text-slate-700 shadow-card hover:text-brand-800"}`}><SiteIcon value="★" size={16} className="mr-1 inline-block align-[-3px]" />4 et plus</Link>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="text-muted">Trier :</span>

@@ -9,6 +9,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { getTaxonomies, typeLabel } from "@/lib/taxonomies";
 import { MobooLogo } from "@/components/logo";
 import { PrintButton } from "@/components/print-button";
+import { SiteIcon } from "@/components/site-icon";
 
 export const metadata: Metadata = { robots: { index: false } };
 
@@ -95,14 +96,14 @@ export default async function PrintListing({ params }: { params: { id: string } 
           )}
           <div className="min-w-0 space-y-0.5 text-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{contact.role}</p>
-            <p className="flex items-center gap-2 font-bold text-ink"><span aria-hidden>👤</span>{contact.name}</p>
+            <p className="flex items-center gap-2 font-bold text-ink"><span aria-hidden><SiteIcon value="👤" size={16} className="mr-1 inline-block align-[-3px]" /></span>{contact.name}</p>
             {contact.phone || contact.whatsapp ? (
               <p className="flex flex-wrap items-center gap-x-4 gap-y-0.5 font-semibold">
-                {contact.phone ? <span><span aria-hidden>📞</span> {contact.phone}</span> : null}
+                {contact.phone ? <span><span aria-hidden><SiteIcon value="📞" size={16} className="mr-1 inline-block align-[-3px]" /></span> {contact.phone}</span> : null}
                 {contact.whatsapp && contact.whatsapp !== contact.phone ? <span>WhatsApp : {contact.whatsapp}</span> : contact.whatsapp ? <span className="text-slate-500">(WhatsApp)</span> : null}
               </p>
             ) : null}
-            {contact.email ? <p><span aria-hidden>✉️</span> {contact.email}</p> : null}
+            {contact.email ? <p><span aria-hidden><SiteIcon value="✉" size={16} className="mr-1 inline-block align-[-3px]" /></span> {contact.email}</p> : null}
           </div>
         </section>
       ) : null}
@@ -129,7 +130,7 @@ export default async function PrintListing({ params }: { params: { id: string } 
         <section className="mt-6 break-inside-avoid">
           <h2 className="border-b border-slate-200 pb-1 font-display text-lg font-bold">Équipements</h2>
           <ul className="mt-3 grid grid-cols-2 gap-1.5 text-sm sm:grid-cols-3">
-            {l.features.map((f) => <li key={f}>✓ {f}</li>)}
+            {l.features.map((f) => <li key={f}><SiteIcon value="✓" size={16} className="mr-1 inline-block align-[-3px]" />{f}</li>)}
           </ul>
         </section>
       ) : null}

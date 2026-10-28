@@ -19,6 +19,7 @@ import { ListingTabs } from "@/components/pro-page/listing-tabs";
 import { ContactForm } from "@/components/pro-page/contact-card";
 import { VideoPlayer } from "@/components/pro-page/video-player";
 import { waHref, waMessage } from "@/lib/whatsapp";
+import { SiteIcon } from "@/components/site-icon";
 
 export const revalidate = 60;
 
@@ -213,7 +214,7 @@ export default async function ProPage({ params }: { params: { username: string }
                 ) : null}
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                  {p.phone ? <a href={`tel:${p.phone}`} className="flex items-center justify-center gap-2 rounded-xl border border-ink py-2.5 text-sm font-bold text-ink transition hover:bg-slate-50">📞 Appeler</a> : null}
+                  {p.phone ? <a href={`tel:${p.phone}`} className="flex items-center justify-center gap-2 rounded-xl border border-ink py-2.5 text-sm font-bold text-ink transition hover:bg-slate-50"><SiteIcon value="📞" size={16} className="mr-1 inline-block align-[-3px]" />Appeler</a> : null}
                   {waLink ? <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-2.5 text-sm font-bold text-white transition hover:brightness-105">WhatsApp</a> : null}
                 </div>
 
@@ -313,7 +314,7 @@ export default async function ProPage({ params }: { params: { username: string }
             {zones.length ? (
               <Section title="Zones d’intervention">
                 <ul className="flex flex-wrap gap-2">
-                  {zones.map((z) => <li key={z}><Link href={`/agents-immobiliers/${slugZone(z)}`} className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-ink transition hover:border-ink hover:bg-slate-50">📍 {z}</Link></li>)}
+                  {zones.map((z) => <li key={z}><Link href={`/agents-immobiliers/${slugZone(z)}`} className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-ink transition hover:border-ink hover:bg-slate-50"><SiteIcon value="📍" size={16} className="mr-1 inline-block align-[-3px]" />{z}</Link></li>)}
                 </ul>
               </Section>
             ) : null}

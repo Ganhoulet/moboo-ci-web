@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SiteIcon } from "@/components/site-icon";
 
 /**
  * Rendu du texte des articles d'aide (sans HTML : pas d'injection possible).
@@ -62,7 +63,7 @@ export function HelpBody({ body, compact = false }: { body: string; compact?: bo
       const warn = /^attention/i.test(text);
       nodes.push(
         <div key={k} className={"my-5 flex gap-3 rounded-xl p-4 text-sm " + (warn ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200" : "bg-brand-50 text-brand-900 ring-1 ring-brand-100")}>
-          <span aria-hidden className="text-lg leading-5">{warn ? "⚠️" : "💡"}</span>
+          <span aria-hidden className="mt-0.5"><SiteIcon value={warn ? "attention" : "ampoule"} size={18} /></span>
           <p>{inline(text, k)}</p>
         </div>,
       );

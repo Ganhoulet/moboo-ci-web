@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { readAllNotices, trackNotice } from "@/app/notice-actions";
 import { NOTICE_TONE } from "@/lib/notice-tone";
 import { NoticeBody } from "./notice-body";
+import { SiteIcon } from "@/components/site-icon";
 
 interface Item { id: string; title: string; body: string; kind: string; ctaLabel: string; ctaUrl: string; dismissible: boolean; date: string; personal?: boolean; read?: boolean }
 
@@ -32,7 +33,7 @@ export function InfoList({ items }: { items: Item[] }) {
         return (
           <li key={n.id} className={"rounded-2xl bg-white p-5 shadow-card " + (n.read ? "" : "ring-2 ring-accent-200")}>
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className={"rounded-full px-2.5 py-1 font-bold " + tone.chip}>{tone.icon} {n.personal ? "Pour vous" : tone.label}</span>
+              <span className={"rounded-full px-2.5 py-1 font-bold " + tone.chip}><SiteIcon value={tone.icon} size={13} className="-mt-0.5 mr-0.5 inline" /> {n.personal ? "Pour vous" : tone.label}</span>
               {!n.read ? <span className="rounded-full bg-accent-600 px-2 py-0.5 font-bold text-white">Nouveau</span> : null}
               <span className="text-muted">{when(n.date)}</span>
               {n.dismissible ? (

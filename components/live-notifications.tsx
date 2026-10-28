@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { SiteIcon } from "@/components/site-icon";
 
 /** Compteur (+ ticket du flux si demandé) via la route /api/live. */
 async function fetchLive(ticket: boolean): Promise<{ unread: number; ticket?: string; url?: string } | null> {
@@ -181,7 +182,7 @@ export function NotificationPermission() {
   return (
     <button type="button" onClick={async () => setState(await Notification.requestPermission())}
       className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-slate-50">
-      🔔 Me prévenir des nouveaux messages
+      <SiteIcon value="🔔" size={16} className="mr-1 inline-block align-[-3px]" />Me prévenir des nouveaux messages
     </button>
   );
 }

@@ -15,13 +15,14 @@ import { LoanCalculator } from "./calculator";
 import { Faq } from "./faq";
 import { img as optimized, imgProps } from "@/lib/img";
 import { getSiteServices, serviceHref } from "@/lib/site-services";
+import { SiteIcon } from "@/components/site-icon";
 const imgSmall = (u: string | null | undefined) => optimized(u, 320);
 
 type P = Record<string, any>;
 const BG: Record<string, string> = { white: "bg-white", soft: "bg-slate-50", brand: "bg-brand-900 text-white" };
 const TYPE_ICON: Record<string, string> = {
-  appartement: "🏢", maison: "🏠", villa: "🏡", studio: "🛋️", duplex: "🏘️", terrain: "🌳", bureau: "💼",
-  magasin: "🏪", entrepot: "🏭", immeuble: "🏙️", autre: "✨",
+  appartement: "appartement", maison: "maison", villa: "villa", studio: "canape", duplex: "residence", terrain: "terrain", bureau: "bureau",
+  magasin: "magasin", entrepot: "entrepot", immeuble: "ville", autre: "maison",
 };
 
 function Head({ title, subtitle, href, dark }: { title?: string; subtitle?: string; href?: string; dark?: boolean }) {
@@ -127,11 +128,11 @@ function Categories({ s, data, edit }: { s: Section; data: HomeData; edit?: bool
   const items = manual
     ? (p.items as P[]).filter((x) => x.type || x.href).map((x) => ({
         key: `${x.type}-${x.label}`, label: x.label || niceLabel(x.type, count.get(x.type)?.label ?? ""),
-        icon: x.icon || TYPE_ICON[x.type] || "🏠", image: x.image as string | undefined,
+        icon: x.icon || TYPE_ICON[x.type] || "maison", image: x.image as string | undefined,
         count: count.get(x.type)?.count ?? 0, href: x.href || `/annonces?propertyType=${encodeURIComponent(x.type)}`,
       }))
     : (want.length ? want.map((w) => count.get(w)).filter(Boolean) as HomeData["types"] : data.types).filter((t) => t.count > 0).map((t) => ({
-        key: t.slug, label: niceLabel(t.slug, t.label), icon: TYPE_ICON[t.slug] ?? "🏠", image: undefined as string | undefined,
+        key: t.slug, label: niceLabel(t.slug, t.label), icon: TYPE_ICON[t.slug] ?? "maison", image: undefined as string | undefined,
         count: t.count, href: `/annonces?propertyType=${encodeURIComponent(t.slug)}`,
       }));
   if (!items.length) return null;
@@ -152,7 +153,8 @@ function Categories({ s, data, edit }: { s: Section; data: HomeData; edit?: bool
               <img src={t.image} alt="" className={"rounded-2xl object-cover " + ({ lg: "h-20 w-20", md: "h-14 w-14", sm: "h-11 w-11" } as const)[size]} />
             ) : (
               <span className={"grid place-items-center rounded-2xl transition group-hover:scale-110 " + (dark ? "bg-white/15 " : "bg-slate-50 group-hover:bg-brand-50 ") +
-                ({ lg: "h-20 w-20 text-4xl", md: "h-14 w-14 text-3xl", sm: "h-11 w-11 text-2xl" } as const)[size]}>{t.icon}</span>
+                (dark ? "text-white " : "text-brand-800 ") + ({ lg: "h-20 w-20", md: "h-14 w-14", sm: "h-11 w-11" } as const)[size]}>
+                <SiteIcon value={t.icon} size={({ lg: 38, md: 28, sm: 22 } as const)[size]} /></span>
             )}
             <span className={"mt-3 w-full truncate font-semibold " + (dark ? "text-white " : "text-ink ") + ({ lg: "text-base", md: "text-sm", sm: "text-[13px]" } as const)[size]}>{t.label}</span>
             {p.showCount !== false && t.count ? (
@@ -180,7 +182,7 @@ function QuickStart({ s, edit }: { s: Section; edit?: boolean }) {
             {x.image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img {...imgProps(x.image, { width: 480, sizes: "(min-width: 1024px) 25vw, 100vw" })} alt="" loading="lazy" decoding="async" className="mb-4 h-32 w-full rounded-xl object-cover" />
-            ) : <span className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-2xl">{x.icon || "🏠"}</span>}
+            ) : <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-800"><SiteIcon value={x.icon} size={24} /></span>}
             <p className="mt-4 font-display text-lg font-bold text-ink">{x.title}</p>
             <p className="mt-1 text-sm text-muted">{x.text}</p>
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-ink underline decoration-slate-300 underline-offset-4 group-hover:decoration-ink">Découvrir →</span>
@@ -263,7 +265,7 @@ function PropertyTypes({ s, data, edit }: { s: Section; data: HomeData; edit?: b
             {x.image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img {...imgProps(x.image, { width: 640, sizes: "(min-width: 1024px) 33vw, 100vw" })} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-            ) : <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-brand-700 to-brand-900 text-6xl">{TYPE_ICON[x.type] ?? "🏠"}</div>}
+            ) : <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-brand-700 to-brand-900 text-white/90"><SiteIcon value={TYPE_ICON[x.type] ?? "maison"} size={64} /></div>}
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
               <p className="font-display text-lg font-bold">{x.t?.label ?? x.type}</p>
               <p className="text-sm text-white/80">{x.t?.count ?? 0} annonce{(x.t?.count ?? 0) > 1 ? "s" : ""}</p>
@@ -474,7 +476,7 @@ function Articles({ s, edit }: { s: Section; edit?: boolean }) {
               {x.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img {...imgProps(x.image, { width: 480, sizes: "(min-width: 1024px) 25vw, 50vw" })} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-              ) : <div className="grid h-full place-items-center text-4xl">📰</div>}
+              ) : <div className="grid h-full place-items-center text-slate-400"><SiteIcon value="journal" size={44} /></div>}
             </div>
             {x.tag ? <p className="mt-3 text-xs font-bold uppercase tracking-wider text-accent-700">{x.tag}</p> : null}
             <p className="mt-1 font-semibold text-ink group-hover:underline">{x.title}</p>
@@ -551,7 +553,7 @@ async function ServicesRow({ s, edit }: { s: Section; edit?: boolean }) {
         {items.map((x) => (
           <Link key={x.key} href={serviceHref(x.key)} data-service={x.key}
             className="group flex w-[var(--m-card,78%)] shrink-0 snap-start flex-col rounded-2xl border border-slate-200 bg-white p-5 text-ink transition hover:-translate-y-0.5 hover:shadow-card-hover sm:w-[45%] lg:w-[calc(25%-15px)]">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-2xl">{x.icon}</span>
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-800"><SiteIcon value={x.icon} fallback="outils" size={24} /></span>
             <span className="mt-4 font-display text-lg font-bold">{x.title}</span>
             <span className="mt-1 flex-1 text-sm text-muted">{x.tagline}</span>
             {p.showPrice !== false && x.price ? <span className="mt-3 text-xs font-semibold text-brand-700">{x.price}</span> : null}

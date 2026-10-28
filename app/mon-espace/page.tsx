@@ -5,6 +5,7 @@ import { EmptyState, HostApps, StatCard, ViewsChart, fmtXOF } from "@/components
 import { listSearches } from "@/app/compte/searches-actions";
 import { OpportunityCard } from "@/components/opportunity-card";
 import { getStats, listAccountFavorites, listMyInquiries, listMyListings } from "./actions";
+import { SiteIcon } from "@/components/site-icon";
 
 export default async function EspaceHome({ searchParams }: { searchParams: { bienvenue?: string } }) {
   const account = getSession()!;
@@ -16,7 +17,7 @@ export default async function EspaceHome({ searchParams }: { searchParams: { bie
       {searchParams.bienvenue ? (
         <div className="animate-[stepIn_.35s_ease-out] rounded-3xl bg-gradient-to-br from-accent-500 to-accent-700 p-6 text-white shadow-card">
           <p className="font-display text-2xl font-extrabold">
-            Bienvenue sur Moboo.ci{account.firstName ? `, ${account.firstName}` : ""} ! 🎉
+            Bienvenue sur Moboo.ci{account.firstName ? `, ${account.firstName}` : ""} !
           </p>
           <p className="mt-2 max-w-lg text-white/90">{WELCOME_NEXT[type].text}</p>
           {WELCOME_NEXT[type].cta ? (
@@ -28,7 +29,7 @@ export default async function EspaceHome({ searchParams }: { searchParams: { bie
         </div>
       ) : (
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">{hello} 👋</h1>
+          <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">{hello}</h1>
           <p className="mt-1 text-sm text-muted">Voici l'essentiel de votre activité sur Moboo.ci.</p>
         </div>
       )}

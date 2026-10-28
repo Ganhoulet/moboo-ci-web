@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { helpFeedbackAction, helpViewAction } from "@/app/aide/actions";
+import { SiteIcon } from "@/components/site-icon";
 
 /** « Cet article vous a-t-il aidé ? » + comptage de la lecture (une fois par jour). */
 export function HelpFeedback({ slug }: { slug: string }) {
@@ -22,12 +23,12 @@ export function HelpFeedback({ slug }: { slug: string }) {
         <>
           <p className="font-semibold text-ink">Cet article vous a-t-il aidé ?</p>
           <div className="mt-3 flex justify-center gap-3">
-            <button type="button" onClick={() => vote(true)} className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-ink ring-1 ring-slate-300 hover:bg-emerald-50 hover:ring-emerald-300">👍 Oui</button>
-            <button type="button" onClick={() => vote(false)} className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-ink ring-1 ring-slate-300 hover:bg-red-50 hover:ring-red-300">👎 Non</button>
+            <button type="button" onClick={() => vote(true)} className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-ink ring-1 ring-slate-300 hover:bg-emerald-50 hover:ring-emerald-300"><SiteIcon value="👍" size={16} className="mr-1 inline-block align-[-3px]" />Oui</button>
+            <button type="button" onClick={() => vote(false)} className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-ink ring-1 ring-slate-300 hover:bg-red-50 hover:ring-red-300"><SiteIcon value="👎" size={16} className="mr-1 inline-block align-[-3px]" />Non</button>
           </div>
         </>
       ) : done ? (
-        <p className="font-semibold text-emerald-700">Merci pour votre retour ! 🙏</p>
+        <p className="font-semibold text-emerald-700">Merci pour votre retour !</p>
       ) : (
         <p className="text-sm text-slate-700"><strong>Merci, nous allons améliorer cet article.</strong> Besoin d’aide tout de suite ? Contactez-nous ci-dessous.</p>
       )}

@@ -62,7 +62,7 @@ export function ProReviewForm({ refId, path, qualities, initial, certified }: { 
       <div>
         <p className="text-sm font-semibold text-ink">Recommandez-vous ce professionnel ?</p>
         <div className="mt-2 flex gap-2">
-          {[{ v: true, l: "👍 Oui" }, { v: false, l: "Non" }].map((o) => (
+          {[{ v: true, l: "Oui" }, { v: false, l: "Non" }].map((o) => (
             <button key={String(o.v)} type="button" onClick={() => setRecommend(o.v)} aria-pressed={recommend === o.v}
               className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${recommend === o.v ? "border-brand-800 bg-brand-800 text-white" : "border-slate-300 text-slate-700 hover:border-brand-700"}`}>{o.l}</button>
           ))}

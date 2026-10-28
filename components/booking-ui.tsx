@@ -1,4 +1,5 @@
 import type { Stage } from "@/app/mon-espace/reservations/actions";
+import { SiteIcon } from "@/components/site-icon";
 
 export const fcfa = (n: number) => `${Math.round(n).toLocaleString("fr-FR")} FCFA`;
 export const frDay = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
@@ -12,10 +13,10 @@ const STAGE_CLS: Record<Stage, string> = {
   cancelled: "bg-red-50 text-red-700 ring-red-200",
   no_show: "bg-red-50 text-red-700 ring-red-200",
 };
-const STAGE_ICON: Record<Stage, string> = { requested: "⏳", accepted: "💳", confirmed: "✓", ongoing: "🏠", completed: "✓", cancelled: "✕", no_show: "✕" };
+const STAGE_ICON: Record<Stage, string> = { requested: "calendrier", accepted: "carte_bancaire", confirmed: "succes", ongoing: "maison", completed: "succes", cancelled: "alerte", no_show: "alerte" };
 
 export function StagePill({ stage, label }: { stage: Stage; label: string }) {
-  return <span className={"inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 " + STAGE_CLS[stage]}><span aria-hidden="true">{STAGE_ICON[stage]}</span>{label}</span>;
+  return <span className={"inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 " + STAGE_CLS[stage]}><SiteIcon value={STAGE_ICON[stage]} size={13} />{label}</span>;
 }
 
 export const DISPUTE_CLS: Record<string, string> = {

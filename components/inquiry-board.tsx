@@ -6,6 +6,7 @@ import { INQUIRY_STEPS } from "@/lib/accounts";
 import { openInquiryConversationAction, updateInquiryAction, type Inquiry } from "@/app/mon-espace/actions";
 import { USER_TYPES } from "@/lib/api";
 import { waNumber } from "@/lib/whatsapp";
+import { SiteIcon } from "@/components/site-icon";
 const USER_TYPE_LABEL = Object.fromEntries(USER_TYPES);
 
 /**
@@ -95,15 +96,15 @@ function Card({ q, compact, open, onToggle, onPatch }: {
           <span className="shrink-0 text-[11px] text-muted">{date}</span>
         </div>
         <p className="truncate text-xs text-muted">
-          {q.kind === "visit" ? `🗓 Visite${q.preferredDate ? ` · ${q.preferredDate}` : ""}` : "💬 Contact"} · {q.listingTitle ?? "Votre profil"}
+          {q.kind === "visit" ? <><SiteIcon value="🗓" size={16} className="mr-1 inline-block align-[-3px]" />Visite{q.preferredDate ? ` · ${q.preferredDate}` : ""}</> : <><SiteIcon value="💬" size={16} className="mr-1 inline-block align-[-3px]" />Contact</>} · {q.listingTitle ?? "Votre profil"}
         </p>
         {q.userType || q.source === "app" ? (
           <p className="mt-1 flex flex-wrap gap-1">
             {q.userType ? <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-800">{USER_TYPE_LABEL[q.userType] ?? q.userType}</span> : null}
-            {q.source === "app" ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">📱 Application</span> : null}
+            {q.source === "app" ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"><SiteIcon value="📱" size={16} className="mr-1 inline-block align-[-3px]" />Application</span> : null}
           </p>
         ) : null}
-        {!open && q.note ? <p className="mt-1 truncate text-xs italic text-slate-500">📝 {q.note}</p> : null}
+        {!open && q.note ? <p className="mt-1 truncate text-xs italic text-slate-500"><SiteIcon value="📝" size={16} className="mr-1 inline-block align-[-3px]" />{q.note}</p> : null}
       </button>
 
       {open ? (
@@ -111,11 +112,11 @@ function Card({ q, compact, open, onToggle, onPatch }: {
           {q.message ? <p className="whitespace-pre-line text-sm text-slate-600">{q.message}</p> : null}
           <button data-action="inquiry.chat" type="button" onClick={openChat} disabled={opening}
             className="btn-primary w-full bg-brand-800 py-2 text-sm hover:bg-brand-900 disabled:opacity-60">
-            {opening ? "Ouverture…" : "💬 Répondre dans Messages"}
+            {opening ? "Ouverture…" : <><SiteIcon value="💬" size={16} className="mr-1 inline-block align-[-3px]" />Répondre dans Messages</>}
           </button>
           {chatError ? <p className="text-xs font-medium text-red-600">{chatError}</p> : null}
           <div className="flex flex-wrap gap-2">
-            <a href={`tel:${q.phone}`} className="rounded-full bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white">📞 Appeler</a>
+            <a href={`tel:${q.phone}`} className="rounded-full bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white"><SiteIcon value="📞" size={16} className="mr-1 inline-block align-[-3px]" />Appeler</a>
             <a href={`https://wa.me/${wa}?text=${encodeURIComponent(`Bonjour ${q.name}, suite à votre demande sur Moboo.ci concernant « ${q.listingTitle ?? "votre recherche"} »…`)}`}
               target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#25D366] px-3 py-1.5 text-xs font-semibold text-white">WhatsApp</a>
             {q.email ? <a href={`mailto:${q.email}`} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-ink">E-mail</a> : null}

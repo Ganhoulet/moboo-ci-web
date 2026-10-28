@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { missionRequestAction } from "@/app/services-actions";
 import { MISSION_FIELDS } from "@/lib/missions";
 import type { MissionKey } from "@/lib/site-services";
+import { SiteIcon } from "@/components/site-icon";
 
 const input = "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100";
 const label = "mb-1 block text-xs font-semibold text-slate-600";
@@ -21,7 +22,7 @@ export function MissionForm({ service, price }: { service: MissionKey; price: st
   if (done != null) {
     return (
       <div className="rounded-2xl bg-emerald-50 p-8 text-center">
-        <p className="text-4xl">✅</p>
+        <p className="text-4xl"><SiteIcon value="✅" size={16} className="mr-1 inline-block align-[-3px]" /></p>
         <p className="mt-3 font-display text-xl font-bold text-ink">Demande n° {done} enregistrée</p>
         <p className="mt-1 text-slate-600">Un agent Moboo vous appelle au {f.phone} pour organiser la mission.</p>
       </div>
@@ -30,7 +31,7 @@ export function MissionForm({ service, price }: { service: MissionKey; price: st
   return (
     <form onSubmit={(e) => { e.preventDefault(); if (f.website) return; setErr(null); start(async () => { const r = await missionRequestAction(service, { ...f, details: d }); if (r.ok) setDone(Number(r.data?.id) || 0); else setErr(r.error); }); }}
       className="grid gap-4 sm:grid-cols-2">
-      {price ? <p className="rounded-xl bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-900 sm:col-span-2">💳 {price}</p> : null}
+      {price ? <p className="rounded-xl bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-900 sm:col-span-2"><SiteIcon value="💳" size={16} className="mr-1 inline-block align-[-3px]" />{price}</p> : null}
       <div><label className={label} htmlFor="ms-name">Nom et prénom *</label><input id="ms-name" required value={f.full_name} onChange={set("full_name")} className={input} autoComplete="name" /></div>
       <div><label className={label} htmlFor="ms-phone">Téléphone (WhatsApp) *</label><input id="ms-phone" required value={f.phone} onChange={set("phone")} inputMode="tel" className={input} autoComplete="tel" /></div>
       <div><label className={label} htmlFor="ms-commune">Commune / ville du bien *</label><input id="ms-commune" required value={f.commune} onChange={set("commune")} placeholder="Ex. Cocody" className={input} /></div>

@@ -1,4 +1,5 @@
 import type { SiteSettings } from "@/lib/settings";
+import { SiteIcon } from "@/components/site-icon";
 
 /** Barre du haut (réglage « En-têtes et barre du haut »). */
 export function TopBar({ h }: { h: SiteSettings["header"] }) {
@@ -12,7 +13,7 @@ export function TopBar({ h }: { h: SiteSettings["header"] }) {
       <div className="container-page flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-1 py-1.5">
         <p className="min-w-0 font-medium">{h.topBarText}</p>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          {h.topBarPhone ? <a href={`tel:${h.topBarPhone}`} className="hover:text-white">📞 {h.topBarPhone}</a> : null}
+          {h.topBarPhone ? <a href={`tel:${h.topBarPhone}`} className="hover:text-white"><SiteIcon value="📞" size={16} className="mr-1 inline-block align-[-3px]" />{h.topBarPhone}</a> : null}
           {wa ? <a href={`https://wa.me/${wa.startsWith("225") ? wa : `225${wa}`}`} target="_blank" rel="noopener noreferrer" className="hover:text-white">WhatsApp</a> : null}
           {h.topBarEmail ? <a href={`mailto:${h.topBarEmail}`} className="hidden hover:text-white sm:inline">{h.topBarEmail}</a> : null}
           {socials.map(([name, url]) => (

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { EmptyState, PageHeader } from "@/components/dashboard-ui";
 import { DisputePill, StagePill, fcfa, frDay } from "@/components/booking-ui";
 import { listMyBookings } from "./actions";
+import { SiteIcon } from "@/components/site-icon";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function MyBookings() {
         {b.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={b.photo} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-        ) : <span className="grid h-full place-items-center text-2xl" aria-hidden="true">{b.kind === "stay" ? "🏠" : "🎉"}</span>}
+        ) : <span className="grid h-full place-items-center text-slate-400" aria-hidden="true"><SiteIcon value={b.kind === "stay" ? "lit" : "etoile"} size={28} /></span>}
       </span>
       <span className="min-w-0 flex-1 space-y-1">
         <span className="flex flex-wrap items-center gap-2">

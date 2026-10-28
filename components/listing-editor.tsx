@@ -8,6 +8,7 @@ import { saveListingAction, uploadImageAction } from "@/app/mon-espace/actions";
 import { ListingVideoCard, uploadListingVideo } from "@/components/listing-video-card";
 import type { ListingVideo } from "@/app/mon-espace/video-actions";
 import { BUILTIN_FIELDS, fieldView, visibleSteps, type CustomField, type ListingFormConfig, type StepId } from "@/lib/listing-form";
+import { SiteIcon } from "@/components/site-icon";
 
 const NO_FORM: ListingFormConfig = { steps: {}, fields: {}, custom: [] };
 const AREA_UNITS = ["m²", "ha", "are", "lot"];
@@ -398,7 +399,7 @@ export function ListingEditor({
                       <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="rounded bg-white/90 px-1.5 text-xs font-bold disabled:opacity-40">◀</button>
                       <button type="button" onClick={() => move(i, 1)} disabled={i === d.photos.length - 1} className="rounded bg-white/90 px-1.5 text-xs font-bold disabled:opacity-40">▶</button>
                     </span>
-                    <button type="button" onClick={() => set({ photos: d.photos.filter((p) => p !== src) })} className="rounded bg-red-600 px-1.5 text-xs font-bold text-white">✕</button>
+                    <button type="button" onClick={() => set({ photos: d.photos.filter((p) => p !== src) })} className="rounded bg-red-600 px-1.5 text-xs font-bold text-white"><SiteIcon value="✕" size={16} className="mr-1 inline-block align-[-3px]" /></button>
                   </div>
                 </div>
               ))}
@@ -426,7 +427,7 @@ export function ListingEditor({
                   </p>
                   {videoFile ? (
                     <p className="mt-2 flex items-center gap-3 text-sm">
-                      <span className="truncate font-medium text-ink">🎬 {videoFile.name} · {(videoFile.size / 1024 / 1024).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} Mo</span>
+                      <span className="truncate font-medium text-ink"><SiteIcon value="🎬" size={16} className="mr-1 inline-block align-[-3px]" />{videoFile.name} · {(videoFile.size / 1024 / 1024).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} Mo</span>
                       <button type="button" className="font-semibold text-red-600" onClick={() => setVideoFile(null)}>Retirer</button>
                     </p>
                   ) : (
@@ -471,7 +472,7 @@ export function ListingEditor({
                   <div key={i} className="flex gap-2">
                     <input className="input" value={a.title} maxLength={60} placeholder="Ex. Eau" onChange={(e) => setExtra(i, { title: e.target.value })} />
                     <input className="input" value={a.value} maxLength={160} placeholder="Ex. Forage + SODECI" onChange={(e) => setExtra(i, { value: e.target.value })} />
-                    <button type="button" aria-label="Retirer" className="shrink-0 rounded-lg px-3 text-red-600 ring-1 ring-red-200" onClick={() => set({ additional: d.additional.filter((_, j) => j !== i) })}>✕</button>
+                    <button type="button" aria-label="Retirer" className="shrink-0 rounded-lg px-3 text-red-600 ring-1 ring-red-200" onClick={() => set({ additional: d.additional.filter((_, j) => j !== i) })}><SiteIcon value="✕" size={16} className="mr-1 inline-block align-[-3px]" /></button>
                   </div>
                 ))}
               </div>
@@ -521,7 +522,7 @@ export function ListingEditor({
                 onChange={(e) => { setMapsLink(e.target.value); const p = parseCoords(e.target.value); if (p) set({ latitude: p[0], longitude: p[1] }); }} />
               {d.latitude != null && d.longitude != null ? (
                 <p className="mt-1 flex items-center gap-2 text-xs text-emerald-700">
-                  ✓ Position enregistrée ({d.latitude.toFixed(4)}, {d.longitude.toFixed(4)})
+                  <SiteIcon value="✓" size={16} className="mr-1 inline-block align-[-3px]" />Position enregistrée ({d.latitude.toFixed(4)}, {d.longitude.toFixed(4)})
                   <button type="button" className="font-semibold text-red-600" onClick={() => { set({ latitude: null, longitude: null }); setMapsLink(""); }}>Retirer</button>
                 </p>
               ) : mapsLink ? <p className="mt-1 text-xs text-amber-700">Lien court non reconnu : ouvrez-le puis copiez l'adresse complète de la page.</p> : null}
@@ -767,11 +768,11 @@ function ShortStayNotice({ soft }: { soft?: boolean }) {
       </p>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <a href="https://resi.moboo.ci/telecharger" target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-200 hover:ring-brand-600">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-800 text-white">🛏</span>
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-800 text-white"><SiteIcon value="🛏" size={18} /></span>
           <span><span className="block text-sm font-bold text-ink">Résidence meublée</span><span className="block text-xs text-muted">Publier avec Moboo Resi ↗</span></span>
         </a>
         <a href="https://event.moboo.ci/telecharger" target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-200 hover:ring-brand-600">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent-600 text-white">🎉</span>
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent-600 text-white"><SiteIcon value="🎉" size={18} /></span>
           <span><span className="block text-sm font-bold text-ink">Espace événementiel</span><span className="block text-xs text-muted">Publier avec Moboo Event ↗</span></span>
         </a>
       </div>

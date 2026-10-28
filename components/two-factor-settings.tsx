@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { SiteIcon } from "@/components/site-icon";
 import {
   disableTwoFactorAction, emailCodeAction, emailEnableAction, regenerateBackupAction,
   totpEnableAction, totpSetupAction, type TwoFactorStatus,
@@ -103,7 +104,7 @@ export function TwoFactorSettings({ initial, required = false }: { initial: TwoF
           <div className="rounded-2xl border border-slate-200 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-lg">📱</span>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-lg"><SiteIcon value="📱" size={20} /></span>
                 <div>
                   <p className="font-semibold text-ink">Application d’authentification <span className="ml-1 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-bold text-brand-800">Recommandé</span></p>
                   <p className="text-sm text-muted">Google Authenticator, Microsoft Authenticator, Authy, 1Password… Fonctionne sans réseau.</p>
@@ -155,7 +156,7 @@ export function TwoFactorSettings({ initial, required = false }: { initial: TwoF
           <div className="rounded-2xl border border-slate-200 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-lg">✉️</span>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-lg"><SiteIcon value="✉" size={20} /></span>
                 <div>
                   <p className="font-semibold text-ink">Code par e-mail</p>
                   <p className="text-sm text-muted">{st.emailAddress ? <>Un code est envoyé à <span className="font-medium text-ink">{st.emailAddress}</span> à chaque connexion.</> : "Ajoutez d’abord une adresse e-mail dans « Mon profil »."}</p>
@@ -194,7 +195,7 @@ export function TwoFactorSettings({ initial, required = false }: { initial: TwoF
         {st.enabled ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 p-4">
             <div className="flex gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-lg">🔑</span>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-lg"><SiteIcon value="🔑" size={20} /></span>
               <div>
                 <p className="font-semibold text-ink">Codes de secours</p>
                 <p className="text-sm text-muted">{st.backupRemaining} code{st.backupRemaining > 1 ? "s" : ""} restant{st.backupRemaining > 1 ? "s" : ""} — si vous perdez votre téléphone.</p>

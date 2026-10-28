@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getInvitation } from "./actions";
 import { ActivateForm } from "./activate-form";
 import { ProStoreButtons } from "./store-buttons";
+import { SiteIcon } from "@/components/site-icon";
 
 const LABELS: Record<string, [string, string]> = {
   locataire: ["Espace locataire", "votre bail, vos loyers et vos états des lieux"],
@@ -17,14 +18,14 @@ export async function InvitationPage({ token }: { token: string }) {
       <div className="w-full max-w-md rounded-2xl bg-white p-7 shadow-card ring-1 ring-slate-200">
         {!inv ? (
           <div className="text-center">
-            <p className="text-4xl" aria-hidden="true">⚠️</p>
+            <p className="text-4xl" aria-hidden="true"><SiteIcon value="⚠" size={16} className="mr-1 inline-block align-[-3px]" /></p>
             <h1 className="mt-3 font-display text-xl font-extrabold text-ink">Invitation introuvable</h1>
             <p className="mt-2 text-sm text-muted">Ce lien est invalide ou a déjà été utilisé. Contactez la personne qui vous a invité.</p>
             <Link href="/" className="mt-5 inline-block text-sm font-semibold text-brand-800 underline">Retour à l’accueil</Link>
           </div>
         ) : (
           <>
-            <h1 className="text-center font-display text-xl font-extrabold text-ink">Bonjour {inv.prenom} 👋</h1>
+            <h1 className="text-center font-display text-xl font-extrabold text-ink">Bonjour {inv.prenom}</h1>
             <p className="mt-2 text-center text-sm text-muted">
               Vous êtes invité(e) à rejoindre votre <strong>{(LABELS[inv.type] ?? LABELS.locataire)[0]}</strong> sur Moboo Pro — suivez {(LABELS[inv.type] ?? LABELS.locataire)[1]}.
             </p>

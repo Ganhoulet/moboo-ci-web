@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { presenceAction } from "@/app/signals-actions";
 import { TONE_CLASS, type ConversionSignal, type SignalTarget } from "@/lib/signals";
+import { SiteIcon } from "@/components/site-icon";
 
 function visitorId() {
   try {
@@ -38,7 +39,7 @@ export function ConversionSignals({ type, id, initial, checkIn, checkOut, classN
     <ul className={"flex flex-col gap-2 " + className} aria-label="Infos sur la demande">
       {items.map((s) => (
         <li key={s.key} className={"flex items-start gap-2 rounded-xl px-3 py-2 text-sm font-semibold ring-1 " + TONE_CLASS[s.tone]}>
-          <span aria-hidden>{s.icon}</span><span>{s.text}</span>
+          <span aria-hidden><SiteIcon value={s.icon} fallback="tendance" size={16} /></span><span>{s.text}</span>
         </li>
       ))}
     </ul>

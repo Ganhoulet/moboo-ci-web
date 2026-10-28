@@ -5,6 +5,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { CATEGORIES, getProReviews, getQualities, type AvisItem } from "@/lib/pro-reviews";
 import { Stars } from "@/components/reviews";
 import { ProReviewForm } from "./pro-review-form";
+import { SiteIcon } from "@/components/site-icon";
 
 const fmt = (n: number) => n.toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const month = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
@@ -91,7 +92,7 @@ export async function ProReviewsSection({ refId, path, name }: { refId: string; 
               {Object.keys(r.categories).length ? (
                 <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
                   {CATEGORIES.filter((c) => r.categories[c.key]).map((c) => <span key={c.key}>{c.label} <strong className="text-ink">{r.categories[c.key]}/5</strong></span>)}
-                  {r.recommande !== null ? <span className={r.recommande ? "font-semibold text-emerald-700" : "font-semibold text-slate-500"}>{r.recommande ? "👍 Recommande" : "Ne recommande pas"}</span> : null}
+                  {r.recommande !== null ? <span className={r.recommande ? "font-semibold text-emerald-700" : "font-semibold text-slate-500"}>{r.recommande ? <><SiteIcon value="👍" size={14} className="mr-1 inline-block align-[-3px]" />Recommande</> : "Ne recommande pas"}</span> : null}
                 </p>
               ) : null}
               {r.titre ? <p className="mt-2 font-semibold text-ink">{r.titre}</p> : null}

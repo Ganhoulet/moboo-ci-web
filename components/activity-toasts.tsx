@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { activityAction } from "@/app/signals-actions";
 import type { ActivityFeed } from "@/lib/signals";
+import { SiteIcon } from "@/components/site-icon";
 
 const HIDDEN = /^\/(admin|administration|mon-espace|compte|connexion|inscription|suppression-compte)(\/|$)/;
 
@@ -44,7 +45,7 @@ export function ActivityToasts() {
   if (!cur || HIDDEN.test(pathname)) return null;
   const body = (
     <>
-      <span className="text-lg" aria-hidden>{cur.kind === "event" ? "🎉" : cur.kind === "closed" ? "🔑" : "✅"}</span>
+      <span className="text-brand-800" aria-hidden><SiteIcon value={cur.kind === "event" ? "etoile" : cur.kind === "closed" ? "cle" : "succes"} size={20} /></span>
       <span className="min-w-0"><span className="block text-sm font-semibold text-ink">{cur.text}</span><span className="text-xs text-muted">{cur.ago}</span></span>
     </>
   );
