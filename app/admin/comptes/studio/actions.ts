@@ -37,3 +37,12 @@ export async function assignAction(listingId: string, accountId: string) {
   if (r.ok) revalidatePath("/admin/comptes/studio/annonces");
   return r;
 }
+
+/** Compte TikTok de l'agent (retrouver ses vidéos). */
+export async function setTiktokAction(id: string, tiktok: string) { return call(`/agents/${id}/tiktok`, "PUT", { tiktok }); }
+
+/** Jeton d'envoi de la vidéo reçue sur WhatsApp, pour l'annonce publiée par l'équipe. */
+export async function teamVideoTicketAction(listingId: string): Promise<{ ok: true; token: string; uploadUrl: string; maxMb: number } | { ok: false; error: string }> {
+  const { ok, data } = await authedFetch(`/site/video/team/${encodeURIComponent(listingId)}/ticket`, { method: "POST", body: "{}" });
+  return ok ? { ok: true, token: data.token, uploadUrl: data.uploadUrl, maxMb: data.maxMb } : { ok: false, error: err(data, "Envoi de la vidéo impossible pour le moment.") };
+}

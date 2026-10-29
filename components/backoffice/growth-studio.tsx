@@ -4,20 +4,44 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { COMMUNES, PROPERTY_TYPES } from "@/lib/accounts";
 import { uploadImageAction } from "@/app/mon-espace/actions";
 import {
-  createProfileAction, declareMandateAction, duplicatesAction, extractAction, publishAction, requestMandateAction, searchAgentsAction,
+  createProfileAction, declareMandateAction, duplicatesAction, extractAction, publishAction, requestMandateAction, searchAgentsAction, setTiktokAction, teamVideoTicketAction,
 } from "@/app/admin/comptes/studio/actions";
 
 type Mandate = { status: string; managerName: string; grantedAt: string | null; mine: boolean; canPublish: boolean } | null;
-type Agent = { id: string; name: string; type: string; phone: string; whatsapp: string | null; commune: string | null; unclaimed: boolean; mandate: Mandate; listings: number; teamListings: number };
+type Agent = { id: string; name: string; type: string; phone: string; whatsapp: string | null; commune: string | null; tiktok: string | null; unclaimed: boolean; mandate: Mandate; listings: number; teamListings: number };
 type Dup = { id: string; title: string; price: number; owner: string | null; sameAccount: boolean; url: string };
 type Draft = {
   title: string; transaction: "rent" | "sale"; propertyType: string; furnished: boolean; price: string; priceUnit: string;
-  city: string; commune: string; quartier: string; bedrooms: string; bathrooms: string; surface: string; features: string; description: string;
+  city: string; commune: string; quartier: string; bedrooms: string; bathrooms: string; surface: string; features: string; description: string; videoUrl: string;
 };
 
-const EMPTY: Draft = { title: "", transaction: "rent", propertyType: "appartement", furnished: false, price: "", priceUnit: "month", city: "Abidjan", commune: "", quartier: "", bedrooms: "", bathrooms: "", surface: "", features: "", description: "" };
+const EMPTY: Draft = { title: "", transaction: "rent", propertyType: "appartement", furnished: false, price: "", priceUnit: "month", city: "Abidjan", commune: "", quartier: "", bedrooms: "", bathrooms: "", surface: "", features: "", description: "", videoUrl: "" };
 const TYPE_LABEL: Record<string, string> = { agent: "Agent", entreprise: "Agence", proprietaire: "Propriétaire" };
 const input = "w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm";
+/** Lien vidéo dans le message collé (TikTok, YouTube, Facebook, Instagram, Vimeo). */
+const VIDEO_LINK = /https?:\/\/(?:www\.|m\.|vm\.|vt\.)?(?:tiktok\.com|youtube\.com|youtu\.be|facebook\.com|fb\.watch|instagram\.com|vimeo\.com)\/\S+/i;
+
+/** Envoie la vidéo reçue sur WhatsApp pour l'annonce publiée (jeton d'envoi de 30 min) ; progress : 0-100. */
+async function uploadTeamVideo(listingId: string, file: File, onProgress: (p: number) => void): Promise<{ ok: true } | { ok: false; error: string }> {
+  const t = await teamVideoTicketAction(listingId);
+  if (!t.ok) return t;
+  if (file.size > t.maxMb * 1024 * 1024) return { ok: false, error: `Vidéo trop lourde : ${t.maxMb} Mo au maximum.` };
+  return new Promise((resolve) => {
+    const form = new FormData();
+    form.append("file", file);
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", t.uploadUrl);
+    xhr.setRequestHeader("Authorization", `Bearer ${t.token}`);
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+    xhr.onload = () => {
+      let body: any = {};
+      try { body = JSON.parse(xhr.responseText); } catch { /* vide */ }
+      resolve(xhr.status >= 200 && xhr.status < 300 && body?.success ? { ok: true } : { ok: false, error: xhr.status === 413 ? "Vidéo trop lourde." : "L’envoi de la vidéo a échoué : réessayez depuis la fiche de l’annonce." });
+    };
+    xhr.onerror = () => resolve({ ok: false, error: "Connexion interrompue pendant l’envoi de la vidéo." });
+    xhr.send(form);
+  });
+}
 
 /** Compresse une image dans le navigateur (1600 px max, JPEG ~75 %) → data URI. */
 async function compress(file: File): Promise<string> {
@@ -57,7 +81,7 @@ export function GrowthStudio({ initialAgents, mode, allowUnclaimed, preselect }:
   const [scope, setScope] = useState<"mine" | "all">("mine");
   const [agent, setAgent] = useState<Agent | null>(initialAgents.find((a) => a.id === preselect) ?? null);
   const [creating, setCreating] = useState(false);
-  const [profile, setProfile] = useState<Record<string, string>>({ firstName: "", lastName: "", companyName: "", accountType: "agent", phone: "", whatsapp: "", commune: "", proof: "" });
+  const [profile, setProfile] = useState<Record<string, string>>({ firstName: "", lastName: "", companyName: "", accountType: "agent", phone: "", whatsapp: "", commune: "", tiktok: "", proof: "" });
   const [text, setText] = useState("");
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [missing, setMissing] = useState<string[]>([]);
@@ -65,7 +89,9 @@ export function GrowthStudio({ initialAgents, mode, allowUnclaimed, preselect }:
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(0);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
-  const [done, setDone] = useState<{ url: string; wa: string | null; moderation?: string } | null>(null);
+  const [done, setDone] = useState<{ url: string; wa: string | null; moderation?: string; video?: string } | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoProgress, setVideoProgress] = useState<number | null>(null);
   const [pending, start] = useTransition();
 
   const canPublish = !!agent?.mandate?.canPublish;
@@ -115,6 +141,17 @@ export function GrowthStudio({ initialAgents, mode, allowUnclaimed, preselect }:
     });
   }
 
+  function setTiktok(a: Agent) {
+    const v = window.prompt("Compte TikTok de l’agent (ex. @agence.cocody ou lien du profil)");
+    if (!v) return;
+    start(async () => {
+      const r = await setTiktokAction(a.id, v);
+      if (!r.ok) return setMsg({ tone: "err", text: r.error! });
+      setMsg({ tone: "ok", text: "Compte TikTok enregistré : ouvrez ses vidéos, copiez le lien de celle du bien et collez-le dans la fiche." });
+      await refreshAgent(a.id);
+    });
+  }
+
   function createProfile() {
     start(async () => {
       const r = await createProfileAction(profile);
@@ -136,7 +173,7 @@ export function GrowthStudio({ initialAgents, mode, allowUnclaimed, preselect }:
         title: f.title || "", transaction: f.transaction === "sale" ? "sale" : "rent", propertyType: f.propertyType || "autre", furnished: !!f.furnished,
         price: f.price ? String(f.price) : "", priceUnit: f.priceUnit || "month", city: f.city || "Abidjan", commune: f.commune || "", quartier: f.quartier || "",
         bedrooms: f.bedrooms ? String(f.bedrooms) : "", bathrooms: f.bathrooms ? String(f.bathrooms) : "", surface: f.surface ? String(f.surface) : "",
-        features: (f.features ?? []).join(", "), description: f.description || "",
+        features: (f.features ?? []).join(", "), description: f.description || "", videoUrl: text.match(VIDEO_LINK)?.[0] ?? draft.videoUrl,
       });
       setMissing(f.missing ?? []);
       setDups(r.data.duplicates ?? []);
@@ -175,8 +212,15 @@ export function GrowthStudio({ initialAgents, mode, allowUnclaimed, preselect }:
         },
       });
       if (!r.ok) return setMsg({ tone: "err", text: r.error! });
-      setDone({ url: r.data.url, wa: r.data.wa, moderation: r.data.moderation });
-      setText(""); setDraft(EMPTY); setPhotos([]); setDups([]); setMissing([]);
+      let video: string | undefined;
+      if (videoFile) {
+        setVideoProgress(0);
+        const v = await uploadTeamVideo(r.data.id, videoFile, setVideoProgress);
+        setVideoProgress(null);
+        video = v.ok ? "Vidéo envoyée : elle apparaît sur la fiche dès qu’elle est prête (quelques minutes)." : v.error;
+      }
+      setDone({ url: r.data.url, wa: r.data.wa, moderation: r.data.moderation, video });
+      setText(""); setDraft(EMPTY); setPhotos([]); setDups([]); setMissing([]); setVideoFile(null);
       await refreshAgent(agent.id);
     });
   }
@@ -222,6 +266,7 @@ export function GrowthStudio({ initialAgents, mode, allowUnclaimed, preselect }:
               <input className={input} placeholder="Téléphone (connexion)" inputMode="tel" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
               <input className={input} placeholder="WhatsApp (si différent)" inputMode="tel" value={profile.whatsapp} onChange={(e) => setProfile({ ...profile, whatsapp: e.target.value })} />
               <input className={input} placeholder="Commune" list="studio-communes" value={profile.commune} onChange={(e) => setProfile({ ...profile, commune: e.target.value })} />
+              <input className={input} placeholder="Compte TikTok (facultatif, ex. @agence.cocody)" value={profile.tiktok} onChange={(e) => setProfile({ ...profile, tiktok: e.target.value })} />
               {mode !== "link_only" ? <input className={input} placeholder="Accord reçu (ex. OK par WhatsApp le 29/10)" value={profile.proof} onChange={(e) => setProfile({ ...profile, proof: e.target.value })} /> : null}
               <div className="flex gap-2">
                 <button type="button" disabled={pending} onClick={createProfile} className="rounded-md bg-brand-800 px-3 py-1.5 font-semibold text-white disabled:opacity-50">Créer le profil</button>
@@ -246,6 +291,11 @@ export function GrowthStudio({ initialAgents, mode, allowUnclaimed, preselect }:
                 <p className="text-xs text-muted">{agent.mandate?.status === "pending" ? "Lien d’accord envoyé : en attente de sa validation." : agent.mandate ? `Accord ${agent.mandate.status === "active" ? "validé" : "noté"} par ${agent.mandate.managerName || "l’équipe"}` : "Aucun accord : envoyez le lien ou notez l’accord reçu par WhatsApp."}</p>
               </div>
               <MandateBadge m={agent.mandate} unclaimed={agent.unclaimed} />
+              {agent.tiktok ? (
+                <a href={agent.tiktok} target="_blank" rel="noreferrer" className="rounded-md bg-ink px-3 py-1.5 text-sm font-semibold text-white">Ses vidéos TikTok ↗</a>
+              ) : (
+                <button type="button" disabled={pending} onClick={() => setTiktok(agent)} className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold ring-1 ring-slate-300">+ Son compte TikTok</button>
+              )}
               {agent.mandate?.status !== "active" ? (
                 <>
                   <button type="button" disabled={pending} onClick={() => sendLink(agent)} className="rounded-md bg-[#25D366] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50">Envoyer le lien d’accord</button>
@@ -257,6 +307,7 @@ export function GrowthStudio({ initialAgents, mode, allowUnclaimed, preselect }:
             {done ? (
               <section className="space-y-2 rounded-lg bg-emerald-50 p-4 text-sm text-emerald-900 ring-1 ring-emerald-200">
                 <p className="font-bold">Annonce publiée pour {agent.name}{done.moderation === "pending" ? " (en attente de modération)" : ""}.</p>
+                {done.video ? <p>{done.video}</p> : null}
                 <div className="flex flex-wrap gap-2">
                   <a href={done.url} target="_blank" rel="noreferrer" className="rounded-md bg-white px-3 py-1.5 font-semibold ring-1 ring-emerald-300">Voir l’annonce</a>
                   {done.wa ? <a href={done.wa} target="_blank" rel="noreferrer" className="rounded-md bg-[#25D366] px-3 py-1.5 font-semibold text-white">Prévenir l’agent sur WhatsApp</a> : null}
@@ -332,11 +383,28 @@ export function GrowthStudio({ initialAgents, mode, allowUnclaimed, preselect }:
                     <span className="ml-2 text-xs text-muted">ou glissez-les / collez-les ici. La 1re est la couverture.</span>
                   </div>
 
+                  <div className="grid gap-2 rounded-md bg-slate-50 p-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <p className="font-semibold text-ink">Vidéo reçue sur WhatsApp</p>
+                      <label className="mt-1 inline-block cursor-pointer font-semibold text-brand-800">
+                        {videoFile ? "Changer la vidéo" : "+ Choisir le fichier vidéo"}
+                        <input type="file" accept="video/*" className="hidden" onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)} />
+                      </label>
+                      {videoFile ? <p className="text-xs text-muted">{videoFile.name} · {(videoFile.size / 1024 / 1024).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} Mo · envoyée après la publication <button type="button" className="ml-1 text-red-700" onClick={() => setVideoFile(null)}>retirer</button></p> : <p className="text-xs text-muted">Téléchargez-la depuis WhatsApp, puis choisissez-la ici.</p>}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-ink">Ou lien de sa vidéo</p>
+                      <input className={input + " mt-1"} placeholder="TikTok, YouTube, Facebook, Instagram…" value={draft.videoUrl} onChange={(e) => set("videoUrl", e.target.value.trim())} />
+                      <p className="text-xs text-muted">{agent.tiktok ? <a href={agent.tiktok} target="_blank" rel="noreferrer" className="text-brand-800 underline">Ouvrir son TikTok</a> : "Copiez le lien de la vidéo sur son compte TikTok."} Elle s’affiche dans la fiche.</p>
+                    </div>
+                  </div>
+
                   <div className="flex flex-wrap items-center gap-3">
                     <button type="button" disabled={pending || uploading > 0 || !canPublish || !draft.title} onClick={publish} className="rounded-md bg-accent-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
                       Publier pour {agent.name}
                     </button>
                     {!canPublish ? <span className="text-xs text-red-700">Accord de l’annonceur nécessaire avant de publier.</span> : null}
+                    {videoProgress !== null ? <span className="text-xs font-semibold text-brand-800">Envoi de la vidéo : {videoProgress} %</span> : null}
                   </div>
                 </section>
               </>
