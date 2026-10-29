@@ -46,3 +46,22 @@ export async function teamVideoTicketAction(listingId: string): Promise<{ ok: tr
   const { ok, data } = await authedFetch(`/site/video/team/${encodeURIComponent(listingId)}/ticket`, { method: "POST", body: "{}" });
   return ok ? { ok: true, token: data.token, uploadUrl: data.uploadUrl, maxMb: data.maxMb } : { ok: false, error: err(data, "Envoi de la vidéo impossible pour le moment.") };
 }
+
+/* ─── Liens de publication rapide ─────────────────────────────────────── */
+
+async function quick<T = any>(path: string, method = "GET", body?: unknown): Promise<R<T>> {
+  const { ok, data } = await authedFetch(`/site/admin/quick-links${path}`, { method, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+  return ok ? { ok: true, data: data as T } : { ok: false, error: err(data, "Action impossible.") };
+}
+export async function getQuickLinks<T = any>(path = ""): Promise<T | null> { const r = await quick<T>(path); return r.ok ? r.data! : null; }
+export async function createQuickLinkAction(input: { title: string; slug?: string }) {
+  const r = await quick("", "POST", input);
+  if (r.ok) revalidatePath("/admin/comptes/liens-rapides");
+  return r;
+}
+export async function updateQuickLinkAction(id: string, input: { active?: boolean; title?: string }) {
+  const r = await quick(`/${id}`, "PUT", input);
+  if (r.ok) revalidatePath("/admin/comptes/liens-rapides");
+  return r;
+}
+export async function quickLinkAccountsAction(id: string) { return quick(`/${id}/accounts`); }

@@ -39,7 +39,8 @@ export function MobileTabBar({ items, style, color, loggedIn, zones }: { items: 
   const path = usePathname() || "/";
   const tabs = parseTabs(items);
   // Pages choisies dans le back-office (fiches d'annonce exclues par défaut : elles ont leur barre Contacter / Réserver).
-  if (path.startsWith("/admin") || tabs.length < 2 || !zones.includes(zoneOf(path))) return null;
+  // Page de publication rapide (/p/…) : elle a ses propres boutons en bas.
+  if (path.startsWith("/admin") || path.startsWith("/p/") || tabs.length < 2 || !zones.includes(zoneOf(path))) return null;
   const on = color === "accent" ? "text-accent-600" : "text-brand-800";
   const floating = style === "floating";
   return (
