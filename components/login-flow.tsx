@@ -72,7 +72,7 @@ export function LoginFlow({ googleTicket, next, firebase, phone: presetPhone }: 
   if (fbPhone && !onCodeStep) {
     const err = fbState?.step === "code" ? fbState.error : null;
     return (
-      <form className="space-y-4" onSubmit={async (e) => {
+      <form key="firebase-code" className="space-y-4" onSubmit={async (e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         setFbBusy(true);
@@ -114,6 +114,7 @@ export function LoginFlow({ googleTicket, next, firebase, phone: presetPhone }: 
     // ── Étape 1 : numéro ──
     return (
       <form
+        key="phone"
         action={firebase ? undefined : sendOtp}
         onSubmit={firebase ? async (e) => {
           e.preventDefault();
@@ -173,7 +174,8 @@ export function LoginFlow({ googleTicket, next, firebase, phone: presetPhone }: 
 
   // ── Étape 2 : code + prénom (à la 1re connexion) ──
   return (
-    <form action={verifyOtp} className="space-y-4">
+    // Clés distinctes : chaque étape a ses propres champs (sinon le navigateur garde la saisie précédente).
+    <form key="code" action={verifyOtp} className="space-y-4">
       <input type="hidden" name="phone" value={phone} />
       {ticketInput}
       <div>
