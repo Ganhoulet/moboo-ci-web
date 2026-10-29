@@ -4,7 +4,7 @@ import { INQUIRY_STEPS, WELCOME_NEXT, isPublisher, type AccountType } from "@/li
 import { EmptyState, HostApps, StatCard, ViewsChart, fmtXOF } from "@/components/dashboard-ui";
 import { listSearches } from "@/app/compte/searches-actions";
 import { OpportunityCard } from "@/components/opportunity-card";
-import { getStats, listAccountFavorites, listMyInquiries, listMyListings } from "./actions";
+import { getMyGrowth, getStats, listAccountFavorites, listMyInquiries, listMyListings } from "./actions";
 import { SiteIcon } from "@/components/site-icon";
 
 export default async function EspaceHome({ searchParams }: { searchParams: { bienvenue?: string } }) {
@@ -34,6 +34,7 @@ export default async function EspaceHome({ searchParams }: { searchParams: { bie
         </div>
       )}
 
+      {isPublisher(type) ? <TeamPublishingCard /> : null}
       {isPublisher(type) ? <OpportunityCard /> : null}
       {isPublisher(type) ? <PublisherHome /> : type === "etablissement" ? <HostHome subtype={account.accountSubtype} /> : <SeekerHome />}
     </div>
@@ -180,3 +181,20 @@ async function SeekerHome() {
     </>
   );
 }
+
+/** Annonces publiées par l'équipe Moboo : accord à confirmer, contacts reçus (Studio de publication). */
+async function TeamPublishingCard() {
+  const g = await getMyGrowth();
+  if (!g?.mandate && !g?.report.teamListings) return null;
+  const r = g.report;
+  const toConfirm = g.mandate?.status === "declared";
+  return (
+    <Link href="/mon-espace/mandat" className={"block rounded-2xl p-4 shadow-card " + (toConfirm ? "bg-brand-50 ring-1 ring-brand-200" : "bg-white")}>
+      <p className="font-bold text-ink">{toConfirm ? "Moboo publie vos biens pour vous : confirmez votre accord" : "Publication par Moboo"}</p>
+      <p className="text-sm text-muted">
+        {r.teamListings ? `${r.teamListings} annonce(s) publiée(s) pour vous · ${r.teamTotals.calls + r.teamTotals.whatsapp} contacts en ${r.days} jours.` : "Envoyez vos biens à votre conseiller Moboo sur WhatsApp : il les publie gratuitement."} Voir le détail ›
+      </p>
+    </Link>
+  );
+}
+

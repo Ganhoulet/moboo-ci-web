@@ -389,3 +389,27 @@ export async function testPayAction(id: string, result: "success" | "failed"): P
   const back = data?.kind === "package" ? "/mon-espace/forfait" : data?.kind === "credits" ? "/mon-espace/publicite" : "/mon-espace/annonces";
   return { ok: true, next: `${back}?facture=${encodeURIComponent(id)}` };
 }
+
+/* ─── Publication par l'équipe Moboo (Studio) ──────────────────────────── */
+
+export interface MyGrowth {
+  mandate: { status: "pending" | "active" | "declared"; managerName: string; grantedAt: string | null; createdAt: string } | null;
+  createdByTeam: boolean;
+  report: {
+    days: number; listings: number; teamListings: number;
+    totals: { views: number; calls: number; whatsapp: number }; teamTotals: { views: number; calls: number; whatsapp: number };
+    top: { id: string; title: string; team: boolean; views: number; calls: number; whatsapp: number }[];
+  };
+}
+
+export async function getMyGrowth(): Promise<MyGrowth | null> {
+  if (!getSession()) return null;
+  const { ok, data } = await authedFetch("/site/me/growth", { method: "GET" });
+  return ok ? data : null;
+}
+
+export async function growthAction(kind: "accept" | "confirm" | "revoke", token?: string): Promise<{ ok: boolean; error?: string }> {
+  const { ok, data } = await authedFetch(`/site/me/growth/${kind}`, { method: "POST", body: JSON.stringify({ token }) });
+  revalidatePath("/mon-espace/mandat");
+  return ok ? { ok: true } : { ok: false, error: errMsg(data, "Action impossible.") };
+}
