@@ -11,6 +11,7 @@ import {
   verifySignupAction,
 } from "@/app/inscription/actions";
 import { confirmFirebaseCode, firebaseErrorMessage, sendFirebaseSms, type FirebaseWebConfig } from "@/lib/firebase-phone";
+import { otpDigits } from "@/lib/otp";
 
 /* ─── Illustrations des types de compte ───────────────────────────────── */
 
@@ -347,7 +348,7 @@ export function SignupWizard({
             <input
               className="input text-center font-display text-2xl font-bold tracking-[0.5em]"
               inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="••••••"
-              value={d.code} onChange={(e) => set({ code: e.target.value.replace(/[^0-9]/g, "") })}
+              value={d.code} onChange={(e) => set({ code: otpDigits(e.target.value) })}
               onKeyDown={(e) => { if (e.key === "Enter") next(); }}
               autoFocus
             />

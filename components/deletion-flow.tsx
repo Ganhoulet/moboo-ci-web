@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { cancelDeletionAction, deleteMyAccountAction, requestDeletionAction, sendDeletionCodeAction } from "@/app/suppression-compte/actions";
+import { otpDigits } from "@/lib/otp";
 
 const REASONS: [string, string][] = [
   ["plus_besoin", "Je n’ai plus besoin du service"],
@@ -130,7 +131,7 @@ export function DeletionByPhone({ days, mode }: { days: number; mode: "delete" |
       });
     }}>
       <label className="block text-sm font-semibold text-ink">Code reçu
-        <input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="6 chiffres" className="input mt-1 tracking-[0.4em]" required />
+        <input value={code} onChange={(e) => setCode(otpDigits(e.target.value))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="6 chiffres" className="input mt-1 tracking-[0.4em]" required />
       </label>
       <p className="-mt-2 text-xs text-muted">
         {hint?.channel === "email" && hint.emailHint ? <>Envoyé par e-mail à {hint.emailHint}.</> : <>Envoyé par {hint?.channel === "sms" ? "SMS" : "WhatsApp"} au {phone}.</>}

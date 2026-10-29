@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { sendOtpAction, verifyFirebaseAction, verifyOtpAction, type OtpState } from "@/app/compte/actions";
 import { confirmFirebaseCode, firebaseErrorMessage, sendFirebaseSms, type FirebaseWebConfig } from "@/lib/firebase-phone";
+import { OtpInput } from "./otp-input";
 
 function SubmitButton({ label, busy = false }: { label: string; busy?: boolean }) {
   const { pending } = useFormStatus();
@@ -88,7 +89,7 @@ export function LoginFlow({ googleTicket, next, firebase, phone: presetPhone }: 
         {recaptcha}
         <div>
           <label htmlFor="code" className="mb-1 block text-sm font-semibold text-ink">Code de vérification</label>
-          <input id="code" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="6 chiffres" className="input tracking-[0.4em]" required />
+          <OtpInput id="code" name="code" className="input tracking-[0.4em]" />
           <p className="mt-1 text-xs text-muted">Envoyé par SMS au <span className="font-semibold text-ink">{fbPhone}</span>.</p>
         </div>
         <div>
@@ -179,17 +180,7 @@ export function LoginFlow({ googleTicket, next, firebase, phone: presetPhone }: 
         <label htmlFor="code" className="mb-1 block text-sm font-semibold text-ink">
           Code de vérification
         </label>
-        <input
-          id="code"
-          name="code"
-          type="text"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          maxLength={6}
-          placeholder="6 chiffres"
-          className="input tracking-[0.4em]"
-          required
-        />
+        <OtpInput id="code" name="code" className="input tracking-[0.4em]" autoFocus />
         <p className="mt-1 text-xs text-muted">
           {channel === "email" && emailHint
             ? <>Envoyé par e-mail à <span className="font-semibold text-ink">{emailHint}</span> (pensez aux courriers indésirables).</>

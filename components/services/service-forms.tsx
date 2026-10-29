@@ -7,6 +7,7 @@ import {
   solvencyConfirmAction, solvencyRequestAction, solvencyResendAction,
 } from "@/app/services-actions";
 import type { ServiceKey, ZoneOption } from "@/lib/site-services";
+import { otpDigits } from "@/lib/otp";
 
 const input = "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100";
 const label = "mb-1 block text-xs font-semibold text-slate-600";
@@ -287,7 +288,7 @@ export function SolvencyForm({ incomeMultiple, codeTtlMin }: { incomeMultiple: n
           <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">L’envoi automatique du SMS n’est pas disponible pour le moment : l’équipe Moboo transmet le code au candidat et vous recontacte. Référence : <b>{step.ref}</b>.</p>
         )}
         <div className="flex flex-wrap gap-3">
-          <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" placeholder="Code à 6 chiffres" aria-label="Code à 6 chiffres" className={input + " max-w-[200px] text-center text-lg tracking-[0.4em]"} />
+          <input value={code} onChange={(e) => setCode(otpDigits(e.target.value))} inputMode="numeric" autoComplete="one-time-code" placeholder="Code à 6 chiffres" aria-label="Code à 6 chiffres" className={input + " max-w-[200px] text-center text-lg tracking-[0.4em]"} />
           <button type="submit" disabled={pending || code.length !== 6} className={btn}>{pending ? "Vérification…" : "Voir le rapport"}</button>
         </div>
         <button type="button" disabled={pending} onClick={() => { setErr(null); setInfo(null); start(async () => { const r = await solvencyResendAction(step.ref); if (r.ok) setInfo("Nouveau code envoyé."); else setErr(r.error); }); }}
