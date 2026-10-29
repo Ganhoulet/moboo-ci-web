@@ -353,7 +353,12 @@ export interface VerificationRequest {
 export interface VerificationLevel {
   offered: boolean; verified: boolean; verifiedAt: string | null; expiresAt?: string | null; docTypes: string[]; last: VerificationRequest | null;
 }
+/** Délai pour s'identifier (décompte de la barre du haut). */
+export interface VerificationDeadline {
+  at: string; days: number; daysLeft: number; overdue: boolean; pending: boolean; action: "block_publish" | "remind";
+}
 export interface MyVerification {
+  deadline?: VerificationDeadline | null;
   enabled: boolean; concerned: boolean; required: boolean; verified: boolean; verifiedAt: string | null;
   docTypes: string[]; intro: string; requireSelfie: boolean; requireDocNumber: boolean; phoneVerified: boolean;
   identity: VerificationLevel; business: VerificationLevel;

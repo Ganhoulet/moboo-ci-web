@@ -69,6 +69,13 @@ export default async function Verification() {
         {!v.phoneVerified ? <p className="text-xs text-muted">Pour confirmer votre téléphone, déconnectez-vous puis reconnectez-vous avec un code. <Link href="/mon-espace/profil" className="text-brand-800 hover:underline">Mon profil</Link></p> : null}
       </section>
 
+      {v.deadline && !v.deadline.pending ? (
+        <p className={"rounded-2xl p-4 text-sm " + (v.deadline.overdue ? "bg-red-50 text-red-800" : v.deadline.daysLeft <= 7 ? "bg-amber-50 text-amber-900" : "bg-brand-50 text-brand-900")}>
+          {v.deadline.overdue
+            ? <>Le délai de {v.deadline.days} jours pour vous identifier est dépassé{v.deadline.action === "block_publish" ? " : la publication de nouvelles annonces est suspendue jusqu’à l’envoi de votre pièce." : "."}</>
+            : <><strong>{v.deadline.daysLeft} jour{v.deadline.daysLeft > 1 ? "s" : ""} restant{v.deadline.daysLeft > 1 ? "s" : ""}</strong> pour vous identifier (jusqu’au {fr(v.deadline.at)}){v.deadline.action === "block_publish" ? ", ensuite la publication de nouvelles annonces sera suspendue." : "."}</>}
+        </p>
+      ) : null}
       {v.required && !id.verified ? <p className="rounded-2xl bg-brand-50 p-4 text-sm text-brand-900">La vérification d’identité est nécessaire pour publier des annonces.</p> : null}
       {id.verified && soon ? <p className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">Votre pièce expire bientôt : le badge sera retiré le {fr(id.expiresAt!)}. Vous pourrez envoyer votre nouvelle pièce dès réception.</p> : null}
 

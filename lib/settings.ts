@@ -72,6 +72,7 @@ export interface SiteSettings {
   verification: {
     enabled: boolean; types: string[]; requiredForListings: boolean; docTypes: string; intro: string;
     requireSelfie: boolean; requireDocNumber: boolean; businessTypes: string[]; businessDocTypes: string; expiryReminderDays: number;
+    deadlineDays: number; deadlineFrom: string; deadlineAction: "block_publish" | "remind";
   };
   moderation: { reportsEnabled: boolean };
   disputes: { enabled: boolean; windowDays: number; hostReplyHours: number; guestCancel: boolean; intro: string };
@@ -163,6 +164,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     enabled: false, types: ["agent", "entreprise"], requiredForListings: false,
     docTypes: "Carte nationale d’identité, Passeport, Permis de conduire, Carte consulaire, Carte de résident",
     requireSelfie: true, requireDocNumber: true, businessTypes: ["agent", "entreprise"], expiryReminderDays: 30,
+    deadlineDays: 45, deadlineFrom: "2026-10-29", deadlineAction: "block_publish",
     businessDocTypes: "Registre du commerce (RCCM), Agrément d’agent immobilier, Carte professionnelle, Déclaration fiscale d’existence (DFE)",
     intro: "Faites vérifier votre compte : les visiteurs font davantage confiance aux professionnels vérifiés. Vos documents ne sont jamais publiés.",
   },
