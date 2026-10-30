@@ -19,6 +19,14 @@ const STEPS = ["Bien", "Photos", "Prix", "Zone", "Détails"];
 const field = "w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none focus:border-brand-700";
 const VIDEO_LINK = /https?:\/\/(?:www\.|m\.|vm\.|vt\.)?(?:tiktok\.com|youtube\.com|youtu\.be|facebook\.com|fb\.watch|instagram\.com|vimeo\.com)\/\S+/i;
 
+/** Même règle que le serveur : « Appartement 3 pièces meublé à louer à Yopougon Maroc » (pièces = chambres + salon). */
+const NO_ROOMS = /studio|terrain|bureau|magasin|boutique|entrep|local|parking|immeuble/i;
+function autoTitle(t: { typeLabel: string; transaction: string; bedrooms: number; furnished: boolean; commune: string; quartier: string }) {
+  const rooms = t.bedrooms > 0 && !NO_ROOMS.test(t.typeLabel) ? ` ${t.bedrooms + 1} pièces` : "";
+  const meuble = t.furnished && t.transaction !== "sale" ? " meublé" : "";
+  return `${t.typeLabel}${rooms}${meuble} ${t.transaction === "sale" ? "à vendre" : "à louer"} à ${t.commune || "…"}${t.quartier ? ` ${t.quartier}` : ""}`.replace(/\s+/g, " ").trim();
+}
+
 /** Compresse une image dans le navigateur (1600 px max, JPEG ~75 %) → data URI. */
 async function compress(file: File): Promise<string> {
   const url = URL.createObjectURL(file);
@@ -58,6 +66,7 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
   const [pending, start] = useTransition();
   const set = (k: keyof typeof d, v: unknown) => setD((x) => ({ ...x, [k]: v }));
   const typeLabel = page.types.find((t) => t.slug === d.propertyType)?.label ?? "Bien";
+  const suggested = autoTitle({ typeLabel, transaction: d.transaction, bedrooms: Number(d.bedrooms) || 0, furnished: d.furnished, commune: d.commune.trim(), quartier: d.quartier.trim() });
 
   const canNext = [
     true,
@@ -305,14 +314,16 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
 
         {step === 4 ? (
           <>
-            <label className="block"><span className="text-sm font-semibold text-ink">Titre <span className="font-normal text-muted">(facultatif)</span></span>
-              <input value={d.title} onChange={(e) => set("title", e.target.value)} placeholder={`${typeLabel} ${d.transaction === "sale" ? "à vendre" : "à louer"} à ${d.commune || "…"}`} className={field + " mt-1"} />
+            <label className="block"><span className="text-sm font-semibold text-ink">Titre de l’annonce</span>
+              <input value={d.title} onChange={(e) => set("title", e.target.value)} placeholder={suggested} className={field + " mt-1"} />
+              <span className="mt-1 block text-xs text-muted">{d.title.trim() ? "Votre titre sera utilisé." : <>Laissez vide : l’annonce s’appellera « <b className="text-ink">{suggested}</b> ».</>}</span>
             </label>
             <label className="block"><span className="text-sm font-semibold text-ink">Description</span>
               <textarea value={d.description} onChange={(e) => set("description", e.target.value)} rows={5} placeholder="Pièces, équipements, accès, conditions (caution, avance)…" className={field + " mt-1"} />
             </label>
             <div className="rounded-xl bg-slate-50 p-3 text-sm text-muted">
-              <b className="text-ink">{typeLabel}</b> {d.transaction === "sale" ? "à vendre" : "à louer"}{d.furnished ? " meublé" : ""} · {Number(d.price).toLocaleString("fr-FR")} F · {d.commune}{d.quartier ? ` ${d.quartier}` : ""} · {photos.length} photo(s){videoFile || d.videoUrl ? " + vidéo" : ""}
+              <b className="block text-ink">{d.title.trim() || suggested}</b>
+              {Number(d.price).toLocaleString("fr-FR")} F{d.transaction === "rent" ? ({ month: " / mois", day: " / jour", week: " / semaine", year: " / an" } as Record<string, string>)[d.priceUnit] ?? "" : ""} · {photos.length} photo(s){videoFile || d.videoUrl ? " + vidéo" : ""}
             </div>
           </>
         ) : null}
