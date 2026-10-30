@@ -17,10 +17,14 @@ export interface PendingTwoFactor {
 const COOKIE = "moboo_2fa";
 export const TWO_FACTOR_PAGE = "/connexion/verification";
 
-/** Chemin interne uniquement (évite les redirections ouvertes). */
+/**
+ * Chemin interne uniquement (évite les redirections ouvertes). Refuse aussi « /\site.com » et
+ * les caractères de contrôle : « /<tab>/site.com » devient « //site.com » dans le navigateur.
+ */
 export const safeNext = (n: unknown, fallback = "/mon-espace") => {
   const s = String(n || "");
-  return s.startsWith("/") && !s.startsWith("//") && !s.startsWith("/\\") ? s : fallback;
+  // eslint-disable-next-line no-control-regex
+  return /^\/(?![/\\])/.test(s) && !/[\u0000-\u001f\u007f\\]/.test(s) ? s : fallback;
 };
 
 /** Réponse de connexion « défi 2FA » → mémorise l'étape et renvoie la page de vérification. */

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PriceTable } from "@/components/price-table";
 import { fcfa, getCommunePrices } from "@/lib/prices";
+import { ldJson } from "@/lib/structured-data";
 
 export const revalidate = 3600;
 
@@ -38,7 +39,7 @@ export default async function CommunePricesPage({ params }: { params: { slug: st
 
   return (
     <div className="container-page py-8 sm:py-10">
-      {faq.length ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /> : null}
+      {faq.length ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(jsonLd) }} /> : null}
       <nav className="text-sm text-muted"><Link href="/prix-immobilier" className="hover:underline">Prix de l’immobilier</Link> › {d.city}{d.commune ? ` › ${d.commune}` : ""}</nav>
       <h1 className="mt-2 font-display text-3xl font-extrabold text-ink sm:text-4xl">Prix de l’immobilier à {d.zone} en {d.year}</h1>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">

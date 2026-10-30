@@ -6,10 +6,15 @@ import { COMMUNES } from "@/lib/accounts";
 import { quickExtractAction, quickPublishAction, quickUploadAction } from "@/app/p/[slug]/actions";
 import { sendSignupCodeAction, verifySignupAction } from "@/app/inscription/actions";
 import { uploadListingVideo } from "@/components/listing-video-card";
+import { saveListingAction, uploadImageAction } from "@/app/mon-espace/actions";
 
 type Page = {
   slug: string; title: string; manager: string; accountTypes: string[]; minPhotos: number; location: "optional" | "required" | "hidden";
   video: boolean; aiFill: boolean; pageTitle: string; pageIntro: string; successText: string; types: { slug: string; label: string }[];
+  /** Mêmes limites que le formulaire « Publier une annonce » du site. */
+  maxPhotos?: number; videoUpload?: { enabled: boolean; maxMb: number; maxSeconds: number };
+  /** Étiquettes (taxonomie « label ») : champ « Étiquette » de la publication rapide de l'application. */
+  labels?: { slug: string; label: string }[];
 };
 type Account = { firstName: string | null; accountType: string; onboarded: boolean } | null;
 
@@ -45,14 +50,23 @@ async function compress(file: File): Promise<string> {
 /**
  * Publication rapide depuis un lien partagé dans un groupe WhatsApp : 5 écrans courts
  * (bien, photos et vidéo, prix, zone, détails) ; le compte est demandé au moment de publier.
+ *
+ * `member` : même formulaire pour « Publier une annonce » de Mon espace (compte déjà connecté) :
+ * photos et publication par les actions de l'espace membre, sans lien ni lecture par l'IA.
+ * Champs = publication rapide de l'application (titre, description, prix, type, vente/location,
+ * étiquette, surface, ville, commune, carte, chambres, salles de bain, photos).
  */
-export function QuickPublish({ page, account }: { page: Page; account: Account }) {
+export function QuickPublish({ page, account, member = false, start: initial }: {
+  page: Page; account: Account; member?: boolean; start?: { transaction?: "rent" | "sale"; propertyType?: string };
+}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [d, setD] = useState({
-    transaction: "rent" as "rent" | "sale", propertyType: page.types[0]?.slug ?? "appartement", furnished: false,
-    price: "", priceUnit: "month", bedrooms: "", commune: "", quartier: "", latitude: null as number | null, longitude: null as number | null,
-    title: "", description: "", videoUrl: "",
+    transaction: (initial?.transaction ?? "rent") as "rent" | "sale",
+    propertyType: page.types.some((t) => t.slug === initial?.propertyType) ? initial!.propertyType! : page.types[0]?.slug ?? "appartement", furnished: false,
+    price: "", priceUnit: "month", bedrooms: "", bathrooms: "", surface: "",
+    city: "Abidjan", commune: "", quartier: "", latitude: null as number | null, longitude: null as number | null,
+    title: "", description: "", videoUrl: "", labels: [] as string[],
   });
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(0);
@@ -61,12 +75,16 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
   const [error, setError] = useState<string | null>(null);
   const [geo, setGeo] = useState<"idle" | "busy" | "ok" | "err">("idle");
   const [auth, setAuth] = useState<null | { stage: "phone" | "code"; phone: string; email: string; code: string; type: string; firstName: string; lastName: string; company: string; registered: boolean; devCode?: string }>(null);
-  const [done, setDone] = useState<{ url: string; text: string; video?: string; payUrl?: string } | null>(null);
+  const [done, setDone] = useState<{ url: string; text: string; video?: string; payUrl?: string; editUrl?: string } | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [pending, start] = useTransition();
   const set = (k: keyof typeof d, v: unknown) => setD((x) => ({ ...x, [k]: v }));
   const typeLabel = page.types.find((t) => t.slug === d.propertyType)?.label ?? "Bien";
   const suggested = autoTitle({ typeLabel, transaction: d.transaction, bedrooms: Number(d.bedrooms) || 0, furnished: d.furnished, commune: d.commune.trim(), quartier: d.quartier.trim() });
+
+  const maxPhotos = page.maxPhotos || 12;
+  const vu = page.videoUpload ?? { enabled: page.video, maxMb: 100, maxSeconds: 120 };
+  const duree = (s: number) => (s >= 60 ? `${Math.round(s / 60)} min` : `${s} s`);
 
   const canNext = [
     true,
@@ -77,16 +95,41 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
   ][step];
 
   async function addPhotos(files: FileList | null) {
-    const list = Array.from(files ?? []).filter((f) => f.type.startsWith("image/")).slice(0, 15 - photos.length);
+    const all = Array.from(files ?? []).filter((f) => f.type.startsWith("image/"));
+    const list = all.slice(0, Math.max(0, maxPhotos - photos.length - uploading));
+    if (list.length < all.length) setError(`${maxPhotos} photos au maximum : les ${all.length - list.length} dernière(s) n’ont pas été ajoutée(s).`);
     setUploading((n) => n + list.length);
     for (const f of list) {
       try {
-        const r = await quickUploadAction(page.slug, await compress(f));
+        const img = await compress(f);
+        const r = member ? await uploadImageAction(img, "annonce") : await quickUploadAction(page.slug, img);
         if (r.ok && r.url) setPhotos((p) => [...p, r.url!]); else setError(r.error ?? "Envoi de la photo impossible.");
       } finally {
         setUploading((n) => n - 1);
       }
     }
+  }
+
+  /** Vidéo refusée tout de suite si elle dépasse la taille ou la durée permises (comme dans « Mon espace »). */
+  function pickVideo(f: File | null) {
+    if (!f) return setVideoFile(null);
+    if (f.size > vu.maxMb * 1024 * 1024) {
+      setVideoFile(null);
+      return setError(`Vidéo trop lourde (${Math.round(f.size / 1024 / 1024)} Mo) : ${vu.maxMb} Mo au maximum.`);
+    }
+    const el = document.createElement("video");
+    const url = URL.createObjectURL(f);
+    el.preload = "metadata";
+    el.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      if (Number.isFinite(el.duration) && el.duration > vu.maxSeconds + 1) {
+        setVideoFile(null);
+        setError(`Vidéo trop longue (${duree(Math.round(el.duration))}) : ${duree(vu.maxSeconds)} au maximum.`);
+      } else { setError(null); setVideoFile(f); }
+    };
+    // Format non lu par le navigateur : la durée sera contrôlée par le serveur.
+    el.onerror = () => { URL.revokeObjectURL(url); setVideoFile(f); };
+    el.src = url;
   }
 
   function locate() {
@@ -115,25 +158,46 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
     });
   }
 
-  async function doPublish() {
+  /** Annonce créée : { id, url, text, payUrl } ou message d'erreur. */
+  async function create(): Promise<{ id: string; url: string; text: string; payUrl?: string } | string> {
+    const num = (v: string) => Number(v) || null;
+    if (member) {
+      const r = await saveListingAction(null, {
+        transaction: d.transaction, propertyType: d.propertyType, title: d.title.trim() || suggested,
+        price: Number(d.price) || 0, priceUnit: d.transaction === "rent" ? d.priceUnit : undefined,
+        description: d.description.trim(), bedrooms: num(d.bedrooms), bathrooms: num(d.bathrooms), surface: num(d.surface),
+        features: d.furnished && d.transaction === "rent" ? ["Meublé"] : [],
+        city: d.city.trim() || "Abidjan", commune: d.commune.trim() || null, quartier: d.quartier.trim() || null,
+        latitude: d.latitude, longitude: d.longitude, photos, videoUrl: d.videoUrl.trim() || null, labels: d.labels,
+      });
+      if (!r.ok || !r.id) return r.error ?? "Publication impossible. Réessayez.";
+      return { id: r.id, url: `/annonce/${r.id}`, text: page.successText, payUrl: r.paymentUrl ?? undefined };
+    }
     const r = await quickPublishAction(page.slug, {
       photos,
-      listing: { ...d, typeLabel, price: Number(d.price) || 0, bedrooms: Number(d.bedrooms) || null, features: [] },
+      listing: { ...d, typeLabel, price: Number(d.price) || 0, bedrooms: num(d.bedrooms), bathrooms: num(d.bathrooms), surface: num(d.surface), features: [] },
     });
-    if (!r.ok) { setError(r.error); return; }
+    if (!r.ok) return r.error;
+    return { id: r.data.id, url: r.data.url, text: r.data.successText || page.successText, payUrl: r.data.payment?.paymentUrl ?? r.data.payment?.url ?? undefined };
+  }
+
+  async function doPublish() {
+    const r = await create();
+    if (typeof r === "string") { setError(r); return; }
     let video: string | undefined;
     if (videoFile) {
       setProgress(0);
-      const v = await uploadListingVideo(r.data.id, videoFile, 1024, setProgress);
+      const v = await uploadListingVideo(r.id, videoFile, vu.maxMb, setProgress);
       setProgress(null);
       video = v.ok ? "Vidéo envoyée : elle apparaît sur l’annonce dans quelques minutes." : v.error;
     }
-    setDone({ url: r.data.url, text: r.data.successText || page.successText, video, payUrl: r.data.payment?.paymentUrl ?? r.data.payment?.url ?? undefined });
+    setDone({ url: r.url, text: r.text, video, payUrl: r.payUrl, editUrl: member ? `/mon-espace/annonces/${r.id}` : undefined });
     router.refresh();
   }
 
   function publish() {
     setError(null);
+    if (member) return start(doPublish);
     if (!account) return setAuth({ stage: "phone", phone: "", email: "", code: "", type: page.accountTypes[0] ?? "agent", firstName: "", lastName: "", company: "", registered: false });
     if (!PUBLISHERS.includes(account.accountType)) return setError("Votre compte n’est pas un compte annonceur : choisissez « Agent », « Agence » ou « Propriétaire » dans Mon espace → Profil.");
     start(doPublish);
@@ -180,6 +244,7 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
         {done.video ? <p className="text-sm text-muted">{done.video}</p> : null}
         {done.payUrl ? <a href={done.payUrl} className="block rounded-xl bg-accent-600 py-3 font-bold text-white">Régler la publication</a> : null}
         <a href={done.url} className="block rounded-xl bg-brand-800 py-3 font-bold text-white">Voir mon annonce</a>
+        {done.editUrl ? <a href={done.editUrl} className="block text-sm font-semibold text-brand-800 underline">Ajouter plus de détails (facultatif)</a> : null}
         <a href={`https://wa.me/?text=${encodeURIComponent(done.url)}`} className="block rounded-xl bg-[#25D366] py-3 font-bold text-white">Partager sur WhatsApp</a>
         <button type="button" onClick={() => { setDone(null); setStep(0); setPhotos([]); setVideoFile(null); setD((x) => ({ ...x, price: "", title: "", description: "", videoUrl: "", quartier: "" })); }}
           className="block w-full rounded-xl py-3 font-semibold text-brand-800 ring-1 ring-slate-300">Publier un autre bien</button>
@@ -189,7 +254,7 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 pb-28 pt-5">
+    <div className={member ? "max-w-md pb-6" : "mx-auto max-w-md px-4 pb-28 pt-5"}>
       <h1 className="font-display text-2xl font-extrabold text-ink">{page.pageTitle}</h1>
       {step === 0 && page.pageIntro ? <p className="mt-1 text-sm text-muted">{page.pageIntro}</p> : null}
 
@@ -253,17 +318,24 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
                 </span>
               ))}
               {Array.from({ length: uploading }).map((_, i) => <span key={`u${i}`} className="aspect-square animate-pulse rounded-xl bg-slate-200" />)}
-              <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-slate-300 text-center text-sm font-semibold text-brand-800">
-                + Photos<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => void addPhotos(e.target.files)} />
-              </label>
+              {photos.length + uploading < maxPhotos ? (
+                <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-slate-300 text-center text-sm font-semibold text-brand-800">
+                  + Photos<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { void addPhotos(e.target.files); e.target.value = ""; }} />
+                </label>
+              ) : null}
             </div>
-            <p className="text-xs text-muted">{page.minPhotos ? `Au moins ${page.minPhotos} photo(s). ` : ""}Choisissez-les dans votre galerie (celles envoyées sur WhatsApp y sont).</p>
+            <p className="text-xs text-muted">{page.minPhotos ? `Au moins ${page.minPhotos} photo(s), ` : ""}{maxPhotos} au maximum ({photos.length}/{maxPhotos}). Choisissez-les dans votre galerie (celles envoyées sur WhatsApp y sont).</p>
             {page.video ? (
               <div className="space-y-2 rounded-xl bg-white p-3 ring-1 ring-slate-200">
                 <p className="font-semibold text-ink">Vidéo <span className="font-normal text-muted">(facultatif)</span></p>
-                <label className="block cursor-pointer rounded-lg bg-slate-50 p-3 text-sm font-semibold text-brand-800">
-                  {videoFile ? `✓ ${videoFile.name}` : "+ Choisir une vidéo"}<input type="file" accept="video/*" className="hidden" onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)} />
-                </label>
+                {vu.enabled ? (
+                  <>
+                    <label className="block cursor-pointer rounded-lg bg-slate-50 p-3 text-sm font-semibold text-brand-800">
+                      {videoFile ? `✓ ${videoFile.name}` : "+ Choisir une vidéo"}<input type="file" accept="video/*" className="hidden" onChange={(e) => { pickVideo(e.target.files?.[0] ?? null); e.target.value = ""; }} />
+                    </label>
+                    <p className="text-xs text-muted">Filmée avec votre téléphone : {vu.maxMb} Mo et {duree(vu.maxSeconds)} au maximum.</p>
+                  </>
+                ) : null}
                 <input value={d.videoUrl} onChange={(e) => set("videoUrl", e.target.value.trim())} placeholder="ou lien TikTok, YouTube, Facebook…" className={field} inputMode="url" />
               </div>
             ) : null}
@@ -291,14 +363,27 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
                 ))}
               </div>
             </label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block"><span className="text-sm font-semibold text-ink">Salles de bain <span className="font-normal text-muted">(facult.)</span></span>
+                <input value={d.bathrooms} onChange={(e) => set("bathrooms", e.target.value.replace(/\D/g, "").slice(0, 2))} inputMode="numeric" placeholder="ex. 2" className={field + " mt-1"} />
+              </label>
+              <label className="block"><span className="text-sm font-semibold text-ink">Surface m² <span className="font-normal text-muted">(facult.)</span></span>
+                <input value={d.surface} onChange={(e) => set("surface", e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="ex. 120" className={field + " mt-1"} />
+              </label>
+            </div>
           </>
         ) : null}
 
         {step === 3 ? (
           <>
-            <label className="block"><span className="text-sm font-semibold text-ink">Commune ou ville</span>
-              <input autoFocus list="quick-communes" value={d.commune} onChange={(e) => set("commune", e.target.value)} placeholder="ex. Cocody" className={field + " mt-1"} />
-            </label>
+            <div className="grid grid-cols-[2fr_1fr] gap-2">
+              <label className="block"><span className="text-sm font-semibold text-ink">Commune</span>
+                <input autoFocus list="quick-communes" value={d.commune} onChange={(e) => set("commune", e.target.value)} placeholder="ex. Cocody" className={field + " mt-1"} />
+              </label>
+              <label className="block"><span className="text-sm font-semibold text-ink">Ville</span>
+                <input value={d.city} onChange={(e) => set("city", e.target.value)} placeholder="Abidjan" className={field + " mt-1"} />
+              </label>
+            </div>
             <datalist id="quick-communes">{COMMUNES.map((c) => <option key={c} value={c} />)}</datalist>
             <label className="block"><span className="text-sm font-semibold text-ink">Quartier <span className="font-normal text-muted">(facultatif)</span></span>
               <input value={d.quartier} onChange={(e) => set("quartier", e.target.value)} placeholder="ex. Angré 8e tranche" className={field + " mt-1"} />
@@ -321,6 +406,20 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
             <label className="block"><span className="text-sm font-semibold text-ink">Description</span>
               <textarea value={d.description} onChange={(e) => set("description", e.target.value)} rows={5} placeholder="Pièces, équipements, accès, conditions (caution, avance)…" className={field + " mt-1"} />
             </label>
+            {page.labels?.length ? (
+              <div>
+                <span className="text-sm font-semibold text-ink">Étiquette <span className="font-normal text-muted">(facultatif)</span></span>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {page.labels.map((l) => {
+                    const on = d.labels.includes(l.slug);
+                    return (
+                      <button key={l.slug} type="button" onClick={() => set("labels", on ? d.labels.filter((x) => x !== l.slug) : [...d.labels, l.slug].slice(-3))}
+                        className={"rounded-full px-3 py-1.5 text-sm font-semibold " + (on ? "bg-ink text-white" : "bg-white ring-1 ring-slate-300")}>{l.label}</button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
             <div className="rounded-xl bg-slate-50 p-3 text-sm text-muted">
               <b className="block text-ink">{d.title.trim() || suggested}</b>
               {Number(d.price).toLocaleString("fr-FR")} F{d.transaction === "rent" ? ({ month: " / mois", day: " / jour", week: " / semaine", year: " / an" } as Record<string, string>)[d.priceUnit] ?? "" : ""} · {photos.length} photo(s){videoFile || d.videoUrl ? " + vidéo" : ""}
@@ -370,8 +469,8 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
       ) : null}
 
       {/* Navigation */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-        <div className="mx-auto flex max-w-md gap-2 px-4 py-3">
+      <div className={member ? "mt-6" : "fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur"} style={member ? undefined : { paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <div className={member ? "flex gap-2" : "mx-auto flex max-w-md gap-2 px-4 py-3"}>
           {step > 0 ? <button type="button" onClick={() => setStep(step - 1)} className="rounded-xl px-5 py-3 font-semibold ring-1 ring-slate-300">Retour</button> : null}
           {step < STEPS.length - 1 ? (
             <button type="button" disabled={!canNext} onClick={() => { setError(null); setStep(step + 1); }} className="flex-1 rounded-xl bg-brand-800 py-3 font-bold text-white disabled:opacity-40">

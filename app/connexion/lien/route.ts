@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { apiPost } from "@/lib/api";
 import { setSession } from "@/lib/session";
+import { safeNext } from "@/lib/two-factor";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +12,8 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("t") ?? "";
-  const raw = req.nextUrl.searchParams.get("next") ?? "/forfaits";
-  // Redirection limitée au site lui-même (chemin relatif).
-  const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/forfaits";
+  // Redirection limitée au site lui-même (chemin relatif, même filtre que la connexion).
+  const next = safeNext(req.nextUrl.searchParams.get("next"), "/forfaits");
   const { ok, data } = await apiPost<any>("/site/auth/login-link/exchange", { token });
   if (!ok || !data?.accessToken) {
     // Lien expiré ou déjà utilisé : connexion habituelle.

@@ -1,3 +1,20 @@
+// Sources utilisées par le site : API Moboo, connexion Google, cartes (Google Maps, OpenStreetMap),
+// vidéos intégrées (YouTube, TikTok, Vimeo) ; images de tout hôte https (photos d'annonces).
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://accounts.google.com https://maps.googleapis.com https://maps.gstatic.com",
+  "style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self' https://*.moboo.ci https://moboo.ci https://accounts.google.com https://maps.googleapis.com https://nominatim.openstreetmap.org wss:",
+  "media-src 'self' blob: https:",
+  "frame-src 'self' https://accounts.google.com https://www.youtube.com https://www.youtube-nocookie.com https://www.tiktok.com https://player.vimeo.com https://www.google.com",
+  "frame-ancestors 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -16,6 +33,9 @@ const nextConfig = {
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(), payment=(), geolocation=(self)' },
         { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
+        // Politique de contenu en OBSERVATION (rien n'est bloqué) : les écarts s'affichent dans la
+        // console du navigateur. Une fois la liste confirmée, passer à « Content-Security-Policy ».
+        { key: 'Content-Security-Policy-Report-Only', value: CSP },
       ],
     }];
   },
