@@ -5,31 +5,41 @@ import { Journey, JourneyChip } from "@/components/backoffice/am-journey";
 export const dynamic = "force-dynamic";
 
 type Funnel = {
-  scope: string; stage: string | null; stuckOnly: boolean; canSeeAll: boolean; total: number;
+  product: string; scope: string; stage: string | null; stuckOnly: boolean; canSeeAll: boolean; total: number;
   stages: { key: string; label: string; count: number; stuck: number }[];
-  items: { id: string; name: string; phone: string | null; whatsapp: string | null; city: string | null; journey: Journey; managerName: string | null }[];
+  items: { id: string; kind: string; name: string; phone: string | null; whatsapp: string | null; city: string | null; journey: Journey; managerName: string | null }[];
 };
 
-/** Parcours de démarrage des hôtes Moboo Resi : où chacun bloque, du compte créé au forfait payé. */
-export default async function AmJourney({ searchParams }: { searchParams: { scope?: string; stage?: string; stuck?: string } }) {
+const PRODUCTS: [string, string][] = [["resi", "Moboo Resi"], ["event", "Moboo Event"], ["pro", "Moboo Pro"]];
+const INTRO: Record<string, string> = {
+  resi: "résidence créée, logements ajoutés, visible sur Moboo.ci, première réservation, forfait payant",
+  event: "espace créé, tarifs ajoutés, visible sur Moboo.ci, première réservation, forfait payant",
+  pro: "premier bien, premier bail, premier loyer encaissé, premier prospect, forfait Moboo Pro payant",
+};
+
+/** Parcours de démarrage des clients (Moboo Resi, Event, Pro) : où chacun bloque, du compte créé au forfait payé. */
+export default async function AmJourney({ searchParams }: { searchParams: { scope?: string; stage?: string; stuck?: string; product?: string } }) {
   const scope = searchParams.scope ?? "mine";
-  const qs = new URLSearchParams({ scope, ...(searchParams.stage ? { stage: searchParams.stage } : {}), ...(searchParams.stuck ? { stuck: "1" } : {}) });
+  const product = PRODUCTS.some(([k]) => k === searchParams.product) ? searchParams.product! : "resi";
+  const qs = new URLSearchParams({ scope, product, ...(searchParams.stage ? { stage: searchParams.stage } : {}), ...(searchParams.stuck ? { stuck: "1" } : {}) });
   const d = await getAm<Funnel>(`/journey?${qs}`);
   if (!d) return <p className="rounded-lg bg-white p-6 text-sm text-red-600 ring-1 ring-slate-200">Parcours indisponible.</p>;
-  const link = (p: Record<string, string>) => `?${new URLSearchParams({ scope: d.scope, ...(d.stage ? { stage: d.stage } : {}), ...(d.stuckOnly ? { stuck: "1" } : {}), ...p })}`;
-  const scopes: [string, string][] = [["mine", "Mon portefeuille"], ["unassigned", "Sans account manager"], ...(d.canSeeAll ? [["all", "Tous les hôtes"] as [string, string]] : [])];
+  const link = (p: Record<string, string>) => `?${new URLSearchParams({ product, scope: d.scope, ...(d.stage ? { stage: d.stage } : {}), ...(d.stuckOnly ? { stuck: "1" } : {}), ...p })}`;
+  const scopes: [string, string][] = [["mine", "Mon portefeuille"], ["unassigned", "Sans account manager"], ...(d.canSeeAll ? [["all", "Tous les comptes"] as [string, string]] : [])];
   const max = Math.max(1, ...d.stages.map((s) => s.count));
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-ink">Parcours de démarrage</h1>
-          <p className="max-w-3xl text-sm text-muted">Où en est chaque hôte Moboo Resi : résidence créée, logements ajoutés, visible sur Moboo.ci, première réservation, forfait payant. Un hôte bloqué trop longtemps à une étape donne une tâche de relance à son account manager, chaque matin à 8 h.</p>
+          <p className="max-w-3xl text-sm text-muted">Où en est chaque client {PRODUCTS.find(([k]) => k === product)![1]} : {INTRO[product]}. Un client bloqué trop longtemps à une étape donne une tâche de relance à son account manager, chaque matin à 8 h.</p>
         </div>
         {d.canSeeAll ? <form action={runJourneyTasksAction}><button className="rounded-md bg-ink px-3 py-1.5 text-sm font-semibold text-white">Créer les relances maintenant</button></form> : null}
       </div>
       <div className="flex flex-wrap gap-2 text-sm">
-        {scopes.map(([k, l]) => <Link key={k} href={`?${new URLSearchParams({ scope: k })}`} className={"rounded-full px-3 py-1 font-semibold " + (d.scope === k ? "bg-ink text-white" : "bg-white ring-1 ring-slate-300")}>{l}</Link>)}
+        {PRODUCTS.map(([k, l]) => <Link key={k} href={`?${new URLSearchParams({ product: k, scope: d.scope })}`} className={"rounded-full px-3 py-1 font-semibold " + (product === k ? "bg-brand-800 text-white" : "bg-white ring-1 ring-slate-300")}>{l}</Link>)}
+        <span className="mx-1 text-slate-300">|</span>
+        {scopes.map(([k, l]) => <Link key={k} href={`?${new URLSearchParams({ product, scope: k })}`} className={"rounded-full px-3 py-1 font-semibold " + (d.scope === k ? "bg-ink text-white" : "bg-white ring-1 ring-slate-300")}>{l}</Link>)}
         <span className="mx-1 text-slate-300">|</span>
         <Link href={link({ stuck: d.stuckOnly ? "" : "1" })} className={"rounded-full px-3 py-1 font-semibold " + (d.stuckOnly ? "bg-red-600 text-white" : "bg-white ring-1 ring-slate-300")}>Bloqués seulement</Link>
       </div>
@@ -43,16 +53,16 @@ export default async function AmJourney({ searchParams }: { searchParams: { scop
           </Link>
         ))}
       </div>
-      <p className="text-xs text-muted">{d.total} hôte{d.total > 1 ? "s" : ""} au total. Cliquez une étape pour voir ses hôtes{d.items.length >= 100 ? " (100 premiers, les plus bloqués d’abord)" : ""}.</p>
+      <p className="text-xs text-muted">{d.total} client{d.total > 1 ? "s" : ""} au total. Cliquez une étape pour voir ses clients{d.items.length >= 100 ? " (100 premiers, les plus bloqués d’abord)" : ""}.</p>
       <div className="overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
         <table className="w-full min-w-[900px] text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-muted">
-            <tr><th className="p-3">Hôte</th><th className="p-3">Étape</th><th className="p-3">Pourquoi</th><th className="p-3">À faire</th><th className="p-3">Contact</th><th className="p-3">Account manager</th></tr>
+            <tr><th className="p-3">Client</th><th className="p-3">Étape</th><th className="p-3">Pourquoi</th><th className="p-3">À faire</th><th className="p-3">Contact</th><th className="p-3">Account manager</th></tr>
           </thead>
           <tbody>
             {d.items.map((a) => (
               <tr key={a.id} className="border-t border-slate-100 align-top">
-                <td className="p-3"><Link href={`/admin/comptes/org/${a.id}`} className="font-semibold text-brand-800 hover:underline">{a.name}</Link>{a.city ? <><br /><span className="text-xs text-muted">{a.city}</span></> : null}</td>
+                <td className="p-3"><Link href={`/admin/comptes/${a.kind}/${a.id}`} className="font-semibold text-brand-800 hover:underline">{a.name}</Link>{a.city ? <><br /><span className="text-xs text-muted">{a.city}</span></> : null}</td>
                 <td className="p-3"><JourneyChip j={a.journey} /></td>
                 <td className="p-3 text-xs">{a.journey.reason ?? <span className="text-muted">—</span>}</td>
                 <td className="p-3 text-xs">{a.journey.action ?? "—"}</td>
@@ -60,7 +70,7 @@ export default async function AmJourney({ searchParams }: { searchParams: { scop
                 <td className="p-3 text-xs">{a.managerName ?? <span className="text-muted">—</span>}</td>
               </tr>
             ))}
-            {!d.items.length ? <tr><td colSpan={6} className="p-6 text-center text-muted">Aucun hôte ici.</td></tr> : null}
+            {!d.items.length ? <tr><td colSpan={6} className="p-6 text-center text-muted">Aucun client ici.</td></tr> : null}
           </tbody>
         </table>
       </div>
