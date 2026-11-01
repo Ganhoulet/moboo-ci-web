@@ -6,6 +6,7 @@ import { fcfa } from "@/lib/am";
 import { RecoList } from "@/components/backoffice/am-reco";
 import { AccessPanel } from "@/components/backoffice/am-access";
 import { HostActivityPanel } from "@/components/backoffice/am-activity";
+import { HealthPanel } from "@/components/backoffice/am-health";
 import { getAm } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -53,6 +54,8 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
           <AssignControl kind={d.kind} id={d.id} current={d.manager?.id ?? null} managers={managers ?? []} canAssign={d.canAssign} meId={getSession()?.id ?? ""} />
         </div>
       </div>
+
+      {d.health ? <HealthPanel h={d.health} /> : null}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {d.kpis.map((k: any) => <div key={k.label} className="rounded-lg bg-white p-4 ring-1 ring-slate-200"><p className="text-xs text-muted">{k.label}</p><p className="font-display text-xl font-extrabold text-ink">{k.value}</p></div>)}
