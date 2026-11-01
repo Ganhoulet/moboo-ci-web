@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAm } from "../actions";
 import { HealthBadge } from "@/components/backoffice/am-health";
+import { JourneyChip } from "@/components/backoffice/am-journey";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,7 @@ export default async function AmPortfolio({ searchParams }: { searchParams: { ki
             {d.items.map((a: any) => (
               <tr key={a.id} className="border-t border-slate-100 align-top">
                 <td className="p-3"><Link href={`/admin/comptes/${a.kind}/${a.id}`} className="font-semibold text-brand-800 hover:underline">{a.name}</Link><br /><span className="text-xs text-muted">{a.sub}</span></td>
-                <td className="p-3">{kind === "org" ? <HealthBadge h={a.health} /> : <span className="text-xs text-muted">—</span>}</td>
+                <td className="p-3">{kind === "org" ? <><HealthBadge h={a.health} /><br /><JourneyChip j={a.journey} /></> : <span className="text-xs text-muted">—</span>}</td>
                 <td className="p-3 text-xs">{a.phone ? <a href={`tel:${a.phone}`} className="text-brand-700">{a.phone}</a> : "—"}{a.whatsapp ? <> · <a href={`https://wa.me/${String(a.whatsapp).replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="text-emerald-700">WhatsApp</a></> : null}<br /><span className="text-muted">Connexion : {date(a.lastLoginAt)}</span></td>
                 <td className="p-3 text-xs">{Object.entries(a.stats).map(([k, v]) => <span key={k} className="mr-2 inline-block">{({ listings: "Annonces", inquiries: "Demandes", pending: "À confirmer", bookings30: "Résa 30 j", cancelled30: "Annul. 30 j" } as Record<string, string>)[k] ?? k} : <b>{String(v)}</b></span>)}</td>
                 <td className="p-3">{a.flags.map((f: string) => <span key={f} className={"mb-1 mr-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold " + (/confirmer|annulations/i.test(f) ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-800")}>{f}</span>)}</td>
