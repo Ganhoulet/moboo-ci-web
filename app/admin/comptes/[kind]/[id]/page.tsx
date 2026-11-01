@@ -7,6 +7,7 @@ import { RecoList } from "@/components/backoffice/am-reco";
 import { AccessPanel } from "@/components/backoffice/am-access";
 import { HostActivityPanel } from "@/components/backoffice/am-activity";
 import { HealthPanel } from "@/components/backoffice/am-health";
+import { JourneySteps } from "@/components/backoffice/am-journey";
 import { getAm } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,7 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
         </div>
       </div>
 
+      {d.journey ? <JourneySteps j={d.journey} /> : null}
       {d.health ? <HealthPanel h={d.health} /> : null}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

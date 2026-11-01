@@ -96,3 +96,8 @@ export async function decidePhoneAction(id: string, approve: boolean, note = "")
 export async function saveGoalsAction(managerId: string, period: string, goals: Record<string, number | null>): Promise<R> {
   return send("/goals", "PUT", { managerId, period, goals });
 }
+
+/** Parcours de démarrage : créer tout de suite les tâches de relance des hôtes bloqués (sinon chaque matin). */
+export async function runJourneyTasksAction(): Promise<void> {
+  await send("/journey/tasks/run", "POST", {});
+}
