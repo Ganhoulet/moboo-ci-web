@@ -121,6 +121,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/publicite", label: "Publicité (annonceurs)", icon: "megaphone", group: "publicite" },
     { href: "/admin/publicite/tarifs", label: "Tarifs", icon: "megaphone", child: true, group: "publicite" },
     { href: "/admin/publicite/services", label: "Services (déménageurs, nettoyage…)", icon: "megaphone", child: true, group: "publicite" },
+    { href: "/admin/publicite/bourse", label: "Bourse des demandes", icon: "megaphone", child: true, group: "publicite" },
     // Immobilier (façon Houzez « Real Estate ») : annonces, listes, agences et agents.
     { href: "/admin/immobilier", label: "Immobilier", icon: "building", group: "immobilier" },
     ...[

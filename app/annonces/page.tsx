@@ -217,6 +217,13 @@ export default async function AnnoncesPage({
     </>
   );
 
+  // Bourse des demandes : « Vous ne trouvez pas ? » sous les résultats.
+  const askCta = (
+    <Link href="/je-cherche" className="mt-8 flex flex-wrap items-center gap-3 rounded-2xl bg-brand-50 p-4 ring-1 ring-brand-100 hover:ring-brand-300">
+      <span className="min-w-0 flex-1"><b className="block text-ink">Vous ne trouvez pas ce que vous cherchez ?</b><span className="text-sm text-muted">Décrivez votre recherche : les agents de la commune vous rappellent avec des biens qui correspondent.</span></span>
+      <span className="rounded-xl bg-brand-800 px-4 py-2 text-sm font-bold text-white">Déposer ma demande</span>
+    </Link>
+  );
   const pagination = (
     <Pagination
       page={page}
@@ -244,7 +251,7 @@ export default async function AnnoncesPage({
       <div className="w-full">
         <div className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">{bar}</div>
         <ResultsView items={items} tpl={tpl} mapSettings={settings.maps} mapItems={mapItems} query={query} mapEnabled serviceAds={serviceAds}
-          head={<>{titleBlock}{extras}</>} foot={pagination} />
+          head={<>{titleBlock}{extras}</>} foot={<>{pagination}{askCta}</>} />
       </div>
     );
   }
@@ -260,6 +267,7 @@ export default async function AnnoncesPage({
         <>
           <ResultsView items={items} tpl={tpl} mapSettings={settings.maps} mapItems={mapItems} query={query} mapEnabled={hasMap(tpl)} serviceAds={serviceAds} />
           {pagination}
+          {askCta}
         </>
       ) : (
         <div className="mx-auto mt-12 max-w-md rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
@@ -272,6 +280,7 @@ export default async function AnnoncesPage({
           <Link href="/annonces" className="btn-ghost mt-5">
             Réinitialiser les filtres
           </Link>
+          <Link href="/je-cherche" className="btn-primary mt-3 block">Déposer ma demande aux agents</Link>
         </div>
       )}
     </div>

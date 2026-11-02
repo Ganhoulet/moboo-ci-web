@@ -166,7 +166,7 @@ export const WELCOME_NEXT: Record<AccountType, { text: string; cta?: { href: str
 
 export type DashKey =
   | "tableau" | "reservations" | "annonces" | "nouvelle" | "statistiques" | "demandes"
-  | "messages" | "favoris" | "recherches" | "profil" | "forfait" | "publicite" | "factures" | "verification" | "api" | "infos" | "avis" | "pagepro" | "equipe" | "realisations";
+  | "messages" | "favoris" | "recherches" | "profil" | "forfait" | "publicite" | "factures" | "verification" | "api" | "infos" | "avis" | "pagepro" | "equipe" | "realisations" | "bourse";
 
 export interface DashItem {
   key: DashKey;
@@ -184,6 +184,7 @@ export const DASH_MENU: DashItem[] = [
   { key: "nouvelle", href: "/mon-espace/annonces/nouvelle", label: "Publier une annonce", types: PUB },
   { key: "statistiques", href: "/mon-espace/statistiques", label: "Statistiques", types: PUB },
   { key: "demandes", href: "/mon-espace/demandes", label: "Demandes", types: PUB },
+  { key: "bourse", href: "/mon-espace/bourse", label: "Bourse des demandes", types: ["agent", "entreprise"] },
   { key: "pagepro", href: "/mon-espace/page-pro", label: "Ma page pro", types: PUB },
   { key: "equipe", href: "/mon-espace/equipe", label: "Mon équipe", types: ["entreprise"] },
   { key: "realisations", href: "/mon-espace/realisations", label: "Vendus et loués", types: PUB },
