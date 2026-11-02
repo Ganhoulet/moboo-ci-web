@@ -36,6 +36,8 @@ export interface Property {
   /** Espace annonceur : vitrine premium (grand format), annonce sponsorisée (boost par zone). */
   showcase?: boolean;
   sponsored?: boolean;
+  /** Label « Bien vérifié Moboo ». */
+  inspected?: boolean;
   /** Centre marketing : message de conversion de la carte (données réelles). */
   signal?: { text: string; tone: "urgent" | "social" | "deal" | "info" | "trust"; icon: string } | null;
   labels?: { slug: string; label: string; color: string | null }[];
@@ -189,6 +191,7 @@ export function mapListing(l: import("./types").ListingItem): Property {
     featured: !!l.featured,
     showcase: !!l.showcase,
     sponsored: !!l.sponsored,
+    inspected: !!l.inspected,
     labels: l.labels ?? [],
     status: kind === "classic" && l.statusLabel ? { label: l.statusLabel.label, color: l.statusLabel.color } : null,
     lat: l.latitude ?? null,

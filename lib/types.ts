@@ -117,6 +117,8 @@ export interface EspaceDetail extends Espace {
 
 /** Annonce classique (à louer / à vendre) — feed public /marketplace/properties. */
 export interface ListingItem {
+  /** Label « Bien vérifié Moboo » (visite de contrôle faite, encore valable). */
+  inspected?: boolean;
   id: string;
   transaction: "rent" | "sale";
   propertyType: string;

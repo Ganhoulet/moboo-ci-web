@@ -195,6 +195,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
             </span>
             <span className="chip">{TYPE(l.propertyType)}</span>
             {l.featured ? <span className="rounded-md bg-amber-500 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">★ En vedette</span> : null}
+            {l.inspected ? <span className="rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white" title="Un agent Moboo a visité ce bien : il existe et correspond à l’annonce.">✓ Bien vérifié par Moboo</span> : null}
             {(l.labels ?? []).map((lb) => <span key={lb.slug} className="rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white" style={{ background: lb.color ?? "#334155" }}>{lb.label}</span>)}
           </>
         }

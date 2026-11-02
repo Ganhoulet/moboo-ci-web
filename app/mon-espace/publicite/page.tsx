@@ -23,6 +23,9 @@ export default async function Publicite({ searchParams }: { searchParams: { fact
   return (
     <div className="space-y-6">
       <PageHeader title="Publicité" sub="Faites voir vos biens et votre agence : boost par zone, vitrine, partenaire de zone et bannières." />
+      <Link href="/mon-espace/bien-verifie" className="block rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900 ring-1 ring-emerald-200 hover:ring-emerald-300">
+        <strong>Badge « Vérifié Moboo »</strong> : un agent Moboo visite votre bien et certifie l’annonce. Plus de confiance, plus d’appels. <span className="font-semibold underline">Faire vérifier mes biens ›</span>
+      </Link>
       <Link href="/mon-espace/publicite-services" className="block rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200 hover:ring-amber-300">
         <strong>Vous proposez un service ?</strong> Déménagement, nettoyage, aménagement… : affichez votre entreprise entre les annonces et recevez des demandes de devis. <span className="font-semibold underline">Publicités de services ›</span>
       </Link>
