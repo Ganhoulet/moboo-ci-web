@@ -6,6 +6,8 @@ import type { MapSettings } from "@/lib/settings";
 import type { ResultLayout } from "@/lib/result-layouts";
 import { PropertyCard } from "./property-card";
 import { PropertyRow } from "./property-row";
+import { ServiceAdCard } from "./service-ad-card";
+import type { ServiceAdCardData } from "@/lib/service-ads";
 import { SiteMap, type Bbox } from "./site-map";
 import { toMarker, type MapMarker } from "@/lib/map-markers";
 
@@ -21,8 +23,10 @@ const MAP_H = { small: "h-[280px]", medium: "h-[420px]", large: "h-[560px]" };
  * avant ; déplacer la carte charge les biens de la zone si le modèle le prévoit.
  */
 export function ResultsView({
-  items, tpl, mapSettings, mapItems, query, mapEnabled = true, head, foot,
+  items, tpl, mapSettings, mapItems, query, mapEnabled = true, head, foot, serviceAds,
 }: {
+  /** Publicités de services glissées toutes les N annonces (prestataires sponsorisés). */
+  serviceAds?: { every: number; items: ServiceAdCardData[] };
   /** Vue façon Zillow : titre, tri et bandeaux en haut de la colonne des annonces. */
   head?: ReactNode;
   /** Vue façon Zillow : pagination sous les annonces. */
@@ -61,13 +65,28 @@ export function ResultsView({
   }, [autoLoad, query]);
 
   const hover = (id: string) => ({ onMouseEnter: () => setActive(id), onMouseLeave: () => setActive(null) });
-  const list = tpl.listStyle === "list" || view === "map-full" ? (
+  const rows = tpl.listStyle === "list" || view === "map-full";
+  // Une publicité de services après chaque groupe de N annonces (jamais en tête, jamais en double).
+  const withAds = (cells: JSX.Element[]) => {
+    const ads = serviceAds?.items ?? [];
+    const every = Math.max(3, serviceAds?.every ?? 6);
+    if (!ads.length) return cells;
+    const out: JSX.Element[] = [];
+    let n = 0;
+    cells.forEach((c, i) => {
+      out.push(c);
+      if ((i + 1) % every === 0 && n < ads.length && i < cells.length - 1) out.push(<div key={`ad-${ads[n].id}`}><ServiceAdCard ad={ads[n]} row={rows} /></div>), n++;
+    });
+    if (n === 0 && cells.length >= 3) out.push(<div key={`ad-${ads[0].id}`}><ServiceAdCard ad={ads[0]} row={rows} /></div>);
+    return out;
+  };
+  const list = rows ? (
     <div className="space-y-4">
-      {items.map((p) => <div key={p.id} {...hover(p.id)}><PropertyRow p={p} /></div>)}
+      {withAds(items.map((p) => <div key={p.id} {...hover(p.id)}><PropertyRow p={p} /></div>))}
     </div>
   ) : (
     <div className={"grid grid-cols-1 gap-5 " + ((split ? COLS_SPLIT : COLS_FULL)[tpl.columns] ?? COLS_FULL[4])}>
-      {items.map((p) => <div key={p.id} className={p.showcase && tpl.columns > 1 ? "sm:col-span-2" : undefined} {...hover(p.id)}><PropertyCard p={p} /></div>)}
+      {withAds(items.map((p) => <div key={p.id} className={p.showcase && tpl.columns > 1 ? "sm:col-span-2" : undefined} {...hover(p.id)}><PropertyCard p={p} /></div>))}
     </div>
   );
 

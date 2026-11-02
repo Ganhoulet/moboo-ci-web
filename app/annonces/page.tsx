@@ -18,6 +18,7 @@ import { FilterBar } from "@/components/filter-bar";
 import { Pagination } from "@/components/pagination";
 import { SaveSearchButton } from "@/components/save-search-button";
 import { SearchPillsBar } from "@/components/search-pills-bar";
+import { getServiceAdsFeed } from "@/lib/service-ads";
 import { getSession } from "@/lib/session";
 import { getSiteSettings } from "@/lib/settings";
 import { getTaxonomies } from "@/lib/taxonomies";
@@ -135,9 +136,10 @@ export default async function AnnoncesPage({
   // Centre marketing : un message de conversion réel par carte (réservations, baisse de prix…).
   const cardSignals = await getCardSignals([...items.map((p) => p.id)]);
   items = items.map((p) => (cardSignals[p.id] ? { ...p, signal: cardSignals[p.id] } : p));
-  const [sponsored, banners] = await Promise.all([
+  const [sponsored, banners, serviceAds] = await Promise.all([
     !isReservableTab && page === 1 && settings.ads?.enabled !== false ? getSponsored({ q: correctedQuery ?? q, transaction: tx2, propertyType }) : Promise.resolve([]),
     q ? getCampaigns("site_banner", zonesOfQuery(correctedQuery ?? q)).then((xs) => xs.filter((c) => c.badge === "Sponsorisé")) : Promise.resolve([]),
+    getServiceAdsFeed(correctedQuery ?? q, active !== "all" ? active : undefined),
   ]);
 
   const hasFilters = !!(q || priceMin || priceMax || propertyType || bedrooms || active !== "all");
@@ -241,7 +243,7 @@ export default async function AnnoncesPage({
     return (
       <div className="w-full">
         <div className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">{bar}</div>
-        <ResultsView items={items} tpl={tpl} mapSettings={settings.maps} mapItems={mapItems} query={query} mapEnabled
+        <ResultsView items={items} tpl={tpl} mapSettings={settings.maps} mapItems={mapItems} query={query} mapEnabled serviceAds={serviceAds}
           head={<>{titleBlock}{extras}</>} foot={pagination} />
       </div>
     );
@@ -256,7 +258,7 @@ export default async function AnnoncesPage({
 
       {items.length > 0 ? (
         <>
-          <ResultsView items={items} tpl={tpl} mapSettings={settings.maps} mapItems={mapItems} query={query} mapEnabled={hasMap(tpl)} />
+          <ResultsView items={items} tpl={tpl} mapSettings={settings.maps} mapItems={mapItems} query={query} mapEnabled={hasMap(tpl)} serviceAds={serviceAds} />
           {pagination}
         </>
       ) : (
