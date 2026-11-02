@@ -5,10 +5,12 @@ import type { LayoutView, LayoutsConfig, ResultLayout } from "@/lib/result-layou
 import { saveLayoutsAction, type LayoutsView } from "@/app/admin/accueil/resultats/actions";
 
 const VIEWS: { v: LayoutView; l: string; d: string }[] = [
-  { v: "map-left", l: "Carte à gauche", d: "Annonces à droite (façon Zillow)" },
+  { v: "zillow", l: "Façon Zillow", d: "Carte collée à gauche sur toute la hauteur, annonces à droite" },
+  { v: "map-left", l: "Carte à gauche", d: "Annonces à droite, carte en encadré" },
   { v: "map-right", l: "Carte à droite", d: "Annonces à gauche (façon Airbnb)" },
   { v: "map-top", l: "Carte en haut", d: "Annonces en dessous" },
   { v: "map-full", l: "Carte plein écran", d: "Liste compacte qui défile à côté" },
+  { v: "gallery", l: "Galerie", d: "Grandes photos, bouton flottant « Afficher la carte »" },
   { v: "standard", l: "Sans carte", d: "Grille ou liste seule" },
 ];
 const MARKERS: { v: ResultLayout["marker"]; l: string }[] = [
@@ -42,6 +44,11 @@ export function LayoutThumb({ l, className = "h-20 w-32" }: { l: Pick<ResultLayo
   const mw = ((W - 3 * p) * l.mapWidth) / 100;
   let body: JSX.Element;
   if (l.view === "standard") body = <g>{cards(p, p, W - 2 * p, H - 2 * p, l.columns, l.listStyle === "list")}</g>;
+  else if (l.view === "gallery") body = <g>{cards(p, p, W - 2 * p, H - 2 * p, l.columns, false)}<rect x={W / 2 - 18} y={H - 15} width="36" height="9" rx="4.5" fill="#0f172a" /></g>;
+  else if (l.view === "zillow") {
+    const zw = ((W - p) * l.mapWidth) / 100;
+    body = <g><rect x="0" y="0" width={W} height="9" fill="#e2e8f0" />{map(0, 9, zw, H - 9)}{cards(zw + p, 9 + p, W - zw - 2 * p, H - 9 - 2 * p, Math.min(l.columns, 2), l.listStyle === "list")}</g>;
+  }
   else if (l.view === "map-top") {
     const mh = { small: 22, medium: 30, large: 38 }[l.mapHeight];
     body = <g>{map(p, p, W - 2 * p, mh)}{cards(p, p + mh + 4, W - 2 * p, H - 2 * p - mh - 4, l.columns, l.listStyle === "list")}</g>;
@@ -162,7 +169,7 @@ export function ResultLayoutsEditor({ initial, seoPages, communes }: { initial: 
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
-              {cur.view === "map-left" || cur.view === "map-right" || cur.view === "map-full" ? (
+              {cur.view === "map-left" || cur.view === "map-right" || cur.view === "map-full" || cur.view === "zillow" ? (
                 <label className="block">
                   <span className="mb-1 flex justify-between text-sm font-semibold text-ink">Largeur de la carte <span className="text-brand-800">{cur.mapWidth} %</span></span>
                   <input type="range" min={35} max={60} step={5} value={cur.mapWidth} onChange={(e) => patch({ mapWidth: Number(e.target.value) })} className="w-full accent-brand-800" />
@@ -187,7 +194,7 @@ export function ResultLayoutsEditor({ initial, seoPages, communes }: { initial: 
                     ))}
                     {cur.listStyle === "grid" ? (
                       <select className="input w-auto py-1 text-sm" value={cur.columns} onChange={(e) => patch({ columns: Number(e.target.value) })} aria-label="Colonnes">
-                        {(cur.view === "standard" || cur.view === "map-top" ? [2, 3, 4] : [1, 2, 3]).map((n) => <option key={n} value={n}>{n} colonne{n > 1 ? "s" : ""} max.</option>)}
+                        {(cur.view === "standard" || cur.view === "map-top" || cur.view === "gallery" ? [2, 3, 4] : [1, 2, 3]).map((n) => <option key={n} value={n}>{n} colonne{n > 1 ? "s" : ""} max.</option>)}
                       </select>
                     ) : null}
                   </div>

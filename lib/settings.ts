@@ -52,7 +52,7 @@ export interface SiteSettings {
   forms: { listingForm: string; memberSpace: string };
   search: {
     perPage: number; headerSearch: "none" | "simple" | "filters"; headerSearchPages: "details" | "all";
-    resultsView: "standard" | "halfmap"; resultsLayout: "grid" | "list";
+    resultsView: "standard" | "halfmap"; resultsLayout: "grid" | "list"; resultsBar: "pills" | "classic";
     defaultOrder: "featured" | "newest" | "oldest" | "price_asc" | "price_desc"; mapAutoLoad: boolean; mapInitialCount: number;
   };
   maps: MapSettings;
@@ -142,7 +142,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   submit: { maxPhotos: 12, submitIntro: "Publiez votre bien en quelques minutes : les intéressés vous contactent directement, sans commission." },
   search: {
     perPage: 24, headerSearch: "none", headerSearchPages: "details",
-    resultsView: "standard", resultsLayout: "grid", defaultOrder: "featured", mapAutoLoad: true, mapInitialCount: 100,
+    resultsView: "standard", resultsLayout: "grid", resultsBar: "pills", defaultOrder: "featured", mapAutoLoad: true, mapInitialCount: 100,
   },
   maps: {
     provider: "osm", googleApiKey: "", mapboxToken: "", mapType: "roadmap", markerType: "price",

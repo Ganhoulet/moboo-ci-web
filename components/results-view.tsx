@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Property } from "@/lib/property";
 import type { MapSettings } from "@/lib/settings";
 import type { ResultLayout } from "@/lib/result-layouts";
@@ -21,8 +21,12 @@ const MAP_H = { small: "h-[280px]", medium: "h-[420px]", large: "h-[560px]" };
  * avant ; déplacer la carte charge les biens de la zone si le modèle le prévoit.
  */
 export function ResultsView({
-  items, tpl, mapSettings, mapItems, query, mapEnabled = true,
+  items, tpl, mapSettings, mapItems, query, mapEnabled = true, head, foot,
 }: {
+  /** Vue façon Zillow : titre, tri et bandeaux en haut de la colonne des annonces. */
+  head?: ReactNode;
+  /** Vue façon Zillow : pagination sous les annonces. */
+  foot?: ReactNode;
   items: Property[];
   tpl: ResultLayout;
   mapSettings: MapSettings;
@@ -39,7 +43,7 @@ export function ResultsView({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const first = useRef(true);
   const view = mapEnabled && initial.length ? tpl.view : "standard";
-  const split = view === "map-left" || view === "map-right" || view === "map-full";
+  const split = view === "map-left" || view === "map-right" || view === "map-full" || view === "zillow";
   const autoLoad = tpl.autoLoad && mapEnabled;
 
   const onBounds = useCallback((b: Bbox) => {
@@ -67,7 +71,63 @@ export function ResultsView({
     </div>
   );
 
-  if (view === "standard") return <div className="mt-8">{list}</div>;
+  // Sans biens localisés, la vue façon Zillow retombe sur la liste (avec son titre et sa pagination).
+  if (view === "standard") return head || foot ? <div className="container-page pb-10 pt-5">{head}<div className="mt-6">{list}</div>{foot}</div> : <div className="mt-8">{list}</div>;
+
+  const settings0 = { ...mapSettings, markerType: tpl.marker };
+
+  // Galerie : grandes photos, carte en plein écran à la demande (bouton flottant).
+  if (view === "gallery") {
+    return (
+      <div className="mt-8">
+        {list}
+        <button type="button" onClick={() => setShowMap(true)}
+          className="fixed bottom-24 left-1/2 z-40 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-white shadow-xl md:bottom-8">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z" strokeLinejoin="round" /><path d="M9 4v14M15 6v14" /></svg>
+          Afficher la carte
+        </button>
+        {showMap ? (
+          <div className="fixed inset-0 z-[80] bg-white" role="dialog" aria-label="Carte des annonces">
+            <SiteMap settings={settings0} markers={markers} activeId={active} onBoundsChange={onBounds} className="h-full w-full" />
+            <button type="button" onClick={() => setShowMap(false)}
+              className="absolute bottom-8 left-1/2 z-[81] inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-white shadow-xl">
+              Afficher la liste
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  // Façon Zillow : carte collée à gauche sur toute la hauteur, annonces qui défilent à droite.
+  if (view === "zillow") {
+    return (
+      <div className="lg:grid lg:grid-cols-[var(--map-w)_minmax(0,1fr)]" style={{ ["--map-w" as string]: `${tpl.mapWidth}%` }}>
+        <div className={(showMap ? "" : "hidden ") + "lg:block"}>
+          <div className="sticky top-16 h-[calc(100dvh-4rem)] border-r border-slate-200">
+            <SiteMap settings={settings0} markers={markers} activeId={active} onBoundsChange={onBounds} className="h-full w-full" />
+            <span className="pointer-events-none absolute left-3 top-3 z-[5] rounded-full bg-ink/80 px-3 py-1.5 text-xs font-bold text-white">
+              {markers.length} bien(s) sur la carte
+            </span>
+          </div>
+        </div>
+        <div className={(showMap ? "hidden lg:block " : "") + "min-w-0 px-4 pb-10 pt-5 sm:px-6"}>
+          {head}
+          <div className="mt-4 flex justify-end lg:hidden">
+            <button type="button" onClick={() => setShowMap(true)} className="rounded-full bg-ink px-4 py-2 text-sm font-bold text-white">Carte ({markers.length})</button>
+          </div>
+          <div className="mt-5">{list}</div>
+          {foot}
+        </div>
+        {showMap ? (
+          <button type="button" onClick={() => setShowMap(false)}
+            className="fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-white shadow-xl lg:hidden">
+            Afficher la liste
+          </button>
+        ) : null}
+      </div>
+    );
+  }
 
   const settings = { ...mapSettings, markerType: tpl.marker };
   const caption = <p className="mt-2 text-xs text-muted">{markers.length} bien(s) sur la carte{autoLoad ? " · déplacez la carte pour charger la zone" : ""}. Seules les annonces localisées apparaissent.</p>;

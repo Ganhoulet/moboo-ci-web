@@ -8,22 +8,29 @@ import type { SearchParams } from "@/lib/searches";
 export function SaveSearchButton({
   params,
   loggedIn,
+  variant = "ghost",
 }: {
   params: SearchParams;
   loggedIn: boolean;
+  /** primary : bouton plein de la barre façon Zillow (« Enregistrer la recherche »). */
+  variant?: "ghost" | "primary";
 }) {
+  const primary = variant === "primary";
+  const btn = primary
+    ? "inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-xl bg-brand-800 px-4 text-sm font-bold text-white transition hover:bg-brand-900 disabled:opacity-60"
+    : "btn-ghost text-sm disabled:opacity-60";
   const [pending, start] = useTransition();
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Rien à enregistrer si aucun critère.
   const hasCriteria = Object.values(params).some((v) => v != null && v !== "");
-  if (!hasCriteria) return null;
+  if (!hasCriteria && !primary) return null;
 
   if (!loggedIn) {
     return (
-      <Link href="/compte" className="btn-ghost text-sm">
-        <BellIcon /> Connexion pour créer une alerte
+      <Link href="/compte" className={btn}>
+        <BellIcon /> {primary ? "Enregistrer la recherche" : "Connexion pour créer une alerte"}
       </Link>
     );
   }
@@ -43,7 +50,8 @@ export function SaveSearchButton({
     <div className="flex flex-col items-start gap-1">
       <button
         type="button"
-        disabled={pending}
+        disabled={pending || !hasCriteria}
+        title={hasCriteria ? undefined : "Choisissez d’abord un lieu, un prix ou un type de bien"}
         onClick={() =>
           start(async () => {
             setError(null);
@@ -52,9 +60,9 @@ export function SaveSearchButton({
             else setError(res.message);
           })
         }
-        className="btn-ghost text-sm disabled:opacity-60"
+        className={btn}
       >
-        <BellIcon /> {pending ? "Enregistrement…" : "Enregistrer cette recherche"}
+        <BellIcon /> {pending ? "Enregistrement…" : primary ? "Enregistrer la recherche" : "Enregistrer cette recherche"}
       </button>
       {error ? <span className="text-xs font-medium text-red-600">{error}</span> : null}
     </div>

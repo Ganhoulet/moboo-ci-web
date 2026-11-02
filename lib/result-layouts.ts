@@ -7,7 +7,7 @@ import { relayHeaders } from "./relay";
  * largeur de la carte, grille ou liste, style des repères. Chaque modèle peut
  * être appliqué à des pages précises ; sinon le modèle par défaut.
  */
-export type LayoutView = "standard" | "map-left" | "map-right" | "map-top" | "map-full";
+export type LayoutView = "standard" | "map-left" | "map-right" | "map-top" | "map-full" | "zillow" | "gallery";
 export interface ResultLayout {
   id: string; name: string; view: LayoutView; listStyle: "grid" | "list"; columns: number;
   mapWidth: number; mapHeight: "small" | "medium" | "large"; marker: "pin" | "price" | "dot"; autoLoad: boolean;

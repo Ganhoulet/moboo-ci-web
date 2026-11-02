@@ -17,6 +17,7 @@ import { SORTS } from "@/lib/sorts";
 import { FilterBar } from "@/components/filter-bar";
 import { Pagination } from "@/components/pagination";
 import { SaveSearchButton } from "@/components/save-search-button";
+import { SearchPillsBar } from "@/components/search-pills-bar";
 import { getSession } from "@/lib/session";
 import { getSiteSettings } from "@/lib/settings";
 import { getTaxonomies } from "@/lib/taxonomies";
@@ -58,6 +59,7 @@ export default async function AnnoncesPage({
     guests?: string;
     date?: string;
     days?: string;
+    bedrooms?: string;
   };
 }) {
   // Back-office → Recherche et résultats : nombre par page, présentation, demi-carte, ordre.
@@ -75,6 +77,8 @@ export default async function AnnoncesPage({
   const priceMax = Number(searchParams.priceMax) > 0 ? Number(searchParams.priceMax) : undefined;
   const propertyType = (searchParams.propertyType ?? "").trim();
   const page = Math.max(1, Number(searchParams.page) || 1);
+  // Chambres (barre façon Zillow) : 1, 2, 3 ou 4 et plus.
+  const bedrooms = /^[1-4]$/.test(searchParams.bedrooms ?? "") ? Number(searchParams.bedrooms) : undefined;
   const agent = /^\d{1,10}$/.test(searchParams.agent ?? "") ? searchParams.agent : undefined;
   // Recherche par rayon (« Autour de moi ») : centre et rayon en km.
   const nLat = Number(searchParams.lat), nLng = Number(searchParams.lng), nRad = Number(searchParams.radius);
@@ -106,7 +110,7 @@ export default async function AnnoncesPage({
   } else {
     // Tout / à louer / à vendre → pagination + filtres serveur (des milliers de biens).
     const tx = active === "rent" || active === "sale" ? active : undefined;
-    const res = await listListingsPage({ transaction: tx, q, priceMin, priceMax, propertyType, page, perPage: PER_PAGE, sort: near && (!searchParams.sort || searchParams.sort === "distance") ? undefined : sort, agent, near });
+    const res = await listListingsPage({ transaction: tx, q, priceMin, priceMax, propertyType, bedrooms, page, perPage: PER_PAGE, sort: near && (!searchParams.sort || searchParams.sort === "distance") ? undefined : sort, agent, near });
     items = res.items;
     total = res.total;
     correctedQuery = res.correctedQuery;
@@ -122,9 +126,9 @@ export default async function AnnoncesPage({
   const halfMap = hasMap(tpl) && !isReservableTab;
   const tx2 = active === "rent" || active === "sale" ? active : undefined;
   const mapItems = halfMap
-    ? (await listListingsPage({ transaction: tx2, q, priceMin, priceMax, propertyType, perPage: cfg.mapInitialCount, sort, map: true, listingKind: "classic" })).items
+    ? (await listListingsPage({ transaction: tx2, q, priceMin, priceMax, propertyType, bedrooms, perPage: cfg.mapInitialCount, sort, map: true, listingKind: "classic" })).items
     : [];
-  const query = new URLSearchParams(Object.entries({ transaction: tx2, q: q || undefined, priceMin: priceMin ? String(priceMin) : undefined, priceMax: priceMax ? String(priceMax) : undefined, propertyType: propertyType || undefined, sort })
+  const query = new URLSearchParams(Object.entries({ transaction: tx2, q: q || undefined, priceMin: priceMin ? String(priceMin) : undefined, priceMax: priceMax ? String(priceMax) : undefined, propertyType: propertyType || undefined, bedrooms: bedrooms ? String(bedrooms) : undefined, sort })
     .filter(([, v]) => v) as [string, string][]).toString();
 
   // Espace annonceur : annonces sponsorisées de la zone (page 1) et bannières ciblées.
@@ -136,7 +140,7 @@ export default async function AnnoncesPage({
     q ? getCampaigns("site_banner", zonesOfQuery(correctedQuery ?? q)).then((xs) => xs.filter((c) => c.badge === "Sponsorisé")) : Promise.resolve([]),
   ]);
 
-  const hasFilters = !!(q || priceMin || priceMax || propertyType || active !== "all");
+  const hasFilters = !!(q || priceMin || priceMax || propertyType || bedrooms || active !== "all");
   const loggedIn = !!getSession();
   const searchCriteria = {
     transaction: active !== "all" ? active : undefined,
@@ -148,17 +152,22 @@ export default async function AnnoncesPage({
   const rangeFrom = total === 0 ? 0 : (page - 1) * PER_PAGE + 1;
   const rangeTo = Math.min(rangeFrom - 1 + items.length, total);
 
-  return (
-    <div className={(halfMap ? "mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8" : "container-page") + " py-8 sm:py-10"}>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-        <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">
-          {reservable ? "Biens réservables" : "Annonces"}
-        </h1>
+  const pills = (cfg.resultsBar ?? "pills") === "pills";
+  const zillow = halfMap && tpl.view === "zillow" && items.length > 0;
+  const types = (await getTaxonomies()).type.map((t) => [t.slug, t.label] as [string, string]);
+  const nearOn = !!near || (await isOn("recherche.autour-de-moi"));
+  // Titre façon Zillow : « Biens à louer à Cocody », « 832 biens disponibles ».
+  const what = reservable ? "Biens réservables" : ({ all: "Annonces", rent: "Biens à louer", sale: "Biens à vendre", furnished: "Meublés à réserver", event: "Espaces à réserver" } as Record<string, string>)[active] ?? "Annonces";
+  const heading = pills ? `${what}${q ? ` à ${correctedQuery ?? q}` : ""}` : reservable ? "Biens réservables" : "Annonces";
+
+  const titleBlock = (
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">{heading}</h1>
         <p className="text-sm text-muted">
-          {total.toLocaleString("fr-FR")} bien(s)
+          {pills ? <><strong className="text-ink">{total.toLocaleString("fr-FR")}</strong> bien(s) disponible(s)</> : <>{total.toLocaleString("fr-FR")} bien(s)</>}
           {total > PER_PAGE ? ` · ${rangeFrom}–${rangeTo} affichés` : ""}
-          {q ? ` · « ${correctedQuery ?? q} »` : ""}
+          {!pills && q ? ` · « ${correctedQuery ?? q} »` : ""}
           {near ? ` · dans un rayon de ${String(near.radius).replace(".", ",")} km` : ""}
         </p>
         {correctedQuery ? (
@@ -166,7 +175,7 @@ export default async function AnnoncesPage({
             Résultats pour <strong>« {correctedQuery} »</strong>. Aucune annonce ne correspondait à « {q} ».
           </p>
         ) : null}
-        {near || (await isOn("recherche.autour-de-moi")) ? <div className="mt-3"><NearMe active={!!near} radius={near?.radius ?? 3} /></div> : null}
+        {!pills && nearOn ? <div className="mt-3"><NearMe active={!!near} radius={near?.radius ?? 3} /></div> : null}
         {isReservableTab && ("checkIn" in stay || "date" in event || guests) ? (
           <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
             ✓ Disponibles
@@ -177,30 +186,24 @@ export default async function AnnoncesPage({
             <Link href="/" className="underline">Modifier</Link>
           </p>
         ) : null}
-        </div>
-        {!isReservableTab ? <SortSelect value={near && (!searchParams.sort || searchParams.sort === "distance") ? "distance" : sort} near={!!near} /> : null}
       </div>
+      {!isReservableTab ? <SortSelect value={near && (!searchParams.sort || searchParams.sort === "distance") ? "distance" : sort} near={!!near} /> : null}
+    </div>
+  );
 
-      <div className="mt-5">
-        <FilterBar
-          types={(await getTaxonomies()).type.map((t) => [t.slug, t.label] as [string, string])}
-          active={active}
-          q={q}
-          priceMin={priceMin}
-          priceMax={priceMax}
-          propertyType={propertyType}
-          reservable={reservable}
-        />
-      </div>
+  const bar = pills ? (
+    <SearchPillsBar types={types} active={active} q={q} priceMin={priceMin} priceMax={priceMax} propertyType={propertyType} bedrooms={bedrooms}
+      reservable={reservable} near={near ? { radius: near.radius } : null} loggedIn={loggedIn} showNearMe={nearOn} />
+  ) : (
+    <>
+      <FilterBar types={types} active={active} q={q} priceMin={priceMin} priceMax={priceMax} propertyType={propertyType} reservable={reservable} />
+      {hasFilters ? <div className="mt-4"><SaveSearchButton params={searchCriteria} loggedIn={loggedIn} /></div> : null}
+    </>
+  );
 
-      {hasFilters ? (
-        <div className="mt-4">
-          <SaveSearchButton params={searchCriteria} loggedIn={loggedIn} />
-        </div>
-      ) : null}
-
+  const extras = (
+    <>
       {banners.length ? <div className="mt-5"><SiteBanners items={banners} /></div> : null}
-
       {sponsored.length ? (
         <section className="mt-6 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200" aria-label="Annonces sponsorisées">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">Annonces sponsorisées{q ? ` · ${q}` : ""}</p>
@@ -209,27 +212,52 @@ export default async function AnnoncesPage({
           </div>
         </section>
       ) : null}
+    </>
+  );
+
+  const pagination = (
+    <Pagination
+      page={page}
+      perPage={PER_PAGE}
+      total={total}
+      params={{
+        transaction: active !== "all" ? active : undefined,
+        q: q || undefined,
+        priceMin: priceMin ? String(priceMin) : undefined,
+        priceMax: priceMax ? String(priceMax) : undefined,
+        propertyType: propertyType || undefined,
+        bedrooms: bedrooms ? String(bedrooms) : undefined,
+        agent,
+        lat: near ? searchParams.lat : undefined, lng: near ? searchParams.lng : undefined, radius: near ? String(near.radius) : undefined,
+        checkIn: searchParams.checkIn, checkOut: searchParams.checkOut, guests: searchParams.guests,
+        date: searchParams.date, days: searchParams.days,
+        sort: searchParams.sort || undefined,
+      }}
+    />
+  );
+
+  // Façon Zillow : barre sur toute la largeur, carte collée à gauche, annonces à droite.
+  if (zillow) {
+    return (
+      <div className="w-full">
+        <div className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">{bar}</div>
+        <ResultsView items={items} tpl={tpl} mapSettings={settings.maps} mapItems={mapItems} query={query} mapEnabled
+          head={<>{titleBlock}{extras}</>} foot={pagination} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={(halfMap ? "mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8" : "container-page") + " py-8 sm:py-10"}>
+      {pills ? <div className="mb-6">{bar}</div> : null}
+      {titleBlock}
+      {!pills ? <div className="mt-5">{bar}</div> : null}
+      {extras}
 
       {items.length > 0 ? (
         <>
           <ResultsView items={items} tpl={tpl} mapSettings={settings.maps} mapItems={mapItems} query={query} mapEnabled={hasMap(tpl)} />
-          <Pagination
-            page={page}
-            perPage={PER_PAGE}
-            total={total}
-            params={{
-              transaction: active !== "all" ? active : undefined,
-              q: q || undefined,
-              priceMin: priceMin ? String(priceMin) : undefined,
-              priceMax: priceMax ? String(priceMax) : undefined,
-              propertyType: propertyType || undefined,
-              agent,
-              lat: near ? searchParams.lat : undefined, lng: near ? searchParams.lng : undefined, radius: near ? String(near.radius) : undefined,
-              checkIn: searchParams.checkIn, checkOut: searchParams.checkOut, guests: searchParams.guests,
-              date: searchParams.date, days: searchParams.days,
-              sort: searchParams.sort || undefined,
-            }}
-          />
+          {pagination}
         </>
       ) : (
         <div className="mx-auto mt-12 max-w-md rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
