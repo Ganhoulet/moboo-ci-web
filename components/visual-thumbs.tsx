@@ -90,6 +90,19 @@ function results(field: string, v: string) {
     : (<>{head}{[10, 66, 122, 178].map((x) => card(x, 26, 50, 46))}{[10, 66, 122, 178].map((x) => card(x, 78, 50, 46))}</>);
 }
 
+/** Barre de la page des annonces : pastilles sur une ligne (façon Zillow) ou onglets + formulaire. */
+function resultsBar(v: string) {
+  const head = (<><rect width={W} height={18} fill="#fff" stroke={SOFT} /><Logo x={10} y={5} /><Dots x={90} y={8} /></>);
+  const cards = [12, 70, 128, 186].map((x) => (<g key={x}><Photo x={x} y={v === "pills" ? 52 : 74} w={46} h={30} /><rect x={x} y={v === "pills" ? 88 : 108} width={36} height={4} rx={2} fill={LINE} /><rect x={x} y={v === "pills" ? 96 : 116} width={22} height={4} rx={2} fill={ORANGE} /></g>));
+  if (v === "pills") {
+    const pill = (x: number, w: number, on = false) => <rect key={x} x={x} y={28} width={w} height={14} rx={5} fill={on ? "#eff6ff" : "#fff"} stroke={on ? BLUE : LINE} strokeWidth={1.5} />;
+    return (<>{head}<rect x={10} y={28} width={62} height={14} rx={5} fill="#fff" stroke={LINE} strokeWidth={1.5} /><circle cx={64} cy={35} r={3} fill="none" stroke="#0f172a" strokeWidth={1.2} />
+      {pill(76, 30, true)}{pill(110, 24)}{pill(138, 30)}{pill(172, 22)}<rect x={198} y={28} width={34} height={14} rx={5} fill={BLUE} />{cards}</>);
+  }
+  return (<>{head}{[10, 40, 74, 108].map((x, i) => <rect key={x} x={x} y={26} width={i === 1 ? 32 : 28} height={10} rx={5} fill={i === 1 ? BLUE : "#fff"} stroke={i === 1 ? BLUE : LINE} />)}
+    <rect x={10} y={42} width={220} height={24} rx={5} fill="#fff" stroke={SOFT} />{[16, 76, 120, 164].map((x) => <rect key={x} x={x} y={48} width={x === 16 ? 54 : 38} height={12} rx={3} fill="#fff" stroke={LINE} />)}<rect x={206} y={48} width={20} height={12} rx={3} fill={ORANGE} />{cards}</>);
+}
+
 function provider(v: string) {
   const color = v === "google" ? "#4285f4" : v === "mapbox" ? "#111827" : "#7ebc6f";
   return (
@@ -135,7 +148,7 @@ function mobileBar(v: string) {
 
 export function VisualThumb({ field, value }: { field: string; value: string }) {
   const draw = field === "mobileHeaderStyle" ? mobileHeader(value) : field === "mobileBottomBarStyle" ? mobileBar(value) : field === "headerStyle" ? header(value) : field === "bannerStyle" ? banner(value) : field === "headerSearch" ? search(value)
-    : field === "resultsView" || field === "resultsLayout" ? results(field, value) : field === "provider" ? provider(value) : null;
+    : field === "resultsView" || field === "resultsLayout" ? results(field, value) : field === "resultsBar" ? resultsBar(value) : field === "provider" ? provider(value) : null;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full rounded bg-white" aria-hidden="true">
       {draw}
