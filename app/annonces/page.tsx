@@ -19,6 +19,8 @@ import { Pagination } from "@/components/pagination";
 import { SaveSearchButton } from "@/components/save-search-button";
 import { SearchPillsBar } from "@/components/search-pills-bar";
 import { getServiceAdsFeed } from "@/lib/service-ads";
+import { listPrograms } from "@/lib/programs";
+import { ProgramCard } from "@/components/program-card";
 import { getSession } from "@/lib/session";
 import { getSiteSettings } from "@/lib/settings";
 import { getTaxonomies } from "@/lib/taxonomies";
@@ -136,10 +138,19 @@ export default async function AnnoncesPage({
   // Centre marketing : un message de conversion réel par carte (réservations, baisse de prix…).
   const cardSignals = await getCardSignals([...items.map((p) => p.id)]);
   items = items.map((p) => (cardSignals[p.id] ? { ...p, signal: cardSignals[p.id] } : p));
-  const [sponsored, banners, serviceAds] = await Promise.all([
+  // Programmes neufs mis en avant (recherches « Tout » ou « À vendre ») : ceux de la commune recherchée d'abord.
+  const programsFor = async () => {
+    if (!(active === "all" || active === "sale") || page !== 1) return [];
+    const featured = await listPrograms({ featured: true, limit: 30 });
+    const zone = (correctedQuery ?? q).toLowerCase();
+    const local = zone ? featured.filter((p) => p.commune && zone.includes(p.commune.toLowerCase())) : [];
+    return (local.length ? local : zone ? [] : featured).slice(0, 3);
+  };
+  const [sponsored, banners, serviceAds, programs] = await Promise.all([
     !isReservableTab && page === 1 && settings.ads?.enabled !== false ? getSponsored({ q: correctedQuery ?? q, transaction: tx2, propertyType }) : Promise.resolve([]),
     q ? getCampaigns("site_banner", zonesOfQuery(correctedQuery ?? q)).then((xs) => xs.filter((c) => c.badge === "Sponsorisé")) : Promise.resolve([]),
     getServiceAdsFeed(correctedQuery ?? q, active !== "all" ? active : undefined),
+    programsFor(),
   ]);
 
   const hasFilters = !!(q || priceMin || priceMax || propertyType || bedrooms || active !== "all");
@@ -205,6 +216,12 @@ export default async function AnnoncesPage({
 
   const extras = (
     <>
+      {programs.length ? (
+        <section className="mt-6" aria-label="Programmes neufs">
+          <div className="mb-3 flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-wide text-muted">Programmes neufs · Sponsorisé</p><Link href="/programmes-neufs" className="text-sm font-semibold text-brand-800">Tous les programmes ›</Link></div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">{programs.map((p) => <ProgramCard key={p.id} p={p} sponsored />)}</div>
+        </section>
+      ) : null}
       {banners.length ? <div className="mt-5"><SiteBanners items={banners} /></div> : null}
       {sponsored.length ? (
         <section className="mt-6 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200" aria-label="Annonces sponsorisées">
