@@ -96,6 +96,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/seo/nouvelle?type=page", label: "SEO d’une page du site", icon: "search", child: true, group: "seo" },
     { href: "/admin/seo/generateur", label: "Générateur SEO", icon: "search", child: true, group: "seo" },
     { href: "/admin/seo/qualite", label: "Qualité des pages", icon: "search", child: true, group: "seo" },
+    { href: "/admin/seo/textes", label: "Textes du bas de page", icon: "search", child: true, group: "seo" },
     { href: "/admin/seo/quartiers", label: "Guides de quartier", icon: "search", child: true, group: "seo" },
     { href: "/admin/seo/console", label: "Search Console", icon: "search", child: true, group: "seo" },
     { href: "/admin/seo/backlinks", label: "Backlinks", icon: "search", child: true, group: "seo" },

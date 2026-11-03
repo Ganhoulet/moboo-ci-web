@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { breadcrumbLd } from "@/lib/structured-data";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getSeoInsights, getSeoLinks, getSeoPage, searchHref, seoLinkLabel, type SeoInsights } from "@/lib/seo";
+import { getSeoInsights, getSeoLinks, getSeoPage, searchHref, seoLinkLabel, type SeoInsights, type SeoPage } from "@/lib/seo";
 import { getPriceCommunes } from "@/lib/prices";
 import { getZones } from "@/lib/pro-reviews";
 import { espacesPage, listListingsPage, residencesPage } from "@/lib/property";
@@ -10,6 +10,8 @@ import { ResultsView } from "@/components/results-view";
 import { hasMap, layoutFor, zoneSlug } from "@/lib/result-layouts";
 import { getSiteSettings } from "@/lib/settings";
 import type { Property } from "@/lib/property";
+import { bottomMeta, getSeoBottom } from "@/lib/seo-bottom";
+import { SeoBottomBlock, bottomFaq } from "@/components/seo/seo-bottom";
 
 export const revalidate = 60;
 
@@ -18,14 +20,17 @@ const slugOf = (parts: string[]) => parts.map((s) => decodeURIComponent(s)).join
 export async function generateMetadata({ params }: { params: { seo: string[] } }): Promise<Metadata> {
   const p = await getSeoPage(slugOf(params.seo));
   if (!p || p.kind !== "landing") return {};
-  const { branding } = await getSiteSettings();
-  const title = p.seoTitle || `${p.title} | ${branding.siteName}`;
+  const [{ branding }, b] = await Promise.all([getSiteSettings(), getSeoBottom(p.slug)]);
+  // Texte du bas publié avec « titre automatique » : titre et description avec les vrais chiffres.
+  const auto = b?.text?.autoMeta ? bottomMeta(shortTitle(p.title), { ...b, count: (await pageListings(p)).total || b.count }) : null;
+  const title = auto?.title || p.seoTitle || `${p.title} | ${branding.siteName}`;
+  const description = auto?.description || p.metaDescription || undefined;
   return {
     title: { absolute: title },
-    description: p.metaDescription || undefined,
+    description,
     alternates: { canonical: p.canonical || `/${p.slug}` },
     robots: p.noindex ? { index: false, follow: true } : undefined,
-    openGraph: { title, description: p.metaDescription || undefined, url: `/${p.slug}`, type: "website", images: p.ogImage ? [p.ogImage] : undefined },
+    openGraph: { title, description, url: `/${p.slug}`, type: "website", images: p.ogImage ? [p.ogImage] : undefined },
   };
 }
 
@@ -34,27 +39,15 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
   const slug = slugOf(params.seo);
   const [page, links] = await Promise.all([getSeoPage(slug), getSeoLinks()]);
   if (!page || page.kind !== "landing") notFound();
-  // Page du générateur SEO : chiffres réels, guide du quartier, FAQ, maillage interne.
+  // Page du générateur SEO : chiffres réels, guide du quartier. Toutes les pages : bloc du bas (liens, texte, FAQ).
   const gen = page.source === "generator";
-  const [ins, priceZones, agentZones] = gen
-    ? await Promise.all([getSeoInsights(page.slug), getPriceCommunes().catch(() => null), getZones().catch(() => [])])
-    : [null, null, []];
+  const [ins, bottom, priceZones, agentZones] = await Promise.all([
+    gen ? getSeoInsights(page.slug) : Promise.resolve(null),
+    getSeoBottom(page.slug), getPriceCommunes().catch(() => null), getZones().catch(() => []),
+  ]);
 
   const f = page.filters ?? {};
-  let items: Property[] = [];
-  let total = 0;
-  try {
-    const res = f.transaction === "furnished"
-      ? await residencesPage({ q: f.q, perPage: page.perPage, priceMax: f.priceMax })
-      : f.transaction === "event"
-        ? await espacesPage({ q: f.q, perPage: page.perPage, priceMax: f.priceMax })
-        : await listListingsPage({
-            transaction: f.transaction === "rent" || f.transaction === "sale" ? f.transaction : undefined,
-            propertyType: f.propertyType, q: f.q, priceMin: f.priceMin, priceMax: f.priceMax, bedrooms: f.bedrooms,
-            perPage: page.perPage, sort: page.sort ?? undefined,
-          });
-    items = res.items; total = res.total;
-  } catch { /* annonces indisponibles : la page et son texte restent affichés */ }
+  const { items, total } = await pageListings(page);
 
   // Modèle d'affichage : celui de cette page SEO, sinon de la zone, sinon de l'onglet.
   const tpl = await layoutFor([`seo:${page.slug}`, f.q ? `zone:${zoneSlug(f.q)}` : null, `search:${f.transaction ?? "all"}`]);
@@ -73,13 +66,20 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
     ...landing.filter((l) => page.hubTab && l.hubTab === page.hubTab && l.hubColumn !== page.hubColumn),
   ].slice(0, 16);
   const more = searchHref(f);
+  const zone = bottom?.zone ?? ins?.zone ?? null;
+  const extra = zone && zone.level !== "pays" ? [
+    priceZones?.some((z) => z.slug === zone.slug) ? { href: `/prix-immobilier/${zone.slug}`, label: `Prix de l’immobilier à ${zone.name}`, count: null } : null,
+    agentZones.some((z) => z.slug === zone.slug && z.indexable !== false) ? { href: `/agents-immobiliers/${zone.slug}`, label: `Agents immobiliers à ${zone.name}`, count: null } : null,
+  ].filter((x): x is { href: string; label: string; count: null } => !!x) : [];
+  const faq = bottom ? bottomFaq(bottom, total) : ins?.faq ?? [];
+  const hasBottom = !!bottom?.chips || !!bottom?.text;
 
   const crumbs = genCrumbs(page.slug, page.title, ins);
   const jsonLd = [
     breadcrumbLd(crumbs.map((c) => ({ label: c.name, href: c.href }))),
-    ins?.faq.length ? {
+    faq.length ? {
       "@context": "https://schema.org", "@type": "FAQPage",
-      mainEntity: ins.faq.map((x) => ({ "@type": "Question", name: x.q, acceptedAnswer: { "@type": "Answer", text: x.a } })),
+      mainEntity: faq.map((x) => ({ "@type": "Question", name: x.q, acceptedAnswer: { "@type": "Answer", text: x.a } })),
     } : null,
     items.length ? {
       "@context": "https://schema.org", "@type": "ItemList", name: page.title,
@@ -129,9 +129,11 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
         </section>
       ) : null}
 
-      {ins ? <GenSections ins={ins} slug={page.slug} pricePage={!!priceZones?.some((z) => z.slug === ins.zone.slug)} agentsPage={agentZones.some((z) => z.slug === ins.zone.slug && z.indexable !== false)} /> : null}
+      {ins ? <GenSections ins={ins} slug={page.slug} pricePage={!!priceZones?.some((z) => z.slug === ins.zone.slug)} agentsPage={agentZones.some((z) => z.slug === ins.zone.slug && z.indexable !== false)} links={!hasBottom} /> : null}
 
-      {related.length ? (
+      {bottom && hasBottom ? <SeoBottomBlock title={shortTitle(page.title)} b={bottom} total={total} extra={extra} /> : null}
+
+      {!hasBottom && related.length ? (
         <section className="mt-12 border-t border-slate-200 pt-8">
           <h2 className="font-display text-lg font-bold text-ink">Recherches similaires</h2>
           <ul className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -143,6 +145,26 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
   );
 }
 
+/** Annonces de la page (mêmes appels dans les métadonnées et la page : une seule requête). */
+async function pageListings(page: SeoPage): Promise<{ items: Property[]; total: number }> {
+  const f = page.filters ?? {};
+  try {
+    const res = f.transaction === "furnished"
+      ? await residencesPage({ q: f.q, perPage: page.perPage, priceMax: f.priceMax })
+      : f.transaction === "event"
+        ? await espacesPage({ q: f.q, perPage: page.perPage, priceMax: f.priceMax })
+        : await listListingsPage({
+            transaction: f.transaction === "rent" || f.transaction === "sale" ? f.transaction : undefined,
+            propertyType: f.propertyType, q: f.q, priceMin: f.priceMin, priceMax: f.priceMax, bedrooms: f.bedrooms,
+            perPage: page.perPage, sort: page.sort ?? undefined,
+          });
+    return { items: res.items, total: res.total };
+  } catch {
+    return { items: [], total: 0 }; // annonces indisponibles : la page et son texte restent affichés
+  }
+}
+
+const shortTitle = (t: string) => t.replace(/ : prix, annonces et vie de quartier$/, "");
 const fcfa = (n: number) => `${Math.round(n).toLocaleString("fr-FR")} FCFA`;
 const TX_CRUMB: Record<string, { name: string; href: string }> = {
   rent: { name: "Location", href: "/annonces?transaction=rent" },
@@ -156,7 +178,7 @@ function genCrumbs(slug: string, title: string, ins: SeoInsights | null) {
   const out = [{ name: "Accueil", href: "/" }];
   if (ins && TX_CRUMB[ins.tx]) out.push(TX_CRUMB[ins.tx]);
   if (ins?.hub && ins.hub !== slug && ins.sameZone.some((p) => p.slug === ins.hub)) out.push({ name: `Immobilier à ${ins.zone.name}`, href: `/${ins.hub}` });
-  out.push({ name: title.replace(/ : prix, annonces et vie de quartier$/, ""), href: `/${slug}` });
+  out.push({ name: shortTitle(title), href: `/${slug}` });
   return out;
 }
 
@@ -203,7 +225,7 @@ const GUIDE_TITLES: [string, string][] = [
 const TX_GROUP: Record<string, string> = { hub: "Quartier", rent: "À louer", sale: "À vendre", furnished: "Meublés", event: "Espaces" };
 
 /** Guide du quartier, FAQ et liens internes (même zone, autres zones de la ville, prix, agents). */
-function GenSections({ ins, slug, pricePage, agentsPage }: { ins: SeoInsights; slug: string; pricePage: boolean; agentsPage: boolean }) {
+function GenSections({ ins, slug, pricePage, agentsPage, links }: { ins: SeoInsights; slug: string; pricePage: boolean; agentsPage: boolean; links: boolean }) {
   const z = ins.zone.name;
   const groups = new Map<string, SeoInsights["sameZone"]>();
   for (const p of ins.sameZone) {
@@ -248,7 +270,7 @@ function GenSections({ ins, slug, pricePage, agentsPage }: { ins: SeoInsights; s
         </section>
       ) : null}
 
-      {ins.faq.length ? (
+      {links && ins.faq.length ? (
         <section className="mt-12 border-t border-slate-200 pt-8">
           <div className="mx-auto max-w-3xl">
             <h2 className="font-display text-xl font-bold text-ink">Questions fréquentes</h2>
@@ -264,7 +286,7 @@ function GenSections({ ins, slug, pricePage, agentsPage }: { ins: SeoInsights; s
         </section>
       ) : null}
 
-      {groups.size || ins.nearby.length || extra.length ? (
+      {links && (groups.size || ins.nearby.length || extra.length) ? (
         <section className="mt-12 border-t border-slate-200 pt-8">
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {groups.size ? (

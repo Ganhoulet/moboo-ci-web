@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { authedFetch } from "@/lib/server-api";
 import { SEO_TAG, type SeoPage } from "@/lib/seo";
 import bundled from "@/lib/wp-seo-pages.json";
+import type { BottomPart, SeoBottom } from "@/lib/seo-bottom";
 
 export interface SeoRow {
   id: string; slug: string; kind: "landing" | "override"; status: "draft" | "published"; title: string;
@@ -50,4 +51,57 @@ export async function importSeoPagesAction(items: unknown[], overwrite: boolean)
 /** Pages de l'ancien moboo.ci (export WordPress du 29/09/2026, déjà converti). */
 export async function importBundledAction(overwrite: boolean): Promise<ImportResult> {
   return importSeoPagesAction(bundled as unknown[], overwrite);
+}
+
+// ─── Texte du bas des pages « catégorie × lieu » ───
+
+export interface BottomTextAdmin {
+  status: "draft" | "published"; parts: BottomPart[]; autoMeta: boolean; source: "claude" | "manual";
+  similar: { slug: string; score: number } | null; warnings: string[]; generatedAt: string | null; updatedAt: string;
+}
+export type BottomFactsAdmin = Omit<SeoBottom, "text">;
+
+export async function getBottomTextAction(id: string): Promise<{ text: BottomTextAdmin | null; facts: BottomFactsAdmin | null } | null> {
+  const r = await authedFetch(`/site/admin/seo/${encodeURIComponent(id)}/bottom`, { method: "GET" });
+  return r.ok ? r.data : null;
+}
+
+export async function saveBottomTextAction(id: string, body: { parts: BottomPart[]; status: "draft" | "published"; autoMeta: boolean; source: "claude" | "manual" }): Promise<{ ok: boolean; error?: string; text?: BottomTextAdmin | null }> {
+  const r = await authedFetch(`/site/admin/seo/${encodeURIComponent(id)}/bottom`, { method: "PUT", body: JSON.stringify(body) });
+  if (!r.ok) return { ok: false, error: msg(r.data, "Enregistrement impossible.") };
+  done();
+  return { ok: true, text: r.data.text };
+}
+
+export async function draftBottomTextAction(id: string): Promise<{ ok: boolean; error?: string; parts?: BottomPart[]; warnings?: string[]; similar?: { slug: string; score: number } | null }> {
+  const r = await authedFetch(`/site/admin/seo/${encodeURIComponent(id)}/bottom/draft`, { method: "POST" });
+  if (!r.ok) return { ok: false, error: msg(r.data, "Rédaction impossible.") };
+  return { ok: true, ...r.data };
+}
+
+export interface BottomRow {
+  id: string; slug: string; title: string; source: string; noindex: boolean; listingCount: number;
+  text: { status: "draft" | "published"; source: string; similar: { slug: string; score: number } | null; warnings: number; updatedAt: string; words: number } | null;
+}
+export interface BottomJob { running: boolean; total: number; done: number; failed: { slug: string; error: string }[]; startedAt: string; finishedAt: string | null; publish: boolean }
+
+export async function listBottomTextsAction(): Promise<{ items: BottomRow[]; job: BottomJob | null } | null> {
+  const [a, b] = await Promise.all([
+    authedFetch("/site/admin/seo/bottom/all", { method: "GET" }),
+    authedFetch("/site/admin/seo/bottom/job", { method: "GET" }),
+  ]);
+  return a.ok ? { items: a.data.items, job: b.ok ? b.data.job : null } : null;
+}
+
+export async function draftMissingBottomAction(body: { limit?: number; publish?: boolean; slugs?: string[] }): Promise<{ ok: boolean; error?: string }> {
+  const r = await authedFetch("/site/admin/seo/bottom/draft-missing", { method: "POST", body: JSON.stringify(body) });
+  if (!r.ok) return { ok: false, error: msg(r.data, "Rédaction impossible.") };
+  return { ok: true };
+}
+
+export async function setBottomStatusAction(slugs: string[], status: "draft" | "published"): Promise<{ ok: boolean; error?: string; updated?: number }> {
+  const r = await authedFetch("/site/admin/seo/bottom/status", { method: "POST", body: JSON.stringify({ slugs, status }) });
+  if (!r.ok) return { ok: false, error: msg(r.data, "Modification impossible.") };
+  done();
+  return { ok: true, updated: r.data.updated };
 }
