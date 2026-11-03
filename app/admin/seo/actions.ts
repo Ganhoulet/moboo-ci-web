@@ -12,7 +12,11 @@ export interface SeoRow {
   hubTab: string | null; hubColumn: string | null; noindex: boolean; updatedAt: string; words: number;
 }
 
-const msg = (d: any, f: string) => (Array.isArray(d?.message) ? d.message[0] : d?.message) || f;
+// Message de l'API : { message } ou { error: { message } } (filtre d'erreurs global).
+const msg = (d: any, f: string) => {
+  const m = d?.error?.message ?? d?.message;
+  return (Array.isArray(m) ? m[0] : typeof m === "string" ? m : null) || f;
+};
 const done = () => { revalidateTag(SEO_TAG); revalidatePath("/admin/seo"); revalidatePath("/", "layout"); };
 
 export async function listSeoPages(): Promise<SeoRow[]> {
@@ -95,7 +99,7 @@ export async function listBottomTextsAction(): Promise<{ items: BottomRow[]; job
 
 export async function draftMissingBottomAction(body: { limit?: number; publish?: boolean; slugs?: string[] }): Promise<{ ok: boolean; error?: string }> {
   const r = await authedFetch("/site/admin/seo/bottom/draft-missing", { method: "POST", body: JSON.stringify(body) });
-  if (!r.ok) return { ok: false, error: msg(r.data, "Rédaction impossible.") };
+  if (!r.ok) return { ok: false, error: `${msg(r.data, "Rédaction impossible.")} (code ${r.status})` };
   return { ok: true };
 }
 
