@@ -57,6 +57,8 @@ export async function searchPros(q: DirectoryQuery): Promise<DirectoryResult> {
   for (const [k, v] of Object.entries(q)) if (v !== undefined && v !== null && String(v) !== "") p.set(k, String(v));
   return (await get<DirectoryResult>(`/site/pros/directory?${p}`, 60)) ?? { total: 0, page: 1, perPage: 18, pages: 1, counts: { agent: 0, agence: 0 }, items: [] };
 }
+/** Pages pro proposées à Google (au moins une annonce en ligne ou un avis). */
+export const getProSitemap = async () => (await get<{ items: { path: string }[] }>(`/site/pros/sitemap`, 600))?.items ?? [];
 export const getZones = async () => (await get<{ items: Zone[] }>(`/site/pros/zones`, 300))?.items ?? [];
 
 /** Chiffres propres à Moboo pour une zone : professionnels, avis, prix, guide de quartier, introduction. */

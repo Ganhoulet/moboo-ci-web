@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getListingUrls, getSeoLinks } from "@/lib/seo";
 import { getPriceCommunes } from "@/lib/prices";
 import { getHelpSitemap } from "@/lib/help";
-import { getZones } from "@/lib/pro-reviews";
+import { getProSitemap, getZones } from "@/lib/pro-reviews";
 
 export const dynamic = "force-dynamic"; // toujours à jour avec les pages SEO publiées
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://moboo.ci").replace(/\/+$/, "");
@@ -36,7 +36,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Seules les zones assez fournies (les autres sont en noindex).
     ...(await getZones()).filter((z) => z.indexable !== false).map((z) => ({ url: `${BASE}/agents-immobiliers/${z.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 })),
   ];
+  // Profils des agents et agences actifs (annonces en ligne ou avis).
+  const profiles = (await getProSitemap()).map((x) => ({ url: `${BASE}${x.path}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.5 }));
   // Annonces en ligne (adresses descriptives).
   const listings = (await getListingUrls()).map((l) => ({ url: `${BASE}${l.path}`, lastModified: new Date(l.updatedAt), changeFrequency: "weekly" as const, priority: 0.5 }));
-  return [...main, ...seo, ...prices, ...help, ...pros, ...agents, ...listings];
+  return [...main, ...seo, ...prices, ...help, ...pros, ...agents, ...profiles, ...listings];
 }

@@ -31,8 +31,11 @@ export async function generateMetadata({ params }: { params: { username: string 
   const rating = r?.aggregates.nb_avis && r.aggregates.assez_d_avis ? ` Note ${r.aggregates.note_globale.toLocaleString("fr-FR")}/5 (${r.aggregates.nb_avis} avis).` : "";
   const label = p.profile?.title || accountLabel(p, roleNames(await getSiteSettings()));
   const description = `${p.name} — ${label} sur Moboo.ci${zones ? ` à ${zones}` : ""}.${rating} ${Math.max((p.stats?.activeSale ?? 0) + (p.stats?.activeRent ?? 0), p.listings.length)} annonce(s) en ligne${p.stats?.closedTotal ? `, ${p.stats.closedTotal} transaction(s) réalisée(s)` : ""}.`;
+  // Profil sans annonce en ligne ni avis : visible, mais hors de Google (page trop pauvre).
+  const empty = !(p.stats?.activeSale || p.stats?.activeRent || p.listings.length) && !r?.aggregates.nb_avis;
   return {
     title: `${p.name} · ${label}`, description, alternates: { canonical: `/pro/${p.canonical || p.username}` },
+    robots: empty ? { index: false, follow: true } : undefined,
     openGraph: { title: p.name, description, images: p.avatarUrl ? [p.avatarUrl] : undefined },
   };
 }
