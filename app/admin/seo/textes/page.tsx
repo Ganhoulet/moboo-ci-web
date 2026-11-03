@@ -28,7 +28,7 @@ export default async function BottomTextsPage({ searchParams }: { searchParams: 
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-2xl font-extrabold text-ink">Textes du bas de page</h1>
-        <p className="mt-1 max-w-3xl text-sm text-muted">Sous les annonces de chaque page « catégorie × lieu » : liens vers les recherches voisines, puis un texte d’environ 300 mots (le lieu, les biens, les prix). Les chiffres se mettent à jour seuls. Un texte enregistré n’est jamais écrasé par une rédaction en lot.</p>
+        <p className="mt-1 max-w-3xl text-sm text-muted">Sous les annonces de chaque page « catégorie × lieu » : liens vers les recherches voisines, puis un texte d’environ 300 mots (le lieu, les biens, les prix). Les chiffres se mettent à jour seuls. Claude rédige et publie seul le texte des pages qui n’en ont pas (après chaque mise à jour du serveur, puis chaque nuit) ; vous pouvez ensuite relire et corriger chaque texte. Un texte enregistré n’est jamais écrasé.</p>
       </div>
 
       <BottomBulkActions missing={n.missing} drafts={drafts} job={d.job} />

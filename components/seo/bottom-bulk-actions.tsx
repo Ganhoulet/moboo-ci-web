@@ -9,7 +9,8 @@ export function BottomBulkActions({ missing, drafts, job }: { missing: number; d
   const router = useRouter();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [limit, setLimit] = useState(Math.min(missing, 5) || 5);
+  const [limit, setLimit] = useState(missing || 5);
+  const [direct, setDirect] = useState(true);
 
   // Rédaction en cours : la page se rafraîchit toutes les 10 secondes.
   useEffect(() => {
@@ -19,8 +20,8 @@ export function BottomBulkActions({ missing, drafts, job }: { missing: number; d
   }, [job?.running, router]);
 
   const run = () => start(async () => {
-    const r = await draftMissingBottomAction({ limit, publish: false });
-    setMsg(r.ok ? { ok: true, text: "Rédaction lancée : les textes arrivent en brouillon." } : { ok: false, text: r.error ?? "Impossible." });
+    const r = await draftMissingBottomAction({ limit, publish: direct });
+    setMsg(r.ok ? { ok: true, text: direct ? "Rédaction lancée : les textes sont publiés au fur et à mesure." : "Rédaction lancée : les textes arrivent en brouillon." } : { ok: false, text: r.error ?? "Impossible." });
     router.refresh();
   });
   const publish = () => start(async () => {
@@ -34,10 +35,11 @@ export function BottomBulkActions({ missing, drafts, job }: { missing: number; d
     <div className="flex flex-wrap items-end gap-4 rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
       <div>
         <label htmlFor="bt-limit" className="block text-sm font-semibold text-ink">Rédiger avec Claude les textes manquants</label>
-        <p className="text-xs text-muted">{missing} page{missing > 1 ? "s" : ""} sans texte. Les textes arrivent en brouillon, à relire avant publication.</p>
+        <p className="text-xs text-muted">{missing} page{missing > 1 ? "s" : ""} sans texte. Les nouvelles pages reçoivent aussi leur texte chaque nuit, automatiquement.</p>
         <div className="mt-2 flex items-center gap-2">
           <input id="bt-limit" type="number" min={1} max={1000} className="input w-24" value={limit} onChange={(e) => setLimit(Number(e.target.value))} />
           <span className="text-sm text-muted">pages</span>
+          <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" className="accent-brand-700" checked={direct} onChange={(e) => setDirect(e.target.checked)} />Publier directement</label>
           <button type="button" disabled={pending || !missing || job?.running} onClick={run} className="rounded-md bg-brand-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">Lancer la rédaction</button>
         </div>
       </div>
