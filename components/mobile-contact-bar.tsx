@@ -132,14 +132,14 @@ export function MobileContactBar({
         ));
 
   return (
-    <div className={`fixed inset-x-0 bottom-0 z-40 border-t shadow-[0_-6px_20px_rgba(15,23,42,.08)] backdrop-blur lg:hidden ${bg.bar}`}>
+    <div style={{ bottom: "var(--mobile-tabbar-h, 0px)" }} className={`fixed inset-x-0 z-40 border-t shadow-[0_-6px_20px_rgba(15,23,42,.08)] backdrop-blur lg:hidden ${bg.bar}`}>
       {twoRows ? (
-        <div className="container-page space-y-2 py-2.5" style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
+        <div className="container-page space-y-2 py-2.5" style={{ paddingBottom: "calc(0.625rem + var(--mobile-bar-safe, env(safe-area-inset-bottom)))" }}>
           <div className={"min-w-0" + (right ? " flex justify-end text-right" : "")}>{person_}</div>
           <div className="flex items-center gap-2 [&>a]:flex-1">{actions}</div>
         </div>
       ) : (
-        <div className={"container-page flex items-center gap-2 py-2.5" + (right ? " flex-row-reverse" : "")} style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
+        <div className={"container-page flex items-center gap-2 py-2.5" + (right ? " flex-row-reverse" : "")} style={{ paddingBottom: "calc(0.625rem + var(--mobile-bar-safe, env(safe-area-inset-bottom)))" }}>
           <div className={"min-w-0 flex-1" + (right ? " flex justify-end text-right" : "")}>{person_}</div>
           {/* Boutons dans l'ordre choisi, quel que soit le côté de l'annonceur. */}
           <div className="flex shrink-0 items-center gap-2">{actions}</div>

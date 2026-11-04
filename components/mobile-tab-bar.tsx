@@ -46,6 +46,8 @@ export function MobileTabBar({ items, style, color, loggedIn, zones }: { items: 
   return (
     <>
       <div className="h-16 md:hidden print:hidden" aria-hidden="true" />
+      {/* Hauteur du menu, lue par les barres collées en bas (page pro, fiche d'annonce) pour se placer juste au-dessus. */}
+      <style>{`@media (max-width: 767px) { :root { --mobile-bar-safe: 0px; --mobile-tabbar-h: ${floating ? "5.25rem" : "calc(4rem + env(safe-area-inset-bottom))"}; } }`}</style>
       <nav aria-label="Navigation principale"
         className={"print:hidden fixed z-50 md:hidden " + (floating
           ? "inset-x-3 bottom-3 rounded-2xl bg-white/95 shadow-xl ring-1 ring-slate-200 backdrop-blur"

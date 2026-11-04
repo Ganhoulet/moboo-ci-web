@@ -358,7 +358,7 @@ export default async function ProPage({ params }: { params: { username: string }
       </div>
 
       {/* Barre de contact mobile (façon Airbnb). */}
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 z-40 flex items-center gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden" style={{ bottom: "var(--mobile-tabbar-h, 0px)" }}>
         <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-ink">{p.name}</p><p className="truncate text-xs text-muted">{title}</p></div>
         {waLink ? <a href={waLink} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white">WhatsApp</a> : null}
         <a href="#contact-mobile" className="rounded-xl bg-ink px-4 py-2.5 text-sm font-bold text-white">Contacter</a>

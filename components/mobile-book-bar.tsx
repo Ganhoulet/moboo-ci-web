@@ -16,10 +16,10 @@ export function MobileBookBar({
   cta?: string;
 }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden">
+    <div className="fixed inset-x-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden" style={{ bottom: "var(--mobile-tabbar-h, 0px)" }}>
       <div
         className="container-page flex items-center gap-3 py-3"
-        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(0.75rem + var(--mobile-bar-safe, env(safe-area-inset-bottom)))" }}
       >
         <div className="min-w-0 flex-1">
           {price ? (
