@@ -158,12 +158,21 @@ export function ListingEditor({
   const customs = (st: StepId) => form.custom.filter((c) => c.step === st && on(c.key));
   // Étapes affichées : réglage du back-office, et seulement si elles ont au moins un champ.
   const STEPS = visibleSteps(form, ctx).filter((st) => st.lockable || BUILTIN_FIELDS.some((f) => f.step === st.id && on(f.key)) || customs(st.id).length > 0);
-  const CONTACT_STEP = STEPS.length - 1;
-  const stepId = STEPS[Math.min(step, STEPS.length - 1)]?.id;
+  // Publication simple : 4 étapes courtes qui regroupent les rubriques du formulaire.
+  const SIMPLE_PAGES: { label: string; ids: StepId[] }[] = [
+    { label: "Le bien et le prix", ids: ["essentiel", "details"] },
+    { label: "Photos et vidéo", ids: ["medias"] },
+    { label: "Commodités et adresse", ids: ["equipements", "localisation"] },
+    { label: "Contact et publication", ids: ["visite", "lots", "plans", "contact", "reglages", "note", "rgpd"] },
+  ];
+  const NAV = simple
+    ? SIMPLE_PAGES.map((p, i) => ({ id: `p${i}`, label: p.label, ids: p.ids.filter((x) => STEPS.some((st) => st.id === x)) })).filter((p) => p.ids.length)
+    : STEPS.map((st) => ({ id: st.id, label: st.label, ids: [st.id] }));
+  const page = NAV[Math.min(step, NAV.length - 1)];
   // Back-office → Formulaires : « une seule page » (toutes les rubriques à la suite, sans onglets).
-  const single = simple || form.layout === "single";
-  const shown = (id: StepId) => (single ? STEPS.some((st) => st.id === id) : stepId === id);
-  const heading = (id: StepId) => (single ? <h3 className="border-t border-slate-100 pt-5 font-display text-lg font-bold text-ink first:border-0 first:pt-0">{STEPS.find((st) => st.id === id)?.label}</h3> : null);
+  const single = !simple && form.layout === "single";
+  const shown = (id: StepId) => (single ? STEPS.some((st) => st.id === id) : !!page?.ids.includes(id));
+  const heading = (id: StepId) => (single || (simple && (page?.ids.length ?? 0) > 1) ? <h3 className="border-t border-slate-100 pt-5 font-display text-lg font-bold text-ink first:border-0 first:pt-0">{STEPS.find((st) => st.id === id)?.label}</h3> : null);
 
   const isEmpty = (key: string): boolean => {
     const c = form.custom.find((x) => x.key === key);
@@ -178,8 +187,13 @@ export function ListingEditor({
     return v == null || (typeof v === "string" && !v.trim()) || (Array.isArray(v) && !v.length);
   };
 
+  /** Première erreur d'une étape (une étape de la publication simple regroupe plusieurs rubriques). */
   function validate(s: number): string | null {
-    const id = STEPS[s]?.id;
+    for (const id of NAV[s]?.ids ?? []) { const e = validateStep(id); if (e) return e; }
+    return null;
+  }
+
+  function validateStep(id: StepId | undefined): string | null {
     if (id === "essentiel") {
       if (d.title.trim().length < 8) return "Donnez un titre clair (8 caractères minimum).";
       if (!(Number(d.price) > 0)) return "Indiquez le prix.";
@@ -247,7 +261,7 @@ export function ListingEditor({
   const setExtra = (i: number, p: Partial<{ title: string; value: string }>) => set({ additional: d.additional.map((x, j) => (j === i ? { ...x, ...p } : x)) });
 
   function save() {
-    for (let s = 0; s < STEPS.length; s++) {
+    for (let s = 0; s < NAV.length; s++) {
       const err = validate(s);
       if (err) { setStep(s); setError(err); if (single) setTimeout(() => document.getElementById("listing-error")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0); return; }
     }
@@ -270,7 +284,7 @@ export function ListingEditor({
   function next() {
     const err = validate(step);
     if (err) return setError(err);
-    if (step === STEPS.length - 1) return save();
+    if (step === NAV.length - 1) return save();
     setStep((s) => s + 1);
   }
 
@@ -304,7 +318,7 @@ export function ListingEditor({
     <div className="rounded-3xl bg-white p-5 shadow-card sm:p-7">
       {/* Étapes */}
       <div className={(single || shortStay ? "hidden " : "") + "-mx-1 mb-6 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"}>
-        {STEPS.map(({ id: sid, label: s }, i) => (
+        {NAV.map(({ id: sid, label: s }, i) => (
           <button key={sid} type="button" disabled={!edit && i > step}
             onClick={() => { if (edit || i <= step) { setStep(i); setError(null); } }}
             className={"flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition " +
@@ -664,14 +678,14 @@ export function ListingEditor({
         {step > 0 && !single ? <button type="button" className="btn-ghost" onClick={() => { setStep((s) => s - 1); setError(null); }}>Retour</button> : null}
         {edit ? (
           <>
-            {step < STEPS.length - 1 && !single ? <button type="button" className="btn-ghost" onClick={next}>Étape suivante</button> : null}
+            {step < NAV.length - 1 && !single ? <button type="button" className="btn-ghost" onClick={next}>Étape suivante</button> : null}
             <button type="button" onClick={save} disabled={pending || !!uploading} className="btn-primary flex-1 bg-accent-600 hover:bg-accent-700 disabled:opacity-60">
               {pending ? "Enregistrement…" : "Enregistrer les modifications"}
             </button>
           </>
         ) : (
           <button type="button" onClick={single ? save : next} disabled={pending || !!uploading} className="btn-primary flex-1 bg-accent-600 hover:bg-accent-700 disabled:opacity-60">
-            {videoProgress != null ? `Envoi de la vidéo… ${videoProgress} %` : pending ? "Publication…" : single || step === STEPS.length - 1 ? "Publier l'annonce" : "Continuer"}
+            {videoProgress != null ? `Envoi de la vidéo… ${videoProgress} %` : pending ? "Publication…" : single || step === NAV.length - 1 ? "Publier l'annonce" : "Continuer"}
           </button>
         )}
       </div>
