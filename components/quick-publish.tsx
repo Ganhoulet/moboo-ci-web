@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { COMMUNES } from "@/lib/accounts";
 import { quickExtractAction, quickPublishAction, quickUploadAction } from "@/app/p/[slug]/actions";
 import { sendSignupCodeAction, verifySignupAction } from "@/app/inscription/actions";
 import { uploadListingVideo } from "@/components/listing-video-card";
+import { VideoUploadCard, type VideoUploadState } from "@/components/video-upload-card";
+import { quickMemberExtractAction, quickMemberPublishAction, quickMemberUploadAction } from "@/app/mon-espace/quick-actions";
 
 type Page = {
   slug: string; title: string; manager: string; accountTypes: string[]; minPhotos: number; location: "optional" | "required" | "hidden";
   video: boolean; aiFill: boolean; pageTitle: string; pageIntro: string; successText: string; types: { slug: string; label: string }[];
+  videoUpload?: { enabled: boolean; maxMb: number; maxSeconds: number };
 };
 type Account = { firstName: string | null; accountType: string; onboarded: boolean } | null;
 
@@ -43,15 +46,26 @@ async function compress(file: File): Promise<string> {
 }
 
 /**
- * Publication rapide depuis un lien partagé dans un groupe WhatsApp : 5 écrans courts
- * (bien, photos et vidéo, prix, zone, détails) ; le compte est demandé au moment de publier.
+ * Publication rapide en 5 écrans courts (bien, photos et vidéo, prix, zone, détails) :
+ * - `link` : lien partagé dans un groupe WhatsApp, le compte est demandé au moment de publier ;
+ * - `member` : onglet « Publier une annonce » de l'espace membre (mêmes champs, compte déjà ouvert).
+ * La publication rapide de l'application Moboo.ci affiche ces mêmes champs.
  */
-export function QuickPublish({ page, account }: { page: Page; account: Account }) {
+export function QuickPublish({ page, account, mode = "link", fullFormHref }: { page: Page; account: Account; mode?: "link" | "member"; fullFormHref?: string }) {
+  const member = mode === "member";
+  const api = member
+    ? { upload: quickMemberUploadAction, extract: quickMemberExtractAction, publish: quickMemberPublishAction }
+    : {
+      upload: (img: string) => quickUploadAction(page.slug, img),
+      extract: (text: string) => quickExtractAction(page.slug, text),
+      publish: (input: { listing: Record<string, unknown>; photos: string[] }) => quickPublishAction(page.slug, input),
+    };
+  const videoUpload = page.videoUpload ?? { enabled: page.video, maxMb: 1024, maxSeconds: 0 };
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [d, setD] = useState({
     transaction: "rent" as "rent" | "sale", propertyType: page.types[0]?.slug ?? "appartement", furnished: false,
-    price: "", priceUnit: "month", bedrooms: "", commune: "", quartier: "", latitude: null as number | null, longitude: null as number | null,
+    price: "", priceUnit: "month", bedrooms: "", surface: "", commune: "", quartier: "", latitude: null as number | null, longitude: null as number | null,
     title: "", description: "", videoUrl: "",
   });
   const [photos, setPhotos] = useState<string[]>([]);
@@ -63,6 +77,18 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
   const [auth, setAuth] = useState<null | { stage: "phone" | "code"; phone: string; email: string; code: string; type: string; firstName: string; lastName: string; company: string; registered: boolean; devCode?: string }>(null);
   const [done, setDone] = useState<{ url: string; text: string; video?: string; payUrl?: string } | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
+  const [videoState, setVideoState] = useState<VideoUploadState>({ stage: "ready" });
+  const [videoTooLong, setVideoTooLong] = useState(false);
+  const videoTooBig = !!videoFile && videoFile.size > videoUpload.maxMb * 1024 * 1024;
+  const uploadingVideo = videoState.stage === "uploading";
+
+  // Pendant l'envoi de la vidéo : prévenir avant de quitter la page.
+  useEffect(() => {
+    if (!uploadingVideo) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [uploadingVideo]);
   const [pending, start] = useTransition();
   const set = (k: keyof typeof d, v: unknown) => setD((x) => ({ ...x, [k]: v }));
   const typeLabel = page.types.find((t) => t.slug === d.propertyType)?.label ?? "Bien";
@@ -70,7 +96,7 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
 
   const canNext = [
     true,
-    photos.length >= page.minPhotos && uploading === 0,
+    photos.length >= page.minPhotos && uploading === 0 && !videoTooBig && !videoTooLong,
     Number(d.price) > 0,
     !!d.commune.trim() && (page.location !== "required" || d.latitude != null),
     true,
@@ -81,7 +107,7 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
     setUploading((n) => n + list.length);
     for (const f of list) {
       try {
-        const r = await quickUploadAction(page.slug, await compress(f));
+        const r = await api.upload(await compress(f));
         if (r.ok && r.url) setPhotos((p) => [...p, r.url!]); else setError(r.error ?? "Envoi de la photo impossible.");
       } finally {
         setUploading((n) => n - 1);
@@ -102,13 +128,14 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
     if (!paste || paste.trim().length < 15) return;
     start(async () => {
       setError(null);
-      const r = await quickExtractAction(page.slug, paste);
+      const r = await api.extract(paste);
       if (!r.ok) return setError(r.error!);
       const f = r.fields;
       setD((x) => ({
         ...x, transaction: f.transaction === "sale" ? "sale" : "rent", propertyType: page.types.some((t) => t.slug === f.propertyType) ? f.propertyType : x.propertyType,
         furnished: !!f.furnished, price: f.price ? String(f.price) : x.price, priceUnit: f.priceUnit || "month", bedrooms: f.bedrooms ? String(f.bedrooms) : x.bedrooms,
         commune: f.commune || x.commune, quartier: f.quartier || x.quartier, title: f.title || "", description: f.description || x.description,
+        surface: f.surface ? String(f.surface) : x.surface,
         videoUrl: paste.match(VIDEO_LINK)?.[0] ?? x.videoUrl,
       }));
       setPaste(null);
@@ -116,17 +143,23 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
   }
 
   async function doPublish() {
-    const r = await quickPublishAction(page.slug, {
+    const r = await api.publish({
       photos,
-      listing: { ...d, typeLabel, price: Number(d.price) || 0, bedrooms: Number(d.bedrooms) || null, features: [] },
+      listing: { ...d, typeLabel, price: Number(d.price) || 0, bedrooms: Number(d.bedrooms) || null, surface: Number(d.surface) || null, features: [] },
     });
     if (!r.ok) { setError(r.error); return; }
     let video: string | undefined;
     if (videoFile) {
+      const startedAt = Date.now();
       setProgress(0);
-      const v = await uploadListingVideo(r.data.id, videoFile, 1024, setProgress);
+      setVideoState({ stage: "uploading", percent: 0, loaded: 0, total: videoFile.size, startedAt });
+      const v = await uploadListingVideo(r.data.id, videoFile, videoUpload.maxMb, (p, loaded, total) => {
+        setProgress(p);
+        setVideoState({ stage: "uploading", percent: p, loaded: loaded ?? Math.round((p / 100) * videoFile.size), total: total ?? videoFile.size, startedAt });
+      });
       setProgress(null);
-      video = v.ok ? "Vidéo envoyée : elle apparaît sur l’annonce dans quelques minutes." : v.error;
+      setVideoState(v.ok ? { stage: "processing" } : { stage: "error", message: v.error });
+      video = v.ok ? undefined : `La vidéo n’a pas pu être envoyée : ${v.error} Vous pourrez la renvoyer depuis Mon espace → Mes annonces.`;
     }
     setDone({ url: r.data.url, text: r.data.successText || page.successText, video, payUrl: r.data.payment?.paymentUrl ?? r.data.payment?.url ?? undefined });
     router.refresh();
@@ -134,8 +167,8 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
 
   function publish() {
     setError(null);
-    if (!account) return setAuth({ stage: "phone", phone: "", email: "", code: "", type: page.accountTypes[0] ?? "agent", firstName: "", lastName: "", company: "", registered: false });
-    if (!PUBLISHERS.includes(account.accountType)) return setError("Votre compte n’est pas un compte annonceur : choisissez « Agent », « Agence » ou « Propriétaire » dans Mon espace → Profil.");
+    if (!account && !member) return setAuth({ stage: "phone", phone: "", email: "", code: "", type: page.accountTypes[0] ?? "agent", firstName: "", lastName: "", company: "", registered: false });
+    if (account && !PUBLISHERS.includes(account.accountType)) return setError("Votre compte n’est pas un compte annonceur : choisissez « Agent », « Agence » ou « Propriétaire » dans Mon espace → Profil.");
     start(doPublish);
   }
 
@@ -177,21 +210,25 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
         <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-3xl text-emerald-700">✓</div>
         <h1 className="font-display text-2xl font-extrabold text-ink">C’est en ligne !</h1>
         <p className="text-muted">{done.text}</p>
+        {videoFile ? <div className="text-left"><VideoUploadCard file={videoFile} state={videoState} maxMb={videoUpload.maxMb} maxSeconds={videoUpload.maxSeconds} /></div> : null}
         {done.video ? <p className="text-sm text-muted">{done.video}</p> : null}
         {done.payUrl ? <a href={done.payUrl} className="block rounded-xl bg-accent-600 py-3 font-bold text-white">Régler la publication</a> : null}
         <a href={done.url} className="block rounded-xl bg-brand-800 py-3 font-bold text-white">Voir mon annonce</a>
         <a href={`https://wa.me/?text=${encodeURIComponent(done.url)}`} className="block rounded-xl bg-[#25D366] py-3 font-bold text-white">Partager sur WhatsApp</a>
-        <button type="button" onClick={() => { setDone(null); setStep(0); setPhotos([]); setVideoFile(null); setD((x) => ({ ...x, price: "", title: "", description: "", videoUrl: "", quartier: "" })); }}
+        <button type="button" onClick={() => { setDone(null); setStep(0); setPhotos([]); setVideoFile(null); setVideoState({ stage: "ready" }); setD((x) => ({ ...x, price: "", surface: "", title: "", description: "", videoUrl: "", quartier: "" })); }}
           className="block w-full rounded-xl py-3 font-semibold text-brand-800 ring-1 ring-slate-300">Publier un autre bien</button>
-        <a href="/mon-espace" className="block text-sm text-muted underline">Mon espace</a>
+        <a href={member ? "/mon-espace/annonces" : "/mon-espace"} className="block text-sm text-muted underline">{member ? "Mes annonces" : "Mon espace"}</a>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 pb-28 pt-5">
-      <h1 className="font-display text-2xl font-extrabold text-ink">{page.pageTitle}</h1>
+    <div className={member ? "max-w-md px-4" : "mx-auto max-w-md px-4 pb-28 pt-5"}>
+      {member ? null : <h1 className="font-display text-2xl font-extrabold text-ink">{page.pageTitle}</h1>}
       {step === 0 && page.pageIntro ? <p className="mt-1 text-sm text-muted">{page.pageIntro}</p> : null}
+      {member && fullFormHref && step === 0 ? (
+        <p className="text-sm text-muted">Publication rapide en 5 écrans, comme dans l’application. Besoin de plus de détails (salles de bain, équipements, visite 360°…) ? <a href={fullFormHref} className="font-semibold text-brand-800 underline">Formulaire complet</a></p>
+      ) : null}
 
       {/* Progression */}
       <ol className="mt-4 flex gap-1" aria-label="Étapes">
@@ -261,9 +298,16 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
             {page.video ? (
               <div className="space-y-2 rounded-xl bg-white p-3 ring-1 ring-slate-200">
                 <p className="font-semibold text-ink">Vidéo <span className="font-normal text-muted">(facultatif)</span></p>
-                <label className="block cursor-pointer rounded-lg bg-slate-50 p-3 text-sm font-semibold text-brand-800">
-                  {videoFile ? `✓ ${videoFile.name}` : "+ Choisir une vidéo"}<input type="file" accept="video/*" className="hidden" onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)} />
-                </label>
+                {videoFile ? (
+                  <VideoUploadCard file={videoFile} state={videoState} maxMb={videoUpload.maxMb} maxSeconds={videoUpload.maxSeconds}
+                    onTooLong={setVideoTooLong} onRemove={() => { setVideoFile(null); setVideoTooLong(false); setVideoState({ stage: "ready" }); }} />
+                ) : videoUpload.enabled ? (
+                  <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-3 text-sm font-semibold text-brand-800">
+                    <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="6" width="13" height="12" rx="2" /><path d="M16 10l5-3v10l-5-3z" /></svg>
+                    <span>Choisir une vidéo du téléphone<span className="block text-xs font-normal text-muted">{videoUpload.maxMb} Mo{videoUpload.maxSeconds ? ` et ${Math.round(videoUpload.maxSeconds / 60) >= 1 ? `${Math.round(videoUpload.maxSeconds / 60)} min` : `${videoUpload.maxSeconds} s`}` : ""} au maximum</span></span>
+                    <input type="file" accept="video/*" className="hidden" onChange={(e) => { setVideoFile(e.target.files?.[0] ?? null); setVideoState({ stage: "ready" }); e.target.value = ""; }} />
+                  </label>
+                ) : null}
                 <input value={d.videoUrl} onChange={(e) => set("videoUrl", e.target.value.trim())} placeholder="ou lien TikTok, YouTube, Facebook…" className={field} inputMode="url" />
               </div>
             ) : null}
@@ -290,6 +334,10 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
                   <button key={n || "0"} type="button" onClick={() => set("bedrooms", n)} className={"rounded-lg py-2 text-sm font-semibold " + (d.bedrooms === n ? "bg-ink text-white" : "bg-white ring-1 ring-slate-300")}>{n || "—"}{n === "5" ? "+" : ""}</button>
                 ))}
               </div>
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-ink">Surface en m² <span className="font-normal text-muted">(facultatif)</span></span>
+              <input value={d.surface} onChange={(e) => set("surface", e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="ex. 120" className={field + " mt-1"} />
             </label>
           </>
         ) : null}
@@ -323,7 +371,7 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
             </label>
             <div className="rounded-xl bg-slate-50 p-3 text-sm text-muted">
               <b className="block text-ink">{d.title.trim() || suggested}</b>
-              {Number(d.price).toLocaleString("fr-FR")} F{d.transaction === "rent" ? ({ month: " / mois", day: " / jour", week: " / semaine", year: " / an" } as Record<string, string>)[d.priceUnit] ?? "" : ""} · {photos.length} photo(s){videoFile || d.videoUrl ? " + vidéo" : ""}
+              {Number(d.price).toLocaleString("fr-FR")} F{d.transaction === "rent" ? ({ month: " / mois", day: " / jour", week: " / semaine", year: " / an" } as Record<string, string>)[d.priceUnit] ?? "" : ""} {Number(d.surface) ? ` · ${Number(d.surface).toLocaleString("fr-FR")} m²` : ""} · {photos.length} photo(s){videoFile || d.videoUrl ? " + vidéo" : ""}
             </div>
           </>
         ) : null}
@@ -369,8 +417,19 @@ export function QuickPublish({ page, account }: { page: Page; account: Account }
         </div>
       ) : null}
 
+      {/* Envoi de la vidéo après la publication de l'annonce */}
+      {videoFile && uploadingVideo ? (
+        <div className="fixed inset-0 z-[70] flex items-end bg-black/40 sm:items-center sm:justify-center" role="dialog" aria-modal="true" aria-label="Envoi de la vidéo">
+          <div className="w-full max-w-md space-y-3 rounded-t-2xl bg-white p-5 sm:rounded-2xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}>
+            <p className="font-display text-lg font-extrabold text-ink">Annonce publiée ✓ Envoi de la vidéo…</p>
+            <p className="text-sm text-muted">Gardez cette page ouverte jusqu’à la fin de l’envoi.</p>
+            <VideoUploadCard file={videoFile} state={videoState} maxMb={videoUpload.maxMb} maxSeconds={videoUpload.maxSeconds} />
+          </div>
+        </div>
+      ) : null}
+
       {/* Navigation */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <div className={(member ? "sticky bottom-0 -mx-4 mt-6" : "fixed inset-x-0 bottom-0") + " z-50 border-t border-slate-200 bg-white/95 backdrop-blur"} style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="mx-auto flex max-w-md gap-2 px-4 py-3">
           {step > 0 ? <button type="button" onClick={() => setStep(step - 1)} className="rounded-xl px-5 py-3 font-semibold ring-1 ring-slate-300">Retour</button> : null}
           {step < STEPS.length - 1 ? (

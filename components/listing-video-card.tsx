@@ -11,8 +11,8 @@ const ERRORS: Record<string, string> = {
 const mb = (n?: number | null) => (n ? `${(n / 1024 / 1024).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} Mo` : "");
 const day = (d?: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "");
 
-/** Envoie le fichier vidéo d'une annonce (jeton d'envoi de 30 min) ; progress : 0-100. */
-export async function uploadListingVideo(listingId: string, file: File, maxMb: number, onProgress: (p: number) => void): Promise<{ ok: true } | { ok: false; error: string }> {
+/** Envoie le fichier vidéo d'une annonce (jeton d'envoi de 30 min) ; progress : 0-100, octets envoyés et total. */
+export async function uploadListingVideo(listingId: string, file: File, maxMb: number, onProgress: (p: number, loaded?: number, total?: number) => void): Promise<{ ok: true } | { ok: false; error: string }> {
   if (file.size > maxMb * 1024 * 1024) return { ok: false, error: `Fichier trop lourd (${mb(file.size)}) : ${maxMb} Mo au maximum.` };
   const t = await videoTicketAction(listingId);
   if (!t.ok) return { ok: false, error: t.error };
@@ -23,7 +23,7 @@ export async function uploadListingVideo(listingId: string, file: File, maxMb: n
     const xhr = new XMLHttpRequest();
     xhr.open("POST", t.uploadUrl);
     xhr.setRequestHeader("Authorization", `Bearer ${t.token}`);
-    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100), e.loaded, e.total); };
     xhr.onload = () => {
       let body: any = {};
       try { body = JSON.parse(xhr.responseText); } catch { /* vide */ }

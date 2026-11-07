@@ -29,6 +29,7 @@ import { ListingReservation } from "@/components/listing-reservation";
 import { MarketPrice } from "@/components/market-price";
 import { getMarketEstimate } from "@/lib/prices";
 import { isOn } from "@/lib/flags";
+import { canonicalVideoUrl } from "@/lib/video-resolve";
 
 export const revalidate = 60;
 
@@ -54,6 +55,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 export default async function AnnoncePage({ params, searchParams }: { params: { id: string }; searchParams: { sp?: string } }) {
   const l = await getListing(listingIdFrom(params.id));
   if (!l) notFound();
+  // Lien TikTok court (partagé depuis l'application) : lu dans l'annonce, sans ouvrir TikTok.
+  const videoUrl = await canonicalVideoUrl(l.videoUrl);
   // Ancienne adresse (identifiant seul) ou titre modifié : redirection 301 vers l'adresse descriptive.
   const path = listingPath(l);
   if (`/annonce/${decodeURIComponent(params.id)}` !== path) permanentRedirect(searchParams?.sp ? `${path}?sp=${encodeURIComponent(searchParams.sp)}` : path);
@@ -171,7 +174,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
       />
       {(() => {
         // Vidéo de l'annonce : éligible aux résultats vidéo de Google.
-        const v = cfg.showVideo ? videoLd({ url: l.videoUrl, name: `Vidéo : ${l.title}`, description: l.description, thumbnail: l.photos?.[0], uploadDate: l.createdAt ?? l.updatedAt }) : null;
+        const v = cfg.showVideo ? videoLd({ url: videoUrl, name: `Vidéo : ${l.title}`, description: l.description, thumbnail: l.photos?.[0], uploadDate: l.createdAt ?? l.updatedAt }) : null;
         return v ? <JsonLd data={v} /> : null;
       })()}
 
@@ -179,7 +182,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
         bannerStyle={cfg.bannerStyle}
         printHref={print.enabled ? `${path}/imprimer` : undefined}
         photos={l.photos}
-        videoUrl={cfg.showVideo ? l.videoUrl : null}
+        videoUrl={cfg.showVideo ? videoUrl : null}
         backHref={`/annonces?transaction=${l.transaction}`}
         breadcrumbs={[
           { label: "Accueil", href: "/" },

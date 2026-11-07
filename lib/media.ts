@@ -24,12 +24,12 @@ const MAX_PHOTOS = 12;
 /** ID YouTube d'une URL (watch?v=, youtu.be, embed, shorts, live). */
 export function youtubeId(url?: string | null): string | null {
   if (!url) return null;
-  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
+  const m = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([\w-]{11})/);
   return m ? m[1] : null;
 }
 
 function tiktokId(url: string): string | null {
-  const m = url.match(/tiktok\.com\/.*\/video\/(\d+)/);
+  const m = url.match(/tiktok\.com\/(?:.*\/video\/|embed\/(?:v2\/)?|v\/)(\d{8,})/);
   return m ? m[1] : null;
 }
 
