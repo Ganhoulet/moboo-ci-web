@@ -95,14 +95,16 @@ function parseCoords(s: string): [number, number] | null {
   return null;
 }
 
-export type EditorSave = (id: string | null, payload: Record<string, any>) => Promise<{ ok: boolean; id?: string; error?: string; paymentUrl?: string | null }>;
+export type EditorSave = (id: string | null, payload: Record<string, any>) => Promise<{ ok: boolean; id?: string; error?: string; paymentUrl?: string | null; moderation?: "pending" }>;
 
 export function ListingEditor({
   id, initial, maxPhotos: MAX_PHOTOS = 12,
   saveAction = saveListingAction, createdHref = "/mon-espace/annonces?publiee={id}",
   types = PROPERTY_TYPES, features: FEATURES = LISTING_FEATURES, communes: AREAS = COMMUNES, labels: LABELS = [],
-  form = NO_FORM, accountType, team = false, video = null, simple = false,
+  form = NO_FORM, accountType, team = false, video = null, simple = false, awaiting = false,
 }: {
+  /** Annonce en attente de validation (masquée du site) : pas de lien « Voir l'annonce », message clair. */
+  awaiting?: boolean;
   /** Publication simple : seulement les champs marqués « Publication simple » (Formulaires), sur une seule page. */
   simple?: boolean;
   /** Envoi de vidéo depuis le site (réglages, et vidéo actuelle en modification) : null = indisponible. */
@@ -133,6 +135,7 @@ export function ListingEditor({
   const [d, setD] = useState<ListingDraft>(initial);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [inReview, setInReview] = useState(awaiting);
   const [pending, start] = useTransition();
   const [uploading, setUploading] = useState<string | null>(null);
   const [customFeature, setCustomFeature] = useState("");
@@ -274,7 +277,7 @@ export function ListingEditor({
         // L'annonce est publiée même si la vidéo échoue : elle pourra être renvoyée depuis « Modifier ».
         if (!up.ok) { router.push(`/mon-espace/annonces/${encodeURIComponent(r.id)}?video=echec`); return; }
       }
-      if (edit) { setSaved(true); router.refresh(); }
+      if (edit) { setSaved(true); if (r.moderation === "pending") setInReview(true); router.refresh(); }
       // Soumission payante à l'annonce : paiement, puis mise en ligne automatique.
       else if (r.paymentUrl) window.location.href = r.paymentUrl;
       else router.push(createdHref.replace("{id}", encodeURIComponent(r.id!)));
@@ -673,6 +676,11 @@ export function ListingEditor({
 
       {error ? <p id="listing-error" className="mt-5 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
       {saved ? <p className="mt-5 rounded-xl bg-emerald-50 p-3 text-sm font-medium text-emerald-700">Modifications enregistrées ✓</p> : null}
+      {inReview && edit ? (
+        <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm font-medium text-amber-800">
+          Votre annonce est en attente de validation par l’équipe Moboo. Elle est masquée du site le temps de la vérification et réapparaîtra dès qu’elle sera validée.
+        </p>
+      ) : null}
 
       <div className={(shortStay ? "hidden " : "") + "mt-6 flex flex-wrap gap-3"}>
         {step > 0 && !single ? <button type="button" className="btn-ghost" onClick={() => { setStep((s) => s - 1); setError(null); }}>Retour</button> : null}
@@ -689,7 +697,7 @@ export function ListingEditor({
           </button>
         )}
       </div>
-      {edit ? (
+      {edit && !inReview ? (
         <p className="mt-4 text-center text-xs text-muted">
           <Link href={`/annonce/${id}`} target="_blank" className="font-semibold text-brand-800 hover:underline">Voir l'annonce sur le site ↗</Link>
         </p>

@@ -59,7 +59,7 @@ export async function getMyListing(id: string): Promise<Record<string, any> | nu
   return ok ? data : null;
 }
 
-export type SaveResult = { ok: boolean; id?: string; error?: string; paymentUrl?: string | null };
+export type SaveResult = { ok: boolean; id?: string; error?: string; paymentUrl?: string | null; moderation?: "pending" };
 
 /** Création (id absent) ou modification d'une annonce. */
 export async function saveListingAction(id: string | null, payload: Record<string, any>): Promise<SaveResult> {
@@ -73,7 +73,8 @@ export async function saveListingAction(id: string | null, payload: Record<strin
   // Publication payante : paiement Money Fusion (ou facture réglée d'office si gratuit).
   const pay = data?.payment;
   if (pay && !pay.paid) return { ok: true, id: data?.id, paymentUrl: pay.paymentUrl ?? `/mon-espace/annonces?facture=${pay.invoiceId}` };
-  return { ok: true, id: data?.id ?? id ?? undefined };
+  // Modification renvoyée en validation (back-office → Modération) : l'annonce est masquée en attendant.
+  return { ok: true, id: data?.id ?? id ?? undefined, ...(data?.moderation === "pending" ? { moderation: "pending" as const } : {}) };
 }
 
 /** Payer la publication d'une annonce en attente (mode « payante à l'annonce »). */
