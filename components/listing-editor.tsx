@@ -7,7 +7,7 @@ import { COMMUNES, LISTING_FEATURES, PROPERTY_TYPES } from "@/lib/accounts";
 import { saveListingAction, uploadImageAction } from "@/app/mon-espace/actions";
 import { ListingVideoCard, uploadListingVideo } from "@/components/listing-video-card";
 import type { ListingVideo } from "@/app/mon-espace/video-actions";
-import { BUILTIN_FIELDS, fieldView, visibleSteps, type CustomField, type ListingFormConfig, type StepId } from "@/lib/listing-form";
+import { BUILTIN_FIELDS, fieldView, isQuick, visibleSteps, type CustomField, type ListingFormConfig, type StepId } from "@/lib/listing-form";
 import { SiteIcon } from "@/components/site-icon";
 
 const NO_FORM: ListingFormConfig = { steps: {}, fields: {}, custom: [] };
@@ -101,8 +101,10 @@ export function ListingEditor({
   id, initial, maxPhotos: MAX_PHOTOS = 12,
   saveAction = saveListingAction, createdHref = "/mon-espace/annonces?publiee={id}",
   types = PROPERTY_TYPES, features: FEATURES = LISTING_FEATURES, communes: AREAS = COMMUNES, labels: LABELS = [],
-  form = NO_FORM, accountType, team = false, video = null,
+  form = NO_FORM, accountType, team = false, video = null, simple = false,
 }: {
+  /** Publication simple : seulement les champs marqués « Publication simple » (Formulaires), sur une seule page. */
+  simple?: boolean;
   /** Envoi de vidéo depuis le site (réglages, et vidéo actuelle en modification) : null = indisponible. */
   video?: ListingVideo | null;
   /** Règles du formulaire (back-office → Formulaires). */
@@ -147,7 +149,7 @@ export function ListingEditor({
 
   const ctx = { accountType, transaction: d.transaction, propertyType: d.propertyType, team };
   const fv = (key: string, fallback?: string) => fieldView(form, key, ctx, fallback);
-  const on = (key: string) => fv(key).show;
+  const on = (key: string) => fv(key).show && (!simple || isQuick(form, key));
   /** Libellé du champ : renommé dans le back-office, « * » si obligatoire, mention si réservé. */
   const lab = (key: string, fallback?: string) => {
     const v = fv(key, fallback);
@@ -159,7 +161,7 @@ export function ListingEditor({
   const CONTACT_STEP = STEPS.length - 1;
   const stepId = STEPS[Math.min(step, STEPS.length - 1)]?.id;
   // Back-office → Formulaires : « une seule page » (toutes les rubriques à la suite, sans onglets).
-  const single = form.layout === "single";
+  const single = simple || form.layout === "single";
   const shown = (id: StepId) => (single ? STEPS.some((st) => st.id === id) : stepId === id);
   const heading = (id: StepId) => (single ? <h3 className="border-t border-slate-100 pt-5 font-display text-lg font-bold text-ink first:border-0 first:pt-0">{STEPS.find((st) => st.id === id)?.label}</h3> : null);
 
@@ -182,12 +184,12 @@ export function ListingEditor({
       if (d.title.trim().length < 8) return "Donnez un titre clair (8 caractères minimum).";
       if (!(Number(d.price) > 0)) return "Indiquez le prix.";
     }
-    if (id === "essentiel" && fv("description").required && d.description.trim().length < 40) return "Décrivez le bien (40 caractères minimum).";
+    if (id === "essentiel" && on("description") && fv("description").required && d.description.trim().length < 40) return "Décrivez le bien (40 caractères minimum).";
     if (id === "rgpd" && fv("gdpr").show && !gdpr) return "Cochez l’accord RGPD pour publier.";
     if (id === "localisation" && !d.city.trim()) return "Indiquez la ville.";
     if (id === "contact" && d.contactPhone.replace(/[^0-9]/g, "").length < 8) return "Indiquez un numéro de contact.";
     for (const f of [...BUILTIN_FIELDS.filter((x) => x.step === id && !x.core && x.key !== "gdpr"), ...form.custom.filter((x) => x.step === id)]) {
-      if (fv(f.key).required && isEmpty(f.key)) return `Renseignez « ${fv(f.key).label} ».`;
+      if (on(f.key) && fv(f.key).required && isEmpty(f.key)) return `Renseignez « ${fv(f.key).label} ».`;
     }
     return null;
   }

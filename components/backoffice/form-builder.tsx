@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { saveSettingsAction } from "@/app/admin/actions";
 import {
-  BUILTIN_FIELDS, CUSTOM_TYPE_LABEL, FORM_STEPS, MODE_LABEL,
+  BUILTIN_FIELDS, CUSTOM_TYPE_LABEL, FORM_STEPS, MODE_LABEL, QUICK_DEFAULT,
   type CustomField, type CustomType, type FieldMode, type FieldRule, type ListingFormConfig, type MemberSpaceConfig, type StepId,
 } from "@/lib/listing-form";
 import { MEMBER_ACTIONS } from "@/lib/member-actions";
@@ -37,8 +37,10 @@ function Chips({ options, value, onChange, allLabel = "Tous" }: { options: [stri
 }
 
 /** Règle commune (intégré ou créé) : mode, libellé, profils, conditions. */
-function RuleRow({ title, hint, core, rule, onChange, types, propertyTypes, extra, onRemove, onMove }: {
+function RuleRow({ title, hint, core, rule, onChange, types, propertyTypes, extra, onRemove, onMove, quickDefault = false }: {
   title: string; hint?: string; core?: boolean; rule: FieldRule; onChange: (r: FieldRule) => void; types: [string, string][]; propertyTypes: [string, string][];
+  /** Dans la publication simple si rien n'est réglé. */
+  quickDefault?: boolean;
   extra?: React.ReactNode; onRemove?: () => void; onMove?: (dir: -1 | 1) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -58,6 +60,15 @@ function RuleRow({ title, hint, core, rule, onChange, types, propertyTypes, extr
             className={"rounded-full border-0 px-3 py-1 text-xs font-bold ring-1 ring-slate-200 " + MODE_STYLE[mode]}>
             {MODES.map((m) => <option key={m} value={m}>{MODE_LABEL[m]}</option>)}
           </select>
+        )}
+        {core ? (
+          <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-800">Simple et complète</span>
+        ) : (
+          <label className={"flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 " + ((rule.quick ?? quickDefault) ? "bg-sky-50 text-sky-800 ring-sky-200" : "bg-white text-muted ring-slate-200")}
+            title="Affiché aussi dans la publication simple du site et la publication rapide de l’application">
+            <input type="checkbox" className="h-3.5 w-3.5" checked={rule.quick ?? quickDefault} onChange={(e) => onChange({ ...rule, quick: e.target.checked })} />
+            Publication simple
+          </label>
         )}
         {conditions ? <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{conditions} condition(s)</span> : null}
         {onMove ? (
@@ -174,6 +185,7 @@ export function ListingFormBuilder({ initial, propertyTypes }: { initial: Listin
             <ul className="divide-y divide-slate-100 px-4">
               {builtins.map((f) => (
                 <RuleRow key={f.key} title={f.label} hint={f.hint} core={f.core} types={PUBLISHERS} propertyTypes={ptypes}
+                  quickDefault={QUICK_DEFAULT.includes(f.key)}
                   rule={{ ...(f.defaultMode ? { mode: f.defaultMode } : {}), ...(cfg.fields[f.key] ?? {}) }} onChange={(r) => setRule(f.key, r)} />
               ))}
               {customs.map((c) => (
@@ -194,6 +206,9 @@ export function ListingFormBuilder({ initial, propertyTypes }: { initial: Listin
                           <textarea className={input + " mt-1"} rows={3} value={c.options.join("\n")} onChange={(e) => setCustom(c.key, { ...c, options: e.target.value.split("\n") })} />
                         </label>
                       ) : null}
+                      <label className="block text-xs font-semibold text-ink">Rubrique sur la fiche annonce
+                        <input className={input + " mt-1"} value={c.group ?? ""} maxLength={60} placeholder="Ex. Prix et conditions" onChange={(e) => setCustom(c.key, { ...c, group: e.target.value || undefined })} />
+                      </label>
                       <label className="block text-xs font-semibold text-ink">Aide sous le champ
                         <input className={input + " mt-1"} value={c.help ?? ""} maxLength={200} onChange={(e) => setCustom(c.key, { ...c, help: e.target.value || undefined })} />
                       </label>

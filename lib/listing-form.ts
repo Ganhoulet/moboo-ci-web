@@ -6,11 +6,15 @@ export type FieldMode = "optional" | "required" | "hidden" | "team";
 export interface FieldRule {
   mode?: FieldMode; label?: string; help?: string;
   types?: string[]; transactions?: string[]; propertyTypes?: string[];
+  /** Affiché aussi dans la publication simple (site) et la publication rapide (application). */
+  quick?: boolean;
 }
 export type CustomType = "text" | "textarea" | "number" | "select" | "multiselect" | "checkbox" | "date" | "url";
 export interface CustomField extends FieldRule {
   key: string; label: string; type: CustomType; step: StepId; options: string[];
   visibility: "public" | "private"; placeholder?: string; unit?: string;
+  /** Rubrique de la fiche annonce (ex. « Prix et conditions »). */
+  group?: string;
 }
 export interface ListingFormConfig {
   /** steps : étapes avec onglets (défaut) ; single : tout sur une seule page. */
@@ -44,6 +48,17 @@ export const FORM_STEPS: { id: StepId; label: string; lockable?: boolean }[] = [
   { id: "note", label: "Note privée" },
   { id: "rgpd", label: "Accord RGPD" },
 ];
+
+/** Champs intégrés de la publication simple par défaut (mêmes que l'API, form-config.ts). */
+export const QUICK_DEFAULT = ["pricePostfix", "photos", "videoUrl", "videoUpload", "description", "bedrooms", "bathrooms", "surface", "commune", "quartier", "map", "gdpr"];
+const CORE_KEYS = ["transaction", "propertyType", "title", "price", "city", "contactPhone"];
+/** Le champ fait-il partie de la publication simple ? (réglable dans Formulaires) */
+export function isQuick(cfg: ListingFormConfig, key: string): boolean {
+  if (CORE_KEYS.includes(key)) return true;
+  const c = cfg.custom.find((x) => x.key === key);
+  if (c) return c.quick === true;
+  return cfg.fields[key]?.quick ?? QUICK_DEFAULT.includes(key);
+}
 
 export interface BuiltinField { key: string; label: string; step: StepId; core?: boolean; defaultMode?: FieldMode; hint?: string }
 /** Champs intégrés du formulaire (mêmes que l'application Moboo.ci). */

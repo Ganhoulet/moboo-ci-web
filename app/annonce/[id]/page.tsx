@@ -24,6 +24,7 @@ import { ContactLink } from "@/components/contact-link";
 import { getSiteSettings } from "@/lib/settings";
 import { waMessage, waNumber } from "@/lib/whatsapp";
 import { customDisplay, parseListingForm } from "@/lib/listing-form";
+import { CustomSections } from "@/components/listing-custom-sections";
 import { getTaxonomies, typeLabel } from "@/lib/taxonomies";
 import { ListingReservation } from "@/components/listing-reservation";
 import { MarketPrice } from "@/components/market-price";
@@ -84,7 +85,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
     { icon: I.home, label: "Type", value: TYPE(l.propertyType) },
   ];
   if (l.bedrooms != null) specs.push({ icon: I.bed, label: "Chambres", value: String(l.bedrooms) });
-  if (l.bathrooms != null) specs.push({ icon: I.bath, label: "Salles de bain", value: String(l.bathrooms) });
+  if (l.bathrooms != null) specs.push({ icon: I.bath, label: "Douches", value: String(l.bathrooms) });
   if (l.garage != null && l.garage > 0) specs.push({ icon: I.car, label: "Garage", value: String(l.garage) });
   const dt = l.details ?? {};
   if (l.surface != null) specs.push({ icon: I.area, label: "Surface", value: `${l.surface} ${dt.sizeUnit || "m²"}` });
@@ -108,12 +109,24 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
     </>
   );
   const floorPlans = (dt.floorPlans ?? []).filter((p) => p.title || p.image);
-  // Champs créés dans le back-office (Formulaires) : seulement les champs publics encore actifs.
-  const customRows = parseListingForm(forms.listingForm).custom
-    .filter((f) => f.visibility !== "private" && f.mode !== "hidden")
-    .map((f) => ({ title: f.label, value: customDisplay(f, dt.custom?.[f.key]) }))
+  // Champs créés dans le back-office (Formulaires) : seulement les champs publics encore actifs,
+  // rangés par rubrique (Prix et conditions, Eau et électricité, Papiers…).
+  const customDefs = parseListingForm(forms.listingForm).custom.filter((f) => f.visibility !== "private" && f.mode !== "hidden");
+  const rows = customDefs
+    .map((f) => ({ f, title: f.label, value: customDisplay(f, dt.custom?.[f.key]), list: f.type === "multiselect" && Array.isArray(dt.custom?.[f.key]) ? (dt.custom?.[f.key] as string[]) : null }))
     .filter((r) => r.value);
-  const additional = [...customRows, ...(dt.additional ?? [])];
+  const GROUP_ORDER = ["Prix et conditions", "Le bien", "Eau, électricité et commodités", "Localisation", "Papiers", "Disponibilité"];
+  const groups = Array.from(new Set([...GROUP_ORDER, ...rows.map((r) => r.f.group || "")]))
+    .filter(Boolean).map((g) => ({ title: g, rows: rows.filter((r) => r.f.group === g) })).filter((g) => g.rows.length);
+  const additional = [...rows.filter((r) => !r.f.group), ...(dt.additional ?? [])];
+  const pieces = Number(dt.custom?.pieces) || 0;
+  if (pieces > 0) specs.unshift({ icon: I.bed, label: "Pièces", value: String(pieces) });
+  // Location au mois : somme à prévoir à l'entrée (caution + avance + frais d'agence en mois).
+  const months = (v: unknown) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : 0; };
+  const feeMonths = (() => { const m = String(dt.custom?.frais_agence ?? "").match(/^(\d+) mois/); return m ? Number(m[1]) : 0; })();
+  const entryMonths = months(dt.custom?.caution_mois) + months(dt.custom?.avance_mois) + feeMonths;
+  const monthly = l.transaction === "rent" && (!dt.pricePostfix || /mois/i.test(dt.pricePostfix)) && l.listingKind === "classic";
+  const entryTotal = monthly && entryMonths > 0 ? l.price * entryMonths : 0;
   const tour = dt.virtualTour?.startsWith("https://") ? dt.virtualTour : null;
   const units = (l.units ?? []).filter((u) => u?.title);
   const txLabel = l.transaction === "rent" ? "À louer" : "À vendre";
@@ -230,11 +243,13 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
             </Section>
           ) : null}
 
+          <CustomSections groups={groups} entry={entryTotal > 0 ? { total: entryTotal, caution: months(dt.custom?.caution_mois), avance: months(dt.custom?.avance_mois), fee: feeMonths } : null} />
+
           {additional.length > 0 || dt.postalCode ? (
             <Section title="Détails supplémentaires">
               <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
                 {additional.map((a, i) => (
-                  <div key={a.title + i} className="flex justify-between gap-4 border-b border-slate-100 py-2">
+                  <div key={String(a.title) + i} className="flex justify-between gap-4 border-b border-slate-100 py-2">
                     <dt className="text-muted">{a.title}</dt>
                     <dd className="text-right font-semibold text-ink">{a.value}</dd>
                   </div>
