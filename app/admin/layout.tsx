@@ -105,6 +105,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Marketing : bannières, flyers et pop-ups (application mobile + site).
     { href: "/admin/marketing", label: "Marketing", icon: "megaphone", group: "marketing" },
     { href: "/admin/marketing/nouvelle", label: "Nouvelle campagne", icon: "megaphone", child: true, group: "marketing" },
+    // Documents imprimables : livres blancs, ebooks, magazines de quartier (export PDF).
+    { href: "/admin/documents", label: "Documents imprimables", icon: "layout", group: "documents" },
+    { href: "/admin/documents/nouveau", label: "Nouveau document", icon: "layout", child: true, group: "documents" },
     // Marketing terrain : affiches QR à poser (agents, agences, annonces, pages SEO) et comptage des scans.
     { href: "/admin/affiches-qr", label: "Marketing terrain", icon: "megaphone", group: "terrain" },
     { href: "/admin/affiches-qr", label: "Affiches QR (agents, annonces)", icon: "megaphone", child: true, group: "terrain" },
