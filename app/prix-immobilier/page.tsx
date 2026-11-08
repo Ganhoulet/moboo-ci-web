@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fcfa, getPriceCommunes, type CommuneRow } from "@/lib/prices";
+import { absUrl, breadcrumbLd, ldJson } from "@/lib/structured-data";
 
 export const revalidate = 3600;
 const YEAR = new Date().getFullYear();
@@ -16,10 +17,22 @@ export const metadata: Metadata = {
 export default async function PricesIndex() {
   const rows = await getPriceCommunes();
   if (!rows) notFound();
+  const dataset = {
+    "@context": "https://schema.org", "@type": "Dataset",
+    name: `Prix de l’immobilier en Côte d’Ivoire en ${YEAR}`,
+    description: "Loyers et prix de vente médians par commune en Côte d’Ivoire, calculés sur les annonces réelles publiées sur Moboo.ci, prix aberrants écartés.",
+    url: absUrl("/prix-immobilier"),
+    creator: { "@type": "Organization", name: "Moboo.ci", url: absUrl("/") },
+    temporalCoverage: String(YEAR),
+    spatialCoverage: { "@type": "Place", name: "Côte d’Ivoire" },
+    isAccessibleForFree: true,
+  };
   const byCity = new Map<string, CommuneRow[]>();
   for (const r of rows) byCity.set(r.city, [...(byCity.get(r.city) ?? []), r]);
   return (
     <div className="container-page py-8 sm:py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(dataset) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd([{ label: "Accueil", href: "/" }, { label: "Prix de l’immobilier" }])) }} />
       <h1 className="font-display text-3xl font-extrabold text-ink sm:text-4xl">Prix de l’immobilier en Côte d’Ivoire en {YEAR}</h1>
       <p className="mt-2 max-w-3xl text-muted">Loyers et prix de vente médians par commune, calculés sur les annonces réelles publiées sur Moboo.ci (prix aberrants écartés). Cliquez sur une commune pour le détail par type de bien.</p>
       {rows.length ? [...byCity].map(([city, list]) => (

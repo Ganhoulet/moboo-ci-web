@@ -25,6 +25,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { waMessage, waNumber } from "@/lib/whatsapp";
 import { customDisplay, parseListingForm } from "@/lib/listing-form";
 import { CustomSections } from "@/components/listing-custom-sections";
+import { listingSeoTitle, listingZone } from "@/lib/listing-seo-title";
 import { getTaxonomies, typeLabel } from "@/lib/taxonomies";
 import { ListingReservation } from "@/components/listing-reservation";
 import { MarketPrice } from "@/components/market-price";
@@ -43,13 +44,14 @@ const TYPE_LABEL: Record<string, string> = {
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const l = await getListing(listingIdFrom(params.id));
   if (!l) return { title: "Annonce" };
-  const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ");
+  const zone = listingZone(l);
+  const seoTitle = listingSeoTitle(l);
   const description = `${TYPE_LABEL[l.propertyType] ?? "Bien"} ${l.transaction === "rent" ? "à louer" : "à vendre"} à ${zone} — ${formatXOF(l.price)}${l.transaction === "rent" ? " / mois" : ""}. Contact direct sur Moboo.ci.`;
   return {
-    title: l.title,
+    title: seoTitle,
     description,
     alternates: { canonical: listingPath(l) },
-    openGraph: { title: l.title, description, url: listingPath(l), images: l.photos?.slice(0, 1) },
+    openGraph: { title: seoTitle, description, url: listingPath(l), images: l.photos?.slice(0, 1) },
   };
 }
 

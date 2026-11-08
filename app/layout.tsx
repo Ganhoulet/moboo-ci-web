@@ -43,6 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: branding.seoTitle, template: `%s · ${branding.siteName}` },
     description: branding.seoDescription,
     metadataBase: new URL("https://moboo.ci"),
+    ...((headers().get("x-moboo-path") || "/") === "/" ? { alternates: { canonical: "/" } } : {}),
     openGraph: {
       title: branding.seoTitle,
       description: branding.seoDescription,
