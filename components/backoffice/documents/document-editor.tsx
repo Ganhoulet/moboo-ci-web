@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { saveDocumentAction } from "@/app/admin/documents/actions";
+import { getZoneDataAction, saveDocumentAction } from "@/app/admin/documents/actions";
+import { applyZone, hasZoneBlocks, type ZoneOption } from "@/lib/documents/zone";
 import { docCss } from "@/components/documents/doc-css";
 import { DocPageView, type Wrap } from "@/components/documents/doc-render";
 import { BLOCK_CATALOG, buildToc, flatBlocks, KIND_LABEL, newBlock, newPage, uid, type Block, type BlockType, type DocData, type DocFull, type DocKind, type DocMeta, type DocPage } from "@/lib/documents/types";
 import { BlockForm, Field, inputCls } from "./block-form";
 
-const NOT_IN_COLUMNS: BlockType[] = ["cover", "back", "columns", "toc"];
+const NOT_IN_COLUMNS: BlockType[] = ["cover", "back", "columns", "toc", "zoneListings"];
 const btn = "rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50 disabled:opacity-40";
 const icon = "rounded px-1.5 py-0.5 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-30";
 
@@ -34,7 +35,7 @@ function pageName(p: DocPage) {
 const blockLabel = (t: BlockType) => BLOCK_CATALOG.flatMap((g) => g.items).find((i) => i.type === t)?.label ?? "Bloc libre";
 
 /** Éditeur par pages : pages à gauche, page réelle au centre, réglages du bloc à droite. */
-export function DocumentEditor({ doc }: { doc: DocFull }) {
+export function DocumentEditor({ doc, zones }: { doc: DocFull; zones: ZoneOption[] }) {
   const router = useRouter();
   const [meta, setMeta] = useState<DocMeta>({ title: doc.title, kind: doc.kind, format: doc.format, edition: doc.edition, editionDate: doc.editionDate, status: doc.status, zone: doc.zone, template: doc.template });
   const [data, setData] = useState<DocData>(doc.data);
@@ -93,6 +94,18 @@ export function DocumentEditor({ doc }: { doc: DocFull }) {
     imgs.forEach((i) => i.addEventListener("load", check));
     return () => imgs.forEach((i) => i.removeEventListener("load", check));
   }, [data, cur, meta.format]);
+
+  const [zoneMsg, setZoneMsg] = useState<{ busy?: boolean; ok?: boolean; text?: string }>({});
+  const refreshZone = async (slug: string) => {
+    if (!slug) return;
+    setZoneMsg({ busy: true });
+    const r = await getZoneDataAction(slug);
+    if (!r.ok || !r.data) return setZoneMsg({ ok: false, text: r.error ?? "Données indisponibles." });
+    const z = r.data;
+    change((d) => applyZone(d, z));
+    setM("zone", slug);
+    setZoneMsg({ ok: true, text: `Données de ${z.zone.name} chargées.` });
+  };
 
   const undo = () => {
     const h = history.current.pop();
@@ -166,6 +179,20 @@ export function DocumentEditor({ doc }: { doc: DocFull }) {
         </div>
       </div>
 
+      {hasZoneBlocks(data) ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-3 text-sm shadow-sm ring-1 ring-slate-200">
+          <label className="flex items-center gap-2 font-semibold text-ink">Zone du magazine
+            <select aria-label="Zone" value={meta.zone ?? ""} disabled={zoneMsg.busy} onChange={(e) => void refreshZone(e.target.value)} className="rounded-md border border-slate-300 px-2 py-1.5 text-sm font-normal">
+              <option value="">Choisir…</option>
+              {meta.zone && !zones.some((z) => z.slug === meta.zone) ? <option value={meta.zone}>{data.settings.zoneName ?? meta.zone}</option> : null}
+              {zones.map((z) => <option key={z.slug} value={z.slug}>{z.name}{z.city && z.city !== z.name ? ` (${z.city})` : ""} · {z.rent + z.sale} annonces</option>)}
+            </select>
+          </label>
+          <button type="button" className={btn} disabled={!meta.zone || zoneMsg.busy} onClick={() => void refreshZone(meta.zone!)}>{zoneMsg.busy ? "Chargement…" : "Actualiser les données"}</button>
+          {zoneMsg.text ? <span role="status" className={"text-xs font-semibold " + (zoneMsg.ok ? "text-emerald-700" : "text-red-600")}>{zoneMsg.text}</span> : <span className="text-xs text-muted">Les chiffres sont figés dans le document jusqu’à la prochaine actualisation.</span>}
+        </div>
+      ) : null}
+
       <div className="grid items-start gap-3 lg:grid-cols-[210px_minmax(0,1fr)_340px]">
         <aside className="rounded-lg bg-white p-2 shadow-sm ring-1 ring-slate-200 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
           <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{data.pages.length} page{data.pages.length > 1 ? "s" : ""}</p>
@@ -220,7 +247,7 @@ export function DocumentEditor({ doc }: { doc: DocFull }) {
               <h2 className="font-display text-sm font-bold text-ink">Page {cur + 1}</h2>
               <Field label="Rubrique en haut de page"><input value={page.section} onChange={(e) => editPage((p) => ({ ...p, section: e.target.value }))} className={inputCls} /></Field>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!page.noChrome} onChange={(e) => editPage((p) => ({ ...p, noChrome: e.target.checked }))} /> Sans en-tête ni pied de page</label>
-              <p className="text-[11px] text-muted">Cliquez sur un bloc de la page pour le modifier.</p>
+              <p className="text-[11px] text-muted">Cliquez sur un bloc de la page pour le modifier. Dans les champs de texte, **deux étoiles** autour d’un mot le mettent en gras.</p>
             </div>
           )}
           <div className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">

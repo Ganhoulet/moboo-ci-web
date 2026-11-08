@@ -3,19 +3,21 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createDocumentAction } from "@/app/admin/documents/actions";
+import type { ZoneOption } from "@/lib/documents/zone";
 import { KIND_LABEL, type DocFormat, type DocKind } from "@/lib/documents/types";
 import { Field, inputCls } from "./block-form";
 
-export interface TemplateCard { key: string; name: string; description: string; format: DocFormat; kind: DocKind }
+export interface TemplateCard { key: string; name: string; description: string; format: DocFormat; kind: DocKind; needsZone: boolean }
 
 /** Création d'un document : page blanche (type, format) ou modèle. */
-export function NewDocument({ templates }: { templates: TemplateCard[] }) {
+export function NewDocument({ templates, zones }: { templates: TemplateCard[]; zones: ZoneOption[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<DocKind>("livre-blanc");
   const [format, setFormat] = useState<DocFormat>("A4");
+  const [zone, setZone] = useState("");
   const create = (input: Parameters<typeof createDocumentAction>[0]) => start(async () => {
     setError("");
     const r = await createDocumentAction(input);
@@ -41,7 +43,10 @@ export function NewDocument({ templates }: { templates: TemplateCard[] }) {
               <p className="text-xs font-semibold text-accent-700">{KIND_LABEL[t.kind]} · {t.format}</p>
               <h3 className="mt-1 font-display font-bold text-ink">{t.name}</h3>
               <p className="mt-1 flex-1 text-sm text-muted">{t.description}</p>
-              <button type="button" disabled={pending} onClick={() => create({ template: t.key })} className="mt-4 self-start rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-brand-800 ring-1 ring-brand-700 hover:bg-brand-50 disabled:opacity-50">Utiliser ce modèle</button>
+              {t.needsZone ? (
+                <div className="mt-3"><Field label="Zone"><select value={zone} onChange={(e) => setZone(e.target.value)} className={inputCls}><option value="">Choisir…</option>{zones.map((z) => <option key={z.slug} value={z.slug}>{z.name}{z.city && z.city !== z.name ? ` (${z.city})` : ""} · {z.rent + z.sale} annonces</option>)}</select></Field></div>
+              ) : null}
+              <button type="button" disabled={pending || (t.needsZone && !zone)} onClick={() => create({ template: t.key, zone: t.needsZone ? zone : undefined })} className="mt-4 self-start rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-brand-800 ring-1 ring-brand-700 hover:bg-brand-50 disabled:opacity-50">Utiliser ce modèle</button>
             </div>
           ))}
         </div>

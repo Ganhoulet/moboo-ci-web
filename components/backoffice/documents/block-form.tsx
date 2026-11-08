@@ -158,6 +158,16 @@ function ImageForm({ b, set }: { b: ImageBlock; set: (p: Partial<ImageBlock>) =>
   );
 }
 
+/** Bloc alimenté par les données de la zone : verrouillé, il garde son contenu lors des actualisations. */
+function Locked({ b, set }: { b: { locked: boolean }; set: (p: any) => void }) {
+  return (
+    <div className="rounded-md bg-slate-50 p-2 text-xs ring-1 ring-slate-200">
+      <label className="flex items-center gap-2 font-semibold"><input type="checkbox" checked={b.locked} onChange={(e) => set({ locked: e.target.checked })} /> Ne plus actualiser ce bloc</label>
+      <p className="mt-1 text-muted">Après « Actualiser les données », ce bloc reprend les chiffres réels de la zone, sauf s’il est coché.</p>
+    </div>
+  );
+}
+
 /** Formulaire du bloc sélectionné. */
 export function BlockForm({ b, onChange }: { b: Block; onChange: (patch: Partial<Block>) => void }) {
   const set = onChange as (p: any) => void;
@@ -175,11 +185,17 @@ export function BlockForm({ b, onChange }: { b: Block; onChange: (patch: Partial
       <Area label="Titre" rows={2} value={b.title} onChange={(title) => set({ title })} />
       <Area label="Texte" rows={4} value={b.text} onChange={(text) => set({ text })} />
       <Text label="Bouton orange" value={b.cta} onChange={(cta) => set({ cta })} />
+      <Area label="Note sous le bouton" rows={2} value={b.note ?? ""} onChange={(note) => set({ note })} />
+      <Text label="Adresse du QR code (facultatif)" value={b.qr ?? ""} onChange={(qr) => set({ qr })} />
       <Items label="Liens en bas de page" items={b.links} onChange={(links) => set({ links })} make={() => ({ title: "", text: "" })} render={(l, s) => <div className="space-y-1"><Text label="Titre" value={l.title} onChange={(title) => s({ ...l, title })} /><Text label="Texte" value={l.text} onChange={(text) => s({ ...l, text })} /></div>} />
     </>;
     case "heading": return <>
       <Text label="Surtitre (orange)" value={b.kicker} onChange={(kicker) => set({ kicker })} placeholder="Chapitre 1" />
       <Area label="Titre" rows={2} value={b.title} onChange={(title) => set({ title })} />
+      <div className="grid grid-cols-2 gap-2">
+        <Text label="Numéro en pastille" value={b.badge ?? ""} onChange={(badge) => set({ badge })} />
+        <label className="flex items-end gap-2 pb-2 text-xs"><input type="checkbox" checked={!!b.kickerTag} onChange={(e) => set({ kickerTag: e.target.checked })} /> Surtitre en étiquette</label>
+      </div>
       <Area label="Chapô" rows={3} value={b.lead} onChange={(lead) => set({ lead })} />
       <Select label="Dans le sommaire" value={b.toc} onChange={(toc) => set({ toc })} options={[["chapter", "Oui, niveau principal"], ["sub", "Oui, sous-niveau"], ["none", "Non"]]} />
       {b.toc !== "none" ? <Text label="Libellé du sommaire (facultatif)" value={b.tocLabel} onChange={(tocLabel) => set({ tocLabel })} placeholder={b.title} /> : null}
@@ -211,6 +227,7 @@ export function BlockForm({ b, onChange }: { b: Block; onChange: (patch: Partial
           {cols > 1 ? <button type="button" className={del} onClick={() => set({ head: b.head.slice(0, -1), rows: b.rows.map((r) => r.slice(0, -1)) })}>Retirer la dernière</button> : null}
         </div>
         <div className="grid gap-1" style={grid}>{b.head.map((h, i) => <input key={i} aria-label={`En-tête ${i + 1}`} value={h} onChange={(e) => set({ head: b.head.map((x, k) => (k === i ? e.target.value : x)) })} className={inputCls + " font-semibold"} />)}</div>
+        <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!b.dense} onChange={(e) => set({ dense: e.target.checked })} /> Tableau compact</label>
         <Items label="Lignes" items={b.rows} onChange={(rows) => set({ rows })} make={() => Array(cols).fill("")} render={(r, s) => <div className="grid gap-1" style={grid}>{r.map((c, j) => <input key={j} aria-label={`Colonne ${j + 1}`} value={c} onChange={(e) => s(r.map((x, k) => (k === j ? e.target.value : x)))} className={inputCls} />)}</div>} />
       </>;
     }
@@ -221,13 +238,34 @@ export function BlockForm({ b, onChange }: { b: Block; onChange: (patch: Partial
         {!it.group ? <input aria-label="Étiquette" placeholder="Étiquette (ex. 15 min)" value={it.tag} onChange={(e) => s({ ...it, tag: e.target.value })} className="min-w-0 flex-1 rounded border border-slate-300 px-2 py-1" /> : null}
       </div>
     </div>} />;
-    case "columns": return <Select label="Largeur des colonnes" value={b.ratio} onChange={(ratio) => set({ ratio })} options={[["equal", "Égales"], ["wide", "Gauche plus large"]]} />;
+    case "columns": return <Select label="Largeur des colonnes" value={b.ratio} onChange={(ratio) => set({ ratio })} options={[["equal", "Égales"], ["wide", "Gauche un peu plus large"], ["anat", "Gauche nettement plus large"], ["narrow", "Gauche étroite"]]} />;
+    case "legend": return <Items label="Repères" items={b.items} onChange={(items) => set({ items })} make={() => ({ n: b.items.length + 1, text: "" })} render={(m, s) => <div className="flex gap-1"><input aria-label="Numéro" type="number" value={m.n} onChange={(e) => s({ ...m, n: Number(e.target.value) })} className={inputCls + " w-16"} /><input aria-label="Texte" value={m.text} onChange={(e) => s({ ...m, text: e.target.value })} className={inputCls} /></div>} />;
+    case "qr": return <><Text label="Adresse du QR code" value={b.url} onChange={(url) => set({ url })} /><Text label="Légende" value={b.caption} onChange={(caption) => set({ caption })} /></>;
+    case "zoneStats": return <Locked b={b} set={set} />;
+    case "zonePrices": return <>
+      <Select label="Transaction" value={b.tx} onChange={(tx) => set({ tx })} options={[["rent", "Location"], ["sale", "Vente"]]} />
+      <Text label="Titre" value={b.title} onChange={(title) => set({ title })} />
+      <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={b.entry} onChange={(e) => set({ entry: e.target.checked })} /> Colonne « Pour entrer » (4 mois de loyer)</label>
+      <Locked b={b} set={set} />
+    </>;
+    case "zoneListings": return <>
+      <Select label="Annonces" value={b.source} onChange={(source) => set({ source })} options={[["rent", "Dernières annonces à louer"], ["sale", "Dernières annonces à vendre"], ["deals", "Bons plans (sous la médiane)"]]} />
+      <Field label="Nombre d’annonces"><input type="number" min={1} max={18} value={b.limit} onChange={(e) => set({ limit: Math.min(18, Math.max(1, Number(e.target.value) || 1)) })} className={inputCls} /></Field>
+      <Locked b={b} set={set} />
+    </>;
+    case "zonePros": return <>
+      <Select label="Professionnels" value={b.kind} onChange={(kind) => set({ kind })} options={[["agent", "Agents"], ["agence", "Agences"]]} />
+      <Field label="Nombre"><input type="number" min={1} max={12} value={b.limit} onChange={(e) => set({ limit: Math.min(12, Math.max(1, Number(e.target.value) || 1)) })} className={inputCls} /></Field>
+      <Locked b={b} set={set} />
+    </>;
+    case "zoneText": return <><RichText key={b.id + String(b.html.length === 0)} value={b.html} onChange={(html) => set({ html, locked: true })} /><Locked b={b} set={set} /></>;
+    case "divider": return <p className="text-xs text-muted">Une ligne qui sépare deux sujets sur la même page.</p>;
     case "toc": return <>
       <Text label="Surtitre" value={b.kicker} onChange={(kicker) => set({ kicker })} />
       <Text label="Titre" value={b.title} onChange={(title) => set({ title })} />
       <p className="text-[11px] text-muted">Le sommaire se remplit tout seul avec les blocs « Titre et chapitre » marqués « Dans le sommaire ».</p>
     </>;
     case "kpis": return <Items label="Chiffres" items={b.items} onChange={(items) => set({ items })} make={() => ({ value: "", label: "" })} render={(k, s) => <div className="space-y-1"><Text label="Chiffre" value={k.value} onChange={(value) => s({ ...k, value })} /><Text label="Libellé" value={k.label} onChange={(label) => s({ ...k, label })} /></div>} />;
-    case "benefits": return <Items label="Cartes" items={b.items} onChange={(items) => set({ items })} make={() => ({ title: "", text: "" })} render={(k, s) => <div className="space-y-1"><Text label="Titre" value={k.title} onChange={(title) => s({ ...k, title })} /><Area label="Texte" value={k.text} onChange={(text) => s({ ...k, text })} /></div>} />;
+    case "benefits": return <><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!b.single} onChange={(e) => set({ single: e.target.checked })} /> Sur une seule colonne</label><Items label="Cartes" items={b.items} onChange={(items) => set({ items })} make={() => ({ title: "", text: "" })} render={(k, s) => <div className="space-y-1"><Text label="Titre" value={k.title} onChange={(title) => s({ ...k, title })} /><Area label="Texte" value={k.text} onChange={(text) => s({ ...k, text })} /></div>} /></>;
   }
 }
