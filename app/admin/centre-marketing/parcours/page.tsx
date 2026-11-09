@@ -1,21 +1,22 @@
 import Link from "next/link";
-import { EmailCorrections, JourneyPeople, JourneyResults, JourneySettings } from "@/components/backoffice/journeys-panel";
-import { getCorrectionContacts, getCorrectionHistory, getEtabTriage, getJourneyDiagnostic, getJourneyOverview, getJourneyPeople, getJourneySimulation } from "./actions";
+import { EmailCorrections, JourneyCalls, JourneyPeople, JourneyResults, JourneySettings } from "@/components/backoffice/journeys-panel";
+import { getCorrectionContacts, getCorrectionHistory, getEtabTriage, getJourneyCalls, getJourneyDiagnostic, getJourneyOverview, getJourneyPeople, getJourneySimulation } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-const TABS = [["apercu", "Vue d’ensemble"], ["reglages", "Réglages et textes"], ["personnes", "Suivi par personne"], ["emails", "E-mails à corriger"]] as const;
-type Search = { tab?: string; journey?: string; stage?: string; status?: string; q?: string; page?: string; state?: string };
+const TABS = [["apercu", "Vue d’ensemble"], ["reglages", "Réglages et textes"], ["personnes", "Suivi par personne"], ["appels", "À appeler"], ["emails", "E-mails à corriger"]] as const;
+type Search = { tab?: string; journey?: string; stage?: string; status?: string; q?: string; page?: string; state?: string; done?: string };
 
 /** Centre marketing → Parcours de conversion : des inscrits de Moboo.ci vers Moboo Pro, Resi et Event. */
 export default async function Parcours({ searchParams: s }: { searchParams: Search }) {
   const tab = TABS.some(([k]) => k === s.tab) ? s.tab! : "apercu";
-  const [o, diag, sim, triage, people, contacts, history] = await Promise.all([
+  const [o, diag, sim, triage, people, calls, contacts, history] = await Promise.all([
     getJourneyOverview(),
     tab === "apercu" ? getJourneyDiagnostic() : null,
     tab === "apercu" ? getJourneySimulation() : null,
     tab === "apercu" ? getEtabTriage() : null,
     tab === "personnes" ? getJourneyPeople({ journey: s.journey, stage: s.stage, status: s.status, search: s.q, page: s.page }) : null,
+    tab === "appels" ? getJourneyCalls({ journey: s.journey, done: s.done, page: s.page }) : null,
     tab === "emails" ? getCorrectionContacts({ state: s.state, search: s.q, page: s.page }) : null,
     tab === "emails" ? getCorrectionHistory() : null,
   ]);
@@ -25,10 +26,10 @@ export default async function Parcours({ searchParams: s }: { searchParams: Sear
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-extrabold text-ink">Parcours de conversion</h1>
-        <p className="max-w-3xl text-sm text-muted">Amenez les inscrits de Moboo.ci vers l’application faite pour leur métier : les agents vers Moboo Pro, les résidences meublées vers Moboo Resi, les espaces événementiels vers Moboo Event. Maximum 3 e-mails, arrêt dès que la personne est arrivée sur l’application ou se désinscrit.</p>
+        <p className="max-w-3xl text-sm text-muted">Amenez les inscrits de Moboo.ci vers l’application faite pour leur métier : les agents vers Moboo Pro, les résidences meublées vers Moboo Resi, les espaces événementiels vers Moboo Event. Jusqu’à 3 e-mails, avec des relances WhatsApp et SMS si vous en ajoutez, arrêt dès que la personne est arrivée sur l’application ou se désinscrit.</p>
       </div>
       <div className={"rounded-lg px-4 py-3 text-sm ring-1 " + (on ? "bg-emerald-50 text-emerald-900 ring-emerald-200" : "bg-slate-50 text-slate-700 ring-slate-200")}>
-        {on ? <><strong>{on} parcours allumé{on > 1 ? "s" : ""}.</strong> De vrais e-mails partent chaque heure, de 8 h à 18 h, dans la limite du plafond.</> : <><strong>Tout est éteint : aucun e-mail réel ne part.</strong> Vous pouvez tout préparer et tester sans risque.</>}
+        {on ? <><strong>{on} parcours allumé{on > 1 ? "s" : ""}.</strong> De vrais messages partent chaque heure, de 8 h à 18 h, dans la limite du plafond.</> : <><strong>Tout est éteint : aucun e-mail réel ne part.</strong> Vous pouvez tout préparer et tester sans risque.</>}
         {!o.emailReady ? <span className="ml-1 font-semibold text-amber-700">L’envoi d’e-mails n’est pas configuré sur le serveur.</span> : null}
       </div>
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200">
@@ -39,6 +40,7 @@ export default async function Parcours({ searchParams: s }: { searchParams: Sear
       {tab === "apercu" ? <JourneyResults overview={o} diagnostic={diag} simulation={sim} triage={triage} /> : null}
       {tab === "reglages" ? <JourneySettings overview={o} /> : null}
       {tab === "personnes" ? <JourneyPeople overview={o} data={people} filters={{ journey: s.journey ?? "", stage: s.stage ?? "", status: s.status ?? "", q: s.q ?? "" }} /> : null}
+      {tab === "appels" ? <JourneyCalls overview={o} data={calls} filters={{ journey: s.journey ?? "", done: s.done === "1" }} /> : null}
       {tab === "emails" ? <EmailCorrections data={contacts} history={history} filters={{ state: s.state ?? "", q: s.q ?? "" }} /> : null}
     </div>
   );

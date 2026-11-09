@@ -3,15 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { authedFetch } from "@/lib/server-api";
 
-export interface JourneyStep { delayHours: number; subject: string; body: string; ctaLabel: string; ctaUrl: string }
+export type JourneyChannel = "email" | "whatsapp" | "sms";
+export interface JourneyStep { channel?: JourneyChannel; delayHours: number; subject: string; body: string; ctaLabel: string; ctaUrl: string; waTemplate?: string; waVars?: string[]; skipIfClicked?: boolean }
 export interface Journey {
-  key: string; name: string; enabled: boolean; backfill: boolean; activatedAt: string | null; audiences: string[]; dailyCap: number; gapDays: number;
+  key: string; name: string; enabled: boolean; backfill: boolean; activatedAt: string | null; audiences: string[]; dailyCap: number; paidCap: number; gapDays: number;
   steps: JourneyStep[]; updatedBy: string | null; updatedAt: string | null;
-  stages: Record<string, number>; statuses: Record<string, number>; last30: Record<string, number>;
+  stages: Record<string, number>; statuses: Record<string, number>; last30: Record<string, number>; paid30: Record<string, number>;
 }
 export interface JourneyOverview {
   journeys: Journey[]; stages: { key: string; en: string; label: string; hint: string }[]; statusLabels: Record<string, string>;
   audiences: Record<string, string>; emailReady: boolean; maxDailyCap: number; variables: Record<string, string>;
+  channels: Record<JourneyChannel, boolean>; stepSamples: Record<"whatsapp" | "sms", Omit<JourneyStep, "ctaUrl">>; callOutcomes: Record<string, string>;
 }
 export interface ProfileCount { total: number; real: number; generated: number; invalid: number; missing: number; recoverable: number }
 export interface JourneyDiagnostic {
@@ -23,12 +25,13 @@ export interface EtabTriage {
   total: number; classifiable: number; unknown: number; counts: { residences: number; espaces: number; les_deux: number };
   samples: { name: string; result: string; furnished: number; event: number; onApp: boolean }[]; autoApplied: number; answered: number;
 }
-export interface JourneyMessage { id: string; step: number; subject: string; status: string; error: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null }
+export interface JourneyMessage { id: string; step: number; channel: JourneyChannel; subject: string; status: string; error: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null }
 export interface JourneyPerson {
   id: string; journeyKey: string; accountId: string; name: string; phone: string; whatsapp: string; address: string | null; source: string; status: string; stage: string; stepsSent: number;
   nextAt: string | null; lastSentAt: string | null; openedAt: string | null; clickedAt: string | null; connectedAt: string | null; subscribedAt: string | null; firstUseAt: string | null;
   ascendedAt: string | null; advocateAt: string | null; promoterAt: string | null; messages: JourneyMessage[];
 }
+export interface JourneyCall { id: string; journeyKey: string; name: string; phone: string; whatsapp: string; hot: boolean; clickedAt: string | null; callOutcome: string | null; callNote: string | null; calledAt: string | null; calledBy: string | null }
 export interface CorrectionContact {
   id: string; name: string; email: string | null; emailState: string; phone: string; whatsapp: string; accountType: string; accountSubtype: string | null;
   oldSiteEmail: string | null; pending: { newEmail: string; createdAt: string } | null;
@@ -55,10 +58,12 @@ export async function getEtabTriage() { return read<EtabTriage>(`${BASE}/triage`
 export async function applyTriageAction(confirm: string) { return post<{ applied: number }>(`${BASE}/triage/apply`, { confirm }); }
 export async function undoTriageAction() { return post<{ undone: number; kept: number }>(`${BASE}/triage/undo`, {}); }
 export async function getJourneyPeople(q: Record<string, string | undefined>) { return read<Paged<JourneyPerson>>(`${BASE}/people?${qs(q)}`); }
+export async function getJourneyCalls(q: Record<string, string | undefined>) { return read<Paged<JourneyCall>>(`${BASE}/calls?${qs(q)}`); }
+export async function saveCallAction(id: string, outcome: string, note: string) { return post(`${BASE}/entries/${id}/call`, { outcome, note }); }
 export async function getCorrectionContacts(q: Record<string, string | undefined>) { return read<Paged<CorrectionContact>>(`/site/admin/email-corrections/contacts?${qs(q)}`); }
 export async function getCorrectionHistory() { return read<CorrectionHistory[]>("/site/admin/email-corrections/history"); }
 
-export async function saveJourneyAction(j: Pick<Journey, "key" | "enabled" | "backfill" | "audiences" | "dailyCap" | "gapDays" | "steps">, confirm: string) { return post(`${BASE}/${j.key}`, { ...j, confirm }, "PUT"); }
+export async function saveJourneyAction(j: Pick<Journey, "key" | "enabled" | "backfill" | "audiences" | "dailyCap" | "paidCap" | "gapDays" | "steps">, confirm: string) { return post(`${BASE}/${j.key}`, { ...j, confirm }, "PUT"); }
 export async function previewJourneyAction(key: string, step: number, steps: JourneyStep[]) { return post<{ subject: string; html: string }>(`${BASE}/${key}/preview`, { step, steps }); }
 export async function testJourneyAction(key: string, step: number, steps: JourneyStep[], to: string) {
   const r = await post<{ ok: boolean; error?: string }>(`${BASE}/${key}/test`, { step, steps, to });

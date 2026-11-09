@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  applyTriageAction, cancelCorrectionAction, journeyEntryAction, previewJourneyAction, requestCorrectionAction, saveJourneyAction, testJourneyAction, undoTriageAction,
-  type CorrectionContact, type CorrectionHistory, type EtabTriage, type Journey, type JourneyDiagnostic, type JourneyOverview, type JourneyPerson, type JourneyStep, type Paged, type SimulationRow,
+  applyTriageAction, cancelCorrectionAction, journeyEntryAction, previewJourneyAction, requestCorrectionAction, saveCallAction, saveJourneyAction, testJourneyAction, undoTriageAction,
+  type CorrectionContact, type CorrectionHistory, type EtabTriage, type Journey, type JourneyCall, type JourneyChannel, type JourneyDiagnostic, type JourneyOverview, type JourneyPerson, type JourneyStep, type Paged, type SimulationRow,
 } from "@/app/admin/centre-marketing/parcours/actions";
 
 const input = "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none";
@@ -96,7 +96,7 @@ export function JourneyResults({ overview: o, diagnostic: d, simulation: sim, tr
                 </Link>
               ))}
             </div>
-            <p className="mt-2 text-xs text-muted">E-mails sur 30 jours : {n(j.last30.sent)} envoyés, {n(j.last30.failed)} en échec. {Object.entries(j.statuses).map(([k, v]) => `${o.statusLabels[k] ?? k} : ${n(v)}`).join(" · ")}</p>
+            <p className="mt-2 text-xs text-muted">E-mails sur 30 jours : {n(j.last30.sent)} envoyés, {n(j.last30.failed)} en échec.{j.paid30.whatsapp || j.paid30.sms ? ` WhatsApp : ${n(j.paid30.whatsapp)}, SMS : ${n(j.paid30.sms)}.` : ""} {Object.entries(j.statuses).map(([k, v]) => `${o.statusLabels[k] ?? k} : ${n(v)}`).join(" · ")}</p>
           </div>
         ))}
       </section>
@@ -154,6 +154,10 @@ function Tile({ k, v, hint }: { k: string; v: string; hint: string }) {
 
 /* ─── Réglages ─────────────────────────────────────────────────────────── */
 
+const CHANNEL_NAME: Record<JourneyChannel, string> = { email: "E-mail", whatsapp: "WhatsApp", sms: "SMS" };
+const channel = (s: JourneyStep): JourneyChannel => s.channel ?? "email";
+const paid = (s: JourneyStep) => channel(s) !== "email";
+
 const delayText = (h: number) => (h >= 24 && h % 24 === 0 ? `soit ${h / 24} jour${h > 24 ? "s" : ""}` : "");
 
 export function JourneySettings({ overview: o }: { overview: JourneyOverview }) {
@@ -172,12 +176,16 @@ export function JourneySettings({ overview: o }: { overview: JourneyOverview }) 
 function JourneyForm({ j, o }: { j: Journey; o: JourneyOverview }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [f, setF] = useState({ enabled: j.enabled, backfill: j.backfill, audiences: j.audiences, dailyCap: j.dailyCap, gapDays: j.gapDays, steps: j.steps });
+  const [f, setF] = useState({ enabled: j.enabled, backfill: j.backfill, audiences: j.audiences, dailyCap: j.dailyCap, paidCap: j.paidCap, gapDays: j.gapDays, steps: j.steps });
   const [confirm, setConfirm] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [to, setTo] = useState("");
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
-  const turningOn = (f.enabled && !j.enabled) || (f.backfill && !j.backfill);
+  const turningOn = (f.enabled && !j.enabled) || (f.backfill && !j.backfill) || (f.enabled && f.steps.some(paid) && !j.steps.some(paid));
+  const addStep = (c: "whatsapp" | "sms") => setF((s) => ({ ...s, steps: [...s.steps, { ...o.stepSamples[c], ctaUrl: (s.steps[0]?.ctaUrl ?? "https://moboo.ci").replace("utm_medium=email", `utm_medium=${c}`) }] }));
+  const move = (i: number, d: number) => setF((s) => { const steps = [...s.steps]; const [x] = steps.splice(i, 1); steps.splice(i + d, 0, x); return { ...s, steps }; });
+  const remove = (i: number) => setF((s) => ({ ...s, steps: s.steps.filter((_, k) => k !== i) }));
+  const emails = f.steps.filter((x) => !paid(x)).length;
   const setStep = (i: number, p: Partial<JourneyStep>) => setF((s) => ({ ...s, steps: s.steps.map((x, k) => (k === i ? { ...x, ...p } : x)) }));
   const save = () => start(async () => {
     const r = await saveJourneyAction({ key: j.key, ...f }, confirm);
@@ -199,27 +207,56 @@ function JourneyForm({ j, o }: { j: Journey; o: JourneyOverview }) {
         </div>}
         <div className="grid gap-3 sm:grid-cols-2 lg:max-w-xl">
           <div><label className={label} htmlFor="cap">E-mails par jour au plus</label><input id="cap" type="number" min={1} max={o.maxDailyCap} className={input} value={f.dailyCap} onChange={(e) => setF({ ...f, dailyCap: Number(e.target.value) })} /></div>
-          <div><label className={label} htmlFor="gap">Jours entre deux e-mails</label><input id="gap" type="number" min={1} max={60} className={input} value={f.gapDays} onChange={(e) => setF({ ...f, gapDays: Number(e.target.value) })} /></div>
+          {j.key !== "tri" ? <div><label className={label} htmlFor="paid">WhatsApp et SMS par jour au plus</label><input id="paid" type="number" min={0} max={o.maxDailyCap} className={input} value={f.paidCap} onChange={(e) => setF({ ...f, paidCap: Number(e.target.value) })} /><p className="mt-1 text-xs text-muted">Ces messages sont facturés par votre fournisseur.</p></div> : null}
+          <div><label className={label} htmlFor="gap">Jours entre deux messages</label><input id="gap" type="number" min={1} max={60} className={input} value={f.gapDays} onChange={(e) => setF({ ...f, gapDays: Number(e.target.value) })} /></div>
         </div>
       </div>
 
-      {f.steps.map((s, i) => (
+      {f.steps.map((s, i) => {
+        const c = channel(s);
+        const ready = o.channels[c];
+        return (
         <div key={i} className={card + " space-y-3"}>
-          <p className="font-semibold text-ink">E-mail {i + 1}</p>
-          <div className="lg:max-w-xs"><label className={label} htmlFor={`d${i}`}>{i === 0 ? "Heures après l’inscription" : "Heures après l’e-mail précédent"}</label><input id={`d${i}`} type="number" min={1} className={input} value={s.delayHours} onChange={(e) => setStep(i, { delayHours: Number(e.target.value) })} /><p className="mt-1 text-xs text-muted">{delayText(s.delayHours)}{i === 0 ? " (les anciens inscrits n’attendent pas ce délai)" : ""}</p></div>
-          <div><label className={label} htmlFor={`s${i}`}>Objet</label><input id={`s${i}`} className={input} value={s.subject} onChange={(e) => setStep(i, { subject: e.target.value })} /></div>
-          <div><label className={label} htmlFor={`b${i}`}>Message</label><textarea id={`b${i}`} rows={8} className={input} value={s.body} onChange={(e) => setStep(i, { body: e.target.value })} /></div>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold text-ink">Message {i + 1} : {CHANNEL_NAME[c]}</p>
+            {paid(s) ? <span className={"rounded-full px-2 py-0.5 text-xs font-semibold " + (ready ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800")}>{ready ? "Connecté" : "En attente de connexion"}</span> : null}
+            {j.key !== "tri" ? <span className="ml-auto flex gap-1">
+              <button type="button" aria-label={`Monter le message ${i + 1}`} disabled={i === 0} className={btn} onClick={() => move(i, -1)}>↑</button>
+              <button type="button" aria-label={`Descendre le message ${i + 1}`} disabled={i === f.steps.length - 1} className={btn} onClick={() => move(i, 1)}>↓</button>
+              {f.steps.length > 1 ? <button type="button" className={btn} onClick={() => remove(i)}>Retirer</button> : null}
+            </span> : null}
+          </div>
+          {paid(s) && !ready ? <p className="rounded-md bg-amber-50 p-2 text-sm text-amber-900 ring-1 ring-amber-200">Rien ne part sur ce canal pour l’instant. Les personnes arrivées à ce message attendent, et repartent dès que le service est connecté dans <Link className="font-semibold underline" href="/admin/centre-marketing/canaux">Canaux d’envoi</Link>.</p> : null}
+          <div className="lg:max-w-xs"><label className={label} htmlFor={`d${i}`}>{i === 0 ? "Heures après l’inscription" : "Heures après le message précédent"}</label><input id={`d${i}`} type="number" min={1} className={input} value={s.delayHours} onChange={(e) => setStep(i, { delayHours: Number(e.target.value) })} /><p className="mt-1 text-xs text-muted">{delayText(s.delayHours)}{i === 0 ? " (les anciens inscrits n’attendent pas ce délai)" : ""}</p></div>
+          {c === "email" ? <>
+            <div><label className={label} htmlFor={`s${i}`}>Objet</label><input id={`s${i}`} className={input} value={s.subject} onChange={(e) => setStep(i, { subject: e.target.value })} /></div>
+            <div><label className={label} htmlFor={`b${i}`}>Message</label><textarea id={`b${i}`} rows={8} className={input} value={s.body} onChange={(e) => setStep(i, { body: e.target.value })} /></div>
+          </> : null}
+          {c === "sms" ? <div><label className={label} htmlFor={`b${i}`}>Texte du SMS</label><textarea id={`b${i}`} rows={3} className={input} value={s.body} onChange={(e) => setStep(i, { body: e.target.value })} /><p className="mt-1 text-xs text-muted">Gardez {"{{lien}}"} dans le texte. Faites court : chaque tranche de 160 caractères est facturée. Le lien STOP s’ajoute tout seul.</p></div> : null}
+          {c === "whatsapp" ? <>
+            <div className="lg:max-w-md"><label className={label} htmlFor={`t${i}`}>Modèle approuvé par Meta</label><input id={`t${i}`} className={input} value={s.waTemplate ?? ""} onChange={(e) => setStep(i, { waTemplate: e.target.value })} /><p className="mt-1 text-xs text-muted">Le texte à faire approuver se trouve dans Canaux d’envoi.</p></div>
+            <div><label className={label} htmlFor={`v${i}`}>Valeurs du modèle, une par ligne</label><textarea id={`v${i}`} rows={3} className={input} value={(s.waVars ?? []).join("\n")} onChange={(e) => setStep(i, { waVars: e.target.value.split("\n") })} /></div>
+          </> : null}
           {j.key === "tri" ? <p className="text-sm text-muted">Trois boutons s’ajoutent tout seuls à l’e-mail : Résidences meublées, Espaces événementiels, Les deux.</p> : <div className="grid gap-3 md:grid-cols-2">
-            <div><label className={label} htmlFor={`c${i}`}>Texte du bouton</label><input id={`c${i}`} className={input} value={s.ctaLabel} onChange={(e) => setStep(i, { ctaLabel: e.target.value })} /></div>
-            <div><label className={label} htmlFor={`u${i}`}>Lien du bouton</label><input id={`u${i}`} className={input} value={s.ctaUrl} onChange={(e) => setStep(i, { ctaUrl: e.target.value })} /></div>
+            {c === "email" ? <div><label className={label} htmlFor={`c${i}`}>Texte du bouton</label><input id={`c${i}`} className={input} value={s.ctaLabel} onChange={(e) => setStep(i, { ctaLabel: e.target.value })} /></div> : null}
+            <div><label className={label} htmlFor={`u${i}`}>{c === "email" ? "Lien du bouton" : "Page ouverte par le lien"}</label><input id={`u${i}`} className={input} value={s.ctaUrl} onChange={(e) => setStep(i, { ctaUrl: e.target.value })} /></div>
           </div>}
+          {paid(s) ? <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!s.skipIfClicked} onChange={(e) => setStep(i, { skipIfClicked: e.target.checked })} />Ne pas envoyer si la personne a déjà cliqué : elle passe dans la liste À appeler</label> : null}
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" disabled={pending} className={btn} onClick={() => start(async () => { const r = await previewJourneyAction(j.key, i, f.steps); if (r.ok && r.data) setPreview(r.data); else setMsg({ ok: false, text: r.error ?? "Erreur" }); })}>Aperçu</button>
-            <input aria-label="Adresse de test" placeholder="Adresse de test" className="w-60 rounded-md border border-slate-300 px-3 py-1.5 text-sm" value={to} onChange={(e) => setTo(e.target.value)} />
-            <button type="button" disabled={pending || !to.trim()} className={btn} onClick={() => start(async () => { const r = await testJourneyAction(j.key, i, f.steps, to); setMsg(r.ok ? { ok: true, text: `E-mail d’essai envoyé à ${to}.` } : { ok: false, text: r.error ?? "Erreur" }); })}>Envoyer un essai</button>
+            <input aria-label={c === "email" ? "Adresse de test" : "Numéro de test"} placeholder={c === "email" ? "Adresse de test" : "Numéro de test"} className="w-60 rounded-md border border-slate-300 px-3 py-1.5 text-sm" value={to} onChange={(e) => setTo(e.target.value)} />
+            <button type="button" disabled={pending || !to.trim()} className={btn} onClick={() => start(async () => { const r = await testJourneyAction(j.key, i, f.steps, to); setMsg(r.ok ? { ok: true, text: `Essai envoyé à ${to}.` } : { ok: false, text: r.error ?? "Erreur" }); })}>Envoyer un essai</button>
           </div>
         </div>
-      ))}
+        );
+      })}
+      {j.key !== "tri" ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" disabled={f.steps.length >= 6} className={btn} onClick={() => addStep("whatsapp")}>Ajouter une relance WhatsApp</button>
+          <button type="button" disabled={f.steps.length >= 6} className={btn} onClick={() => addStep("sms")}>Ajouter une relance SMS</button>
+          <span className="text-xs text-muted">{n(emails)} e-mail(s) sur 3 au plus, {n(f.steps.length)} message(s) sur 6 au plus. N’oubliez pas d’enregistrer.</span>
+        </div>
+      ) : null}
       <p className="text-xs text-muted">Variables : {Object.entries(o.variables).map(([k, v]) => `{{${k}}} ${v}`).join(" · ")}. Valeur de secours : {"{{prenom|à vous}}"}. Le lien de désinscription s’ajoute tout seul.</p>
 
       {preview ? (
@@ -232,7 +269,7 @@ function JourneyForm({ j, o }: { j: Journey; o: JourneyOverview }) {
       <div className={card + " space-y-3"}>
         {turningOn ? (
           <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200">
-            <p className="font-semibold">De vrais e-mails vont partir vers de vraies personnes.</p>
+            <p className="font-semibold">De vrais messages vont partir vers de vraies personnes{f.steps.some(paid) ? " dès que chaque canal sera connecté, et WhatsApp et SMS sont facturés" : ""}.</p>
             <label className="mt-2 block" htmlFor="confirm">Pour confirmer, écrivez <strong>ACTIVER</strong> :</label>
             <input id="confirm" className={input + " max-w-xs bg-white"} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
           </div>
@@ -293,7 +330,7 @@ export function JourneyPeople({ overview: o, data, filters: f }: { overview: Jou
             </summary>
             <div className="mt-3 space-y-2 text-sm">
               <p className="text-muted">{p.address ?? "Pas d’adresse valable"} · {p.phone} · {p.source === "new" ? "Nouvel inscrit" : "Ancien inscrit"}{p.nextAt ? ` · prochain e-mail : ${when(p.nextAt)}` : ""}</p>
-              {p.messages.length ? <ul className="space-y-1">{p.messages.map((m) => <li key={m.id} className="text-slate-700">E-mail {m.step + 1} : {m.subject} — {m.status === "sent" ? `envoyé ${when(m.sentAt)}` : m.status === "failed" ? `échec (${m.error})` : m.status === "cancelled" ? "annulé" : "en cours"}{m.openedAt ? `, ouvert ${when(m.openedAt)}` : ""}{m.clickedAt ? `, cliqué ${when(m.clickedAt)}` : ""}</li>)}</ul> : null}
+              {p.messages.length ? <ul className="space-y-1">{p.messages.map((m) => <li key={m.id} className="text-slate-700">{CHANNEL_NAME[m.channel] ?? "E-mail"} (message {m.step + 1}) : {m.subject} — {m.status === "sent" ? `envoyé ${when(m.sentAt)}` : m.status === "failed" ? `échec (${m.error})` : m.status === "cancelled" ? "annulé" : "en cours"}{m.openedAt ? `, ouvert ${when(m.openedAt)}` : ""}{m.clickedAt ? `, cliqué ${when(m.clickedAt)}` : ""}</li>)}</ul> : null}
               <div className="flex flex-wrap gap-2">
                 {p.status === "active" ? <button disabled={pending} className={btn} onClick={() => act(p.id, "stop")}>Arrêter les e-mails</button> : null}
                 {p.status === "stopped" ? <button disabled={pending} className={btn} onClick={() => act(p.id, "resume")}>Reprendre</button> : null}
@@ -306,6 +343,60 @@ export function JourneyPeople({ overview: o, data, filters: f }: { overview: Jou
       </div>
       <Pager page={data.page} pages={data.pages} href={url} />
       <p className="text-xs text-muted">« Ouvert » reste approximatif : certaines messageries bloquent ou anticipent cette mesure. Le téléchargement n’est visible que lorsque la personne ouvre l’application et s’y connecte.</p>
+    </div>
+  );
+}
+
+/* ─── À appeler ────────────────────────────────────────────────────────── */
+
+function CallRow({ c, outcomes }: { c: JourneyCall; outcomes: Record<string, string> }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [note, setNote] = useState(c.callNote ?? "");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const digits = c.whatsapp.replace(/[^\d]/g, "");
+  return (
+    <div className="space-y-2 p-3 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-semibold text-ink">{c.name}</span>
+        <span className="text-muted">{APP[c.journeyKey]}</span>
+        {c.hot ? <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700">A cliqué {when(c.clickedAt)}</span> : null}
+        {c.callOutcome ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{outcomes[c.callOutcome] ?? c.callOutcome}, {when(c.calledAt)}</span> : null}
+        <span className="ml-auto flex gap-2">
+          <a href={`tel:${c.phone}`} className={btn}>Appeler {c.phone}</a>
+          <a href={`https://wa.me/${digits}`} target="_blank" rel="noreferrer" className={btn}>WhatsApp</a>
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <input aria-label={`Note sur ${c.name}`} placeholder="Note après l’appel" className="w-72 rounded-md border border-slate-300 px-3 py-1.5 text-sm" value={note} onChange={(e) => setNote(e.target.value)} />
+        {Object.entries(outcomes).map(([k, l]) => <button key={k} disabled={pending} className={btn} onClick={() => start(async () => { const r = await saveCallAction(c.id, k, note); if (r.ok) router.refresh(); else setMsg({ ok: false, text: r.error ?? "Erreur" }); })}>{l}</button>)}
+      </div>
+      <Msg m={msg} />
+    </div>
+  );
+}
+
+export function JourneyCalls({ overview: o, data, filters: f }: { overview: JourneyOverview; data: Paged<JourneyCall> | null; filters: { journey: string; done: boolean } }) {
+  if (!data) return <p className={card + " text-sm text-red-600"}>Liste indisponible.</p>;
+  const url = (p: number, done = f.done) => `${PAGE}?${new URLSearchParams({ tab: "appels", ...(f.journey ? { journey: f.journey } : {}), ...(done ? { done: "1" } : {}), page: String(p) })}`;
+  return (
+    <div className="space-y-3">
+      <p className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">Ceux qui ont cliqué sans rejoindre l’application apparaissent en premier, puis ceux qui ont reçu tous les messages. Après l’appel, cliquez sur le résultat : « Pas intéressé » arrête aussi les messages.</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Link className={f.done ? btn : primary} href={url(1, false)}>À appeler</Link>
+        <Link className={f.done ? primary : btn} href={url(1, true)}>Déjà appelés</Link>
+        <form className="flex items-center gap-2" action={PAGE}>
+          <input type="hidden" name="tab" value="appels" />
+          {f.done ? <input type="hidden" name="done" value="1" /> : null}
+          <select aria-label="Application" name="journey" defaultValue={f.journey} className="rounded-md border border-slate-300 px-2 py-2 text-sm"><option value="">Toutes les applications</option>{o.journeys.filter((j) => j.key !== "tri").map((j) => <option key={j.key} value={j.key}>{j.name}</option>)}</select>
+          <button className={btn}>Filtrer</button>
+        </form>
+        <span className="ml-auto text-sm text-muted">{n(data.total)} personne(s)</span>
+      </div>
+      <div className="divide-y divide-slate-100 rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
+        {data.items.length ? data.items.map((c) => <CallRow key={`${c.id}-${c.calledAt}`} c={c} outcomes={o.callOutcomes} />) : <p className="p-4 text-sm text-muted">Personne à appeler pour l’instant. La liste se remplit quand un parcours est allumé.</p>}
+      </div>
+      <Pager page={data.page} pages={data.pages} href={(p) => url(p)} />
     </div>
   );
 }
