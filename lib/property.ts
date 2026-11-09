@@ -209,6 +209,7 @@ export async function listListingsPage(opts: {
   priceMin?: number;
   priceMax?: number;
   propertyType?: string;
+  excludeTypes?: string;
   listingKind?: string;
   page?: number;
   perPage?: number;
@@ -233,6 +234,7 @@ export async function listListingsPage(opts: {
     priceMin: opts.priceMin,
     priceMax: opts.priceMax,
     propertyType: opts.propertyType,
+    excludeTypes: opts.excludeTypes,
     listingKind: opts.listingKind,
     page: opts.page ?? 1,
     perPage: opts.perPage ?? 24,

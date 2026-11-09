@@ -109,6 +109,8 @@ export async function listListings(params?: {
   agent?: string;
   /** Chambres : nombre exact (4 = 4 et plus). */
   bedrooms?: number;
+  /** Types de bien à écarter, séparés par des virgules. */
+  excludeTypes?: string;
   near?: import("./types").NearQuery;
 }): Promise<Paginated<ListingItem>> {
   const q = new URLSearchParams();
@@ -124,6 +126,7 @@ export async function listListings(params?: {
   if (params?.priceMin) q.set("priceMin", String(params.priceMin));
   if (params?.priceMax) q.set("priceMax", String(params.priceMax));
   if (params?.propertyType) q.set("propertyType", params.propertyType);
+  if (params?.excludeTypes) q.set("excludeTypes", params.excludeTypes);
   if (params?.bedrooms) q.set("bedrooms", String(params.bedrooms));
   if (params?.listingKind) q.set("listingKind", params.listingKind);
   if (params?.page) q.set("page", String(params.page));

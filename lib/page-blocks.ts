@@ -59,6 +59,10 @@ const SORT = [
   { value: "price_asc", label: "Prix croissant" }, { value: "price_desc", label: "Prix décroissant" },
 ];
 const LAYOUT = [{ value: "carousel", label: "Carrousel" }, { value: "grid", label: "Grille" }];
+const CAROUSEL_FIELDS: BlockField[] = [
+  { key: "perView", label: "Annonces visibles en même temps sur ordinateur", type: "number", min: 3, max: 6 },
+  { key: "hideIfEmpty", label: "Masquer ce bloc s’il n’y a aucune annonce", type: "bool" },
+];
 const BG = [{ value: "white", label: "Blanc" }, { value: "soft", label: "Gris très clair" }, { value: "brand", label: "Bleu Moboo" }];
 
 const common: BlockField[] = [
@@ -183,15 +187,17 @@ export const BLOCKS: BlockDef[] = [
     fields: [
       { key: "title", label: "Titre", type: "text" }, { key: "subtitle", label: "Sous-titre", type: "text" },
       { key: "transaction", label: "Transaction", type: "select", options: TX },
-      { key: "propertyType", label: "Type de bien", type: "select", options: "types" },
+      { key: "propertyTypes", label: "Types de bien affichés", help: "Aucun type choisi : tous les types.", type: "multi", options: "types" },
+      { key: "excludeTypes", label: "Types de bien à ne pas afficher", type: "multi", options: "types" },
       { key: "q", label: "Lieu (commune, quartier, ville)", type: "text" },
       { key: "featuredOnly", label: "Uniquement les annonces en vedette", type: "bool" },
       { key: "sort", label: "Ordre", type: "select", options: SORT },
-      { key: "count", label: "Nombre d’annonces", type: "number", min: 3, max: 24 },
+      { key: "count", label: "Nombre d’annonces", type: "number", min: 5, max: 24 },
       { key: "layout", label: "Présentation", type: "select", options: LAYOUT },
+      ...CAROUSEL_FIELDS,
       ...common,
     ],
-    defaults: { title: "Annonces en vedette", subtitle: "Sélectionnées par l’équipe Moboo", transaction: "", propertyType: "", q: "", featuredOnly: true, sort: "featured", count: 12, layout: "carousel", background: "white" },
+    defaults: { title: "Annonces en vedette", subtitle: "Sélectionnées par l’équipe Moboo", transaction: "", propertyTypes: [], excludeTypes: [], q: "", featuredOnly: true, sort: "featured", count: 12, layout: "carousel", perView: 5, hideIfEmpty: true, background: "white" },
   },
   {
     type: "reservables", label: "Meublés ou espaces réservables", icon: "🛎️",
@@ -199,11 +205,12 @@ export const BLOCKS: BlockDef[] = [
     fields: [
       { key: "title", label: "Titre", type: "text" }, { key: "subtitle", label: "Sous-titre", type: "text" },
       { key: "kind", label: "Catalogue", type: "select", options: [{ value: "furnished", label: "Résidences meublées" }, { value: "event", label: "Espaces événementiels" }] },
-      { key: "count", label: "Nombre", type: "number", min: 3, max: 24 },
+      { key: "count", label: "Nombre", type: "number", min: 5, max: 24 },
       { key: "layout", label: "Présentation", type: "select", options: LAYOUT },
+      ...CAROUSEL_FIELDS,
       ...common,
     ],
-    defaults: { title: "Séjours meublés à réserver", subtitle: "Réservation en ligne, acompte sécurisé", kind: "furnished", count: 10, layout: "carousel", background: "soft" },
+    defaults: { title: "Séjours meublés à réserver", subtitle: "Réservation en ligne, acompte sécurisé", kind: "furnished", count: 12, layout: "carousel", perView: 5, hideIfEmpty: true, background: "soft" },
   },
   {
     type: "localities", label: "Quartiers populaires", icon: "📍",
@@ -371,6 +378,9 @@ const def = (type: string, id: string, props: Record<string, unknown> = {}): Sec
   ({ id, type, enabled: true, props: { ...structuredClone(blockDef(type)!.defaults), ...props } });
 
 /** Page d'accueil par défaut (tant que rien n'est publié). */
+const FURNISHED_TYPES = ["appartement-meublee", "studio-meublee", "villa-meublee", "residentiel-meublee"];
+const COMMERCIAL_TYPES = ["bureau", "bureaux-commerces", "entrepot", "magasin", "boutique", "restaurant", "conteneur"];
+
 export const DEFAULT_HOME: PageContent = {
   sections: [
     def("hero", "hero-main"),
@@ -378,11 +388,13 @@ export const DEFAULT_HOME: PageContent = {
     def("services", "services-main"),
     def("marketing", "marketing-main"),
     def("listings", "listings-featured"),
+    def("listings", "listings-recent", { title: "Récemment ajoutés", subtitle: "Les dernières locations et ventes publiées", featuredOnly: false, sort: "newest", excludeTypes: FURNISHED_TYPES, background: "white" }),
+    def("reservables", "reservables-furnished", { title: "Résidences meublées à réserver", background: "soft" }),
+    def("listings", "listings-land", { title: "Terrains et parcelles à vendre", subtitle: "Les derniers terrains publiés", transaction: "sale", propertyTypes: ["terrain", "parcelles"], featuredOnly: false, sort: "newest", background: "white" }),
+    def("reservables", "reservables-events", { title: "Espaces événementiels à réserver", subtitle: "Salles et espaces disponibles à la réservation", kind: "event", background: "soft" }),
+    def("listings", "listings-commercial", { title: "Locaux commerciaux et entrepôts", subtitle: "Bureaux, boutiques, magasins et entrepôts à louer", transaction: "rent", propertyTypes: COMMERCIAL_TYPES, featuredOnly: false, sort: "newest", background: "white" }),
     def("quickStart", "quickstart-main"),
-    def("listings", "listings-rent", { title: "Nouveautés à louer", subtitle: "Les dernières annonces publiées", transaction: "rent", featuredOnly: false, sort: "newest", background: "white" }),
     def("localities", "localities-main"),
-    def("reservables", "reservables-furnished"),
-    def("listings", "listings-sale", { title: "Biens à vendre", subtitle: "Maisons, villas et terrains", transaction: "sale", featuredOnly: false, sort: "newest" }),
     def("propertyTypes", "types-main"),
     def("steps", "steps-booking"),
     def("pros", "pros-main"),

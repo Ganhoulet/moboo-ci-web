@@ -58,19 +58,20 @@ function Shell({ s, children, pad = "py-12 sm:py-16", edit }: { s: Section; chil
   );
 }
 
-function Tiles({ items, layout, label }: { items: Property[]; layout: string; label: string }) {
+function Tiles({ items, layout, label, perView }: { items: Property[]; layout: string; label: string; perView?: number }) {
   if (!items.length) return <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-muted">Aucune annonce pour ces critères pour le moment.</p>;
   if (layout === "grid") {
     return <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{items.map((p) => <PropertyTile key={p.id} p={p} />)}</div>;
   }
+  const visible = Math.min(6, Math.max(3, Number(perView) || 5));
   return (
-    <Carousel label={label}>
-      {items.map((p) => <PropertyTile key={p.id} p={p} className="w-[var(--m-card,78%)] shrink-0 snap-start sm:w-[45%] lg:w-[calc(25%-15px)]" />)}
-    </Carousel>
+    <div style={{ ["--lg-card" as string]: `calc(${100 / visible}% - ${(20 * (visible - 1)) / visible}px)` }}>
+      <Carousel label={label}>
+        {items.map((p) => <PropertyTile key={p.id} p={p} className="w-[var(--m-card,78%)] shrink-0 snap-start sm:w-[45%] lg:w-[var(--lg-card)]" />)}
+      </Carousel>
+    </div>
   );
 }
-
-/* ─── Blocs ──────────────────────────────────────────────────────────────── */
 
 async function Hero({ s, data }: { s: Section; data: HomeData }) {
   const p: P = s.props;
@@ -193,33 +194,34 @@ function QuickStart({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
+const typeList = (p: P) => [...(Array.isArray(p.propertyTypes) ? p.propertyTypes : []), p.propertyType].filter(Boolean).join(",");
+
 async function Listings({ s, edit }: { s: Section; edit?: boolean }) {
   const p: P = s.props;
-  const count = Math.min(24, Math.max(3, Number(p.count) || 12));
+  const count = Math.min(24, Math.max(5, Number(p.count) || 12));
   const tx = p.transaction === "rent" || p.transaction === "sale" ? p.transaction : undefined;
-  let { items } = await listListingsPage({ transaction: tx, propertyType: p.propertyType || undefined, q: p.q || undefined, sort: p.sort, perPage: count, listingKind: "classic", featured: !!p.featuredOnly });
-  // Pas assez d'annonces en vedette : on complète avec les plus récentes.
-  if (p.featuredOnly && items.length < 4) {
-    const more = await listListingsPage({ transaction: tx, propertyType: p.propertyType || undefined, q: p.q || undefined, sort: "featured", perPage: count, listingKind: "classic" });
-    items = [...items, ...more.items.filter((x) => !items.some((y) => y.id === x.id))].slice(0, count);
-  }
-  const qs = new URLSearchParams(Object.entries({ transaction: tx, propertyType: p.propertyType, q: p.q, sort: p.sort }).filter(([, v]) => v) as [string, string][]);
+  const propertyType = typeList(p) || undefined;
+  const excludeTypes = Array.isArray(p.excludeTypes) && p.excludeTypes.length ? p.excludeTypes.join(",") : undefined;
+  const { items } = await listListingsPage({ transaction: tx, propertyType, excludeTypes, q: p.q || undefined, sort: p.sort, perPage: count, listingKind: "classic", featured: !!p.featuredOnly });
+  if (!items.length && p.hideIfEmpty && !edit) return null;
+  const qs = new URLSearchParams(Object.entries({ transaction: tx, propertyType, q: p.q, sort: p.sort }).filter(([, v]) => v) as [string, string][]);
   return (
     <Shell s={s} edit={edit}>
       <Head title={p.title} subtitle={p.subtitle} href={`/annonces?${qs}`} dark={p.background === "brand"} />
-      <Tiles items={items} layout={p.layout} label={p.title || "Annonces"} />
+      <Tiles items={items} layout={p.layout} label={p.title || "Annonces"} perView={p.perView} />
     </Shell>
   );
 }
 
 async function Reservables({ s, edit }: { s: Section; edit?: boolean }) {
   const p: P = s.props;
-  const count = Math.min(24, Math.max(3, Number(p.count) || 10));
+  const count = Math.min(24, Math.max(5, Number(p.count) || 12));
   const { items } = p.kind === "event" ? await espacesPage({ perPage: count }) : await residencesPage({ perPage: count });
+  if (!items.length && p.hideIfEmpty && !edit) return null;
   return (
     <Shell s={s} edit={edit}>
       <Head title={p.title} subtitle={p.subtitle} href={`/annonces?transaction=${p.kind === "event" ? "event" : "furnished"}`} dark={p.background === "brand"} />
-      <Tiles items={items} layout={p.layout} label={p.title || "Réservables"} />
+      <Tiles items={items} layout={p.layout} label={p.title || "Réservables"} perView={p.perView} />
     </Shell>
   );
 }
