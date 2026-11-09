@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { EmailCorrections, JourneyPeople, JourneyResults, JourneySettings } from "@/components/backoffice/journeys-panel";
-import { getCorrectionContacts, getCorrectionHistory, getJourneyDiagnostic, getJourneyOverview, getJourneyPeople, getJourneySimulation } from "./actions";
+import { getCorrectionContacts, getCorrectionHistory, getEtabTriage, getJourneyDiagnostic, getJourneyOverview, getJourneyPeople, getJourneySimulation } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -10,10 +10,11 @@ type Search = { tab?: string; journey?: string; stage?: string; status?: string;
 /** Centre marketing → Parcours de conversion : des inscrits de Moboo.ci vers Moboo Pro, Resi et Event. */
 export default async function Parcours({ searchParams: s }: { searchParams: Search }) {
   const tab = TABS.some(([k]) => k === s.tab) ? s.tab! : "apercu";
-  const [o, diag, sim, people, contacts, history] = await Promise.all([
+  const [o, diag, sim, triage, people, contacts, history] = await Promise.all([
     getJourneyOverview(),
     tab === "apercu" ? getJourneyDiagnostic() : null,
     tab === "apercu" ? getJourneySimulation() : null,
+    tab === "apercu" ? getEtabTriage() : null,
     tab === "personnes" ? getJourneyPeople({ journey: s.journey, stage: s.stage, status: s.status, search: s.q, page: s.page }) : null,
     tab === "emails" ? getCorrectionContacts({ state: s.state, search: s.q, page: s.page }) : null,
     tab === "emails" ? getCorrectionHistory() : null,
@@ -35,7 +36,7 @@ export default async function Parcours({ searchParams: s }: { searchParams: Sear
           <Link key={k} href={`/admin/centre-marketing/parcours?tab=${k}`} className={"-mb-px border-b-2 px-3 py-2 text-sm font-semibold " + (tab === k ? "border-brand-700 text-brand-800" : "border-transparent text-slate-500 hover:text-ink")}>{l}</Link>
         ))}
       </div>
-      {tab === "apercu" ? <JourneyResults overview={o} diagnostic={diag} simulation={sim} /> : null}
+      {tab === "apercu" ? <JourneyResults overview={o} diagnostic={diag} simulation={sim} triage={triage} /> : null}
       {tab === "reglages" ? <JourneySettings overview={o} /> : null}
       {tab === "personnes" ? <JourneyPeople overview={o} data={people} filters={{ journey: s.journey ?? "", stage: s.stage ?? "", status: s.status ?? "", q: s.q ?? "" }} /> : null}
       {tab === "emails" ? <EmailCorrections data={contacts} history={history} filters={{ state: s.state ?? "", q: s.q ?? "" }} /> : null}

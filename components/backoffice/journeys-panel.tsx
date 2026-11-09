@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  cancelCorrectionAction, journeyEntryAction, previewJourneyAction, requestCorrectionAction, saveJourneyAction, testJourneyAction,
-  type CorrectionContact, type CorrectionHistory, type Journey, type JourneyDiagnostic, type JourneyOverview, type JourneyPerson, type JourneyStep, type Paged, type SimulationRow,
+  applyTriageAction, cancelCorrectionAction, journeyEntryAction, previewJourneyAction, requestCorrectionAction, saveJourneyAction, testJourneyAction, undoTriageAction,
+  type CorrectionContact, type CorrectionHistory, type EtabTriage, type Journey, type JourneyDiagnostic, type JourneyOverview, type JourneyPerson, type JourneyStep, type Paged, type SimulationRow,
 } from "@/app/admin/centre-marketing/parcours/actions";
 
 const input = "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none";
@@ -15,8 +15,9 @@ const primary = "rounded-md bg-brand-700 px-3 py-2 text-sm font-semibold text-wh
 const card = "rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200";
 const n = (v: number | undefined) => (v ?? 0).toLocaleString("fr-FR");
 const when = (d: string | null) => (d ? new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
-const PROFILE: Record<string, string> = { agent: "Agents", entreprise: "Agences et promoteurs", etab_residences: "Résidences meublées", etab_espaces: "Espaces événementiels", proprietaire: "Propriétaires", particulier: "Particuliers", autre: "Autres" };
-const APP: Record<string, string> = { pro: "Moboo Pro", resi: "Moboo Resi", event: "Moboo Event" };
+const PROFILE: Record<string, string> = { agent: "Agents", entreprise: "Agences et promoteurs", etab_residences: "Résidences meublées", etab_espaces: "Espaces événementiels", proprietaire: "Propriétaires", etab_inconnu: "Établissements à classer", particulier: "Particuliers", autre: "Autres" };
+const APP: Record<string, string> = { pro: "Moboo Pro", resi: "Moboo Resi", event: "Moboo Event", tri: "Question : comptes à classer" };
+const SUBTYPE: Record<string, string> = { residences: "Résidences meublées", espaces: "Espaces événementiels", les_deux: "Les deux" };
 const PAGE = "/admin/centre-marketing/parcours";
 
 function Msg({ m }: { m: { ok: boolean; text: string } | null }) {
@@ -25,12 +26,62 @@ function Msg({ m }: { m: { ok: boolean; text: string } | null }) {
 
 /* ─── Vue d'ensemble ───────────────────────────────────────────────────── */
 
-export function JourneyResults({ overview: o, diagnostic: d, simulation: sim }: { overview: JourneyOverview; diagnostic: JourneyDiagnostic | null; simulation: Record<string, SimulationRow> | null }) {
+function TriagePanel({ t }: { t: EtabTriage }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [confirm, setConfirm] = useState("");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const apply = () => start(async () => {
+    const r = await applyTriageAction(confirm);
+    setMsg(r.ok ? { ok: true, text: `${n(r.data?.applied)} compte(s) classé(s).` } : { ok: false, text: r.error ?? "Erreur" });
+    if (r.ok) { setConfirm(""); router.refresh(); }
+  });
+  const undo = () => start(async () => {
+    const r = await undoTriageAction();
+    setMsg(r.ok ? { ok: true, text: `Tri annulé pour ${n(r.data?.undone)} compte(s).${r.data?.kept ? ` ${n(r.data.kept)} compte(s) déjà entrés dans un parcours ne changent pas.` : ""}` } : { ok: false, text: r.error ?? "Erreur" });
+    if (r.ok) router.refresh();
+  });
+  return (
+    <section className="space-y-2">
+      <h2 className="font-display text-lg font-bold text-ink">Établissements à classer</h2>
+      <p className="max-w-3xl text-sm text-muted">Ces comptes ne disent pas s’ils proposent des résidences meublées ou des espaces événementiels. Le tri regarde leurs annonces et les applications qu’ils utilisent. Il n’envoie aucun e-mail et ne remplace jamais une information déjà renseignée.</p>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Tile k="Résidences meublées" v={n(t.counts.residences)} hint="à classer d’après les faits" />
+        <Tile k="Espaces événementiels" v={n(t.counts.espaces)} hint="à classer d’après les faits" />
+        <Tile k="Les deux" v={n(t.counts.les_deux)} hint="à classer d’après les faits" />
+        <Tile k="Sans indice" v={n(t.unknown)} hint="à questionner par e-mail" />
+      </div>
+      <div className={card + " space-y-3"}>
+        {t.samples.length ? (
+          <div>
+            <p className="text-sm font-semibold text-ink">Exemples à vérifier avant d’appliquer</p>
+            <ul className="mt-1 divide-y divide-slate-100 text-sm">
+              {t.samples.map((s, i) => <li key={i} className="flex flex-wrap justify-between gap-2 py-1.5"><span>{s.name}</span><span className="text-muted">{SUBTYPE[s.result]} · {n(s.furnished)} annonce(s) meublée(s), {n(s.event)} d’espace{s.onApp ? ", déjà sur l’application" : ""}</span></li>)}
+            </ul>
+          </div>
+        ) : <p className="text-sm text-muted">Aucun compte ne peut être classé automatiquement pour l’instant.</p>}
+        {t.classifiable ? (
+          <div className="flex flex-wrap items-end gap-2">
+            <div><label className={label} htmlFor="classer">Pour appliquer, écrivez CLASSER</label><input id="classer" className={input + " max-w-xs"} value={confirm} onChange={(e) => setConfirm(e.target.value)} /></div>
+            <button disabled={pending || confirm !== "CLASSER"} className={primary} onClick={apply}>Classer {n(t.classifiable)} compte(s)</button>
+          </div>
+        ) : null}
+        {t.autoApplied ? <button disabled={pending} className={btn} onClick={undo}>Annuler le tri automatique ({n(t.autoApplied)} compte(s))</button> : null}
+        {t.answered ? <p className="text-sm text-muted">{n(t.answered)} personne(s) ont indiqué elles-mêmes leur activité.</p> : null}
+        <Msg m={msg} />
+        <p className="text-xs text-muted">Pour les comptes sans indice, allumez « Comptes à classer » dans Réglages et textes : un seul e-mail, avec trois réponses possibles.</p>
+      </div>
+    </section>
+  );
+}
+
+export function JourneyResults({ overview: o, diagnostic: d, simulation: sim, triage }: { overview: JourneyOverview; diagnostic: JourneyDiagnostic | null; simulation: Record<string, SimulationRow> | null; triage: EtabTriage | null }) {
   return (
     <div className="space-y-6">
+      {triage && (triage.total > 0 || triage.autoApplied > 0) ? <TriagePanel t={triage} /> : null}
       <section className="space-y-3">
         <h2 className="font-display text-lg font-bold text-ink">Où en sont les personnes</h2>
-        {o.journeys.map((j) => (
+        {o.journeys.filter((j) => j.key !== "tri").map((j) => (
           <div key={j.key} className={card}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="font-semibold text-ink">{j.name}</p>
@@ -140,12 +191,12 @@ function JourneyForm({ j, o }: { j: Journey; o: JourneyOverview }) {
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked, backfill: e.target.checked && f.backfill })} /><span><strong>Parcours allumé</strong><br /><span className="text-muted">Les nouveaux inscrits reçoivent les e-mails après le délai.</span></span></label>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" disabled={!f.enabled} checked={f.backfill} onChange={(e) => setF({ ...f, backfill: e.target.checked })} /><span><strong>Inclure les anciens inscrits</strong><br /><span className="text-muted">Les personnes déjà en base, par petits lots chaque jour.</span></span></label>
         </div>
-        <div>
+        {j.key === "tri" ? <p className="text-sm text-muted">Reçu seulement par les établissements restés sans indice après le tri. Dès qu’une personne répond, son compte est classé et elle peut entrer dans le parcours Moboo Resi ou Moboo Event.</p> : <div>
           <p className={label}>Qui reçoit ce parcours</p>
           <div className="mt-2 flex flex-wrap gap-4 text-sm">
-            {Object.entries(o.audiences).map(([k, l]) => <label key={k} className="flex items-center gap-2"><input type="checkbox" checked={f.audiences.includes(k)} onChange={() => setF({ ...f, audiences: f.audiences.includes(k) ? f.audiences.filter((x) => x !== k) : [...f.audiences, k] })} />{l}</label>)}
+            {Object.entries(o.audiences).filter(([k]) => k !== "etab_inconnu").map(([k, l]) => <label key={k} className="flex items-center gap-2"><input type="checkbox" checked={f.audiences.includes(k)} onChange={() => setF({ ...f, audiences: f.audiences.includes(k) ? f.audiences.filter((x) => x !== k) : [...f.audiences, k] })} />{l}</label>)}
           </div>
-        </div>
+        </div>}
         <div className="grid gap-3 sm:grid-cols-2 lg:max-w-xl">
           <div><label className={label} htmlFor="cap">E-mails par jour au plus</label><input id="cap" type="number" min={1} max={o.maxDailyCap} className={input} value={f.dailyCap} onChange={(e) => setF({ ...f, dailyCap: Number(e.target.value) })} /></div>
           <div><label className={label} htmlFor="gap">Jours entre deux e-mails</label><input id="gap" type="number" min={1} max={60} className={input} value={f.gapDays} onChange={(e) => setF({ ...f, gapDays: Number(e.target.value) })} /></div>
@@ -158,10 +209,10 @@ function JourneyForm({ j, o }: { j: Journey; o: JourneyOverview }) {
           <div className="lg:max-w-xs"><label className={label} htmlFor={`d${i}`}>{i === 0 ? "Heures après l’inscription" : "Heures après l’e-mail précédent"}</label><input id={`d${i}`} type="number" min={1} className={input} value={s.delayHours} onChange={(e) => setStep(i, { delayHours: Number(e.target.value) })} /><p className="mt-1 text-xs text-muted">{delayText(s.delayHours)}{i === 0 ? " (les anciens inscrits n’attendent pas ce délai)" : ""}</p></div>
           <div><label className={label} htmlFor={`s${i}`}>Objet</label><input id={`s${i}`} className={input} value={s.subject} onChange={(e) => setStep(i, { subject: e.target.value })} /></div>
           <div><label className={label} htmlFor={`b${i}`}>Message</label><textarea id={`b${i}`} rows={8} className={input} value={s.body} onChange={(e) => setStep(i, { body: e.target.value })} /></div>
-          <div className="grid gap-3 md:grid-cols-2">
+          {j.key === "tri" ? <p className="text-sm text-muted">Trois boutons s’ajoutent tout seuls à l’e-mail : Résidences meublées, Espaces événementiels, Les deux.</p> : <div className="grid gap-3 md:grid-cols-2">
             <div><label className={label} htmlFor={`c${i}`}>Texte du bouton</label><input id={`c${i}`} className={input} value={s.ctaLabel} onChange={(e) => setStep(i, { ctaLabel: e.target.value })} /></div>
             <div><label className={label} htmlFor={`u${i}`}>Lien du bouton</label><input id={`u${i}`} className={input} value={s.ctaUrl} onChange={(e) => setStep(i, { ctaUrl: e.target.value })} /></div>
-          </div>
+          </div>}
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" disabled={pending} className={btn} onClick={() => start(async () => { const r = await previewJourneyAction(j.key, i, f.steps); if (r.ok && r.data) setPreview(r.data); else setMsg({ ok: false, text: r.error ?? "Erreur" }); })}>Aperçu</button>
             <input aria-label="Adresse de test" placeholder="Adresse de test" className="w-60 rounded-md border border-slate-300 px-3 py-1.5 text-sm" value={to} onChange={(e) => setTo(e.target.value)} />

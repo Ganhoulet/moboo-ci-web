@@ -19,6 +19,10 @@ export interface JourneyDiagnostic {
   legacy: { total: number; linked: number; noEmail: number }; appUsers: { total: number; generatedEmail: number }; devices: Record<string, number>; optedOut: number;
 }
 export interface SimulationRow { total: number; sendable: number; already: number; noEmail: number; optedOut: number; dailyCap: number; daysFirstEmail: number; sample: { name: string; email: string }[] }
+export interface EtabTriage {
+  total: number; classifiable: number; unknown: number; counts: { residences: number; espaces: number; les_deux: number };
+  samples: { name: string; result: string; furnished: number; event: number; onApp: boolean }[]; autoApplied: number; answered: number;
+}
 export interface JourneyMessage { id: string; step: number; subject: string; status: string; error: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null }
 export interface JourneyPerson {
   id: string; journeyKey: string; accountId: string; name: string; phone: string; whatsapp: string; address: string | null; source: string; status: string; stage: string; stepsSent: number;
@@ -47,6 +51,9 @@ const post = async <T,>(path: string, body: unknown, method = "POST"): Promise<R
 export async function getJourneyOverview() { return read<JourneyOverview>(BASE); }
 export async function getJourneyDiagnostic() { return read<JourneyDiagnostic>(`${BASE}/diagnostic`); }
 export async function getJourneySimulation() { return read<Record<string, SimulationRow>>(`${BASE}/simulation`); }
+export async function getEtabTriage() { return read<EtabTriage>(`${BASE}/triage`); }
+export async function applyTriageAction(confirm: string) { return post<{ applied: number }>(`${BASE}/triage/apply`, { confirm }); }
+export async function undoTriageAction() { return post<{ undone: number; kept: number }>(`${BASE}/triage/undo`, {}); }
 export async function getJourneyPeople(q: Record<string, string | undefined>) { return read<Paged<JourneyPerson>>(`${BASE}/people?${qs(q)}`); }
 export async function getCorrectionContacts(q: Record<string, string | undefined>) { return read<Paged<CorrectionContact>>(`/site/admin/email-corrections/contacts?${qs(q)}`); }
 export async function getCorrectionHistory() { return read<CorrectionHistory[]>("/site/admin/email-corrections/history"); }
