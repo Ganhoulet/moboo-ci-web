@@ -424,6 +424,11 @@ export const DEFAULT_CHROME: ChromeContent = {
       { title: "Moboo", links: [
         { label: "Blog", href: "https://moboo.ci/blog" }, { label: "Réserver", href: "/reserver" }, { label: "Mon espace", href: "/mon-espace" },
       ] },
+      { title: "L’univers Moboo", links: [
+        { label: "Moboo Resi", href: "https://resi.moboo.ci" },
+        { label: "Moboo Event", href: "https://event.moboo.ci" },
+        { label: "Moboo Pro", href: "https://pro.moboo.ci" },
+      ] },
     ],
     showApps: true, playStoreUrl: "", appStoreUrl: "",
     bottomText: "© {year} Moboo — Tous droits réservés.",

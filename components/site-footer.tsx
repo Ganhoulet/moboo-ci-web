@@ -32,7 +32,7 @@ export function SiteFooter({ chrome, settings }: { chrome: ChromeContent; settin
             </div>
           ) : null}
         </div>
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <div className={`grid grid-cols-2 gap-8 ${footer.columns.length > 4 ? "sm:grid-cols-3 xl:grid-cols-5" : "sm:grid-cols-4"}`}>
           {footer.columns.map((c, i) => (
             <div key={i}>
               <p className="text-sm font-semibold text-ink">{c.title}</p>
