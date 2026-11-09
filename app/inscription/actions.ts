@@ -3,6 +3,7 @@
 import { siteCheckSignup, siteRequestOtp, siteVerifyOtp, type SignupProfile } from "@/lib/api";
 import { setSession, setProfile, getSession } from "@/lib/session";
 import { authedFetch } from "@/lib/server-api";
+import { flashTrack } from "@/lib/track-flash";
 
 export type Availability = { usernameAvailable: boolean; emailAvailable: boolean; phoneRegistered: boolean } | null;
 
@@ -54,6 +55,7 @@ export async function verifySignupAction(input: { phone: string; code?: string; 
       return { ok: false, error: m || "Code incorrect ou expiré." };
     }
     setSession(data, data.account);
+    if ((data as any)?.isNew) flashTrack("signup");
     // Pas de revalidatePath ici : il re-rendrait /inscription (→ /compte) avant
     // l'écran de bienvenue. Le rafraîchissement se fait à « Découvrir mon espace ».
     return { ok: true, firstName: data.account.firstName };

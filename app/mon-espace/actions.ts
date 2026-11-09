@@ -6,6 +6,7 @@ import { getSession, setProfile } from "@/lib/session";
 import { siteRequestOtp } from "@/lib/api";
 import type { Property } from "@/lib/property";
 import type { Invoice } from "@/app/admin/immobilier/actions";
+import { flashTrack } from "@/lib/track-flash";
 
 const errMsg = (data: any, fallback: string) =>
   (Array.isArray(data?.message) ? data.message[0] : data?.message)
@@ -70,6 +71,7 @@ export async function saveListingAction(id: string | null, payload: Record<strin
   });
   if (!ok) return { ok: false, error: errMsg(data, "Enregistrement impossible. Réessayez.") };
   revalidatePath("/mon-espace", "layout");
+  if (!id) flashTrack("publish_listing");
   // Publication payante : paiement Money Fusion (ou facture réglée d'office si gratuit).
   const pay = data?.payment;
   if (pay && !pay.paid) return { ok: true, id: data?.id, paymentUrl: pay.paymentUrl ?? `/mon-espace/annonces?facture=${pay.invoiceId}` };

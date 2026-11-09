@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSiteSettings } from "@/lib/settings";
+import { trackingIds, trackingOn } from "@/lib/tracking-config";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité",
@@ -15,7 +16,8 @@ function H({ children }: { children: React.ReactNode }) {
 
 /** Politique de confidentialité (exigée par Google Play / l'App Store) — texte modifiable dans le back-office. */
 export default async function PrivacyPage() {
-  const { legal } = await getSiteSettings();
+  const { legal, tracking } = await getSiteSettings();
+  const pixels = trackingOn(trackingIds(tracking));
   const mail = <a href={`mailto:${legal.contactEmail}`} className="font-semibold text-brand-800 hover:underline">{legal.contactEmail}</a>;
 
   return (
@@ -61,13 +63,13 @@ export default async function PrivacyPage() {
               <li>Vous envoyer des e-mails, messages WhatsApp ou notifications liés à votre compte (codes, demandes reçues, alertes que vous avez créées) — <em>exécution du service</em>.</li>
               <li>Mesurer l’audience et améliorer le site et les applications (statistiques agrégées) — <em>intérêt légitime</em>.</li>
             </ul>
-            <p className="mt-2">Nous ne vendons pas vos données personnelles et ne les utilisons pas pour de la publicité ciblée de tiers.</p>
+            <p className="mt-2">{pixels ? "Nous ne vendons pas vos données personnelles. Si vous l’acceptez, des cookies de Google, Facebook et TikTok servent à mesurer l’audience du site et à mieux cibler nos publicités." : "Nous ne vendons pas vos données personnelles et ne les utilisons pas pour de la publicité ciblée de tiers."}</p>
 
             <H>4. Qui peut les voir</H>
             <ul>
               <li><strong>Les autres utilisateurs</strong> : les informations de vos annonces et de votre profil public, et vos coordonnées lorsque vous contactez un annonceur.</li>
               <li><strong>L’équipe {legal.companyName}</strong>, selon son rôle (support, modération, comptabilité), avec un journal de toutes les actions.</li>
-              <li><strong>Nos prestataires techniques</strong>, uniquement pour faire fonctionner le service : hébergement du site et de l’API (Vercel, Render), base de données et stockage des fichiers (Supabase), envoi des e-mails, messages WhatsApp (Meta), connexion Google (Google), paiements (Money Fusion), notifications de l’application (OneSignal), statistiques d’utilisation anonymes et connexion de l’application (Google Firebase).</li>
+              <li><strong>Nos prestataires techniques</strong>, uniquement pour faire fonctionner le service : hébergement du site et de l’API (Vercel, Render), base de données et stockage des fichiers (Supabase), envoi des e-mails, messages WhatsApp (Meta), connexion Google (Google), paiements (Money Fusion), notifications de l’application (OneSignal), statistiques d’utilisation anonymes et connexion de l’application (Google Firebase).{pixels ? " Avec votre accord, mesure d’audience et publicité sur le site (Google Analytics, Facebook, TikTok)." : ""}</li>
               <li><strong>Les autorités</strong>, sur demande légale.</li>
             </ul>
             <p className="mt-2">Certains prestataires hébergent des données hors de Côte d’Ivoire (Union européenne, États-Unis). Ces transferts sont encadrés par leurs engagements contractuels de protection des données.</p>
@@ -93,7 +95,7 @@ export default async function PrivacyPage() {
             <p>Connexions chiffrées (HTTPS), mots de passe et codes stockés chiffrés, double authentification disponible (obligatoire pour l’équipe), accès de l’équipe limité par rôle et journalisé, documents sensibles stockés dans un espace privé.</p>
 
             <H>8. Cookies et stockage local</H>
-            <p>Le site utilise uniquement des cookies nécessaires à son fonctionnement : votre session de connexion et vos préférences (par exemple pour ne pas réafficher une annonce promotionnelle déjà fermée). Aucun cookie publicitaire tiers n’est déposé.</p>
+            <p>Le site utilise {pixels ? "" : "uniquement "}des cookies nécessaires à son fonctionnement : votre session de connexion et vos préférences (par exemple pour ne pas réafficher une annonce promotionnelle déjà fermée).{pixels ? " Avec votre accord seulement, le site dépose aussi des cookies de mesure et de publicité de Google Analytics, Facebook et TikTok. Vous pouvez changer votre choix à tout moment avec le lien « Gérer les cookies » en bas de page." : " Aucun cookie publicitaire tiers n’est déposé."}</p>
 
             <H>9. Mineurs</H>
             <p>Les services Moboo.ci sont destinés aux personnes majeures. Nous ne collectons pas sciemment de données concernant des mineurs ; si c’est le cas, contactez-nous pour les faire supprimer.</p>

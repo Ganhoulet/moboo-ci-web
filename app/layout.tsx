@@ -7,6 +7,8 @@ import { VerificationDeadline } from "@/components/verification-deadline";
 import { AssistBanner } from "@/components/assist-banner";
 import { TopBar } from "@/components/top-bar";
 import { BackToTop, ClientSettings } from "@/components/site-chrome";
+import { Tracking } from "@/components/tracking";
+import { trackingIds, trackingOn } from "@/lib/tracking-config";
 import { getSiteSettings } from "@/lib/settings";
 import { getSession } from "@/lib/session";
 import { LiveNotifications } from "@/components/live-notifications";
@@ -68,6 +70,7 @@ async function SeoBottom() {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [settings, chrome, notices] = await Promise.all([getSiteSettings(), getChrome(), noticesForVisitor()]);
   const { general, header } = settings;
+  const tracking = trackingIds(settings.tracking);
   return (
     <html lang="fr" className={`${inter.variable} ${poppins.variable}`}>
       <body className="min-h-screen font-sans" style={{ ["--container-max" as string]: `${general.containerWidth}px`, ["--m-card" as string]: `${Math.min(95, Math.max(45, Number(header.mobileCardWidth) || 70))}%` }}>
@@ -86,6 +89,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SiteFooter chrome={chrome} settings={settings} />
         {header.mobileBottomBar ? <MobileTabBar items={header.mobileBottomBarItems} style={header.mobileBottomBarStyle} color={header.mobileBottomBarColor} loggedIn={!!getSession()} zones={zonesFrom(header.mobileBottomBarZones, ["home", "results", "pros", "account", "content"])} /> : null}
         {general.backToTop ? <BackToTop /> : null}
+        {trackingOn(tracking) ? <Suspense fallback={null}><Tracking ids={tracking} text={settings.tracking.consentText} /></Suspense> : null}
         {/* Une information ciblée ouverte passe avant la pop-up marketing (jamais deux fenêtres à la fois). */}
         {notices.popup.length ? <NoticePopup items={notices.popup} /> : null}
         <SitePopup items={await getCampaigns("site_popup")} loggedIn={!!getSession()} />

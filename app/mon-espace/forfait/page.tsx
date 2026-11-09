@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/dashboard-ui";
 import { PackageCards } from "@/components/package-cards";
 import { fcfa, getPackages } from "@/lib/community";
 import { getMyInvoice, getMySubscription } from "../actions";
+import { TrackPurchase } from "@/components/tracking";
 
 const d = (s: string) => new Date(s).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
@@ -23,6 +24,7 @@ export default async function MonForfait({ searchParams }: { searchParams: { fac
     <div className="space-y-6">
       <PageHeader title="Mon forfait" sub="Propriétés en ligne, annonces sponsorisées et renouvellement." />
 
+      {invoice?.status === "paid" ? <TrackPurchase id={invoice.id} value={invoice.amount} /> : null}
       {invoice ? (
         <div className={"rounded-2xl p-4 text-sm " + (invoice.status === "paid" ? "bg-emerald-50 text-emerald-800" : invoice.status === "pending" ? "bg-amber-50 text-amber-800" : "bg-red-50 text-red-700")}>
           {invoice.status === "paid" ? <>✅ Paiement confirmé : facture <strong>{invoice.number}</strong> ({fcfa(invoice.amount)}). Votre forfait est actif.</>

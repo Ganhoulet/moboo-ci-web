@@ -8,6 +8,7 @@ import { ListingRowActions } from "@/components/listing-row-actions";
 import { getMyInvoice, getMySubscription, listMyListings } from "../actions";
 import { getTaxonomies } from "@/lib/taxonomies";
 import { SiteIcon } from "@/components/site-icon";
+import { TrackPurchase } from "@/components/tracking";
 
 const TABS = [
   { key: "", label: "Toutes" },
@@ -41,6 +42,7 @@ export default async function MesAnnonces({ searchParams }: { searchParams: { st
         action={<Link href="/mon-espace/annonces/nouvelle" className="btn-primary bg-accent-600 hover:bg-accent-700">+ Publier une annonce</Link>}
       />
 
+      {invoice?.status === "paid" ? <TrackPurchase id={invoice.id} value={invoice.amount} /> : null}
       {invoice ? (
         <div className={"mb-4 rounded-2xl p-4 text-sm " + (invoice.status === "paid" ? "bg-emerald-50 text-emerald-800" : invoice.status === "pending" ? "bg-amber-50 text-amber-800" : "bg-red-50 text-red-700")}>
           {invoice.status === "paid" ? <><SiteIcon value="✅" size={16} className="mr-1 inline-block align-[-3px]" />Paiement confirmé : {invoice.label}.</> : invoice.status === "pending" ? <>⏳ Paiement en attente de confirmation ({invoice.number}) : actualisez dans quelques instants.</> : <>Le paiement n’a pas abouti ({invoice.number}) : réessayez depuis le menu « ⋯ » de l’annonce.</>}

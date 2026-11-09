@@ -3,6 +3,8 @@ import { MobooLogo } from "./logo";
 import type { ChromeContent } from "@/lib/page-blocks";
 import type { SiteSettings } from "@/lib/settings";
 import { menuAt, safeHref } from "@/lib/menus";
+import { trackingIds, trackingOn } from "@/lib/tracking-config";
+import { CookiePreferences } from "./tracking";
 
 const isExternal = (h: string) => /^https?:\/\//.test(h);
 const A = ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) =>
@@ -56,6 +58,7 @@ export function SiteFooter({ chrome, settings }: { chrome: ChromeContent; settin
             <Link href="/aide" className="hover:text-ink hover:underline">Centre d’aide</Link>
             <Link href="/confidentialite" className="hover:text-ink hover:underline">Confidentialité</Link>
             <Link href="/suppression-compte" className="hover:text-ink hover:underline">Supprimer mon compte</Link>
+            {trackingOn(trackingIds(settings.tracking)) ? <CookiePreferences className="hover:text-ink hover:underline" /> : null}
           </span>
           {settings.auth.adminLoginLink ? (
             <Link href="/administration" className="inline-flex items-center gap-1 font-semibold hover:text-ink">

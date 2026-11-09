@@ -7,6 +7,7 @@ import { AdsHub } from "@/components/ads-hub";
 import { getAdZones } from "@/lib/ads";
 import { getAdsOverview } from "./actions";
 import { getMyInvoice } from "../actions";
+import { TrackPurchase } from "@/components/tracking";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export default async function Publicite({ searchParams }: { searchParams: { fact
       <Link href="/mon-espace/publicite-services" className="block rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200 hover:ring-amber-300">
         <strong>Vous proposez un service ?</strong> Déménagement, nettoyage, aménagement… : affichez votre entreprise entre les annonces et recevez des demandes de devis. <span className="font-semibold underline">Publicités de services ›</span>
       </Link>
+      {invoice?.status === "paid" ? <TrackPurchase id={invoice.id} value={invoice.amount} /> : null}
       {invoice ? (
         <div className={"rounded-2xl p-4 text-sm " + (invoice.status === "paid" ? "bg-emerald-50 text-emerald-800" : invoice.status === "pending" ? "bg-amber-50 text-amber-800" : "bg-red-50 text-red-700")}>
           {invoice.status === "paid" ? <>✅ Recharge confirmée : {invoice.label}. Vos crédits sont disponibles.</>

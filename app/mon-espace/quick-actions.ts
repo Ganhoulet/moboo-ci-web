@@ -1,6 +1,7 @@
 "use server";
 
 import { authedFetch } from "@/lib/server-api";
+import { flashTrack } from "@/lib/track-flash";
 
 /** Onglet « Publier une annonce » : les 5 écrans du lien de publication rapide, pour un membre connecté. */
 const err = (d: any, fb: string) => (Array.isArray(d?.message) ? d.message[0] : d?.message) || d?.error?.message || fb;
@@ -22,5 +23,6 @@ export async function quickMemberExtractAction(text: string): Promise<{ ok: bool
 
 export async function quickMemberPublishAction(input: { listing: Record<string, unknown>; photos: string[] }) {
   const { ok, data } = await authedFetch("/site/quick-member/publish", { method: "POST", body: JSON.stringify(input) });
+  if (ok) flashTrack("publish_listing");
   return ok ? { ok: true as const, data } : { ok: false as const, error: err(data, "Publication impossible. Réessayez.") };
 }

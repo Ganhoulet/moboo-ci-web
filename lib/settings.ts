@@ -2,6 +2,7 @@
 // mis en cache 60 s (étiquette « site-settings », vidée à chaque enregistrement).
 import { API_URL } from "./api";
 import { relayHeaders } from "./relay";
+import type { TrackingSettings } from "./tracking-config";
 
 export interface SiteSettings {
   general: {
@@ -48,6 +49,7 @@ export interface SiteSettings {
     cbOrder: string; cbPersonSide: "left" | "right";
   };
   submit: { maxPhotos: number; submitIntro: string };
+  tracking: TrackingSettings;
   /** Formulaire de publication et onglets de l'espace membre (JSON, back-office → Formulaires). */
   forms: { listingForm: string; memberSpace: string };
   search: {
@@ -90,6 +92,10 @@ export interface MapSettings {
 
 /** Valeurs de secours (API injoignable) — les mêmes que le schéma de l'API. */
 export const DEFAULT_SETTINGS: SiteSettings = {
+  tracking: {
+    enabled: true, ga4Id: "", metaPixelId: "", tiktokPixelId: "",
+    consentText: "Avec votre accord, nous utilisons des cookies de Google, Facebook et TikTok pour mesurer l’audience et mieux cibler nos publicités.",
+  },
   general: { containerWidth: "1270", backToTop: true, favoritesLoginRequired: false, excerptEnabled: true, excerptWords: 75, readMoreText: "Lire la suite", teamTitle: "L’équipe", memberOfLabel: "Membre de", teamListings: true },
   branding: {
     siteName: "Moboo.ci", logoUrl: "", logoHeight: 32, faviconUrl: "",

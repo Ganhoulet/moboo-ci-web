@@ -4,6 +4,7 @@ import { API_URL } from "@/lib/api";
 import { relayHeaders } from "@/lib/relay";
 import { getSession } from "@/lib/session";
 import { authedFetch } from "@/lib/server-api";
+import { flashTrack } from "@/lib/track-flash";
 
 /** Lien de publication rapide (groupes WhatsApp) : page publique, photos et IA sans compte. */
 const err = (d: any, fb: string) => (Array.isArray(d?.message) ? d.message[0] : d?.message) || d?.error?.message || fb;
@@ -36,5 +37,6 @@ export async function quickExtractAction(slug: string, text: string): Promise<{ 
 export async function quickPublishAction(slug: string, input: { listing: Record<string, unknown>; photos: string[] }) {
   if (!getSession()) return { ok: false as const, error: "Connectez-vous d'abord." };
   const { ok, data } = await authedFetch(`/site/quick/${encodeURIComponent(slug)}/publish`, { method: "POST", body: JSON.stringify(input) });
+  if (ok) flashTrack("publish_listing");
   return ok ? { ok: true as const, data } : { ok: false as const, error: err(data, "Publication impossible. Réessayez.") };
 }

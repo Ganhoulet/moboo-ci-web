@@ -5,6 +5,7 @@ import { siteRequestOtp, siteVerifyOtp, siteLogout, sitePasswordLogin, siteGoogl
 import { setSession, clearSession, getRefreshToken } from "@/lib/session";
 import { setAgentSession, type AgentProfile } from "@/lib/agent";
 import { safeNext, startTwoFactor } from "@/lib/two-factor";
+import { flashTrack } from "@/lib/track-flash";
 
 const errMsg = (data: any, fallback: string) =>
   (Array.isArray(data?.message) ? data.message[0] : data?.message)
@@ -60,6 +61,7 @@ export async function verifyOtpAction(_prev: OtpState, formData: FormData): Prom
       return { step: "code", phone, error: errMsg(data, "Code incorrect ou expiré."), googleTicket };
     }
     setSession(data, data.account);
+    if ((data as any)?.isNew) flashTrack("signup");
     revalidatePath("/", "layout");
     return { step: "done" };
   } catch {
@@ -75,6 +77,7 @@ export async function verifyFirebaseAction(input: { phone: string; idToken: stri
     if (ok && (data as any)?.twoFactor) return { step: "done", redirectTo: startTwoFactor(data, safeNext(input.next)) };
     if (!ok || !data?.accessToken || !data?.account) return { step: "code", phone, error: errMsg(data, "Connexion impossible. Réessayez."), googleTicket };
     setSession(data, data.account);
+    if ((data as any)?.isNew) flashTrack("signup");
     revalidatePath("/", "layout");
     return { step: "done" };
   } catch {
@@ -130,6 +133,7 @@ export async function googleLoginAction(credential: string, nextPath?: string): 
     }
     if (!data?.accessToken || !data?.account) return { status: "error", error: "Connexion Google impossible." };
     setSession(data, data.account);
+    if ((data as any)?.isNew) flashTrack("signup");
     revalidatePath("/", "layout");
     return { status: "ok", redirectTo: next ?? (data.account.onboarded ? "/mon-espace" : "/inscription") };
   } catch {
