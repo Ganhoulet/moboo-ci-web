@@ -100,7 +100,7 @@ export function UserActions({ a, canManage, sessions }: { a: Account; canManage:
         </button>
       ) : null}
       <button type="button" disabled={pending} className={`${btn} border-slate-300 text-slate-700 hover:bg-slate-50`} onClick={() => setMode(mode === "edit" ? null : "edit")}>✎ Modifier le profil…</button>
-      {mode === "edit" ? <EditProfile a={a} pending={pending} onSave={(patch) => run(() => updateUserAction(a.id, patch), "Profil enregistré.")} onCancel={() => setMode(null)} /> : null}
+      {mode === "edit" ? <EditProfile a={a} pending={pending} onSave={(patch) => run(() => updateUserAction(a.id, patch), patch.email.trim().toLowerCase() !== (a.email ?? "").toLowerCase() ? `Profil enregistré. Un lien a été envoyé à ${patch.email.trim()} : l’adresse changera quand la personne aura confirmé.` : "Profil enregistré.")} onCancel={() => setMode(null)} /> : null}
 
       {msg ? <p className={"text-sm font-medium " + (msg.ok ? "text-emerald-700" : "text-red-600")}>{msg.text}</p> : null}
     </div>
@@ -121,6 +121,7 @@ function EditProfile({ a, pending, onSave, onCancel }: { a: Account; pending: bo
     <form className="space-y-2 rounded-md bg-slate-50 p-3 ring-1 ring-slate-200" onSubmit={(e) => { e.preventDefault(); onSave(v); }}>
       <div className="grid grid-cols-2 gap-2">{f("firstName", "Prénom")}{f("lastName", "Nom")}</div>
       {f("email", "E-mail", "email")}
+      <p className="text-xs text-slate-500">Une nouvelle adresse ne s’applique qu’après confirmation par la personne, depuis cette boîte mail.</p>
       <div className="grid grid-cols-2 gap-2">{f("username", "Identifiant")}{f("whatsapp", "WhatsApp")}</div>
       {f("companyName", "Société / établissement")}
       <div className="grid grid-cols-2 gap-2">{f("city", "Ville")}{f("commune", "Commune")}</div>
