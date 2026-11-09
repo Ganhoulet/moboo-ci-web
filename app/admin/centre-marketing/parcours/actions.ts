@@ -31,6 +31,9 @@ export interface JourneyPerson {
   nextAt: string | null; lastSentAt: string | null; openedAt: string | null; clickedAt: string | null; connectedAt: string | null; subscribedAt: string | null; firstUseAt: string | null;
   ascendedAt: string | null; advocateAt: string | null; promoterAt: string | null; messages: JourneyMessage[];
 }
+export interface PerfRow { step: number; channel: JourneyChannel; subject: string; sent: number; failed: number; opened: number; clicked: number; installed: number; subscribed: number; answered: number }
+export interface PerfJourney { key: string; name: string; enabled: boolean; contacted: number; clickedPeople: number; installed: number; subscribed: number; answered: number; steps: PerfRow[] }
+export interface JourneyPerformance { days: number; journeys: PerfJourney[] }
 export interface JourneyCall { id: string; journeyKey: string; name: string; phone: string; whatsapp: string; hot: boolean; clickedAt: string | null; callOutcome: string | null; callNote: string | null; calledAt: string | null; calledBy: string | null }
 export interface CorrectionContact {
   id: string; name: string; email: string | null; emailState: string; phone: string; whatsapp: string; accountType: string; accountSubtype: string | null;
@@ -58,6 +61,7 @@ export async function getEtabTriage() { return read<EtabTriage>(`${BASE}/triage`
 export async function applyTriageAction(confirm: string) { return post<{ applied: number }>(`${BASE}/triage/apply`, { confirm }); }
 export async function undoTriageAction() { return post<{ undone: number; kept: number }>(`${BASE}/triage/undo`, {}); }
 export async function getJourneyPeople(q: Record<string, string | undefined>) { return read<Paged<JourneyPerson>>(`${BASE}/people?${qs(q)}`); }
+export async function getJourneyPerformance(days?: string) { return read<JourneyPerformance>(`${BASE}/performance?${qs({ days })}`); }
 export async function getJourneyCalls(q: Record<string, string | undefined>) { return read<Paged<JourneyCall>>(`${BASE}/calls?${qs(q)}`); }
 export async function saveCallAction(id: string, outcome: string, note: string) { return post(`${BASE}/entries/${id}/call`, { outcome, note }); }
 export async function getCorrectionContacts(q: Record<string, string | undefined>) { return read<Paged<CorrectionContact>>(`/site/admin/email-corrections/contacts?${qs(q)}`); }

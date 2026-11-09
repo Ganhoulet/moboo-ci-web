@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   applyTriageAction, cancelCorrectionAction, journeyEntryAction, previewJourneyAction, requestCorrectionAction, saveCallAction, saveJourneyAction, testJourneyAction, undoTriageAction,
-  type CorrectionContact, type CorrectionHistory, type EtabTriage, type Journey, type JourneyCall, type JourneyChannel, type JourneyDiagnostic, type JourneyOverview, type JourneyPerson, type JourneyStep, type Paged, type SimulationRow,
+  type CorrectionContact, type CorrectionHistory, type EtabTriage, type Journey, type JourneyCall, type JourneyChannel, type JourneyDiagnostic, type JourneyOverview, type JourneyPerformance, type JourneyPerson, type PerfJourney, type JourneyStep, type Paged, type SimulationRow,
 } from "@/app/admin/centre-marketing/parcours/actions";
 
 const input = "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none";
@@ -150,6 +150,70 @@ export function JourneyResults({ overview: o, diagnostic: d, simulation: sim, tr
 
 function Tile({ k, v, hint }: { k: string; v: string; hint: string }) {
   return <div className={card}><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{k}</p><p className="mt-1 font-display text-2xl font-extrabold tabular-nums text-ink">{v}</p><p className="mt-0.5 text-xs text-muted">{hint}</p></div>;
+}
+
+/* ─── Performance ─────────────────────────────────────────────────────── */
+
+const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)} %` : "—");
+
+function Cell({ v, of }: { v: number; of: number }) {
+  return <td className="px-3 py-2 text-right tabular-nums"><span className="font-semibold">{n(v)}</span> <span className="text-xs text-muted">{pct(v, of)}</span></td>;
+}
+
+function PerfCard({ j }: { j: PerfJourney }) {
+  const tri = j.key === "tri";
+  return (
+    <section className={card + " space-y-3"}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-semibold text-ink">{tri ? "Comptes à classer" : j.name}</h2>
+        <span className={"rounded-full px-2 py-0.5 text-xs font-semibold " + (j.enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500")}>{j.enabled ? "Allumé" : "Éteint"}</span>
+      </div>
+      {j.steps.length ? <>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Tile k="Personnes contactées" v={n(j.contacted)} hint="au moins un message envoyé" />
+          <Tile k="Ont cliqué" v={n(j.clickedPeople)} hint={`${pct(j.clickedPeople, j.contacted)} des personnes contactées`} />
+          {tri ? <Tile k="Ont répondu" v={n(j.answered)} hint={`${pct(j.answered, j.contacted)} des personnes contactées`} /> : <>
+            <Tile k="Installé et connecté" v={n(j.installed)} hint={`${pct(j.installed, j.contacted)} des personnes contactées`} />
+            <Tile k="Abonnés" v={n(j.subscribed)} hint={`${pct(j.subscribed, j.contacted)} des personnes contactées`} />
+          </>}
+        </div>
+        <div className="overflow-x-auto rounded-md ring-1 ring-slate-200">
+          <table className="min-w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th className="px-3 py-2">Message</th><th className="px-3 py-2 text-right">Envoyés</th><th className="px-3 py-2 text-right">Échecs</th><th className="px-3 py-2 text-right">Ouverts</th><th className="px-3 py-2 text-right">Cliqués</th>{tri ? <th className="px-3 py-2 text-right">Ont répondu</th> : <><th className="px-3 py-2 text-right">Installé ensuite</th><th className="px-3 py-2 text-right">Abonné ensuite</th></>}</tr></thead>
+            <tbody className="divide-y divide-slate-100">
+              {j.steps.map((s) => (
+                <tr key={`${s.step}-${s.channel}-${s.subject}`}>
+                  <td className="min-w-52 px-3 py-2"><span className="font-semibold">{s.step + 1}. {CHANNEL_NAME[s.channel] ?? s.channel}</span><br /><span className="text-xs text-muted">{s.subject}</span></td>
+                  <td className="px-3 py-2 text-right font-semibold tabular-nums">{n(s.sent)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums text-amber-700">{n(s.failed)}</td>
+                  {s.channel === "email" ? <Cell v={s.opened} of={s.sent} /> : <td className="px-3 py-2 text-right text-muted">non mesuré</td>}
+                  <Cell v={s.clicked} of={s.sent} />
+                  {tri ? <Cell v={s.answered} of={s.sent} /> : <><Cell v={s.installed} of={s.sent} /><Cell v={s.subscribed} of={s.sent} /></>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </> : <p className="text-sm text-muted">Aucun message envoyé sur cette période.</p>}
+    </section>
+  );
+}
+
+export function JourneyPerformancePanel({ data }: { data: JourneyPerformance | null }) {
+  if (!data) return <p className={card + " text-sm text-red-600"}>Performance indisponible.</p>;
+  const periods: [number, string][] = [[7, "7 jours"], [30, "30 jours"], [90, "90 jours"], [0, "Depuis le début"]];
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {periods.map(([d, l]) => <Link key={d} className={d === data.days ? primary : btn} href={`${PAGE}?tab=performance&days=${d}`}>{l}</Link>)}
+      </div>
+      {data.journeys.map((j) => <PerfCard key={j.key} j={j} />)}
+      <div className="rounded-lg bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">
+        <p><strong>Envoyés</strong> : acceptés par le fournisseur, ce qui ne prouve pas l’arrivée dans la boîte. <strong>Ouverts</strong> : approximatif. <strong>Cliqués</strong> : le meilleur signal, un antivirus de messagerie peut parfois cliquer à la place de la personne.</p>
+        <p className="mt-1"><strong>Installé ensuite</strong> : la personne s’est connectée à l’application après ce message, le dernier reçu avant son arrivée. Chaque personne n’est comptée qu’une fois.</p>
+      </div>
+    </div>
+  );
 }
 
 /* ─── Réglages ─────────────────────────────────────────────────────────── */

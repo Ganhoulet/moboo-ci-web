@@ -1,20 +1,21 @@
 import Link from "next/link";
-import { EmailCorrections, JourneyCalls, JourneyPeople, JourneyResults, JourneySettings } from "@/components/backoffice/journeys-panel";
-import { getCorrectionContacts, getCorrectionHistory, getEtabTriage, getJourneyCalls, getJourneyDiagnostic, getJourneyOverview, getJourneyPeople, getJourneySimulation } from "./actions";
+import { EmailCorrections, JourneyCalls, JourneyPeople, JourneyPerformancePanel, JourneyResults, JourneySettings } from "@/components/backoffice/journeys-panel";
+import { getCorrectionContacts, getCorrectionHistory, getEtabTriage, getJourneyCalls, getJourneyDiagnostic, getJourneyOverview, getJourneyPeople, getJourneyPerformance, getJourneySimulation } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-const TABS = [["apercu", "Vue d’ensemble"], ["reglages", "Réglages et textes"], ["personnes", "Suivi par personne"], ["appels", "À appeler"], ["emails", "E-mails à corriger"]] as const;
-type Search = { tab?: string; journey?: string; stage?: string; status?: string; q?: string; page?: string; state?: string; done?: string };
+const TABS = [["apercu", "Vue d’ensemble"], ["performance", "Performance"], ["reglages", "Réglages et textes"], ["personnes", "Suivi par personne"], ["appels", "À appeler"], ["emails", "E-mails à corriger"]] as const;
+type Search = { tab?: string; journey?: string; stage?: string; status?: string; q?: string; page?: string; state?: string; done?: string; days?: string };
 
 /** Centre marketing → Parcours de conversion : des inscrits de Moboo.ci vers Moboo Pro, Resi et Event. */
 export default async function Parcours({ searchParams: s }: { searchParams: Search }) {
   const tab = TABS.some(([k]) => k === s.tab) ? s.tab! : "apercu";
-  const [o, diag, sim, triage, people, calls, contacts, history] = await Promise.all([
+  const [o, diag, sim, triage, perf, people, calls, contacts, history] = await Promise.all([
     getJourneyOverview(),
     tab === "apercu" ? getJourneyDiagnostic() : null,
     tab === "apercu" ? getJourneySimulation() : null,
     tab === "apercu" ? getEtabTriage() : null,
+    tab === "performance" ? getJourneyPerformance(s.days ?? "30") : null,
     tab === "personnes" ? getJourneyPeople({ journey: s.journey, stage: s.stage, status: s.status, search: s.q, page: s.page }) : null,
     tab === "appels" ? getJourneyCalls({ journey: s.journey, done: s.done, page: s.page }) : null,
     tab === "emails" ? getCorrectionContacts({ state: s.state, search: s.q, page: s.page }) : null,
@@ -38,6 +39,7 @@ export default async function Parcours({ searchParams: s }: { searchParams: Sear
         ))}
       </div>
       {tab === "apercu" ? <JourneyResults overview={o} diagnostic={diag} simulation={sim} triage={triage} /> : null}
+      {tab === "performance" ? <JourneyPerformancePanel data={perf} /> : null}
       {tab === "reglages" ? <JourneySettings overview={o} /> : null}
       {tab === "personnes" ? <JourneyPeople overview={o} data={people} filters={{ journey: s.journey ?? "", stage: s.stage ?? "", status: s.status ?? "", q: s.q ?? "" }} /> : null}
       {tab === "appels" ? <JourneyCalls overview={o} data={calls} filters={{ journey: s.journey ?? "", done: s.done === "1" }} /> : null}
