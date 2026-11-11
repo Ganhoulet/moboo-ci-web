@@ -9,11 +9,14 @@ export function MobileBookBar({
   unit,
   prefix,
   cta = "Réserver",
+  color,
 }: {
   price: number | null;
   unit?: string;
   prefix?: string;
   cta?: string;
+  /** Couleur du bouton (back-office → Formulaire de réservation). */
+  color?: string;
 }) {
   return (
     <div className="fixed inset-x-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden" style={{ bottom: "var(--mobile-tabbar-h, 0px)" }}>
@@ -33,7 +36,7 @@ export function MobileBookBar({
           )}
           <p className="text-xs text-muted">Aucun débit avant confirmation</p>
         </div>
-        <a href="#reserver" className="btn-primary shrink-0 bg-accent-600 px-5 hover:bg-accent-700">
+        <a href="#reserver" style={color && /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(color) ? { backgroundColor: color } : undefined} className="btn-primary shrink-0 bg-accent-600 px-5 hover:bg-accent-700">
           {cta}
         </a>
       </div>

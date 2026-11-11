@@ -236,10 +236,12 @@ export default async function EspacePage({ params }: { params: { slug: string } 
           {e.host ? <HostCard host={e.host} noun="espace" /> : null}
         </div>
 
-        <aside id="reserver" className="scroll-mt-24 lg:self-start">
+        <aside id="reserver" className="min-w-0 scroll-mt-24">
           <ConversionSignals type="espace" id={e.id} initial={signals} className="mb-4" />
           <AsidePerson person={person} />
-          <EspaceBooking espaceId={e.id} occupied={occupied} fromPrice={aPartir} />
+          <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain lg:pb-2">
+            <EspaceBooking espaceId={e.id} occupied={occupied} fromPrice={aPartir} />
+          </div>
         </aside>
       </div>
 

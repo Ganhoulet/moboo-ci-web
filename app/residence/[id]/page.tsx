@@ -112,6 +112,7 @@ export default async function ResidencePage({ params, searchParams }: { params: 
     sub: r.host.listingsCount > 1 ? `${r.host.listingsCount} logements sur Moboo.ci` : "Hôte Moboo.ci",
   } : null;
 
+  const look = (await getSiteSettings()).bookingWidget;
   return (
     <div className="container-page py-8 pb-28 lg:pb-8">
       <JsonLd
@@ -263,11 +264,13 @@ export default async function ResidencePage({ params, searchParams }: { params: 
         </div>
 
         {/* Carte de réservation avec calendrier (façon Airbnb) */}
-        <aside id="reserver" className="scroll-mt-24 lg:self-start">
+        {/* Colonne pleine hauteur : le bloc de réservation suit le défilement (façon Airbnb). */}
+        <aside id="reserver" className="min-w-0 scroll-mt-24">
           <ConversionSignals type="residence" id={r.id} initial={signals} checkIn={dates.checkIn} checkOut={dates.checkOut} className="mb-4" />
           <AsidePerson person={person} />
+          <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain lg:pb-2">
           {bookable.length > 0 ? (
-            <ResidenceBooking apartments={bookable} occupiedByApt={occupiedByApt} depositPercent={30} />
+            <ResidenceBooking apartments={bookable} occupiedByApt={occupiedByApt} depositPercent={30} look={look} />
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
               <div className="flex items-baseline gap-1">
@@ -285,6 +288,7 @@ export default async function ResidencePage({ params, searchParams }: { params: 
           <p className="mt-3 px-1 text-xs text-muted">
             L'adresse exacte est communiquée après le paiement de l'acompte.
           </p>
+          </div>
         </aside>
       </div>
 
@@ -297,7 +301,7 @@ export default async function ResidencePage({ params, searchParams }: { params: 
         </section>
       ) : null}
 
-      <MobileBookBar price={r.minNightlyPrice} unit="/ nuit" prefix={apts.length > 1 ? "dès" : undefined} />
+      <MobileBookBar price={r.minNightlyPrice} unit="/ nuit" prefix={apts.length > 1 ? "dès" : undefined} cta={look.buttonText || undefined} color={look.buttonColor} />
     </div>
   );
 }

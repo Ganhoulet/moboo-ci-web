@@ -3,6 +3,7 @@
 import { API_URL } from "./api";
 import { relayHeaders } from "./relay";
 import type { TrackingSettings } from "./tracking-config";
+import type { BookingLook } from "@/components/residence-booking";
 
 export interface SiteSettings {
   general: {
@@ -50,6 +51,7 @@ export interface SiteSettings {
   };
   submit: { maxPhotos: number; submitIntro: string };
   tracking: TrackingSettings;
+  bookingWidget: BookingLook;
   /** Formulaire de publication et onglets de l'espace membre (JSON, back-office → Formulaires). */
   forms: { listingForm: string; memberSpace: string };
   search: {
@@ -92,6 +94,7 @@ export interface MapSettings {
 
 /** Valeurs de secours (API injoignable) — les mêmes que le schéma de l'API. */
 export const DEFAULT_SETTINGS: SiteSettings = {
+  bookingWidget: { template: "classic", buttonText: "Réserver", buttonColor: "#ea580c", note: "Aucun paiement avant la confirmation de l’hôte" },
   tracking: {
     enabled: true, ga4Id: "", metaPixelId: "", tiktokPixelId: "",
     consentText: "Avec votre accord, nous utilisons des cookies de Google, Facebook et TikTok pour mesurer l’audience et mieux cibler nos publicités.",
