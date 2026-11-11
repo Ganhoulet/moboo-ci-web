@@ -12,8 +12,14 @@ import { formatXOF, type OccupiedRange } from "@/lib/api";
 export type BookableApt = { id: string; type: string; nightlyPrice: number };
 
 /** Modèle et textes du bloc de réservation (back-office → Réglages → Formulaire de réservation). */
-export interface BookingLook { template: "classic" | "availability" | "express"; buttonText: string; buttonColor: string; note: string }
-export const DEFAULT_LOOK: BookingLook = { template: "classic", buttonText: "Réserver", buttonColor: "#ea580c", note: "Aucun paiement avant la confirmation de l’hôte" };
+export interface BookingLook {
+  template: "classic" | "availability" | "express"; buttonText: string; buttonColor: string; note: string;
+  arrivalLabel: string; departureLabel: string; guestsLabel: string;
+}
+export const DEFAULT_LOOK: BookingLook = {
+  template: "classic", buttonText: "Réserver", buttonColor: "#ea580c", note: "Aucun paiement avant la confirmation de l’hôte",
+  arrivalLabel: "Arrivée", departureLabel: "Départ", guestsLabel: "Voyageurs",
+};
 
 const SAFE_COLOR = /^#[0-9a-f]{3}([0-9a-f]{3})?$/i;
 const WEEK = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
@@ -78,6 +84,7 @@ export function ResidenceBooking({
   const total = apt && sel.nights ? apt.nightlyPrice * sel.nights : 0;
   const deposit = Math.round((total * depositPercent) / 100);
   const ready = !!(aptId && free);
+  const guests = look.guestsLabel || DEFAULT_LOOK.guestsLabel;
   const pickDates = (s: CalendarSelection) => { setSel(s); if (look.template === "classic" && s.checkOut) setCalendarOpen(false); };
 
   if (state?.ok) {
@@ -128,7 +135,7 @@ export function ResidenceBooking({
     : null;
 
   const persons = (className = "input") => (
-    <input name="personsCount" type="number" min={1} defaultValue={1} className={className} aria-label="Voyageurs" />
+    <input name="personsCount" type="number" min={1} defaultValue={1} className={className} aria-label={guests} />
   );
 
   const contactFields = (
@@ -184,7 +191,7 @@ export function ResidenceBooking({
         </ul>
         {unavailable}
         {breakdown}
-        <label className="block text-sm font-semibold text-ink">Voyageurs{persons("input mt-1")}</label>
+        <label className="block text-sm font-semibold text-ink">{guests}{persons("input mt-1")}</label>
         {contactFields}
         {footer}
         <ul className="grid gap-1.5 text-xs text-slate-600">
@@ -200,7 +207,7 @@ export function ResidenceBooking({
           <div className="flex justify-between gap-3 text-slate-600"><span>À payer après l’accord de l’hôte</span><span className="whitespace-nowrap font-bold text-ink">{formatXOF(deposit)}</span></div>
           <p className="pt-1 text-xs text-slate-600">Wave · Orange Money · MTN MoMo · Moov Money</p>
         </div>
-      ) : null}<label className="block text-sm font-semibold text-ink">Voyageurs{persons("input mt-1")}</label>{contactFields}{footer}</>} />;
+      ) : null}<label className="block text-sm font-semibold text-ink">{guests}{persons("input mt-1")}</label>{contactFields}{footer}</>} />;
   } else {
     content = (
       <>
@@ -209,16 +216,16 @@ export function ResidenceBooking({
         <div className="overflow-hidden rounded-xl border border-slate-400">
           <button type="button" onClick={() => setCalendarOpen((o) => !o)} className="grid w-full grid-cols-2 text-left" aria-expanded={calendarOpen}>
             <span className="border-r border-slate-400 px-3 py-2.5">
-              <span className="block text-[11px] font-bold uppercase tracking-wide text-ink">Arrivée</span>
+              <span className="block text-[11px] font-bold uppercase tracking-wide text-ink">{look.arrivalLabel || DEFAULT_LOOK.arrivalLabel}</span>
               <span className={"block text-sm " + (sel.checkIn ? "text-ink" : "text-slate-500")}>{shortDate(sel.checkIn) ?? "Ajouter une date"}</span>
             </span>
             <span className="px-3 py-2.5">
-              <span className="block text-[11px] font-bold uppercase tracking-wide text-ink">Départ</span>
+              <span className="block text-[11px] font-bold uppercase tracking-wide text-ink">{look.departureLabel || DEFAULT_LOOK.departureLabel}</span>
               <span className={"block text-sm " + (sel.checkOut ? "text-ink" : "text-slate-500")}>{shortDate(sel.checkOut) ?? "Ajouter une date"}</span>
             </span>
           </button>
           <label className="flex items-center justify-between gap-3 border-t border-slate-400 px-3 py-2">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-ink">Voyageurs</span>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-ink">{guests}</span>
             {persons("w-20 rounded-md border border-slate-300 px-2 py-1 text-right text-sm")}
           </label>
         </div>

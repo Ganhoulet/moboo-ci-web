@@ -94,7 +94,10 @@ export interface MapSettings {
 
 /** Valeurs de secours (API injoignable) — les mêmes que le schéma de l'API. */
 export const DEFAULT_SETTINGS: SiteSettings = {
-  bookingWidget: { template: "classic", buttonText: "Réserver", buttonColor: "#ea580c", note: "Aucun paiement avant la confirmation de l’hôte" },
+  bookingWidget: {
+    template: "classic", buttonText: "Réserver", buttonColor: "#ea580c", note: "Aucun paiement avant la confirmation de l’hôte",
+    arrivalLabel: "Arrivée", departureLabel: "Départ", guestsLabel: "Voyageurs",
+  },
   tracking: {
     enabled: true, ga4Id: "", metaPixelId: "", tiktokPixelId: "",
     consentText: "Avec votre accord, nous utilisons des cookies de Google, Facebook et TikTok pour mesurer l’audience et mieux cibler nos publicités.",
