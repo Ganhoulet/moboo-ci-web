@@ -135,6 +135,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ...[
       ["/admin/immobilier/nouvelle", "Nouvelle annonce"],
       ["/admin/immobilier/courte-duree", "Courte durée à classer"],
+      ["/admin/immobilier/proprietaires", "Propriétaires des résidences et espaces"],
       ["/admin/immobilier/listes/type", "Types de bien"],
       ["/admin/immobilier/listes/status", "Statuts"],
       ["/admin/immobilier/listes/feature", "Équipements"],

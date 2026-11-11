@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ListingEditor } from "@/components/listing-editor";
 import { AdminListingExtras } from "@/components/admin-listing-extras";
+import { OwnerTransfer } from "@/components/backoffice/owner-transfer";
 import { getSiteSettings } from "@/lib/settings";
 import { editorLists, getTaxonomies } from "@/lib/taxonomies";
 import { draftFromListing } from "@/lib/listing-draft";
@@ -21,9 +22,11 @@ export default async function AdminEditListing({ params, searchParams }: { param
         </div>
         <a href={`/annonce/${l.id}`} target="_blank" rel="noopener" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50">Voir sur le site ↗</a>
       </div>
-      {searchParams.creee ? <p className="rounded-md bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800">Annonce créée. Réglez ci-dessous sa mise en avant et son annonceur.</p> : null}
+      {searchParams.creee ? <p className="rounded-md bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800">Annonce créée. Réglez ci-dessous son propriétaire et sa mise en avant.</p> : null}
+      <OwnerTransfer kind="listing" id={l.id} />
       <AdminListingExtras
         id={l.id}
+        ownerField={false}
         labels={tax.label}
         initial={{
           status: l.status, featured: !!l.featured, labels: Array.isArray(l.labels) ? l.labels : [],

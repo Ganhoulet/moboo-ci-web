@@ -16,6 +16,7 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/moderation/reglages", ["moderation"]],
   ["/admin/moderation", ["moderation"]],
   ["/admin/immobilier/nouvelle", ["listings"]],
+  ["/admin/immobilier/proprietaires", ["realestate"]],
   ["/admin/immobilier/listes", ["realestate"]],
   ["/admin/immobilier/equipe", ["realestate", "users.view"]],
   ["/admin/immobilier/partenaires", ["realestate"]],

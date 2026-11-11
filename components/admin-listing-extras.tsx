@@ -11,8 +11,10 @@ const STATUSES = [
 const day = (d: Date) => d.toISOString().slice(0, 10);
 
 /** Réglages réservés au back-office : statut, vedette, étiquettes, expiration, annonceur. */
-export function AdminListingExtras({ id, initial, labels }: {
+export function AdminListingExtras({ id, initial, labels, ownerField = true }: {
   id: string;
+  /** false : l'annonceur se change avec « Changer de propriétaire » (motif et journal). */
+  ownerField?: boolean;
   initial: { status: string; featured: boolean; labels: string[]; expiresAt: string | null; ownerPhone: string | null; ownerName: string | null };
   labels: { slug: string; label: string; color: string | null }[];
 }) {
@@ -27,7 +29,7 @@ export function AdminListingExtras({ id, initial, labels }: {
     const r = await saveAdminListingAction(id, {
       status: v.status, featured: v.featured, labels: v.labels,
       expiresAt: v.expiresAt ? new Date(`${v.expiresAt}T23:59:59`).toISOString() : null,
-      ownerPhone: v.ownerPhone.trim(),
+      ...(ownerField ? { ownerPhone: v.ownerPhone.trim() } : {}),
     });
     setMsg(r.ok ? { ok: true, text: "Réglages de l’annonce enregistrés." } : { ok: false, text: r.error ?? "Enregistrement impossible." });
     if (r.ok) router.refresh();
@@ -80,11 +82,11 @@ export function AdminListingExtras({ id, initial, labels }: {
           </div>
           <p className="mt-1 text-xs text-muted">Après cette date, l’annonce disparaît du site (elle reste ici).</p>
         </div>
-        <div>
+        {ownerField ? <div>
           <span className={label}>Annonceur (compte du site)</span>
           <input className="input py-2" type="tel" placeholder="Numéro du compte, ex. 07 07 12 34 56" value={v.ownerPhone} onChange={(e) => set({ ownerPhone: e.target.value })} />
           <p className="mt-1 text-xs text-muted">{initial.ownerName ? `Actuellement : ${initial.ownerName}. ` : "Aucun compte rattaché. "}Le compte retrouve l’annonce, ses statistiques et ses messages. Vide : détacher.</p>
-        </div>
+        </div> : null}
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <button type="button" onClick={save} disabled={pending} className="rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-50">
