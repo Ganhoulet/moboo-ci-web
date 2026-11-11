@@ -7,18 +7,27 @@ import "server-only";
  */
 const SHORT = /^https?:\/\/(?:vm\.tiktok\.com|vt\.tiktok\.com|(?:www\.|m\.)?tiktok\.com\/t)\/[\w-]+/i;
 
+const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148";
+const videoIdIn = (loc: string) => loc.match(/\/(?:video|v)\/(\d{8,})/)?.[1] ?? null;
+
 export async function canonicalVideoUrl(url: string | null | undefined): Promise<string | null> {
   if (!url) return null;
   if (!SHORT.test(url)) return url;
   try {
     const res = await fetch(url, {
       redirect: "manual",
-      headers: { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148" },
+      headers: { "User-Agent": UA },
       next: { revalidate: 86400 },
       signal: AbortSignal.timeout(4000),
     });
-    const loc = res.headers.get("location") || "";
-    const id = loc.match(/\/video\/(\d{8,})/)?.[1];
+    let loc = res.headers.get("location") || "";
+    let id = videoIdIn(loc);
+    // Certains liens passent par une 2e redirection avant l'adresse de la vidéo.
+    if (!id && /^https?:\/\//.test(loc)) {
+      const next = await fetch(loc, { redirect: "manual", headers: { "User-Agent": UA }, next: { revalidate: 86400 }, signal: AbortSignal.timeout(4000) });
+      loc = next.headers.get("location") || "";
+      id = videoIdIn(loc);
+    }
     return id ? `https://www.tiktok.com/@moboo/video/${id}` : url;
   } catch {
     return url;

@@ -39,6 +39,7 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/centre-marketing/reglages", ["settings"]],
   ["/admin/centre-marketing/canaux", ["settings"]],
   ["/admin/centre-marketing/pixels", ["settings"]],
+  ["/admin/centre-marketing/messages-voyageur", ["settings"]],
   ["/admin/centre-marketing", ["marketing"]],
   ["/admin/publicite/services/reglages", ["settings"]],
   ["/admin/publicite/bourse/reglages", ["settings"]],

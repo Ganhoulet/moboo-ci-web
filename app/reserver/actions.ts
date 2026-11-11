@@ -28,6 +28,7 @@ export async function submitReservation(
     checkIn: String(formData.get("checkIn") || ""),
     checkOut: String(formData.get("checkOut") || "") || undefined,
     personsCount: Number(formData.get("personsCount") || 1),
+    guestEmail: String(formData.get("guestEmail") || "").trim().slice(0, 160) || undefined,
   };
 
   if (!payload.apartmentId || !payload.guestName || !payload.guestPhone || !payload.checkIn) {
@@ -69,6 +70,7 @@ export async function submitEventReservation(
     nbInvites: Number(formData.get("nbInvites") || 1),
     typeEvenement: String(formData.get("typeEvenement") || "") || undefined,
     nomEvenement: String(formData.get("nomEvenement") || "") || undefined,
+    guestEmail: String(formData.get("guestEmail") || "").trim().slice(0, 160) || undefined,
   };
   if (!espaceId || !payload.guestName || !payload.guestPhone || !payload.dateDebut || !payload.dateFin) {
     return { ok: false, message: "Merci de remplir les dates, vos nom et téléphone." };

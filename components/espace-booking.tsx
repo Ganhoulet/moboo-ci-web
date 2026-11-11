@@ -75,6 +75,7 @@ export function EspaceBooking({
         <input name="nbInvites" type="number" min={1} defaultValue={50} placeholder="Nombre d'invités" className="input" aria-label="Nombre d'invités" />
         <input ref={contact.name} name="guestName" required placeholder="Votre nom" className="input" />
         <input ref={contact.phone} name="guestPhone" required inputMode="tel" placeholder="Téléphone" className="input" />
+        <input name="guestEmail" type="email" inputMode="email" autoComplete="email" placeholder="E-mail (facultatif, pour la confirmation)" className="input" aria-label="E-mail pour recevoir la confirmation" />
       </div>
 
       {state && !state.ok && state.loginRequired ? <LoginToBook message={state.message} /> : null}

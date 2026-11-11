@@ -48,6 +48,10 @@ export function BookingForm({ apartments }: { apartments: Apt[] }) {
         <input name="guestPhone" required inputMode="tel" placeholder="07 00 00 00 00" className="input" />
       </Field>
 
+      <Field label="E-mail (facultatif, pour recevoir la confirmation)">
+        <input name="guestEmail" type="email" inputMode="email" autoComplete="email" placeholder="vous@exemple.com" className="input" />
+      </Field>
+
       {state && !state.ok && state.loginRequired ? <LoginToBook message={state.message} /> : null}
       {state && !state.ok && !state.loginRequired ? (
         <p className="text-sm font-medium text-red-600">{state.message}</p>

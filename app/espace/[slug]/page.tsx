@@ -17,6 +17,7 @@ import {
   KeyFacts, Section, displayName, type Fact,
 } from "@/components/detail";
 import { getSiteSettings } from "@/lib/settings";
+import { canonicalVideoUrl } from "@/lib/video-resolve";
 
 export const revalidate = 60;
 
@@ -124,7 +125,7 @@ export default async function EspacePage({ params }: { params: { slug: string } 
       <DetailHero
         bannerStyle={(await getSiteSettings()).listing.bannerStyle}
         photos={photos}
-        videoUrl={e.videoUrl}
+        videoUrl={await canonicalVideoUrl(e.videoUrl)}
         backHref="/annonces?transaction=event"
         breadcrumbs={[
           { label: "Accueil", href: "/" },

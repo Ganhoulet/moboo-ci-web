@@ -29,7 +29,7 @@ export function youtubeId(url?: string | null): string | null {
 }
 
 function tiktokId(url: string): string | null {
-  const m = url.match(/tiktok\.com\/(?:.*\/video\/|embed\/(?:v2\/)?|v\/)(\d{8,})/);
+  const m = url.match(/tiktok\.com\/(?:.*\/video\/|embed\/(?:v2\/)?|player\/v1\/|v\/)(\d{8,})/);
   return m ? m[1] : null;
 }
 
@@ -51,7 +51,9 @@ export function videoMedia(url: string | null | undefined, fallbackPoster: strin
   }
   const tt = tiktokId(url);
   if (tt) {
-    return { kind: "video", player: "iframe", src: `https://www.tiktok.com/embed/v2/${tt}`, url, poster: fallbackPoster, vertical: true };
+    // Lecteur officiel « player/v1 » : la vidéo se lit dans l'annonce, sans bouton qui renvoie vers TikTok.
+    const base = `https://www.tiktok.com/player/v1/${tt}?music_info=0&description=0&rel=0&native_context_menu=0&closed_caption=0`;
+    return { kind: "video", player: "iframe", src: `${base}&autoplay=1`, mutedSrc: `${base}&autoplay=1&loop=1&controls=0`, url, poster: fallbackPoster, vertical: true };
   }
   // Vimeo : vimeo.com/123, vimeo.com/channels/x/123, player.vimeo.com/video/123.
   const vm = url.match(/vimeo\.com\/(?:.*\/)?(?:video\/)?(\d{6,})/);

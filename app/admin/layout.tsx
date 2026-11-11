@@ -121,6 +121,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/centre-marketing/informations", label: "Informations ciblées", icon: "megaphone", child: true, group: "centre" },
     { href: "/admin/centre-marketing/relances", label: "Relance des agents", icon: "megaphone", child: true, group: "centre" },
     { href: "/admin/centre-marketing/parcours", label: "Parcours de conversion", icon: "megaphone", child: true, group: "centre" },
+    { href: "/admin/centre-marketing/messages-voyageur", label: "Messages au voyageur", icon: "megaphone", child: true, group: "centre" },
     { href: "/admin/centre-marketing/pixels", label: "Pixels et mesure", icon: "megaphone", child: true, group: "centre" },
     { href: "/admin/centre-marketing/canaux", label: "Canaux d’envoi (SMS, WhatsApp)", icon: "megaphone", child: true, group: "centre" },
     { href: "/admin/centre-marketing/reglages", label: "Réglages", icon: "megaphone", child: true, group: "centre" },

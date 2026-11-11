@@ -18,6 +18,7 @@ import {
 } from "@/components/detail";
 import { getSiteSettings } from "@/lib/settings";
 import { img } from "@/lib/img";
+import { canonicalVideoUrl } from "@/lib/video-resolve";
 
 export const revalidate = 60;
 
@@ -134,7 +135,7 @@ export default async function ResidencePage({ params, searchParams }: { params: 
       <DetailHero
         bannerStyle={(await getSiteSettings()).listing.bannerStyle}
         photos={photos}
-        videoUrl={r.videoUrl}
+        videoUrl={await canonicalVideoUrl(r.videoUrl)}
         backHref="/annonces?transaction=furnished"
         breadcrumbs={[
           { label: "Accueil", href: "/" },

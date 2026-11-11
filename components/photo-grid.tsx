@@ -187,14 +187,17 @@ export function MobileGallery({
                   </button>
                 )
               ) : (
-                <button type="button" className="block h-full w-full" onClick={() => setOpen(i)} aria-label={`Agrandir la photo ${i + 1}`}>
+                <button type="button" className="relative block h-full w-full overflow-hidden bg-slate-900" onClick={() => setOpen(i)} aria-label={`Agrandir la photo ${i + 1}`}>
+                  {/* Photo entière (verticale ou horizontale), sur le même cliché flouté en fond. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img(m.src, 320)} alt="" aria-hidden loading={i < 2 ? "eager" : "lazy"} decoding="async" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl" />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     {...imgProps(m.src, { width: 960, sizes: "100vw" })}
                     alt={i === 0 ? alt : ""}
                     loading={i < 2 ? "eager" : "lazy"}
                     decoding="async"
-                    className="h-full w-full object-cover"
+                    className="relative h-full w-full object-contain"
                   />
                 </button>
               )}
@@ -525,7 +528,7 @@ export function Lightbox({
         </button>
       </div>
 
-      <div className="relative flex flex-1 items-center justify-center px-2 sm:px-16">
+      <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-2 sm:px-16">
         {m.kind === "video" ? (
           m.player === "link" ? (
             <a href={m.url} target="_blank" rel="noopener noreferrer" className="btn-primary bg-accent-600 hover:bg-accent-700">
@@ -538,7 +541,7 @@ export function Lightbox({
           )
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img key={m.src} {...imgProps(m.src, { width: 1600, sizes: "100vw" })} alt={`${alt} — photo ${i + 1}`} decoding="async" className="max-h-full max-w-full object-contain" />
+          <img key={m.src} {...imgProps(m.src, { width: 1600, sizes: "100vw" })} alt={`${alt} — photo ${i + 1}`} decoding="async" className="max-h-[calc(100dvh-8rem)] max-w-full object-contain" />
         )}
         {n > 1 && (
           <>
