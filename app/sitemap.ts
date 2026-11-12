@@ -45,6 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const stays = [
     { url: `${BASE}/prix-nuitee`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
     { url: `${BASE}/meuble-pres-de`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 },
+    { url: `${BASE}/garantie-arrivee`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.5 },
     ...((await getLandmarks()) ?? []).filter((l) => l.residences > 0).map((l) => ({ url: `${BASE}/meuble-pres-de/${l.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 })),
   ];
   return [...main, ...seo, ...prices, ...stays, ...help, ...pros, ...agents, ...profiles, ...listings];

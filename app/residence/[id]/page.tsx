@@ -19,7 +19,7 @@ import {
 import { getSiteSettings } from "@/lib/settings";
 import { img } from "@/lib/img";
 import { canonicalVideoUrl } from "@/lib/video-resolve";
-import { getResidenceReviews } from "@/lib/stays";
+import { getResidenceCheck, getResidenceReviews } from "@/lib/stays";
 
 export const revalidate = 60;
 
@@ -54,9 +54,10 @@ export default async function ResidencePage({ params, searchParams }: { params: 
     id: a.id, type: apartmentLabel(a.type), nightlyPrice: num(a.nightlyPrice),
   }));
   const occupiedByApt: Record<string, OccupiedRange[]> = {};
-  const [similar, reviews] = await Promise.all([
+  const [similar, reviews, check] = await Promise.all([
     similarResidences({ commune: r.commune, city: r.city, excludeId: r.id }).catch(() => []),
     getResidenceReviews(r.id),
+    getResidenceCheck(r.id),
     ...bookable.map(async (a) => { occupiedByApt[a.id] = await getApartmentOccupied(a.id); }),
   ]);
 
@@ -127,6 +128,8 @@ export default async function ResidencePage({ params, searchParams }: { params: 
           image: photos.slice(0, 5),
           address: { "@type": "PostalAddress", addressLocality: r.commune ?? r.city, addressRegion: r.city, addressCountry: "CI" },
           priceRange: r.minNightlyPrice ? `${formatXOF(r.minNightlyPrice)} / nuit` : undefined,
+          // Confort constaté sur place par un agent Moboo.
+          ...(check?.comfort.length ? { amenityFeature: check.comfort.map((c) => ({ "@type": "LocationFeatureSpecification", name: c.label, value: c.good })) } : {}),
           // Avis de séjours vérifiés (check-in réel) : étoiles dans Google.
           ...(reviews?.count && reviews.rating ? {
             aggregateRating: { "@type": "AggregateRating", ratingValue: reviews.rating, reviewCount: reviews.count, bestRating: 5, worstRating: 1 },
@@ -260,6 +263,26 @@ export default async function ResidencePage({ params, searchParams }: { params: 
             </Section>
           ) : null}
 
+          {check ? (
+            <Section title="Vérifié sur place par Moboo" id="verifie">
+              <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200">
+                <p className="text-sm text-ink">
+                  <span className="mr-2 rounded-full bg-ink px-2.5 py-1 text-xs font-bold text-white">✓ Vérifié sur place</span>
+                  Visite de {check.agent}, agent Moboo, le {new Date(check.visitedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}.
+                  {check.conformity === "conforme" ? " Logement conforme aux photos." : " Quelques écarts avec l’annonce, précisés ci-dessous."}
+                  {check.gpsChecked ? " Position contrôlée sur place." : ""}
+                </p>
+                {check.comfort.length ? (
+                  <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {check.comfort.map((c) => <li key={c.key} className="flex items-center gap-2 text-sm text-ink"><span className={c.good ? "text-emerald-600" : "text-amber-600"}>{c.good ? "✓" : "!"}</span>{c.label}</li>)}
+                  </ul>
+                ) : null}
+                {check.notes ? <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-muted">{check.notes}</p> : null}
+                {check.videoUrl ? <a href={check.videoUrl} target="_blank" rel="noopener" className="mt-3 inline-block text-sm font-semibold text-ink underline">Voir la vidéo de la visite</a> : null}
+              </div>
+            </Section>
+          ) : null}
+
           {reviews?.count ? (
             <Section title={`Avis des voyageurs · ★ ${String(reviews.rating).replace(".", ",")} (${reviews.count})`} id="avis">
               <p className="text-sm text-muted">Uniquement des séjours vérifiés : seuls les voyageurs dont l’arrivée a été enregistrée peuvent noter.</p>
@@ -282,6 +305,10 @@ export default async function ResidencePage({ params, searchParams }: { params: 
               </ul>
             </Section>
           ) : null}
+
+          <Section title="Garantie d’arrivée Moboo" id="garantie">
+            <p className="text-sm text-ink">Votre acompte reste chez Moboo jusqu’à votre arrivée. Logement non conforme, accès impossible, eau ou électricité en panne : signalez-le depuis « Mes réservations », le versement à l’hôte est gelé et notre équipe tranche (remboursement total ou partiel). <a href="/garantie-arrivee" className="font-semibold underline">Comment ça marche</a></p>
+          </Section>
 
           <Section title="Comment se passe la réservation">
             <BookingSteps

@@ -14,6 +14,12 @@ export function StayCardView({ s }: { s: StayCard }) {
             {s.freeTonight} libre{s.freeTonight > 1 ? "s" : ""} ce soir
           </span>
         ) : null}
+        {s.verified || s.generator ? (
+          <span className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
+            {s.verified ? <span className="rounded-full bg-ink px-2.5 py-1 text-xs font-bold text-white">✓ Vérifié sur place</span> : null}
+            {s.generator ? <span className="rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink">⚡ Groupe électrogène</span> : null}
+          </span>
+        ) : null}
         {s.distanceKm != null ? (
           <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink">à {String(s.distanceKm).replace(".", ",")} km</span>
         ) : null}

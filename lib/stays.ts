@@ -10,7 +10,7 @@ import { API_URL } from "./api";
 export interface NightStats { count: number; min: number; median: number; p25: number; p75: number; common?: number[]; commonCount?: number }
 export interface StayCard {
   id: string; name: string; href: string; quartier: string | null; commune: string | null; city: string; photo: string | null;
-  fromPrice: number | null; apartments: number; tracked?: boolean; freeTonight: number; freeTonightFrom: number | null;
+  fromPrice: number | null; apartments: number; tracked?: boolean; verified?: boolean; generator?: boolean; freeTonight: number; freeTonightFrom: number | null;
   distanceKm?: number; rating?: number; reviews?: number;
 }
 /** tracked = logements dont le calendrier est tenu dans Moboo Resi (seule base fiable du « libres ce soir »). */
@@ -50,6 +50,11 @@ export const getLandmarks = () => get<LandmarkRow[]>("/landmarks/all", 600);
 export const getNearStays = (slug: string) => get<NearStays>(`/near/${encodeURIComponent(slug)}`);
 export const getPriceIndex = () => get<PriceIndex>("/price-index/all", 1800);
 export const getResidenceReviews = (id: string) => get<ResidenceReviews>(`/residence/${encodeURIComponent(id)}/reviews`);
+export interface StayCheck {
+  verified: true; visitedAt: string; agent: string; videoUrl: string | null; photos: string[]; gpsChecked: boolean;
+  conformity: "conforme" | "ecarts"; notes: string | null; comfort: { key: string; label: string; good: boolean }[];
+}
+export const getResidenceCheck = (id: string) => get<StayCheck | null>(`/residence/${encodeURIComponent(id)}/check`);
 export const getReviewForm = (token: string) => get<ReviewForm>(`/review/${encodeURIComponent(token)}`, 0);
 export const getGbpKit = (token: string) => get<GbpKit>(`/gbp-kit/${encodeURIComponent(token)}`, 0);
 
