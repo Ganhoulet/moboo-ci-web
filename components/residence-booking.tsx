@@ -1,5 +1,6 @@
 "use client";
 
+import { BeneficiaryFields } from "@/components/beneficiary-fields";
 import { useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitReservation, type ReserveState } from "@/app/reserver/actions";
@@ -143,6 +144,7 @@ export function ResidenceBooking({
       <input ref={contact.name} name="guestName" required placeholder="Votre nom" className="input" aria-label="Votre nom" />
       <input ref={contact.phone} name="guestPhone" required inputMode="tel" placeholder="Téléphone (mobile money)" className="input" aria-label="Téléphone" />
       <input name="guestEmail" type="email" inputMode="email" autoComplete="email" placeholder="E-mail (facultatif, pour la confirmation)" className="input" aria-label="E-mail pour recevoir la confirmation" />
+      <BeneficiaryFields />
     </div>
   );
 

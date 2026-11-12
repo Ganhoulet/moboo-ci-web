@@ -29,7 +29,11 @@ export async function submitReservation(
     checkOut: String(formData.get("checkOut") || "") || undefined,
     personsCount: Number(formData.get("personsCount") || 1),
     guestEmail: String(formData.get("guestEmail") || "").trim().slice(0, 160) || undefined,
+    // Réserver pour un proche (facultatif) : vérifié par le moteur.
+    beneficiaryName: String(formData.get("beneficiaryName") || "").trim().slice(0, 80) || undefined,
+    beneficiaryPhone: String(formData.get("beneficiaryPhone") || "").trim().slice(0, 30) || undefined,
   };
+  const forSomeone = payload.beneficiaryName ? ` Dès l'acompte payé, ${payload.beneficiaryName} recevra son code d'arrivée, l'adresse et l'itinéraire sur son téléphone.` : "";
 
   if (!payload.apartmentId || !payload.guestName || !payload.guestPhone || !payload.checkIn) {
     return { ok: false, message: "Merci de remplir le logement, vos nom et téléphone, et la date d'arrivée." };
@@ -47,9 +51,9 @@ export async function submitReservation(
       ok: true,
       bookingId: data.bookingId,
       message:
-        getSession()
+        (getSession()
           ? "Demande envoyée ! L'hôte va confirmer la disponibilité : vous serez prévenu dans Mon espace, puis vous payez l'acompte depuis Mon espace → Mes réservations."
-          : "Demande envoyée ! L'hôte va confirmer la disponibilité — vous recevrez alors sur ce numéro, par WhatsApp ou SMS, le lien pour payer l'acompte. Vous pouvez aussi la suivre dans Mon espace → Mes réservations (connexion avec ce numéro).",
+          : "Demande envoyée ! L'hôte va confirmer la disponibilité — vous recevrez alors sur ce numéro, par WhatsApp ou SMS, le lien pour payer l'acompte. Vous pouvez aussi la suivre dans Mon espace → Mes réservations (connexion avec ce numéro).") + forSomeone,
     };
   } catch {
     return { ok: false, message: "Service indisponible pour le moment. Réessayez plus tard." };
