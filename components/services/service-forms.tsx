@@ -6,7 +6,8 @@ import {
   edlRequestAction, foncierEstimateAction, loyerEstimateAction, serviceLeadAction,
   solvencyConfirmAction, solvencyRequestAction, solvencyResendAction,
 } from "@/app/services-actions";
-import type { ServiceKey, ZoneOption } from "@/lib/site-services";
+import type { PageField, ServiceKey, ZoneOption } from "@/lib/site-services";
+import { ExtraField } from "./mission-form";
 import { otpDigits } from "@/lib/otp";
 
 const input = "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100";
@@ -67,7 +68,8 @@ function CallbackForm({ service, data, title }: { service: ServiceKey; data: Rec
 // ─── État des lieux ─────────────────────────────────────────────────────────
 const PROP_TYPES = ["Appartement", "Studio", "Maison", "Villa", "Duplex", "Bureau", "Magasin", "Entrepôt", "Autre"];
 
-export function EdlForm() {
+export function EdlForm({ extraFields = [], submitText, successText }: { extraFields?: PageField[]; submitText?: string; successText?: string } = {}) {
+  const [d, setD] = useState<Record<string, string>>({});
   const { f, set } = useForm({ full_name: "", phone: "", email: "", prop_type: "Appartement", commune: "", zone: "", city: "Abidjan", purpose: "entree", role: "locataire", pieces: "", date_souhaitee: "", message: "", website: "" });
   const [done, setDone] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -77,12 +79,12 @@ export function EdlForm() {
       <div className="rounded-2xl bg-emerald-50 p-8 text-center">
         <p className="text-4xl">✅</p>
         <p className="mt-3 font-display text-xl font-bold text-ink">Demande n° {done} enregistrée</p>
-        <p className="mt-1 text-slate-600">Un agent Moboo vous appelle au {f.phone} pour fixer le rendez-vous.</p>
+        <p className="mt-1 text-slate-600">{successText || `Un agent Moboo vous appelle au ${f.phone} pour fixer le rendez-vous.`}</p>
       </div>
     );
   }
   return (
-    <form onSubmit={(e) => { e.preventDefault(); if (f.website) return; start(async () => { const r = await edlRequestAction(f); if (r.ok) setDone(Number(r.data?.id) || 0); else setErr(r.error); }); }}
+    <form onSubmit={(e) => { e.preventDefault(); if (f.website) return; start(async () => { const r = await edlRequestAction({ ...f, details: d }); if (r.ok) setDone(Number(r.data?.id) || 0); else setErr(r.error); }); }}
       className="grid gap-4 sm:grid-cols-2">
       <div><label className={label} htmlFor="edl-name">Nom et prénom *</label><input id="edl-name" required value={f.full_name} onChange={set("full_name")} className={input} autoComplete="name" /></div>
       <div><label className={label} htmlFor="edl-phone">Téléphone (WhatsApp) *</label><input id="edl-phone" required value={f.phone} onChange={set("phone")} inputMode="tel" className={input} autoComplete="tel" /></div>
@@ -101,13 +103,14 @@ export function EdlForm() {
       </div>
       <div><label className={label} htmlFor="edl-pieces">Nombre de pièces</label><input id="edl-pieces" value={f.pieces} onChange={set("pieces")} inputMode="numeric" className={input} /></div>
       <div><label className={label} htmlFor="edl-date">Date souhaitée</label><input id="edl-date" type="date" value={f.date_souhaitee} onChange={set("date_souhaitee")} className={input} /></div>
+      {extraFields.map((x) => <ExtraField key={x.key} id={`edl-${x.key}`} field={x} value={d[x.key] ?? ""} onChange={(e) => setD((o) => ({ ...o, [x.key]: e.target.value }))} />)}
       <div><label className={label} htmlFor="edl-email">E-mail (facultatif)</label><input id="edl-email" type="email" value={f.email} onChange={set("email")} className={input} autoComplete="email" /></div>
       <div className="sm:col-span-2"><label className={label} htmlFor="edl-msg">Précisions (facultatif)</label><textarea id="edl-msg" rows={3} value={f.message} onChange={set("message")} className={input} placeholder="Adresse, accès, meublé ou non…" /></div>
       <input value={f.website} onChange={set("website")} tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
       <Err text={err} />
       <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
         <p className="text-xs text-muted">Vos coordonnées servent uniquement à organiser l’état des lieux.</p>
-        <button type="submit" disabled={pending} className={btn}>{pending ? "Envoi…" : "Demander un état des lieux"}</button>
+        <button type="submit" disabled={pending} className={btn}>{pending ? "Envoi…" : submitText || "Demander un état des lieux"}</button>
       </div>
     </form>
   );

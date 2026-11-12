@@ -157,3 +157,22 @@ export async function leadSetStatus(id: string, status: string) {
 export async function solvencyCode(ref: string) {
   return call<{ code: string; ttlMin: number; tenantName: string; tenantPhone: string }>(`/solvabilite/${encodeURIComponent(ref)}/code`, "POST", {});
 }
+
+/** Facture d'une mission ou d'un état des lieux : lien de paiement envoyé au client (e-mail, SMS). */
+export async function billService(target: "mission" | "edl", id: string, amount: number, label: string, sms: boolean) {
+  const r = await call<{ number: string; amount: number; payUrl: string; whatsappUrl: string; emailed: boolean }>(`/${target === "edl" ? "edl" : "missions"}/${encodeURIComponent(id)}/bill`, "POST", { amount, label, sms });
+  revalidatePath(target === "edl" ? "/admin/services/etats-des-lieux" : "/admin/services/missions");
+  return r;
+}
+
+/** Page détaillée d'un service : remplace seulement cette page dans les réglages à jour. */
+export async function saveServicePage(key: string, page: unknown) {
+  const cur = await call<ServicesConfig>("/config");
+  if (!cur.ok || !cur.data) return { ok: false, error: cur.error ?? "Réglages indisponibles." };
+  const cfg = cur.data;
+  const next = { ...cfg, site: { ...cfg.site, pages: { ...(cfg.site.pages ?? {}), [key]: page } } } as ServicesConfig;
+  const r = await call<ServicesConfig>("/config", "PUT", next);
+  revalidatePath("/admin/services", "layout");
+  revalidateTag(SITE_SERVICES_TAG);
+  return r.ok ? { ok: true, page: r.data?.site.pages?.[key] } : { ok: false, error: r.error };
+}

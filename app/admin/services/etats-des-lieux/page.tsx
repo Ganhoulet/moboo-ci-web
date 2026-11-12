@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServices } from "../actions";
 import { fcfa, type ServicesConfig } from "@/lib/moboo-services";
 import { EdlActions } from "@/components/backoffice/edl-actions";
+import { ServiceBill } from "@/components/backoffice/service-bill";
 
 export const dynamic = "force-dynamic";
 
@@ -44,14 +45,14 @@ export default async function EdlAdmin({ searchParams }: { searchParams: { statu
             {d.items.map((r: any) => (
               <tr key={r.uuid} className="border-t border-slate-100 align-top">
                 <td className="p-3 text-xs text-muted">#{r.id}<br />{r.created_at}<br /><span className="rounded bg-slate-100 px-1.5 font-semibold">{r.source === "site" ? "Site" : "Appli"}</span></td>
-                <td className="p-3"><strong>{r.full_name}</strong><br /><span className="text-xs">{r.phone}</span><br /><span className="text-xs text-muted">{r.role === "proprietaire" ? "Propriétaire" : "Locataire"} · {r.purpose === "sortie" ? "sortie" : "entrée"}</span>{r.date_souhaitee ? <><br /><span className="text-xs">📅 {r.date_souhaitee}</span></> : null}{r.message ? <p className="mt-1 max-w-[220px] text-xs text-slate-600">« {r.message} »</p> : null}</td>
+                <td className="p-3"><strong>{r.full_name}</strong><br /><span className="text-xs">{r.phone}</span><br /><span className="text-xs text-muted">{r.role === "proprietaire" ? "Propriétaire" : "Locataire"} · {r.purpose === "sortie" ? "sortie" : "entrée"}</span>{r.date_souhaitee ? <><br /><span className="text-xs">📅 {r.date_souhaitee}</span></> : null}{r.message ? <p className="mt-1 max-w-[260px] whitespace-pre-line text-xs text-slate-600">« {r.message} »</p> : null}</td>
                 <td className="p-3">{r.prop_type || "—"}{r.pieces ? ` · ${r.pieces} p.` : ""}</td>
                 <td className="p-3">{r.zone}<br /><span className="text-xs text-muted">{r.targets} agent(s) ciblé(s)</span></td>
                 <td className="p-3"><span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold">{LABEL[r.status] ?? r.status}</span></td>
                 <td className="p-3">{r.agent || "—"}{r.note ? <p className="mt-1 max-w-[180px] text-xs text-muted">Note : {r.note}</p> : null}</td>
                 <td className="p-3">{r.agreed_price ? fcfa(r.agreed_price) : "—"}</td>
                 <td className="p-3 text-xs">{r.seq_held ? fcfa(r.seq_held) : "—"}{r.commission ? <><br />Moboo : {fcfa(r.commission)}</> : null}</td>
-                <td className="p-3"><EdlActions r={r} mode={mode} /></td>
+                <td className="p-3"><EdlActions r={r} mode={mode} /><ServiceBill target="edl" id={r.uuid} name={r.full_name} phone={r.phone} title={`État des lieux — n° ${r.id}`} bills={r.bills ?? []} suggested={r.agreed_price || undefined} /></td>
               </tr>
             ))}
             {!d.items.length ? <tr><td colSpan={9} className="p-6 text-center text-muted">Aucune demande.</td></tr> : null}

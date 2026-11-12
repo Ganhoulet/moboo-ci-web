@@ -12,6 +12,7 @@ const TABS: [string, string][] = [
   ["/admin/services/estimations", "Estimations"],
   ["/admin/services/cartes", "Cartes pro"],
   ["/admin/services/application", "Configuration des applications"],
+  ["/admin/services/pages", "Pages des services"],
   ["/admin/services/reglages", "Réglages"],
 ];
 

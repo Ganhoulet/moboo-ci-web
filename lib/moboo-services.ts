@@ -1,6 +1,8 @@
 // Services Moboo (ex-extensions WordPress) : types partagés par le back-office.
 // Miroir de l'API : src/modules/moboo-services/services.config.ts.
 
+import type { ServicePage } from "./site-services";
+
 export interface Soon { on: boolean; at: string; title: string; message: string }
 export interface CreditPack { id: string; label: string; credits: number; price: number }
 export interface AlertePack { id: string; label: string; audience: "sender" | "agent"; credits: number; days: number; price: number }
@@ -19,7 +21,7 @@ export interface ServicesConfig {
   foncier: { enabled: boolean; soon: Soon; marketLabel: string; minObs: number; since: string; minSqm: number; maxSqm: number; packages: CreditPack[] };
   loyer: { enabled: boolean; soon: Soon; minObs: number; since: string; trendSince: string; trendMin: number; packages: CreditPack[] };
   solvency: { enabled: boolean; incomeMultiple: number; codeTtlMin: number };
-  site: { order: string[]; tiles: Record<string, SiteTile> };
+  site: { order: string[]; tiles: Record<string, SiteTile>; pages?: Record<string, ServicePage> };
   card: {
     durationMonths: number; reminderDays: number[];
     primaryColor: string; secondaryColor: string; goldColor: string; accentColor: string;

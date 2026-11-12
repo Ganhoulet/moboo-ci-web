@@ -12,7 +12,7 @@ async function post<T = any>(path: string, body: unknown): Promise<Res<T>> {
 }
 
 /** Pages des services Moboo : formulaires (avec ou sans compte connecté). */
-export async function edlRequestAction(form: Record<string, string>) { return post("/edl", form); }
+export async function edlRequestAction(form: Record<string, unknown>) { return post("/edl", form); }
 export async function loyerEstimateAction(form: Record<string, string>) { return post("/loyer", form); }
 export async function foncierEstimateAction(form: Record<string, string>) { return post("/foncier", form); }
 export async function serviceLeadAction(service: string, form: { full_name: string; phone: string; data: Record<string, unknown> }) {

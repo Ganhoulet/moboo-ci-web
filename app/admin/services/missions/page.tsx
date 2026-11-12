@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getServices } from "../actions";
 import { MissionActions } from "@/components/backoffice/mission-actions";
+import { ServiceBill } from "@/components/backoffice/service-bill";
 import { fcfa } from "@/lib/moboo-services";
 
 export const dynamic = "force-dynamic";
@@ -19,8 +20,8 @@ export default async function MissionsAdmin({ searchParams }: { searchParams: { 
       <div>
         <h1 className="font-display text-2xl font-extrabold text-ink">Missions Moboo</h1>
         <p className="max-w-3xl text-sm text-muted">
-          Services commandés sur le site (mise en location, gestion, visite, bail…). Chaque mission arrive ici et par e-mail. Attribuez-la à un agent : il la reçoit dans
-          Moboo Pro › Missions Moboo et la réalise avec ses outils (mandats, contrats, baux…), puis envoie son compte rendu. Pour qu’un service soit pris directement par les agents de la zone,
+          Services commandés sur le site (nettoyage, conciergerie, mise en location, gestion, visite, bail…). Chaque mission arrive ici et par e-mail. Attribuez-la à un agent : il la reçoit dans
+          Moboo Pro › Missions Moboo et la réalise avec ses outils (mandats, contrats, baux…), puis envoie son compte rendu. « Facturer » envoie au client un lien de paiement mobile money (e-mail, SMS, WhatsApp) ; la facture passe « Payée » toute seule. Pour qu’un service soit pris directement par les agents de la zone,
           passez-le en « Agents de la zone » dans <Link href="/admin/services/reglages?tab=site" className="font-semibold underline">Réglages › Services du site</Link>.
         </p>
       </div>
@@ -51,7 +52,7 @@ export default async function MissionsAdmin({ searchParams }: { searchParams: { 
                   {m.agent_note ? <p className="mt-1 text-indigo-800">Agent : {m.agent_note}</p> : null}
                   {m.report ? <details className="mt-1"><summary className="cursor-pointer font-semibold text-emerald-800">Compte rendu</summary><p className="mt-1 whitespace-pre-line">{m.report}</p></details> : null}
                 </td>
-                <td className="p-3"><MissionActions m={m} /></td>
+                <td className="p-3"><MissionActions m={m} /><ServiceBill target="mission" id={m.uuid} name={m.full_name} phone={m.phone} title={`${m.title} — n° ${m.id}`} bills={m.bills ?? []} /></td>
               </tr>
             ))}
             {!d.items.length ? <tr><td colSpan={7} className="p-6 text-center text-muted">Aucune mission.</td></tr> : null}

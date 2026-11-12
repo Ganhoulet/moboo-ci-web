@@ -6,6 +6,14 @@ import type { MissionKey } from "./site-services";
 export interface MissionField { key: string; label: string; type?: "text" | "number" | "select" | "textarea" | "url"; options?: string[]; placeholder?: string }
 
 export const MISSION_FIELDS: Record<MissionKey, MissionField[]> = {
+  nettoyage: [
+    { key: "formule", label: "Type de ménage", type: "select", options: ["Ménage régulier", "Grand ménage", "Fin de chantier / déménagement", "Repassage & linge"] },
+    { key: "pieces", label: "Nombre de pièces", type: "number" },
+  ],
+  conciergerie: [
+    { key: "nb_logements", label: "Nombre de logements", type: "number" },
+    { key: "etat", label: "Votre résidence est", type: "select", options: ["Déjà meublée et louée", "Meublée, jamais louée", "À meubler"] },
+  ],
   mise_en_location: [
     { key: "loyer", label: "Loyer souhaité (FCFA / mois)", type: "number" },
     { key: "pieces", label: "Nombre de pièces", type: "number" },
@@ -55,6 +63,8 @@ export const MISSION_FIELDS: Record<MissionKey, MissionField[]> = {
 };
 
 export const MISSION_POINTS: Record<MissionKey, string[]> = {
+  nettoyage: ["Agentes vérifiées et formées", "Produits fournis sur demande", "Paiement mobile money après le passage"],
+  conciergerie: ["Annonces sur Moboo, Airbnb et Booking", "Accueil des voyageurs et ménage hôtelier", "Revenus versés chaque mois"],
   mise_en_location: ["Photos, annonce et visites gérées par un agent", "Dossier du locataire vérifié", "Bail préparé et signé"],
   gestion_locative: ["Loyers encaissés et relancés", "Rapport mensuel dans votre espace", "Idéal pour la diaspora"],
   visite: ["Vidéo et photos du bien", "Compte rendu avant de payer quoi que ce soit", "Agent Moboo vérifié"],

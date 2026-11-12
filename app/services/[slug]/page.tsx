@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { EdlForm, FoncierForm, LoyerForm, SolvencyForm } from "@/components/services/service-forms";
 import { MissionForm } from "@/components/services/mission-form";
 import { MISSION_POINTS } from "@/lib/missions";
-import { getServiceZones, getSiteServices, isMissionKey, serviceBySlug, serviceHref, type ServiceKey, type ServiceTile, type ToolKey } from "@/lib/site-services";
+import { getServicePage, getServiceZones, getSiteServices, isMissionKey, serviceBySlug, serviceHref, type ServiceKey, type ServicePage, type ServiceTile, type ToolKey } from "@/lib/site-services";
+import { RichServicePage } from "@/components/services/rich-service-page";
 import { SiteIcon } from "@/components/site-icon";
 
 export const revalidate = 120;
@@ -16,18 +17,22 @@ const POINTS: Record<ToolKey, string[]> = {
   solvabilite: ["Avec l’accord du candidat (code par SMS)", "Ponctualité des loyers suivis sur Moboo Pro", "Rapport revenus / loyer et conseils pratiques"],
 };
 
-async function tile(slug: string): Promise<{ key: ServiceKey; t: ServiceTile; all: ServiceTile[]; solvency: { incomeMultiple: number; codeTtlMin: number } } | null> {
+async function tile(slug: string): Promise<{ key: ServiceKey; t: ServiceTile; page: ServicePage | null; all: ServiceTile[]; solvency: { incomeMultiple: number; codeTtlMin: number } } | null> {
   const key = serviceBySlug(slug);
   if (!key) return null;
-  const data = await getSiteServices();
+  const [data, detail] = await Promise.all([getSiteServices(), getServicePage(key)]);
   const t = data.items.find((x) => x.key === key);
-  return t ? { key, t, all: data.items, solvency: data.solvency } : null;
+  return t ? { key, t, page: detail?.page?.enabled ? detail.page : null, all: data.items, solvency: data.solvency } : null;
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const r = await tile(params.slug);
   if (!r) return { title: "Service indisponible", robots: { index: false } };
-  return { title: r.t.landingTitle || r.t.title, description: r.t.landingIntro.slice(0, 160), alternates: { canonical: serviceHref(r.key) } };
+  const image = r.page?.heroImage;
+  return {
+    title: r.t.landingTitle || r.t.title, description: r.t.landingIntro.slice(0, 160), alternates: { canonical: serviceHref(r.key) },
+    ...(image ? { openGraph: { title: r.t.landingTitle || r.t.title, description: r.t.landingIntro.slice(0, 200), images: [{ url: image }] } } : {}),
+  };
 }
 
 /** Page dédiée d'un service Moboo : présentation (textes du back-office) et formulaire. */
@@ -37,6 +42,13 @@ export default async function ServicePage({ params }: { params: { slug: string }
   const { key, t } = r;
   const zones = key === "loyer" || key === "foncier" ? await getServiceZones(key) : [];
   const others = r.all.filter((x) => x.key !== key);
+  const pg = r.page;
+  if (pg) {
+    const form = key === "edl"
+      ? <EdlForm extraFields={pg.fields} submitText={pg.submitText} successText={pg.successText} />
+      : isMissionKey(key) ? <MissionForm service={key} price={t.price} fields={pg.fields} submitText={pg.submitText} successText={pg.successText} /> : null;
+    if (form) return <RichServicePage tile={t} page={pg} others={others} form={form} />;
+  }
   return (
     <div className="bg-slate-50">
       <section className="bg-gradient-to-br from-brand-900 to-brand-700 text-white">
