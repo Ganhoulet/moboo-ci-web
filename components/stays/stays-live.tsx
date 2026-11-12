@@ -43,6 +43,12 @@ export async function StaysLive({ zone }: { zone: string }) {
           {z.night ? <p className="text-xs text-muted">{tracked && z.freeTonightFrom ? `dès ${nightly(z.freeTonightFrom)} ce soir` : `dès ${nightly(z.night.min)}`}{z.night.count >= 4 ? ` · la moitié entre ${nightly(z.night.p25)} et ${nightly(z.night.p75)}` : ""}</p> : null}
         </div>
       </dl>
+      {z.market ? (
+        <p className="mt-3 text-sm text-muted">
+          Données du marché à {z.zone.label} : nuit médiane <strong className="text-ink">{nightly(z.market.median)}</strong> (de {nightly(z.market.low)} à {nightly(z.market.high)}){z.combined ? <>, repère combiné avec Moboo.ci : <strong className="text-ink">{nightly(z.combined.median)}</strong></> : null}.
+          <span className="block text-xs">Prix relevés sur plusieurs plateformes de location et annonces publiques, en plus de Moboo.ci.</span>
+        </p>
+      ) : null}
       {shown.length ? (
         <>
           <h3 className="mt-6 font-semibold text-ink">{free.length ? "Libres ce soir" : "Résidences à découvrir"}</h3>

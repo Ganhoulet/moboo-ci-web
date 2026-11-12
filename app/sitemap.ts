@@ -3,7 +3,7 @@ import { getListingUrls, getSeoLinks } from "@/lib/seo";
 import { getPriceCommunes } from "@/lib/prices";
 import { getHelpSitemap } from "@/lib/help";
 import { getProSitemap, getZones } from "@/lib/pro-reviews";
-import { getLandmarks } from "@/lib/stays";
+import { getLandmarks, getEvents } from "@/lib/stays";
 
 export const dynamic = "force-dynamic"; // toujours à jour avec les pages SEO publiées
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://moboo.ci").replace(/\/+$/, "");
@@ -45,6 +45,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const stays = [
     { url: `${BASE}/prix-nuitee`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
     { url: `${BASE}/meuble-pres-de`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 },
+    { url: `${BASE}/garantie-arrivee`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.5 },
+    { url: `${BASE}/ou-dormir`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.5 },
+    ...((await getEvents()) ?? []).map((e) => ({ url: `${BASE}/ou-dormir/${e.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 })),
     ...((await getLandmarks()) ?? []).filter((l) => l.residences > 0).map((l) => ({ url: `${BASE}/meuble-pres-de/${l.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 })),
   ];
   return [...main, ...seo, ...prices, ...stays, ...help, ...pros, ...agents, ...profiles, ...listings];

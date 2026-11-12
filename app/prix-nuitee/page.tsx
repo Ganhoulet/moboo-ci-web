@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const when = d ? ` (${period(d.period)})` : "";
   return {
     title: { absolute: `Prix d’une nuit en résidence meublée à Abidjan et en Côte d’Ivoire${when} | Moboo.ci` },
-    description: "Indice Moboo du prix de la nuitée : prix médian, fourchette par commune (Cocody, Marcory, Yopougon, Plateau…), calculés sur les prix réels des résidences meublées de Moboo.ci.",
+    description: "Indice Moboo du prix de la nuitée : prix médian, fourchette par commune (Cocody, Marcory, Yopougon, Plateau…), calculés sur les prix réels des résidences meublées de Moboo.ci et sur les données du marché.",
     alternates: { canonical: "/prix-nuitee" },
   };
 }
@@ -39,9 +39,9 @@ export default async function NightPriceIndex() {
       </p>
       {rows.length ? (
         <div className="mt-6 overflow-x-auto rounded-xl bg-white ring-1 ring-slate-200">
-          <table className="w-full min-w-[820px] text-sm">
+          <table className="w-full min-w-[920px] text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-              <tr><th className="px-4 py-2.5">Commune</th><th className="px-3 py-2.5">Prix le plus fréquent</th><th className="px-3 py-2.5">Nuit médiane</th><th className="px-3 py-2.5">La moitié entre</th><th className="px-3 py-2.5">Par type</th><th className="px-4 py-2.5 text-right" title="Parmi les logements dont le calendrier est tenu en direct dans Moboo Resi">Libres ce soir</th></tr>
+              <tr><th className="px-4 py-2.5">Commune</th><th className="px-3 py-2.5">Prix le plus fréquent</th><th className="px-3 py-2.5">Nuit médiane</th><th className="px-3 py-2.5">La moitié entre</th><th className="px-3 py-2.5" title="Prix relevés sur plusieurs plateformes de location et annonces publiques">Marché</th><th className="px-3 py-2.5">Par type</th><th className="px-4 py-2.5 text-right" title="Parmi les logements dont le calendrier est tenu en direct dans Moboo Resi">Libres ce soir</th></tr>
             </thead>
             <tbody>
               {rows.map((c) => (
@@ -50,6 +50,7 @@ export default async function NightPriceIndex() {
                   <td className="px-3 py-3">{commonText(c.night) ? <><strong className="text-ink">{commonText(c.night)}</strong><span className="block text-xs text-muted">{c.night!.commonCount} logements</span></> : <span className="text-muted">—</span>}</td>
                   <td className="px-3 py-3"><strong className="text-ink">{c.night ? nightly(c.night.median) : "—"}</strong></td>
                   <td className="px-3 py-3 text-muted">{c.night ? `${nightly(c.night.p25)} – ${nightly(c.night.p75)}` : "—"}</td>
+                  <td className="px-3 py-3">{c.market ? <><strong className="text-ink">{nightly(c.market.median)}</strong><span className="block text-xs text-muted">{nightly(c.market.low)} – {nightly(c.market.high)}</span>{c.combined ? <span className="block text-xs text-muted">repère combiné {nightly(c.combined.median)}</span> : null}</> : <span className="text-muted">—</span>}</td>
                   <td className="px-3 py-3 text-muted">{Object.entries(c.byType).map(([t, s]) => <span key={t} className="block">{TYPE_LABEL[t] ?? t} : {commonText(s) ? `souvent ${commonText(s)}` : nightly(s.median)}{commonText(s) ? <span className="text-xs"> · médiane {nightly(s.median)}</span> : null}</span>)}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-ink">{c.tracked ? `${c.freeTonight} / ${c.tracked}` : "—"}</td>
                 </tr>
@@ -58,7 +59,7 @@ export default async function NightPriceIndex() {
           </table>
         </div>
       ) : <p className="mt-8 rounded-xl bg-white p-6 text-muted ring-1 ring-slate-200">Pas encore assez de résidences pour publier des prix fiables.</p>}
-      <p className="mt-4 max-w-3xl text-xs text-muted">Méthode : {d?.source ?? "prix affichés par les hôtes."} Le prix le plus fréquent est celui que l’on retrouve le plus souvent (les deux en cas d’égalité) ; la médiane est le prix du milieu : la moitié des logements coûte moins, l’autre moitié plus. Une commune apparaît dès 3 logements. Mis à jour toutes les 30 minutes.</p>
+      <p className="mt-4 max-w-3xl text-xs text-muted">Méthode : {d?.source ?? "prix affichés par les hôtes."} Le prix le plus fréquent est celui que l’on retrouve le plus souvent (les deux en cas d’égalité) ; la médiane est le prix du milieu : la moitié des logements coûte moins, l’autre moitié plus. Une commune apparaît dès 3 logements. Mis à jour toutes les 30 minutes.{rows.some((c) => c.market) ? <> Colonne « Marché » : {d?.marketSource ?? "prix relevés sur plusieurs plateformes de location, en plus de Moboo.ci."} Le repère combiné réunit les logements Moboo.ci et ces relevés.</> : null}</p>
       <div className="mt-8 flex flex-wrap gap-2 text-sm">
         <Link href="/meuble-pres-de" className="rounded-full border border-slate-300 px-3 py-1.5 text-ink hover:border-ink">Meublés près d’un repère</Link>
         <Link href="/annonces?transaction=furnished" className="rounded-full border border-slate-300 px-3 py-1.5 text-ink hover:border-ink">Toutes les résidences meublées</Link>

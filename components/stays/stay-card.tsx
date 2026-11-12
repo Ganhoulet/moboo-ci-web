@@ -14,6 +14,12 @@ export function StayCardView({ s }: { s: StayCard }) {
             {s.freeTonight} libre{s.freeTonight > 1 ? "s" : ""} ce soir
           </span>
         ) : null}
+        {s.verified || s.generator ? (
+          <span className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
+            {s.verified ? <span className="rounded-full bg-ink px-2.5 py-1 text-xs font-bold text-white">✓ Vérifié sur place</span> : null}
+            {s.generator ? <span className="rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink">⚡ Groupe électrogène</span> : null}
+          </span>
+        ) : null}
         {s.distanceKm != null ? (
           <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink">à {String(s.distanceKm).replace(".", ",")} km</span>
         ) : null}
@@ -21,6 +27,7 @@ export function StayCardView({ s }: { s: StayCard }) {
       <div className="p-4">
         <p className="font-semibold text-ink group-hover:underline">{s.name}</p>
         <p className="mt-0.5 text-sm text-muted">{place}</p>
+        {s.travel ? <p className="mt-0.5 text-xs text-muted" title="Estimation selon la distance, pas un itinéraire">≈ {s.travel.normal} min en voiture · {s.travel.rush} min aux heures de pointe</p> : null}
         <div className="mt-2 flex items-center justify-between gap-2 text-sm">
           <span>{s.fromPrice ? <>dès <strong className="text-ink">{nightly(s.fromPrice)}</strong> / nuit</> : <span className="text-muted">Prix sur demande</span>}</span>
           {s.rating && s.reviews ? (
