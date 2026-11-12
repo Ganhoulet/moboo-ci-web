@@ -1,5 +1,6 @@
 "use client";
 
+import { BeneficiaryFields } from "@/components/beneficiary-fields";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitReservation, type ReserveState } from "@/app/reserver/actions";
 import { LoginToBook } from "@/components/login-to-book";
@@ -51,6 +52,8 @@ export function BookingForm({ apartments }: { apartments: Apt[] }) {
       <Field label="E-mail (facultatif, pour recevoir la confirmation)">
         <input name="guestEmail" type="email" inputMode="email" autoComplete="email" placeholder="vous@exemple.com" className="input" />
       </Field>
+
+      <BeneficiaryFields />
 
       {state && !state.ok && state.loginRequired ? <LoginToBook message={state.message} /> : null}
       {state && !state.ok && !state.loginRequired ? (
