@@ -7,6 +7,7 @@ import { getPriceCommunes } from "@/lib/prices";
 import { getZones } from "@/lib/pro-reviews";
 import { espacesPage, listListingsPage, residencesPage } from "@/lib/property";
 import { ResultsView } from "@/components/results-view";
+import { ImpressionsBeacon } from "@/components/stats-beacons";
 import { hasMap, layoutFor, zoneSlug } from "@/lib/result-layouts";
 import { getSiteSettings } from "@/lib/settings";
 import type { Property } from "@/lib/property";
@@ -109,7 +110,8 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
       </div>
 
       {items.length ? (
-        <ResultsView items={items} tpl={tpl} mapSettings={maps} mapItems={mapItems} query={mapQuery} mapEnabled={hasMap(tpl) && classic} />
+<><ImpressionsBeacon ids={items.map((p) => p.id)} commune={f.q ?? null} />
+                <ResultsView items={items} tpl={tpl} mapSettings={maps} mapItems={mapItems} query={mapQuery} mapEnabled={hasMap(tpl) && classic} /></>
       ) : (
         <div className="mt-5 rounded-2xl border border-dashed border-slate-300 p-10 text-center">
           <p className="font-semibold text-ink">De nouvelles annonces arrivent chaque jour.</p>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toggleFavorite, useFavorites } from "@/lib/favorites";
 import { toggleAccountFavoriteAction } from "@/app/mon-espace/actions";
 import type { Property } from "@/lib/property";
+import { beacon, listingUuid } from "@/lib/beacon";
 
 /** Boutons « Partager » et « Enregistrer » en tête de fiche (barre du haut de l'appli). */
 export function DetailActions({ property, printHref }: { property: Property; printHref?: string }) {
@@ -14,6 +15,8 @@ export function DetailActions({ property, printHref }: { property: Property; pri
   async function share() {
     const url = window.location.href;
     const data = { title: property.title, text: `${property.title} — Moboo.ci`, url };
+    const lid = listingUuid(property.id);
+    if (lid) beacon({ kind: "share", listingId: lid });
     try {
       if (navigator.share) {
         await navigator.share(data);

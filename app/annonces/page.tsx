@@ -10,6 +10,7 @@ import {
   type Transaction,
   type Property,
 } from "@/lib/property";
+import { ImpressionsBeacon } from "@/components/stats-beacons";
 import { ResultsView } from "@/components/results-view";
 import { hasMap, layoutFor, zoneSlug } from "@/lib/result-layouts";
 import { SortSelect } from "@/components/sort-select";
@@ -267,6 +268,7 @@ export default async function AnnoncesPage({
     return (
       <div className="w-full">
         <div className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">{bar}</div>
+        <ImpressionsBeacon ids={items.map((p) => p.id)} commune={q || null} />
         <ResultsView items={items} tpl={tpl} mapSettings={settings.maps} mapItems={mapItems} query={query} mapEnabled serviceAds={serviceAds}
           head={<>{titleBlock}{extras}</>} foot={<>{pagination}{askCta}</>} />
       </div>

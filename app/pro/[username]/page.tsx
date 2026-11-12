@@ -20,6 +20,7 @@ import { ContactForm } from "@/components/pro-page/contact-card";
 import { VideoPlayer } from "@/components/pro-page/video-player";
 import { waHref, waMessage } from "@/lib/whatsapp";
 import { SiteIcon } from "@/components/site-icon";
+import { ProViewBeacon } from "@/components/stats-beacons";
 
 export const revalidate = 60;
 
@@ -139,6 +140,7 @@ export default async function ProPage({ params }: { params: { username: string }
 
   return (
     <div className="bg-white pb-24 lg:pb-0">
+      <ProViewBeacon username={p.username} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd([
         { label: "Agents et agences", href: "/agents-immobiliers" },

@@ -166,6 +166,25 @@ export interface Stats {
     id: string; title: string; status: string; totalViews: number; totalCalls: number; totalWhatsapp: number;
     views: number; inquiries: number; calls: number; whatsapp: number;
   }[];
+  /** Champs enrichis (absents si le serveur ne les fournit pas). */
+  previous?: { views: number; inquiries: number; calls: number; whatsapp: number };
+  contactRate?: number | null;
+  listings?: StatListing[];
+  pipeline?: { new: number; contacted: number; visit: number; negotiation: number; won: number; lost: number };
+  responseHours?: number | null;
+  deals?: { sold: number; rented: number };
+  reviews?: { count: number; rating: number | null };
+  sources?: { app: number; site: number };
+  impressions?: number;
+  shares?: number;
+  proPageViews?: number;
+  communes?: { name: string; count: number }[];
+}
+
+export interface StatListing {
+  id: string; title: string; photo: string | null; status: string; daysOnline: number;
+  views: number; inquiries: number; calls: number; whatsapp: number; favorites: number; shares: number;
+  photos: number; priceVsArea: number | null; lastContactAt: string | null; tips: string[];
 }
 
 export async function getStats(days = 30): Promise<Stats | null> {
