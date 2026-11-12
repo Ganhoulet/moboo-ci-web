@@ -16,7 +16,7 @@ export interface Marker { n: number; x: number; y: number; label: string }
 export interface Crop { pageW: number; x: number; y: number; w: number; h: number }
 
 interface B<T extends string> { id: string; type: T }
-export type CoverBlock = B<"cover"> & { tag: string; title: string; subtitle: string; image: string; footLeft: string; footRight: string };
+export type CoverBlock = B<"cover"> & { small?: boolean; tag: string; title: string; subtitle: string; image: string; footLeft: string; footRight: string };
 export type BackBlock = B<"back"> & { title: string; text: string; cta: string; note?: string; qr?: string; links: { title: string; text: string }[] };
 export type HeadingBlock = B<"heading"> & { kicker: string; title: string; lead: string; toc: "none" | "chapter" | "sub"; tocLabel: string; badge?: string; kickerTag?: boolean };
 export type SubheadingBlock = B<"subheading"> & { text: string };
@@ -26,7 +26,7 @@ export type CalloutBlock = B<"callout"> & { tone: "tip" | "warn"; title: string;
 export type SpecBlock = B<"spec"> & { title: string; rows: { a: string; b: string }[] };
 export type DoDontBlock = B<"dodont"> & { good: string[]; bad: string[] };
 export type ExampleBlock = B<"example"> & { tone: "good" | "bad"; label: string; text: string };
-export type TableBlock = B<"table"> & { head: string[]; rows: string[][]; dense?: boolean };
+export type TableBlock = B<"table"> & { head: string[]; rows: string[][]; dense?: boolean; small?: boolean };
 export type ChecklistBlock = B<"checklist"> & { items: { group: boolean; tag: string; text: string }[] };
 export type ColumnsBlock = B<"columns"> & { ratio: "equal" | "wide" | "anat" | "narrow"; left: Block[]; right: Block[] };
 export type TocBlock = B<"toc"> & { kicker: string; title: string };
@@ -35,6 +35,8 @@ export type BenefitsBlock = B<"benefits"> & { single?: boolean; items: { title: 
 export type HtmlBlock = B<"html"> & { html: string };
 export type LegendBlock = B<"legend"> & { items: { n: number; text: string }[] };
 export type DividerBlock = B<"divider">;
+export type BarsBlock = B<"bars"> & { items: { label: string; pct: number; value: string; sub: string }[] };
+export type SourcesBlock = B<"sources"> & { text: string };
 export type QrBlock = B<"qr"> & { url: string; caption: string };
 export interface ZoneItem { id: string; title: string; tx: string; price: number; priceUnit: string | null; place: string; bedrooms: number | null; surface: number | null; image: string; url: string; pct?: number }
 export interface ZonePro { name: string; company: string | null; image: string; rating: number; reviews: number; listings: number; verified: boolean; phone: string | null; url: string }
@@ -47,7 +49,7 @@ export type ZoneTextBlock = B<"zoneText"> & { locked: boolean; html: string };
 
 export type Block =
   | CoverBlock | BackBlock | HeadingBlock | SubheadingBlock | TextBlock | ImageBlock | CalloutBlock | SpecBlock
-  | DoDontBlock | ExampleBlock | TableBlock | ChecklistBlock | ColumnsBlock | TocBlock | KpisBlock | BenefitsBlock | HtmlBlock | LegendBlock | DividerBlock | QrBlock
+  | DoDontBlock | ExampleBlock | TableBlock | ChecklistBlock | ColumnsBlock | TocBlock | KpisBlock | BenefitsBlock | HtmlBlock | LegendBlock | DividerBlock | QrBlock | BarsBlock | SourcesBlock
   | ZoneStatsBlock | ZonePricesBlock | ZoneListingsBlock | ZoneProsBlock | ZoneTextBlock;
 export type BlockType = Block["type"];
 
@@ -73,11 +75,11 @@ export const BLOCK_CATALOG: { group: string; items: { type: BlockType; label: st
   ] },
   { group: "Contenu", items: [
     { type: "text", label: "Texte riche" }, { type: "image", label: "Image ou capture" }, { type: "callout", label: "Encadré (conseil, attention)" },
-    { type: "legend", label: "Liste de repères" }, { type: "qr", label: "QR code" }, { type: "kpis", label: "Chiffres clés" }, { type: "benefits", label: "Cartes d’arguments" },
+    { type: "legend", label: "Liste de repères" }, { type: "qr", label: "QR code" }, { type: "kpis", label: "Chiffres clés" }, { type: "bars", label: "Barres comparées" }, { type: "benefits", label: "Cartes d’arguments" },
   ] },
   { group: "Méthode", items: [
     { type: "spec", label: "Fiche technique" }, { type: "dodont", label: "À faire, à éviter" }, { type: "example", label: "Bon ou mauvais exemple" },
-    { type: "table", label: "Tableau" }, { type: "checklist", label: "Liste à cocher" },
+    { type: "table", label: "Tableau" }, { type: "checklist", label: "Liste à cocher" }, { type: "sources", label: "Sources (bas de page)" },
   ] },
   { group: "Données du quartier", items: [
     { type: "zoneStats", label: "Chiffres de la zone" }, { type: "zonePrices", label: "Prix par type de bien" }, { type: "zoneListings", label: "Annonces de la zone" },
@@ -107,6 +109,8 @@ export function newBlock(type: BlockType): Block {
     case "html": return { id, type, html: "<p></p>" };
     case "legend": return { id, type, items: [{ n: 1, text: "Premier repère" }] };
     case "divider": return { id, type };
+    case "bars": return { id, type, items: [{ label: "Cocody", pct: 100, value: "35 000 F", sub: "" }] };
+    case "sources": return { id, type, text: "Sources : …" };
     case "qr": return { id, type, url: "https://moboo.ci", caption: "Scannez pour ouvrir Moboo.ci" };
     case "zoneStats": return { id, type, locked: false, items: [] };
     case "zonePrices": return { id, type, locked: false, tx: "rent", title: "Loyers par type de bien", entry: true, rows: [] };

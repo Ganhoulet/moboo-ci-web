@@ -1,3 +1,4 @@
+import guideMeubles from "./data/guide-residences-meublees.json";
 import livreBlanc from "./data/livre-blanc-page-pro.json";
 import { DEFAULT_FOOTER, newPage, uid, type Block, type DocData, type DocFormat, type DocKind } from "./types";
 
@@ -94,6 +95,7 @@ function magazine(): DocData {
 }
 
 export const TEMPLATES: DocTemplate[] = [
+  { key: "guide-residences-meublees", name: "Guide résidences meublées", description: "Le guide « Résidences meublées en Côte d’Ivoire » : prix réels par commune, rentabilité, publication et gestion avec Moboo Resi. 20 pages A4, modifiable bloc par bloc.", kind: "livre-blanc", format: "A4", title: "Résidences meublées en Côte d’Ivoire", editionDate: "novembre 2026", build: () => JSON.parse(JSON.stringify(guideMeubles)) as DocData },
   { key: "magazine-quartier", name: "Magazine de quartier", description: "Chiffres, prix par type de bien, bons plans, annonces, agents et agences : remplis avec les données réelles de la zone choisie.", kind: "magazine", format: "A4", title: "L’immobilier dans votre quartier", needsZone: true, build: magazine },
   { key: "livre-blanc-page-pro", name: "Livre blanc page pro", description: "Le livre blanc « Votre page pro sur Moboo.ci », 30 pages A4, entièrement modifiable bloc par bloc.", kind: "livre-blanc", format: "A4", title: "Votre page pro sur Moboo.ci", editionDate: "novembre 2026", build: () => JSON.parse(JSON.stringify(livreBlanc)) as DocData },
   { key: "ebook-a5", name: "Ebook A5", description: "Plan complet de l’ebook n° 1 : 5 parties, 12 chapitres avec encadrés « Passez à l’action » et « Avec Moboo », annexes.", kind: "ebook", format: "A5", title: "L’agent immobilier rentable en Côte d’Ivoire", build: ebook },
