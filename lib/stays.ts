@@ -9,10 +9,11 @@ import { API_URL } from "./api";
 export interface NightStats { count: number; min: number; median: number; p25: number; p75: number }
 export interface StayCard {
   id: string; name: string; href: string; quartier: string | null; commune: string | null; city: string; photo: string | null;
-  fromPrice: number | null; apartments: number; freeTonight: number; freeTonightFrom: number | null;
+  fromPrice: number | null; apartments: number; tracked?: boolean; freeTonight: number; freeTonightFrom: number | null;
   distanceKm?: number; rating?: number; reviews?: number;
 }
-export interface StaySummary { residences: number; apartments: number; freeTonight: number; night: NightStats | null; freeTonightFrom: number | null }
+/** tracked = logements dont le calendrier est tenu dans Moboo Resi (seule base fiable du « libres ce soir »). */
+export interface StaySummary { residences: number; apartments: number; tracked?: number; freeTonight: number; night: NightStats | null; freeTonightFrom: number | null }
 export interface LandmarkRef { slug: string; name: string; near: string }
 export interface ZoneStays extends StaySummary { zone: { slug: string; label: string }; updatedAt: string; items: StayCard[]; landmarks: LandmarkRef[] }
 export interface Landmark extends LandmarkRef { city: string; commune: string; lat: number; lng: number; radiusKm: number; why: string }
