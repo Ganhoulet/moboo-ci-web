@@ -19,6 +19,7 @@ import {
 import { getSiteSettings } from "@/lib/settings";
 import { img } from "@/lib/img";
 import { canonicalVideoUrl } from "@/lib/video-resolve";
+import { getResidenceReviews } from "@/lib/stays";
 
 export const revalidate = 60;
 
@@ -53,8 +54,9 @@ export default async function ResidencePage({ params, searchParams }: { params: 
     id: a.id, type: apartmentLabel(a.type), nightlyPrice: num(a.nightlyPrice),
   }));
   const occupiedByApt: Record<string, OccupiedRange[]> = {};
-  const [similar] = await Promise.all([
+  const [similar, reviews] = await Promise.all([
     similarResidences({ commune: r.commune, city: r.city, excludeId: r.id }).catch(() => []),
+    getResidenceReviews(r.id),
     ...bookable.map(async (a) => { occupiedByApt[a.id] = await getApartmentOccupied(a.id); }),
   ]);
 
@@ -125,6 +127,14 @@ export default async function ResidencePage({ params, searchParams }: { params: 
           image: photos.slice(0, 5),
           address: { "@type": "PostalAddress", addressLocality: r.commune ?? r.city, addressRegion: r.city, addressCountry: "CI" },
           priceRange: r.minNightlyPrice ? `${formatXOF(r.minNightlyPrice)} / nuit` : undefined,
+          // Avis de séjours vérifiés (check-in réel) : étoiles dans Google.
+          ...(reviews?.count && reviews.rating ? {
+            aggregateRating: { "@type": "AggregateRating", ratingValue: reviews.rating, reviewCount: reviews.count, bestRating: 5, worstRating: 1 },
+            review: reviews.items.slice(0, 5).map((v) => ({
+              "@type": "Review", author: { "@type": "Person", name: v.authorName }, datePublished: v.createdAt.slice(0, 10),
+              reviewRating: { "@type": "Rating", ratingValue: v.rating, bestRating: 5 }, reviewBody: v.comment,
+            })),
+          } : {}),
         }}
       />
       {(() => {
@@ -247,6 +257,29 @@ export default async function ResidencePage({ params, searchParams }: { params: 
                 approximate
                 note="Zone approximative — l'adresse exacte vous est envoyée après le paiement de l'acompte."
               />
+            </Section>
+          ) : null}
+
+          {reviews?.count ? (
+            <Section title={`Avis des voyageurs · ★ ${String(reviews.rating).replace(".", ",")} (${reviews.count})`} id="avis">
+              <p className="text-sm text-muted">Uniquement des séjours vérifiés : seuls les voyageurs dont l’arrivée a été enregistrée peuvent noter.</p>
+              {reviews.topQualities.length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {reviews.topQualities.map((q) => <span key={q.label} className="rounded-full bg-slate-100 px-3 py-1 text-sm text-ink">{q.label} · {q.count}</span>)}
+                </div>
+              ) : null}
+              <ul className="mt-4 space-y-4">
+                {reviews.items.slice(0, 6).map((v) => (
+                  <li key={v.id} className="rounded-xl bg-white p-4 ring-1 ring-slate-200">
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="font-semibold text-ink">{v.authorName} <span className="ml-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">Séjour vérifié</span></span>
+                      <span className="text-amber-500" aria-label={`${v.rating} sur 5`}>{"★".repeat(v.rating)}<span className="text-slate-300">{"★".repeat(5 - v.rating)}</span></span>
+                    </div>
+                    <p className="mt-2 text-ink">{v.comment}</p>
+                    {v.reply ? <p className="mt-2 rounded-lg bg-slate-50 p-3 text-sm text-muted"><strong className="text-ink">Réponse de l’hôte :</strong> {v.reply}</p> : null}
+                  </li>
+                ))}
+              </ul>
             </Section>
           ) : null}
 

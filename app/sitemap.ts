@@ -3,6 +3,7 @@ import { getListingUrls, getSeoLinks } from "@/lib/seo";
 import { getPriceCommunes } from "@/lib/prices";
 import { getHelpSitemap } from "@/lib/help";
 import { getProSitemap, getZones } from "@/lib/pro-reviews";
+import { getLandmarks } from "@/lib/stays";
 
 export const dynamic = "force-dynamic"; // toujours à jour avec les pages SEO publiées
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://moboo.ci").replace(/\/+$/, "");
@@ -40,5 +41,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const profiles = (await getProSitemap()).map((x) => ({ url: `${BASE}${x.path}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.5 }));
   // Annonces en ligne (adresses descriptives).
   const listings = (await getListingUrls()).map((l) => ({ url: `${BASE}${l.path}`, lastModified: new Date(l.updatedAt), changeFrequency: "weekly" as const, priority: 0.5 }));
-  return [...main, ...seo, ...prices, ...help, ...pros, ...agents, ...profiles, ...listings];
+  // Séjours : indice des prix de la nuitée + repères qui ont au moins une résidence.
+  const stays = [
+    { url: `${BASE}/prix-nuitee`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 },
+    { url: `${BASE}/meuble-pres-de`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 },
+    ...((await getLandmarks()) ?? []).filter((l) => l.residences > 0).map((l) => ({ url: `${BASE}/meuble-pres-de/${l.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 })),
+  ];
+  return [...main, ...seo, ...prices, ...stays, ...help, ...pros, ...agents, ...profiles, ...listings];
 }
