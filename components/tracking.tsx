@@ -10,7 +10,7 @@ import {
 
 const FLASH = "moboo_ev";
 const BACKOFFICE = /^\/(admin|administration)(\/|$)/;
-const PRIVATE = /^\/(admin|administration|mon-espace|compte|agent)(\/|$)/;
+const PRIVATE = /^\/(admin|administration|mon-espace|compte|agent|hote)(\/|$)/;
 const LISTING = /^\/(?:annonce|residence|espace)\/([^/]+)$/;
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
