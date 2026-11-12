@@ -6,7 +6,8 @@ import { API_URL } from "./api";
  * check-in. Ne casse jamais le rendu : null si l'API ne répond pas.
  */
 
-export interface NightStats { count: number; min: number; median: number; p25: number; p75: number }
+/** common = prix le plus fréquent (deux en cas d'égalité), commonCount = logements à ce(s) prix. */
+export interface NightStats { count: number; min: number; median: number; p25: number; p75: number; common?: number[]; commonCount?: number }
 export interface StayCard {
   id: string; name: string; href: string; quartier: string | null; commune: string | null; city: string; photo: string | null;
   fromPrice: number | null; apartments: number; tracked?: boolean; freeTonight: number; freeTonightFrom: number | null;
@@ -53,4 +54,8 @@ export const getReviewForm = (token: string) => get<ReviewForm>(`/review/${encod
 export const getGbpKit = (token: string) => get<GbpKit>(`/gbp-kit/${encodeURIComponent(token)}`, 0);
 
 export const TYPE_LABEL: Record<string, string> = { STUDIO: "Studio", TWO_ROOMS: "2 pièces", THREE_ROOMS: "3 pièces", VILLA: "Villa" };
+/** « 15 000 F et 20 000 F » ; null si aucun prix ne se répète assez. */
+export const commonText = (s: NightStats | null | undefined) =>
+  s?.common?.length ? s.common.map((n) => nightly(n)).join(" et ") : null;
+
 export const nightly = (n: number) => `${Math.round(n).toLocaleString("fr-FR").replace(/ | /g, " ")} F`;

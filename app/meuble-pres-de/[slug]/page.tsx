@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StayCardView } from "@/components/stays/stay-card";
-import { getNearStays, nightly } from "@/lib/stays";
+import { commonText, getNearStays, nightly } from "@/lib/stays";
 import { absUrl, breadcrumbLd, ldJson } from "@/lib/structured-data";
 
 export const revalidate = 300;
@@ -30,7 +30,7 @@ export default async function NearLandmarkPage({ params }: { params: { slug: str
   if (!d) notFound();
   const l = d.landmark;
   const faq = [
-    { q: `Combien coûte une nuit en résidence meublée ${l.near} ?`, a: d.night ? `Sur Moboo.ci, la nuitée commence à ${nightly(d.night.min)} et le prix médian est de ${nightly(d.night.median)} pour les ${d.apartments} logements des ${d.residences} résidences situées à moins de ${String(l.radiusKm).replace(".", ",")} km.` : `Les prix s'affichent dès qu'une résidence est publiée ${l.near}.` },
+    { q: `Combien coûte une nuit en résidence meublée ${l.near} ?`, a: d.night ? `Sur Moboo.ci, ${commonText(d.night) ? `le prix le plus fréquent est ${commonText(d.night)} la nuit (${d.night.commonCount} logements). ` : ""}La nuitée commence à ${nightly(d.night.min)} et le prix médian est de ${nightly(d.night.median)} pour les ${d.apartments} logements des ${d.residences} résidences situées à moins de ${String(l.radiusKm).replace(".", ",")} km.` : `Les prix s'affichent dès qu'une résidence est publiée ${l.near}.` },
     ...(d.tracked ? [{ q: `Y a-t-il des logements libres ce soir ${l.near} ?`, a: `${d.freeTonight} logement${d.freeTonight > 1 ? "s sont libres" : " est libre"} ce soir parmi les ${d.tracked} dont le calendrier est tenu en direct dans Moboo Resi. Pour les autres, envoyez une demande : l'hôte confirme la disponibilité.` }] : []),
     { q: "Comment payer la réservation ?", a: "Par Wave, Orange Money, MTN ou Moov. L'acompte est conservé par Moboo jusqu'à votre arrivée, puis vous recevez l'adresse exacte et votre code d'arrivée." },
   ];
@@ -57,8 +57,8 @@ export default async function NearLandmarkPage({ params }: { params: { slug: str
         ) : (
           <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Logements</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.apartments}</dd></div>
         )}
-        <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Nuitée dès</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.night ? nightly(d.night.min) : "—"}</dd></div>
-        <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Prix médian</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.night ? nightly(d.night.median) : "—"}</dd></div>
+        <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Prix le plus fréquent</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{commonText(d.night) ?? (d.night ? nightly(d.night.median) : "—")}</dd>{d.night?.common?.length ? <p className="text-xs text-muted">{d.night.commonCount} logements à ce prix par nuit</p> : null}</div>
+        <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Prix médian</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.night ? nightly(d.night.median) : "—"}</dd>{d.night ? <p className="text-xs text-muted">dès {nightly(d.night.min)}</p> : null}</div>
       </dl>
       {d.items.length ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{d.items.map((s) => <StayCardView key={s.id} s={s} />)}</div>

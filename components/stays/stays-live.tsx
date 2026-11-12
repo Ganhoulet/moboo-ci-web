@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { StayCardView } from "./stay-card";
-import { getZoneStays, nightly } from "@/lib/stays";
+import { commonText, getZoneStays, nightly } from "@/lib/stays";
 
 /**
  * Bloc « Ce soir à … » des pages de résidences meublées : chiffres réels tirés
@@ -33,13 +33,14 @@ export async function StaysLive({ zone }: { zone: string }) {
           </div>
         )}
         <div className="rounded-xl bg-slate-50 p-4">
-          <dt className="text-xs uppercase tracking-wide text-muted">{tracked && z.freeTonightFrom ? "Nuitée la moins chère ce soir" : "Nuitée la moins chère"}</dt>
-          <dd className="mt-1 font-display text-2xl font-extrabold text-ink">{tracked && z.freeTonightFrom ? nightly(z.freeTonightFrom) : z.night ? nightly(z.night.min) : "—"}</dd>
+          <dt className="text-xs uppercase tracking-wide text-muted">Prix le plus fréquent</dt>
+          <dd className="mt-1 font-display text-2xl font-extrabold text-ink">{commonText(z.night) ?? (z.night ? nightly(z.night.median) : "—")}</dd>
+          <p className="text-xs text-muted">{z.night?.common?.length ? `${z.night.commonCount} logements à ce prix par nuit` : "par nuit"}</p>
         </div>
         <div className="rounded-xl bg-slate-50 p-4">
           <dt className="text-xs uppercase tracking-wide text-muted">Prix médian de la nuitée</dt>
           <dd className="mt-1 font-display text-2xl font-extrabold text-ink">{z.night ? nightly(z.night.median) : "—"}</dd>
-          {z.night && z.night.count >= 4 ? <p className="text-xs text-muted">la moitié entre {nightly(z.night.p25)} et {nightly(z.night.p75)}</p> : null}
+          {z.night ? <p className="text-xs text-muted">{tracked && z.freeTonightFrom ? `dès ${nightly(z.freeTonightFrom)} ce soir` : `dès ${nightly(z.night.min)}`}{z.night.count >= 4 ? ` · la moitié entre ${nightly(z.night.p25)} et ${nightly(z.night.p75)}` : ""}</p> : null}
         </div>
       </dl>
       {shown.length ? (
