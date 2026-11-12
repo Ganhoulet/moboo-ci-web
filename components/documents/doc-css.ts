@@ -51,6 +51,7 @@ figcaption { font-size: 8pt; color: #64748b; margin-top: 2mm; }
 .cover-top { display: flex; justify-content: space-between; align-items: center; gap: 5mm; }
 .cover-tag { font-size: 8.5pt; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; border: .3mm solid rgba(255,255,255,.45); padding: 1.5mm 3.5mm; border-radius: 10mm; }
 .cover-h { font-family: var(--font-poppins), Poppins, sans-serif; font-size: 44pt; line-height: 1.02; font-weight: 900; margin: 26mm 0 7mm; letter-spacing: -.02em; color: #fff; white-space: pre-line; }
+.cover-h.sm { font-size: 38pt; }
 .cover-bar { display: block; width: 22mm; height: 1.6mm; background: #ea580c; margin: 0 0 6mm; }
 .cover-sub { font-size: 13pt; line-height: 1.45; max-width: 150mm; color: #dbe6fe; }
 .cover-shot { position: absolute; left: 16mm; right: -30mm; bottom: 30mm; height: 127mm; overflow: hidden; border: 1.2mm solid #fff; border-radius: 4mm; box-shadow: 0 6mm 18mm rgba(0,0,0,.35); background: #fff; }
@@ -90,6 +91,14 @@ figcaption { font-size: 8pt; color: #64748b; margin-top: 2mm; }
 .ptitle { font-family: var(--font-poppins), Poppins, sans-serif; font-weight: 700; font-size: 9.2pt; line-height: 1.2; }
 .pok { margin-left: 1.5mm; background: #ecfdf5; color: #059669; font-size: 6.8pt; padding: .2mm 1.2mm; border-radius: 1mm; }
 .pqr { flex: none; width: 13mm; height: 13mm; }
+.srcline { position: absolute; left: 0; right: 0; bottom: 0; font-size: 7pt; color: #64748b; border-top: .2mm solid #e2e8f0; padding-top: 1.5mm; margin: 0; background: #fff; }
+.bars { margin: 2mm 0 3mm; }
+.bar { display: grid; grid-template-columns: 34mm 1fr 30mm; gap: 2.5mm; align-items: center; margin-bottom: 1.6mm; font-size: 8.6pt; }
+.bar .bl { font-weight: 600; }
+.bar .bt { height: 4mm; background: #eff4ff; border-radius: 1mm; overflow: hidden; }
+.bar .bt i { display: block; height: 100%; background: #1e40af; }
+.bar .bv { font-family: var(--font-poppins), Poppins, sans-serif; font-weight: 700; color: #1e3a8a; }
+.bar .bv small { font-family: var(--font-inter), Inter, sans-serif; font-weight: 500; color: #64748b; font-size: 7pt; }
 .benefits.one { grid-template-columns: 1fr; }
 .step { display: inline-flex; align-items: center; background: #ea580c; color: #fff; font-family: var(--font-poppins), Poppins, sans-serif; font-weight: 700; font-size: 8pt; text-transform: uppercase; letter-spacing: .06em; padding: 1mm 3mm; border-radius: 1mm; margin-bottom: 2mm; }
 .zone-head { display: flex; align-items: center; gap: 3mm; margin-bottom: 2mm; }
@@ -148,6 +157,8 @@ ul.why, ol.why { padding-left: 4.5mm; }
 .dims td { padding: 2mm 2.5mm; border-bottom: .2mm solid #e2e8f0; vertical-align: top; }
 .dims tr:nth-child(even) td { background: #f8fafc; }
 .dims td:first-child { font-weight: 700; }
+.dims td, .fields td, .spec td, .spec th { white-space: pre-line; }
+.dims.sm td, .dims.sm th { font-size: 8pt; padding: 1.5mm 2.2mm; }
 .check { list-style: none; padding: 0; margin: 0; }
 .check li { display: flex; gap: 3mm; align-items: flex-start; padding: 2mm 0; border-bottom: .2mm solid #e2e8f0; font-size: 9pt; }
 .check li .box { flex: none; width: 4.5mm; height: 4.5mm; border: .5mm solid #1e40af; border-radius: 1mm; margin-top: .4mm; }
@@ -166,7 +177,7 @@ const scope = (css: string) =>
 const A5_EXTRA = `
 .page { font-size: 10pt; line-height: 1.5; }
 h2 { font-size: 17pt; }
-.cover-h { font-size: 28pt; margin-top: 18mm; }
+.cover-h, .cover-h.sm { font-size: 28pt; margin-top: 18mm; }
 .cover-sub { font-size: 11pt; }
 .back-wrap h2 { font-size: 20pt; margin-top: 24mm; }
 .kpis { grid-template-columns: 1fr 1fr; }

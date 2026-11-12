@@ -75,7 +75,7 @@ function render(b: Block, ctx: Ctx): ReactNode {
     case "cover": return (
       <div className="cover-wrap">
         <div className="cover-top"><DocLogo ring="#ffffff" word="#ffffff" big />{b.tag ? <span className="cover-tag">{fillVars(b.tag, ctx.meta)}</span> : null}</div>
-        <h1 className="cover-h">{fillVars(b.title, ctx.meta)}</h1><span className="cover-bar" />
+        <h1 className={"cover-h" + (b.small ? " sm" : "")}>{fillVars(b.title, ctx.meta)}</h1><span className="cover-bar" />
         <p className="cover-sub">{fillVars(b.subtitle, ctx.meta)}</p>
         {b.image ? <div className="cover-shot"><img src={b.image} alt="" /></div> : null}
         <div className="cover-foot"><span>{fillVars(b.footLeft, ctx.meta)}</span><span>{fillVars(b.footRight, ctx.meta)}</span></div>
@@ -110,7 +110,7 @@ function render(b: Block, ctx: Ctx): ReactNode {
       </div>
     );
     case "example": return <div className={"ex " + b.tone}><span className="lab">{b.label}</span><Rich t={b.text} /></div>;
-    case "table": return <table className={b.dense ? "fields" : "dims"}><thead><tr>{b.head.map((h, i) => <th key={i}>{h}</th>)}</tr></thead><tbody>{b.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}><Rich t={c} /></td>)}</tr>)}</tbody></table>;
+    case "table": return <table className={b.dense ? "fields" : "dims" + (b.small ? " sm" : "")}><thead><tr>{b.head.map((h, i) => <th key={i}>{h}</th>)}</tr></thead><tbody>{b.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}><Rich t={c} /></td>)}</tr>)}</tbody></table>;
     case "checklist": return <ul className="check">{b.items.map((it, i) => it.group ? <li key={i} className="grp">{it.text}</li> : <li key={i}><span className="box" />{it.tag ? <span className="t">{it.tag}</span> : null}<span><Rich t={it.text} /></span></li>)}</ul>;
     case "columns": return <div className={"cols" + (b.ratio === "wide" ? " w" : b.ratio === "anat" ? " a" : b.ratio === "narrow" ? " n" : "")}><div><Blocks blocks={b.left} ctx={ctx} /></div><div><Blocks blocks={b.right} ctx={ctx} /></div></div>;
     case "toc": return (
@@ -123,6 +123,8 @@ function render(b: Block, ctx: Ctx): ReactNode {
     case "benefits": return <div className={"benefits" + (b.single ? " one" : "")}>{b.items.map((k, i) => <div key={i}><p className="bt">{k.title}</p><p><Rich t={k.text} /></p></div>)}</div>;
     case "legend": return <ol className="legend">{b.items.map((m, i) => <li key={i}><span className="n">{m.n}</span>{m.text}</li>)}</ol>;
     case "divider": return <div className="dv" />;
+    case "bars": return <div className="bars">{b.items.map((r, i) => <div key={i} className="bar"><span className="bl">{r.label}</span><span className="bt"><i style={{ width: `${Math.max(0, Math.min(100, r.pct))}%` }} /></span><span className="bv">{r.value}{r.sub ? <small> · {r.sub}</small> : null}</span></div>)}</div>;
+    case "sources": return <p className="srcline"><Rich t={fillVars(b.text, ctx.meta)} /></p>;
     case "qr": return <div className="qrb"><Qr url={b.url} /><span>{fillVars(b.caption, ctx.meta)}</span></div>;
     case "zoneStats": return b.items.length ? <div className="kpis">{b.items.map((k, i) => <div key={i}><b>{k.value}</b><span>{k.label}</span></div>)}</div> : <Empty />;
     case "zonePrices": return (

@@ -175,6 +175,7 @@ export function BlockForm({ b, onChange }: { b: Block; onChange: (patch: Partial
     case "cover": return <>
       <Text label="Étiquette" value={b.tag} onChange={(tag) => set({ tag })} />
       <Area label="Titre" rows={2} value={b.title} onChange={(title) => set({ title })} />
+      <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!b.small} onChange={(e) => set({ small: e.target.checked })} /> Titre un peu plus petit (titre long)</label>
       <Area label="Sous-titre" value={b.subtitle} onChange={(subtitle) => set({ subtitle })} />
       <ImagePick label="Image de couverture" value={b.image} onChange={(image) => set({ image })} />
       <Text label="Bas de page, à gauche" value={b.footLeft} onChange={(footLeft) => set({ footLeft })} />
@@ -228,6 +229,7 @@ export function BlockForm({ b, onChange }: { b: Block; onChange: (patch: Partial
         </div>
         <div className="grid gap-1" style={grid}>{b.head.map((h, i) => <input key={i} aria-label={`En-tête ${i + 1}`} value={h} onChange={(e) => set({ head: b.head.map((x, k) => (k === i ? e.target.value : x)) })} className={inputCls + " font-semibold"} />)}</div>
         <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!b.dense} onChange={(e) => set({ dense: e.target.checked })} /> Tableau compact</label>
+        <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!b.small} onChange={(e) => set({ small: e.target.checked })} /> Tableau resserré (texte plus petit)</label>
         <Items label="Lignes" items={b.rows} onChange={(rows) => set({ rows })} make={() => Array(cols).fill("")} render={(r, s) => <div className="grid gap-1" style={grid}>{r.map((c, j) => <input key={j} aria-label={`Colonne ${j + 1}`} value={c} onChange={(e) => s(r.map((x, k) => (k === j ? e.target.value : x)))} className={inputCls} />)}</div>} />
       </>;
     }
@@ -259,6 +261,11 @@ export function BlockForm({ b, onChange }: { b: Block; onChange: (patch: Partial
       <Locked b={b} set={set} />
     </>;
     case "zoneText": return <><RichText key={b.id + String(b.html.length === 0)} value={b.html} onChange={(html) => set({ html, locked: true })} /><Locked b={b} set={set} /></>;
+    case "bars": return <Items label="Barres" items={b.items} onChange={(items) => set({ items })} make={() => ({ label: "", pct: 50, value: "", sub: "" })} render={(r, s) => <div className="space-y-1">
+      <div className="grid grid-cols-2 gap-1"><Text label="Libellé" value={r.label} onChange={(label) => s({ ...r, label })} /><Text label="Valeur affichée" value={r.value} onChange={(value) => s({ ...r, value })} /></div>
+      <div className="grid grid-cols-2 gap-1"><Text label="Précision (petit texte)" value={r.sub} onChange={(sub) => s({ ...r, sub })} /><Field label={`Longueur : ${r.pct} %`}><input type="range" min={0} max={100} value={r.pct} onChange={(e) => s({ ...r, pct: Number(e.target.value) })} className="mt-2 w-full" /></Field></div>
+    </div>} />;
+    case "sources": return <><Area label="Sources" rows={4} value={b.text} onChange={(text) => set({ text })} /><p className="text-[11px] text-muted">S’affiche en petit, collé en bas de la page.</p></>;
     case "divider": return <p className="text-xs text-muted">Une ligne qui sépare deux sujets sur la même page.</p>;
     case "toc": return <>
       <Text label="Surtitre" value={b.kicker} onChange={(kicker) => set({ kicker })} />
