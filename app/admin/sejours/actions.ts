@@ -40,3 +40,22 @@ export async function listKits() {
   const { ok, data } = await authedFetch("/site/admin/stays/gbp-kits", { method: "GET" });
   return ok ? (data as { id: string; name: string; place: string; kit: string }[]) : null;
 }
+
+export interface AssistantSettings { enabled: boolean; testOnly: boolean; testNumbers: string; maxPerDay: number; handoff: string }
+
+export async function getAssistant() {
+  const { ok, data } = await authedFetch("/site/admin/stays/assistant", { method: "GET" });
+  return ok ? (data as AssistantSettings) : null;
+}
+
+export async function saveAssistantAction(body: Partial<AssistantSettings>) {
+  const { ok, data } = await authedFetch("/site/admin/stays/assistant", { method: "PUT", body: JSON.stringify(body) });
+  if (!ok) return { ok: false as const, error: err(data, "Enregistrement impossible.") };
+  revalidatePath("/admin/sejours/assistant");
+  return { ok: true as const, settings: data as AssistantSettings };
+}
+
+export async function testAssistantAction(text: string) {
+  const { ok, data } = await authedFetch("/site/admin/stays/assistant/test", { method: "POST", body: JSON.stringify({ text }) });
+  return ok ? { ok: true as const, reply: String(data?.reply ?? "") } : { ok: false as const, error: err(data, "Essai impossible.") };
+}
