@@ -31,7 +31,7 @@ export function RichServicePage({ tile, page: p, others, form }: { tile: Service
       {/* Couverture */}
       <section className="relative isolate overflow-hidden bg-brand-900 text-white">
         {p.heroImage ? <img src={p.heroImage} alt={p.heroAlt || tile.title} className="absolute inset-0 -z-10 h-full w-full object-cover" fetchPriority="high" /> : null}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#0b1640]/95 via-brand-900/80 to-brand-900/20" aria-hidden />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#0b1640]/95 via-[#0b1640]/65 to-[#0b1640]/25 lg:bg-gradient-to-r lg:from-[#0b1640]/95 lg:via-brand-900/75 lg:to-brand-900/10" aria-hidden />
         <div className="container-page py-14 sm:py-20 lg:py-28">
           <nav className="text-xs text-white/70"><Link href="/" className="hover:underline">Accueil</Link> › <span>Services</span> › <span className="text-white">{tile.title}</span></nav>
           <div className="mt-6 max-w-2xl">
