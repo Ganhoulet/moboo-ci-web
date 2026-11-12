@@ -27,6 +27,7 @@ export function StayCardView({ s }: { s: StayCard }) {
       <div className="p-4">
         <p className="font-semibold text-ink group-hover:underline">{s.name}</p>
         <p className="mt-0.5 text-sm text-muted">{place}</p>
+        {s.travel ? <p className="mt-0.5 text-xs text-muted" title="Estimation selon la distance, pas un itinéraire">≈ {s.travel.normal} min en voiture · {s.travel.rush} min aux heures de pointe</p> : null}
         <div className="mt-2 flex items-center justify-between gap-2 text-sm">
           <span>{s.fromPrice ? <>dès <strong className="text-ink">{nightly(s.fromPrice)}</strong> / nuit</> : <span className="text-muted">Prix sur demande</span>}</span>
           {s.rating && s.reviews ? (

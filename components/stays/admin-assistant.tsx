@@ -32,7 +32,7 @@ export function AssistantPanel({ initial }: { initial: AssistantSettings }) {
         <p className="text-sm text-muted">La réponse s’affiche ici ; rien n’est envoyé sur WhatsApp.</p>
         <textarea rows={3} value={q} onChange={(e) => setQ(e.target.value)} className="w-full rounded-lg border border-slate-300 p-2 text-sm" />
         <button type="button" onClick={test} disabled={pending || !q.trim()} className="rounded-full bg-brand-700 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-50">{pending ? "Réponse…" : "Tester"}</button>
-        {reply ? <div className="whitespace-pre-line rounded-lg bg-emerald-50 p-3 text-sm text-ink ring-1 ring-emerald-200">{reply}</div> : null}
+        {reply ? <div className="whitespace-pre-line rounded-lg bg-slate-50 p-3 text-sm text-ink ring-1 ring-slate-200">{reply}</div> : null}
       </div>
     </div>
   );

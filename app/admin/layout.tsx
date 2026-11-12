@@ -177,6 +177,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/sejours/visites", label: "Vérifié sur place", icon: "scale", child: true, group: "reservations" },
     { href: "/admin/sejours/kits-google", label: "Kits Google", icon: "scale", child: true, group: "reservations" },
     { href: "/admin/sejours/assistant", label: "Assistant WhatsApp", icon: "scale", child: true, group: "reservations" },
+    { href: "/admin/sejours/marche", label: "Prix du marché", icon: "scale", child: true, group: "reservations" },
+    { href: "/admin/sejours/evenements", label: "Événements", icon: "scale", child: true, group: "reservations" },
     // Services Moboo (ex-extensions WordPress des applications).
     { href: "/admin/services", label: "Services Moboo", icon: "phone", group: "services", badge: svc.edl + svc.leads + svc.missions },
     ...[

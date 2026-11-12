@@ -59,3 +59,57 @@ export async function testAssistantAction(text: string) {
   const { ok, data } = await authedFetch("/site/admin/stays/assistant/test", { method: "POST", body: JSON.stringify({ text }) });
   return ok ? { ok: true as const, reply: String(data?.reply ?? "") } : { ok: false as const, error: err(data, "Essai impossible.") };
 }
+
+// ── Prix du marché (sources privées) ──────────────────────────────────────
+
+export interface MarketRow {
+  id: string; commune: string; type: string; median: number; low: number | null; high: number | null; sampleSize: number;
+  occupancy: number | null; source: string; sourceUrl: string | null; observedAt: string; note: string | null; status: string;
+}
+
+export async function listMarket() {
+  const { ok, data } = await authedFetch("/site/admin/stays/market", { method: "GET" });
+  return ok ? (data as MarketRow[]) : null;
+}
+
+export async function saveMarketAction(id: string | null, body: Record<string, unknown>) {
+  const { ok, data } = await authedFetch(`/site/admin/stays/market${id ? `/${encodeURIComponent(id)}` : ""}`, { method: id ? "PUT" : "POST", body: JSON.stringify(body) });
+  if (!ok) return { ok: false as const, error: err(data, "Enregistrement impossible.") };
+  revalidatePath("/admin/sejours/marche");
+  revalidatePath("/prix-nuitee");
+  return { ok: true as const };
+}
+
+export async function deleteMarketAction(id: string) {
+  const { ok, data } = await authedFetch(`/site/admin/stays/market/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!ok) return { ok: false as const, error: err(data, "Suppression impossible.") };
+  revalidatePath("/admin/sejours/marche");
+  return { ok: true as const };
+}
+
+// ── Événements (« Où dormir pendant … ») ──────────────────────────────────
+
+export interface EventRow {
+  id: string; slug: string; name: string; venue: string; city: string; lat: number; lng: number; radiusKm: number;
+  startDate: string; endDate: string; description: string | null; status: string;
+}
+
+export async function listEvents() {
+  const { ok, data } = await authedFetch("/site/admin/stays/events", { method: "GET" });
+  return ok ? (data as EventRow[]) : null;
+}
+
+export async function saveEventAction(id: string | null, body: Record<string, unknown>) {
+  const { ok, data } = await authedFetch(`/site/admin/stays/events${id ? `/${encodeURIComponent(id)}` : ""}`, { method: id ? "PUT" : "POST", body: JSON.stringify(body) });
+  if (!ok) return { ok: false as const, error: err(data, "Enregistrement impossible.") };
+  revalidatePath("/admin/sejours/evenements");
+  revalidatePath("/ou-dormir");
+  return { ok: true as const, slug: String((data as any)?.slug ?? "") };
+}
+
+export async function deleteEventAction(id: string) {
+  const { ok, data } = await authedFetch(`/site/admin/stays/events/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!ok) return { ok: false as const, error: err(data, "Suppression impossible.") };
+  revalidatePath("/admin/sejours/evenements");
+  return { ok: true as const };
+}
