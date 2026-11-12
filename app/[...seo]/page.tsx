@@ -12,6 +12,7 @@ import { getSiteSettings } from "@/lib/settings";
 import type { Property } from "@/lib/property";
 import { bottomMeta, getSeoBottom } from "@/lib/seo-bottom";
 import { SeoBottomBlock, bottomFaq } from "@/components/seo/seo-bottom";
+import { StaysLive } from "@/components/stays/stays-live";
 
 export const revalidate = 60;
 
@@ -102,6 +103,8 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
       {page.intro ? <div className="rich-text mt-3 max-w-3xl text-muted" dangerouslySetInnerHTML={{ __html: page.intro }} />
         : ins?.intro ? <p className="mt-3 max-w-3xl text-muted">{ins.intro}</p> : null}
       {ins ? <GenFacts ins={ins} slug={page.slug} /> : null}
+      {/* Meublés : chiffres du soir tirés de Moboo Resi (libres ce soir, prix réels, repères). */}
+      {f.transaction === "furnished" && (zone?.slug || f.q) ? <StaysLive zone={zone?.slug ?? zoneSlug(String(f.q))} /> : null}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">{total ? `${total.toLocaleString("fr-FR")} annonce${total > 1 ? "s" : ""} disponible${total > 1 ? "s" : ""}` : "Aucune annonce pour le moment"}</p>
