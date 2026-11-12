@@ -51,7 +51,12 @@ export default async function NearLandmarkPage({ params }: { params: { slug: str
       </nav>
       <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">Résidences meublées {l.near}</h1>
       <p className="mt-3 max-w-3xl text-muted">{l.why} Ici, {d.residences} résidence{d.residences > 1 ? "s" : ""} à moins de {String(l.radiusKm).replace(".", ",")} km, classée{d.residences > 1 ? "s" : ""} de la plus proche à la plus éloignée.</p>
-      <dl className="mt-6 grid gap-3 sm:grid-cols-3">
+      {d.items.length ? (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{d.items.map((s) => <StayCardView key={s.id} s={s} />)}</div>
+      ) : (
+        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-muted">Pas encore de résidence publiée {l.near}. <Link href="/annonces?transaction=furnished" className="font-semibold text-ink underline">Voir toutes les résidences</Link></div>
+      )}
+      <dl className="mt-10 grid gap-3 sm:grid-cols-3">
         {d.tracked ? (
           <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Libres ce soir</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.freeTonight} <span className="text-sm font-semibold text-muted">sur {d.tracked} suivis</span></dd></div>
         ) : (
@@ -60,11 +65,6 @@ export default async function NearLandmarkPage({ params }: { params: { slug: str
         <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Prix le plus fréquent</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{commonText(d.night) ?? (d.night ? nightly(d.night.median) : "—")}</dd>{d.night?.common?.length ? <p className="text-xs text-muted">{d.night.commonCount} logements à ce prix par nuit</p> : null}</div>
         <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Prix médian</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.night ? nightly(d.night.median) : "—"}</dd>{d.night ? <p className="text-xs text-muted">dès {nightly(d.night.min)}</p> : null}</div>
       </dl>
-      {d.items.length ? (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{d.items.map((s) => <StayCardView key={s.id} s={s} />)}</div>
-      ) : (
-        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-muted">Pas encore de résidence publiée {l.near}. <Link href="/annonces?transaction=furnished" className="font-semibold text-ink underline">Voir toutes les résidences</Link></div>
-      )}
       <section className="mt-12 max-w-3xl">
         <h2 className="font-display text-xl font-bold text-ink">Questions fréquentes</h2>
         {faq.map((x) => (

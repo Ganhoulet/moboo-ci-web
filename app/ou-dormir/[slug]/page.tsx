@@ -54,11 +54,6 @@ export default async function EventStaysPage({ params }: { params: { slug: strin
       </nav>
       <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">Où dormir pendant {e.name} ?</h1>
       <p className="mt-3 max-w-3xl text-muted">{e.venue}, {e.city}, {dateRange(e.startDate, e.endDate)}. {e.description ? `${e.description} ` : ""}Voici les résidences meublées à moins de {String(e.radiusKm).replace(".", ",")} km, de la plus proche à la plus éloignée, avec les dates déjà remplies : arrivée {day(d.stay.checkIn)}, départ {day(d.stay.checkOut)}.</p>
-      <dl className="mt-6 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200">{tracked ? <><dt className="text-xs uppercase tracking-wide text-muted">Libres sur toute la période</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.freeDuring} <span className="text-sm font-semibold text-muted">sur {tracked} suivis</span></dd></> : <><dt className="text-xs uppercase tracking-wide text-muted">Logements autour</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.apartments}</dd></>}</div>
-        <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Prix le plus fréquent</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{commonText(d.night) ?? (d.night ? nightly(d.night.median) : "—")}</dd><p className="text-xs text-muted">par nuit</p></div>
-        <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Prix médian</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.night ? nightly(d.night.median) : "—"}</dd>{d.night ? <p className="text-xs text-muted">dès {nightly(d.night.min)}</p> : null}</div>
-      </dl>
       {d.items.length ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {d.items.map((s) => (
@@ -71,6 +66,11 @@ export default async function EventStaysPage({ params }: { params: { slug: strin
       ) : (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-muted">Pas encore de résidence publiée près de {e.venue}. <Link href="/annonces?transaction=furnished" className="font-semibold text-ink underline">Voir toutes les résidences</Link></div>
       )}
+      <dl className="mt-10 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200">{tracked ? <><dt className="text-xs uppercase tracking-wide text-muted">Libres sur toute la période</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.freeDuring} <span className="text-sm font-semibold text-muted">sur {tracked} suivis</span></dd></> : <><dt className="text-xs uppercase tracking-wide text-muted">Logements autour</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.apartments}</dd></>}</div>
+        <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Prix le plus fréquent</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{commonText(d.night) ?? (d.night ? nightly(d.night.median) : "—")}</dd><p className="text-xs text-muted">par nuit</p></div>
+        <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200"><dt className="text-xs uppercase tracking-wide text-muted">Prix médian</dt><dd className="mt-1 font-display text-2xl font-extrabold text-ink">{d.night ? nightly(d.night.median) : "—"}</dd>{d.night ? <p className="text-xs text-muted">dès {nightly(d.night.min)}</p> : null}</div>
+      </dl>
       <section className="mt-12 max-w-3xl">
         <h2 className="font-display text-xl font-bold text-ink">Questions fréquentes</h2>
         {faq.map((x) => <details key={x.q} className="mt-3 rounded-xl bg-white p-4 ring-1 ring-slate-200"><summary className="cursor-pointer font-semibold text-ink">{x.q}</summary><p className="mt-2 text-muted">{x.a}</p></details>)}

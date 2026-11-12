@@ -102,9 +102,6 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
       <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{page.title}</h1>
       {page.intro ? <div className="rich-text mt-3 max-w-3xl text-muted" dangerouslySetInnerHTML={{ __html: page.intro }} />
         : ins?.intro ? <p className="mt-3 max-w-3xl text-muted">{ins.intro}</p> : null}
-      {ins ? <GenFacts ins={ins} slug={page.slug} /> : null}
-      {/* Meublés : chiffres du soir tirés de Moboo Resi (libres ce soir, prix réels, repères). */}
-      {f.transaction === "furnished" && (zone?.slug || f.q) ? <StaysLive zone={zone?.slug ?? zoneSlug(String(f.q))} /> : null}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">{total ? `${total.toLocaleString("fr-FR")} annonce${total > 1 ? "s" : ""} disponible${total > 1 ? "s" : ""}` : "Aucune annonce pour le moment"}</p>
@@ -125,6 +122,11 @@ export default async function SeoLandingPage({ params }: { params: { seo: string
           <Link href={more} className="inline-flex rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white hover:bg-black">Voir les {total.toLocaleString("fr-FR")} annonces</Link>
         </div>
       ) : null}
+
+      {/* Chiffres sous les annonces : d'abord la liste, ensuite les repères de prix. */}
+      {ins ? <div className="mt-12"><GenFacts ins={ins} slug={page.slug} /></div> : null}
+      {/* Meublés : chiffres du soir tirés de Moboo Resi (libres ce soir, prix réels, repères). */}
+      {f.transaction === "furnished" && (zone?.slug || f.q) ? <StaysLive zone={zone?.slug ?? zoneSlug(String(f.q))} /> : null}
 
       {page.content ? (
         <section className="mt-14 border-t border-slate-200 pt-10">
