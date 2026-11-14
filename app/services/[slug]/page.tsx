@@ -53,7 +53,7 @@ export default async function ServicePage({ params }: { params: { slug: string }
     }
     const form = key === "edl"
       ? <EdlForm extraFields={pg.fields} submitText={pg.submitText} successText={pg.successText} />
-      : isMissionKey(key) ? <MissionForm service={key} price={t.price} fields={pg.fields} submitText={pg.submitText} successText={pg.successText} /> : null;
+      : isMissionKey(key) ? <MissionForm service={key} price={t.price} fields={pg.fields.length ? pg.fields : undefined} submitText={pg.submitText} successText={pg.successText} /> : null;
     if (form) return <RichServicePage tile={t} page={pg} others={others} form={form} />;
   }
   return (
