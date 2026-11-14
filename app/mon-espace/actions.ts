@@ -435,3 +435,37 @@ export async function growthAction(kind: "accept" | "confirm" | "revoke", token?
   revalidatePath("/mon-espace/mandat");
   return ok ? { ok: true } : { ok: false, error: errMsg(data, "Action impossible.") };
 }
+
+/* ─── Collaborations entre agents (co-listing) ──────────────────────────── */
+
+export interface CoItem {
+  token: string; status: "pending" | "accepted" | "rejected" | "stopped" | "expired"; role: "owner" | "co";
+  property: { id: number; uuid: string; title: string; image: string | null; price: number; link: string } | null;
+  partner: { name: string; photo: string | null; phone: string | null } | null;
+  commission_owner_pct: number; commission_co_pct: number; duration_days: number; message: string | null;
+  created_at: string; ends_at: string; share_url: string | null; my_link: string | null; stats: { views: number; contacts: number };
+}
+
+export async function getCoListings(): Promise<{ sent: CoItem[]; received: CoItem[] } | null> {
+  if (!getSession()) return null;
+  const { ok, data } = await authedFetch("/site/me/co-listings", { method: "GET" });
+  return ok ? (data as { sent: CoItem[]; received: CoItem[] }) : null;
+}
+
+const coErr = (d: any) => d?.error?.message ?? d?.message ?? "Action impossible.";
+
+/** Proposer une collaboration sur une de mes annonces : lien à partager au confrère. */
+export async function proposeCoListingAction(input: { listingId: string; pct: number; days: number; message: string }) {
+  const { ok, data } = await authedFetch("/site/me/co-listings", {
+    method: "POST", body: JSON.stringify({ listingId: input.listingId, commission_owner_pct: input.pct, duration_days: input.days, message: input.message }),
+  });
+  revalidatePath("/mon-espace/collaborations");
+  return ok ? { ok: true as const, shareUrl: String(data.share_url), expiresAt: String(data.expires_at) } : { ok: false as const, error: coErr(data) };
+}
+
+/** Accepter, refuser ou arrêter une collaboration. */
+export async function coListingAction(token: string, what: "accept" | "reject" | "stop") {
+  const { ok, data } = await authedFetch(`/site/me/co-listings/${encodeURIComponent(token)}/${what}`, { method: "POST", body: "{}" });
+  revalidatePath("/mon-espace/collaborations");
+  return ok ? { ok: true as const } : { ok: false as const, error: coErr(data), code: (data?.error?.error ?? data?.error) as string | undefined };
+}

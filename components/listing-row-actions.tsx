@@ -59,6 +59,7 @@ export function ListingRowActions({ id, status, transaction, featured, awaitingP
         <div className="absolute right-0 top-10 z-30 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
           <Link data-action="listing.edit" href={`/mon-espace/annonces/${id}`} className={item + " sm:hidden"}><SiteIcon value="✏" size={16} className="mr-1 inline-block align-[-3px]" />Modifier</Link>
           {status === "ACTIVE" ? <Link href={`/annonce/${id}`} target="_blank" className={item}><SiteIcon value="👁" size={16} className="mr-1 inline-block align-[-3px]" />Voir sur le site</Link> : null}
+          {status === "ACTIVE" ? <Link data-action="listing.colisting" href={`/mon-espace/collaborations?annonce=${id}`} className={item}><SiteIcon value="🤝" size={16} className="mr-1 inline-block align-[-3px]" />Proposer une collaboration</Link> : null}
           {status === "ACTIVE" ? (
             <>
               <button data-action="listing.status" type="button" className={item} onClick={() => run(() => setListingStatusAction(id, closed))}>

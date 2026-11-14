@@ -350,6 +350,8 @@ export const USER_TYPES: [string, string][] = [["buyer", "Acheteur"], ["tenant",
 /** Demande de contact ou de visite sur une annonce. */
 export function submitInquiry(input: {
   listingId?: string;
+  /** Lien d'un confrère (collaboration) : la demande lui arrive, copie au proposant. */
+  ref?: string;
   /** Demande adressée à un pro depuis sa page (identifiant public). */
   toUsername?: string;
   name: string;
@@ -406,4 +408,16 @@ export function formatXOF(n: number | string | null | undefined): string {
   const v = typeof n === "string" ? Number(n) : n;
   if (v == null || Number.isNaN(v)) return "—";
   return new Intl.NumberFormat("fr-FR").format(Math.round(v)) + " FCFA";
+}
+
+/** Contact du confrère quand la fiche est ouverte par son lien de collaboration (?ref=), sinon null. */
+export interface CoContact { name: string; phone: string | null; whatsapp: string | null; photo: string | null; username: string | null; accountType: string }
+export async function getCoContact(listingId: string, ref: string | undefined): Promise<CoContact | null> {
+  if (!ref || !/^[a-z2-9]{6,12}$/.test(ref)) return null;
+  try {
+    const r = await fetch(`${API_URL}/site/co/ref-view`, { method: "POST", cache: "no-store", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ listingId, ref }) });
+    return r.ok ? ((await r.json()) as { contact: CoContact | null }).contact : null;
+  } catch {
+    return null;
+  }
 }

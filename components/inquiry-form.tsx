@@ -13,7 +13,7 @@ function Submit() {
   );
 }
 
-export function InquiryForm({ listingId, title }: { listingId: string; title: string }) {
+export function InquiryForm({ listingId, title, coRef }: { listingId: string; title: string; coRef?: string }) {
   const [state, action] = useFormState<InquiryState, FormData>(sendInquiryAction, null);
 
   if (state?.ok) {
@@ -33,6 +33,7 @@ export function InquiryForm({ listingId, title }: { listingId: string; title: st
       <h3 className="font-display font-bold text-ink">Envoyer une demande</h3>
       <p className="mt-0.5 text-sm text-muted">Intéressé par « {title} » ? Laissez vos coordonnées.</p>
       <input type="hidden" name="listingId" value={listingId} />
+      {coRef ? <input type="hidden" name="ref" value={coRef} /> : null}
       <div className="mt-4 space-y-3">
         <input name="name" placeholder="Votre nom" className="input" required />
         <input name="phone" type="tel" inputMode="tel" placeholder="Votre téléphone" className="input" required />

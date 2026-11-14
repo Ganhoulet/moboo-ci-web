@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
   if (!listingId || !ID.test(listingId) || (channel !== "call" && channel !== "whatsapp")) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
-  await relay(`/marketplace/listings/${encodeURIComponent(listingId)}/contact-click`, { channel });
+  const ref = typeof (body as any).ref === "string" && /^[a-z2-9]{6,12}$/.test((body as any).ref) ? (body as any).ref : undefined;
+  await relay(`/marketplace/listings/${encodeURIComponent(listingId)}/contact-click`, { channel, ...(ref ? { ref } : {}) });
   return NextResponse.json({ ok: true });
 }

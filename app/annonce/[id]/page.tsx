@@ -21,6 +21,7 @@ import { getZonePartners, trackAdClick } from "@/lib/ads";
 import { VisitForm } from "@/components/visit-form";
 import { MobileContactBar } from "@/components/mobile-contact-bar";
 import { ContactLink } from "@/components/contact-link";
+import { getCoContact } from "@/lib/api";
 import { getSiteSettings } from "@/lib/settings";
 import { waMessage, waNumber } from "@/lib/whatsapp";
 import { customDisplay, parseListingForm } from "@/lib/listing-form";
@@ -55,21 +56,27 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export default async function AnnoncePage({ params, searchParams }: { params: { id: string }; searchParams: { sp?: string } }) {
+export default async function AnnoncePage({ params, searchParams }: { params: { id: string }; searchParams: { sp?: string; ref?: string } }) {
   const l = await getListing(listingIdFrom(params.id));
   if (!l) notFound();
+  // Lien d'un confrère (collaboration) : son contact remplace celui de l'annonceur.
+  const co = await getCoContact(l.id, typeof searchParams?.ref === "string" ? searchParams.ref : undefined);
+  const coRef = co ? searchParams.ref : undefined;
   // Lien TikTok court (partagé depuis l'application) : lu dans l'annonce, sans ouvrir TikTok.
   const videoUrl = await canonicalVideoUrl(l.videoUrl);
   // Ancienne adresse (identifiant seul) ou titre modifié : redirection 301 vers l'adresse descriptive.
   const path = listingPath(l);
-  if (`/annonce/${decodeURIComponent(params.id)}` !== path) permanentRedirect(searchParams?.sp ? `${path}?sp=${encodeURIComponent(searchParams.sp)}` : path);
+  if (`/annonce/${decodeURIComponent(params.id)}` !== path) {
+    const q = new URLSearchParams(Object.entries({ sp: searchParams?.sp, ref: searchParams?.ref }).filter(([, v]) => typeof v === "string" && v) as [string, string][]).toString();
+    permanentRedirect(q ? `${path}?${q}` : path);
+  }
   // Arrivée depuis une annonce sponsorisée : clic compté pour l'annonceur.
   if (searchParams?.sp) trackAdClick("boost", searchParams.sp);
   const [partners, signals, market] = await Promise.all([getZonePartners(l.id), getSignals("listing", l.id), isOn("prix.repere-fiche").then((on) => (on ? getMarketEstimate(l.id) : null))]);
 
   const zone = [l.quartier, l.commune, l.city].filter(Boolean).join(", ") || "Côte d'Ivoire";
   // Numéro WhatsApp au format international (premier numéro si le champ en contient deux).
-  const phoneDigits = waNumber(l.agent?.whatsapp || l.agent?.phone || l.contactPhone || l.owner?.whatsapp || l.owner?.phone) ?? "";
+  const phoneDigits = waNumber((co ? co.whatsapp || co.phone : null) || l.agent?.whatsapp || l.agent?.phone || l.contactPhone || l.owner?.whatsapp || l.owner?.phone) ?? "";
   // Sections affichées, extrait, biens similaires : back-office → Détails de la propriété.
   const { listing: cfg, general, print, moderation, forms } = await getSiteSettings();
   const tax = await getTaxonomies();
@@ -133,11 +140,11 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
   const units = (l.units ?? []).filter((u) => u?.title);
   const txLabel = l.transaction === "rent" ? "À louer" : "À vendre";
 
-  const barPhone = l.agent?.phone || l.contactPhone || l.owner?.phone;
-  const barWhatsapp = l.agent?.whatsapp || l.contactPhone || l.owner?.whatsapp || l.owner?.phone;
+  const barPhone = (co ? co.phone || co.whatsapp : null) || l.agent?.phone || l.contactPhone || l.owner?.phone;
+  const barWhatsapp = (co ? co.whatsapp || co.phone : null) || l.agent?.whatsapp || l.contactPhone || l.owner?.whatsapp || l.owner?.phone;
   const isReservable = l.listingKind === "furnished" || l.listingKind === "event";
   // Message WhatsApp pré-rempli (comme Houzez) : texte du back-office → Détails de la propriété → Messages WhatsApp.
-  const contactName = (l.agent?.name || l.owner?.name || l.contactName || "").trim();
+  const contactName = (co?.name || l.agent?.name || l.owner?.name || l.contactName || "").trim();
   const waText = encodeURIComponent(waMessage(isReservable ? cfg.waFurnished : cfg.waListing, {
     titre: l.title, type: txLabel.toLowerCase(), ref: l.id.slice(0, 8).toUpperCase(), prix: formatXOF(l.price),
     ville: [l.commune, l.city].filter(Boolean).join(", "), lien: `${(cfg.waLinkBase || SITE_URL).replace(/\/+$/, "")}${listingPath(l)}`,
@@ -145,7 +152,9 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
   }));
 
   // Agent / agence rattaché (reprise WP), sinon l'annonceur particulier.
-  const person: HeroPerson | null = l.agent
+  const person: HeroPerson | null = co
+    ? { role: co.accountType === "entreprise" ? "Agence partenaire" : "Agent partenaire", name: co.name, photoUrl: co.photo, sub: "Partenaire Moboo pour cette annonce" }
+    : l.agent
     ? {
         role: l.agent.kind === "agency" ? "Agence" : "Agent",
         name: l.agent.name,
@@ -379,8 +388,8 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
               {/* Coordonnées de l'agent si rattaché, sinon de l'annonceur. */}
               {phoneDigits ? (
                 <div className="mt-4 grid gap-2">
-                  <ContactLink listingId={l.id} channel="call" href={`tel:${barPhone}`} className="btn-primary w-full bg-brand-800 hover:bg-brand-900">Appeler</ContactLink>
-                  <ContactLink listingId={l.id} channel="whatsapp" href={`https://wa.me/${phoneDigits}?text=${waText}`} className="btn-ghost w-full" target="_blank" rel="noopener noreferrer">WhatsApp</ContactLink>
+                  <ContactLink listingId={l.id} coRef={coRef} channel="call" href={`tel:${barPhone}`} className="btn-primary w-full bg-brand-800 hover:bg-brand-900">Appeler</ContactLink>
+                  <ContactLink listingId={l.id} coRef={coRef} channel="whatsapp" href={`https://wa.me/${phoneDigits}?text=${waText}`} className="btn-ghost w-full" target="_blank" rel="noopener noreferrer">WhatsApp</ContactLink>
                 </div>
               ) : (
                 <p className="mt-3 text-sm text-muted">Contact communiqué par l'annonceur.</p>
@@ -399,7 +408,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
 
           {cfg.showContactForm ? (
             <div id="message" className="mt-4 scroll-mt-4">
-              <InquiryForm listingId={l.id} title={l.title} />
+              <InquiryForm listingId={l.id} title={l.title} coRef={coRef} />
             </div>
           ) : null}
 
@@ -424,7 +433,7 @@ export default async function AnnoncePage({ params, searchParams }: { params: { 
         </section>
       ) : null}
 
-      <MobileContactBar listingId={l.id} phone={barPhone} whatsapp={barWhatsapp} waText={waText}
+      <MobileContactBar listingId={l.id} coRef={coRef} phone={barPhone} whatsapp={barWhatsapp} waText={waText}
         bar={cfg} price={l.price} transaction={l.transaction} messageHref={cfg.showContactForm ? "#message" : null}
         person={person ? {
           name: person.name, role: person.role, photoUrl: person.photoUrl, verified: !!(person.verified || person.businessVerified), agency: person.role === "Agence",

@@ -166,7 +166,7 @@ export const WELCOME_NEXT: Record<AccountType, { text: string; cta?: { href: str
 
 export type DashKey =
   | "tableau" | "reservations" | "annonces" | "nouvelle" | "statistiques" | "demandes"
-  | "messages" | "favoris" | "recherches" | "profil" | "forfait" | "publicite" | "factures" | "verification" | "api" | "infos" | "avis" | "pagepro" | "equipe" | "realisations" | "bourse";
+  | "messages" | "favoris" | "recherches" | "profil" | "forfait" | "publicite" | "factures" | "verification" | "api" | "infos" | "avis" | "pagepro" | "equipe" | "realisations" | "bourse" | "collaborations";
 
 export interface DashItem {
   key: DashKey;
@@ -188,6 +188,7 @@ export const DASH_MENU: DashItem[] = [
   { key: "pagepro", href: "/mon-espace/page-pro", label: "Ma page pro", types: PUB },
   { key: "equipe", href: "/mon-espace/equipe", label: "Mon équipe", types: ["entreprise"] },
   { key: "realisations", href: "/mon-espace/realisations", label: "Vendus et loués", types: PUB },
+  { key: "collaborations", href: "/mon-espace/collaborations", label: "Collaborations", types: PUB },
   { key: "avis", href: "/mon-espace/avis", label: "Avis clients", types: ["agent", "entreprise"] },
   { key: "reservations", href: "/mon-espace/reservations", label: "Mes réservations", types: "all" },
   { key: "messages", href: "/mon-espace/messages", label: "Messages", types: "all" },

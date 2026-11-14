@@ -52,9 +52,10 @@ const shorten = (s: string, max: number) => (s.length > max ? s.slice(0, Math.ma
  * tailles, couleurs, nom de l'annonceur (complet, prénom, longueur, lignes), ligne d'information, fond.
  */
 export function MobileContactBar({
-  phone, whatsapp, listingId, waText, person, price, transaction, messageHref, bar,
+  phone, whatsapp, listingId, waText, person, price, transaction, messageHref, bar, coRef,
 }: {
   listingId?: string;
+  coRef?: string;
   /** Message WhatsApp pré-rempli (déjà encodé pour une URL). */
   waText?: string;
   phone?: string | null;
@@ -117,7 +118,7 @@ export function MobileContactBar({
   const twoRows = !!who && (bar.cbLayout === "two_rows" || (bar.cbLayout !== "one_row" && (pills >= 2 || (pills === 1 && buttons.length >= 3))));
   const person_ = who && person?.href ? <Link href={person.href} className="block min-w-0 rounded-lg">{who}</Link> : who;
   const actions = buttons.map((b) => b === "call" ? (
-          <ContactLink key={b} listingId={listingId} channel="call" href={`tel:${tel}`} aria-label="Appeler" className={cls(b, bar.cbCallColor)}>
+          <ContactLink key={b} listingId={listingId} coRef={coRef} channel="call" href={`tel:${tel}`} aria-label="Appeler" className={cls(b, bar.cbCallColor)}>
             {IconPhone(size.icon)}{labelled(b) ? <span>Appeler</span> : null}
           </ContactLink>
         ) : b === "message" ? (
@@ -125,7 +126,7 @@ export function MobileContactBar({
             {IconMessage(size.icon)}{labelled(b) ? <span>Message</span> : null}
           </a>
         ) : (
-          <ContactLink key={b} listingId={listingId} channel="whatsapp" href={`https://wa.me/${waDigits}${waText ? `?text=${waText}` : ""}`}
+          <ContactLink key={b} listingId={listingId} coRef={coRef} channel="whatsapp" href={`https://wa.me/${waDigits}${waText ? `?text=${waText}` : ""}`}
             target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className={cls(b, bar.cbWhatsappColor)}>
             {IconWhatsApp(size.icon)}{labelled(b) ? <span>WhatsApp</span> : null}
           </ContactLink>

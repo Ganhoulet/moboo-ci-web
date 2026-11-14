@@ -26,6 +26,7 @@ export const DASH_ICONS: Record<DashKey, React.ReactNode> = {
   pagepro: <svg {...sv}><rect x="3" y="4" width="18" height="16" rx="3" {...lj} /><circle cx="9" cy="10" r="2.2" /><path d="M5.5 17c.6-2 2-3 3.5-3s2.9 1 3.5 3M14 9h4M14 13h4" {...lj} /></svg>,
   equipe: <svg {...sv}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c.4-3 2.7-5 5.5-5s5.1 2 5.5 5" {...lj} /><circle cx="17" cy="9" r="2.4" /><path d="M15.5 14.2c2.6-.3 4.6 1.4 5 4.3" {...lj} /></svg>,
   realisations: <svg {...sv}><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" {...lj} /><path d="m9 14 2 2 4-4" {...lj} /></svg>,
+  collaborations: <svg {...sv}><circle cx="8" cy="9" r="3" {...lj} /><circle cx="16" cy="9" r="3" {...lj} /><path d="M3 19c0-3 2.5-5 5-5s5 2 5 5M11 19c0-3 2.5-5 5-5s5 2 5 5" {...lj} /></svg>,
   avis: <svg {...sv}><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9Z" {...lj} /></svg>,
   infos: <svg {...sv}><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z" {...lj} /><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" {...lj} /></svg>,
   profil: <svg {...sv}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-3.9 3.6-7 8-7s8 3.1 8 7" {...lj} /></svg>,
