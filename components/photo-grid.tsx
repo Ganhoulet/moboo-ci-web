@@ -188,16 +188,14 @@ export function MobileGallery({
                 )
               ) : (
                 <button type="button" className="relative block h-full w-full overflow-hidden bg-slate-900" onClick={() => setOpen(i)} aria-label={`Agrandir la photo ${i + 1}`}>
-                  {/* Photo entière (verticale ou horizontale), sur le même cliché flouté en fond. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img(m.src, 320)} alt="" aria-hidden loading={i < 2 ? "eager" : "lazy"} decoding="async" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl" />
+                  {/* Photo qui remplit tout le cadre (comme Airbnb) ; la visionneuse plein écran la montre entière. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     {...imgProps(m.src, { width: 960, sizes: "100vw" })}
                     alt={i === 0 ? alt : ""}
                     loading={i < 2 ? "eager" : "lazy"}
                     decoding="async"
-                    className="relative h-full w-full object-contain"
+                    className="h-full w-full object-cover"
                   />
                 </button>
               )}
