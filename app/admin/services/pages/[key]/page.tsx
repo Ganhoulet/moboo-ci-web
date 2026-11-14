@@ -4,6 +4,7 @@ import { getServices } from "../../actions";
 import type { ServicesConfig } from "@/lib/moboo-services";
 import { SERVICE_LABEL, SERVICE_SLUG, serviceHref, type ServiceKey } from "@/lib/site-services";
 import { ServicePageEditor } from "@/components/backoffice/service-page-editor";
+import { HousingSettings } from "@/components/backoffice/housing-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export default async function ServicePageEdit({ params }: { params: { key: strin
         <Link href="/admin/services/pages" className="text-sm text-brand-700">← Pages des services</Link>
         <h1 className="mt-1 font-display text-2xl font-extrabold text-ink">{title}</h1>
       </div>
+      {key === "recherche_logement" && cfg.housing ? <HousingSettings initial={cfg.housing} /> : null}
       <ServicePageEditor serviceKey={key} title={title} initial={page} href={serviceHref(key)} />
     </div>
   );

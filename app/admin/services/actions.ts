@@ -176,3 +176,13 @@ export async function saveServicePage(key: string, page: unknown) {
   revalidateTag(SITE_SERVICES_TAG);
   return r.ok ? { ok: true, page: r.data?.site.pages?.[key] } : { ok: false, error: r.error };
 }
+
+/** Recherche de logement : communes ouvertes, forfaits, canaux, paiement en ligne (réglages à jour, seul ce bloc remplacé). */
+export async function saveHousingSettings(housing: unknown) {
+  const cur = await call<ServicesConfig>("/config");
+  if (!cur.ok || !cur.data) return { ok: false, error: cur.error ?? "Réglages indisponibles." };
+  const r = await call<ServicesConfig>("/config", "PUT", { ...cur.data, housing });
+  revalidatePath("/admin/services", "layout");
+  revalidateTag(SITE_SERVICES_TAG);
+  return r.ok ? { ok: true, housing: r.data?.housing } : { ok: false, error: r.error };
+}

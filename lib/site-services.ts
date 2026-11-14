@@ -8,9 +8,9 @@ import { relayHeaders } from "./relay";
 export const SITE_SERVICES_TAG = "site-services";
 
 export type ToolKey = "edl" | "loyer" | "foncier" | "solvabilite";
-export type MissionKey = "nettoyage" | "conciergerie" | "mise_en_location" | "gestion_locative" | "visite" | "bail" | "photos_annonce" | "avis_valeur" | "devis_travaux" | "verif_fonciere" | "panneau_qr";
+export type MissionKey = "recherche_logement" | "nettoyage" | "conciergerie" | "mise_en_location" | "gestion_locative" | "visite" | "bail" | "photos_annonce" | "avis_valeur" | "devis_travaux" | "verif_fonciere" | "panneau_qr";
 export type ServiceKey = ToolKey | MissionKey;
-export const MISSION_KEYS: MissionKey[] = ["nettoyage", "conciergerie", "mise_en_location", "gestion_locative", "visite", "bail", "photos_annonce", "avis_valeur", "devis_travaux", "verif_fonciere", "panneau_qr"];
+export const MISSION_KEYS: MissionKey[] = ["recherche_logement", "nettoyage", "conciergerie", "mise_en_location", "gestion_locative", "visite", "bail", "photos_annonce", "avis_valeur", "devis_travaux", "verif_fonciere", "panneau_qr"];
 export const isMissionKey = (k: string): k is MissionKey => (MISSION_KEYS as string[]).includes(k);
 export interface SiteTile {
   enabled: boolean; icon: string; title: string; tagline: string; landingTitle: string; landingIntro: string;
@@ -21,13 +21,13 @@ export interface SiteServicesData { items: ServiceTile[]; solvency: { incomeMult
 
 export const SERVICE_SLUG: Record<ServiceKey, string> = {
   edl: "etat-des-lieux", loyer: "estimation-loyer", foncier: "estimation-terrain", solvabilite: "solvabilite-locataire",
-  nettoyage: "nettoyage-a-domicile", conciergerie: "conciergerie",
+  recherche_logement: "trouver-un-logement", nettoyage: "nettoyage-a-domicile", conciergerie: "conciergerie",
   mise_en_location: "mettre-en-location", gestion_locative: "gestion-locative", visite: "visite-a-distance", bail: "redaction-bail",
   photos_annonce: "photos-annonce", avis_valeur: "avis-de-valeur", devis_travaux: "devis-travaux", verif_fonciere: "verification-fonciere", panneau_qr: "panneau-a-louer",
 };
 export const SERVICE_LABEL: Record<ServiceKey, string> = {
   edl: "État des lieux", loyer: "Estimation de loyer", foncier: "Estimation de terrain", solvabilite: "Solvabilité locataire",
-  nettoyage: "Nettoyage à domicile", conciergerie: "Conciergerie",
+  recherche_logement: "Recherche de logement", nettoyage: "Nettoyage à domicile", conciergerie: "Conciergerie",
   mise_en_location: "Mise en location", gestion_locative: "Gestion locative", visite: "Visite pour vous", bail: "Bail & contrat",
   photos_annonce: "Photos & annonce", avis_valeur: "Avis de valeur", devis_travaux: "Devis travaux", verif_fonciere: "Vérification foncière", panneau_qr: "Panneau À louer + QR",
 };
@@ -59,7 +59,9 @@ export interface ServicePage {
   formTitle: string; formIntro: string; submitText: string; successText: string; fields: PageField[];
   contactPhone: string; contactWhatsapp: string;
 }
-export interface ServicePageData extends ServiceTile { page: ServicePage | null }
+export interface HousingPack { id: string; label: string; price: number; visits: number; items: string[]; featured: boolean }
+export interface HousingConfig { communes: string[]; payOnline: boolean; channels: string[]; packs: HousingPack[] }
+export interface ServicePageData extends ServiceTile { page: ServicePage | null; housing?: HousingConfig }
 
 /** Page détaillée d'un service ouvert (null : service fermé ou API injoignable). */
 export async function getServicePage(key: ServiceKey): Promise<ServicePageData | null> {

@@ -6,6 +6,7 @@ import type { MissionKey } from "./site-services";
 export interface MissionField { key: string; label: string; type?: "text" | "number" | "select" | "textarea" | "url"; options?: string[]; placeholder?: string }
 
 export const MISSION_FIELDS: Record<MissionKey, MissionField[]> = {
+  recherche_logement: [],
   nettoyage: [
     { key: "formule", label: "Type de ménage", type: "select", options: ["Ménage régulier", "Grand ménage", "Fin de chantier / déménagement", "Repassage & linge"] },
     { key: "pieces", label: "Nombre de pièces", type: "number" },
@@ -63,6 +64,7 @@ export const MISSION_FIELDS: Record<MissionKey, MissionField[]> = {
 };
 
 export const MISSION_POINTS: Record<MissionKey, string[]> = {
+  recherche_logement: ["Logements trouvés sur le terrain", "Photos et vidéos par WhatsApp", "Visites accompagnées selon le forfait"],
   nettoyage: ["Agentes vérifiées et formées", "Produits fournis sur demande", "Paiement mobile money après le passage"],
   conciergerie: ["Annonces sur Moboo, Airbnb et Booking", "Accueil des voyageurs et ménage hôtelier", "Revenus versés chaque mois"],
   mise_en_location: ["Photos, annonce et visites gérées par un agent", "Dossier du locataire vérifié", "Bail préparé et signé"],

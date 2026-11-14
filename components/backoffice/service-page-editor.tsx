@@ -138,6 +138,7 @@ export function ServicePageEditor({ serviceKey, title, initial, href }: { servic
 
       <section className={card + " space-y-3"}>
         <h2 className="font-display text-lg font-bold text-ink">Formules et tarifs</h2>
+        {serviceKey === "recherche_logement" ? <p className="text-sm text-amber-800">Pour ce service, la page affiche les forfaits réglés plus haut (Forfaits et communes) : seuls le titre et la phrase ci-dessous sont utilisés.</p> : null}
         <div className="grid gap-3 sm:grid-cols-2"><Text label="Titre de la rubrique" value={p.offersTitle} onChange={(v) => set("offersTitle", v)} /><Text label="Phrase sous le titre" value={p.offersIntro} onChange={(v) => set("offersIntro", v)} /></div>
         <ListEditor items={p.offers} onChange={(v) => set("offers", v)} max={6} addLabel="Ajouter une formule" make={() => ({ name: "", price: "", period: "", items: [], featured: false })}
           render={(x, s) => (

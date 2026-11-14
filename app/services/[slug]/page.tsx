@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { EdlForm, FoncierForm, LoyerForm, SolvencyForm } from "@/components/services/service-forms";
 import { MissionForm } from "@/components/services/mission-form";
 import { MISSION_POINTS } from "@/lib/missions";
-import { getServicePage, getServiceZones, getSiteServices, isMissionKey, serviceBySlug, serviceHref, type ServiceKey, type ServicePage, type ServiceTile, type ToolKey } from "@/lib/site-services";
+import { getServicePage, getServiceZones, getSiteServices, isMissionKey, serviceBySlug, serviceHref, type ServiceKey, type HousingConfig, type ServicePage, type ServiceTile, type ToolKey } from "@/lib/site-services";
 import { RichServicePage } from "@/components/services/rich-service-page";
+import { HousingForm } from "@/components/services/housing-form";
 import { SiteIcon } from "@/components/site-icon";
 
 export const revalidate = 120;
@@ -17,12 +18,12 @@ const POINTS: Record<ToolKey, string[]> = {
   solvabilite: ["Avec l’accord du candidat (code par SMS)", "Ponctualité des loyers suivis sur Moboo Pro", "Rapport revenus / loyer et conseils pratiques"],
 };
 
-async function tile(slug: string): Promise<{ key: ServiceKey; t: ServiceTile; page: ServicePage | null; all: ServiceTile[]; solvency: { incomeMultiple: number; codeTtlMin: number } } | null> {
+async function tile(slug: string): Promise<{ key: ServiceKey; t: ServiceTile; page: ServicePage | null; housing: HousingConfig | null; all: ServiceTile[]; solvency: { incomeMultiple: number; codeTtlMin: number } } | null> {
   const key = serviceBySlug(slug);
   if (!key) return null;
   const [data, detail] = await Promise.all([getSiteServices(), getServicePage(key)]);
   const t = data.items.find((x) => x.key === key);
-  return t ? { key, t, page: detail?.page?.enabled ? detail.page : null, all: data.items, solvency: data.solvency } : null;
+  return t ? { key, t, page: detail?.page?.enabled ? detail.page : null, housing: detail?.housing ?? null, all: data.items, solvency: data.solvency } : null;
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -44,6 +45,12 @@ export default async function ServicePage({ params }: { params: { slug: string }
   const others = r.all.filter((x) => x.key !== key);
   const pg = r.page;
   if (pg) {
+    const hc = r.housing;
+    // Recherche de logement : formules = forfaits réglés au back-office (une seule source pour la page et le formulaire).
+    if (key === "recherche_logement" && hc) {
+      const offers = hc.packs.map((p) => ({ name: p.label, price: `${Math.round(p.price).toLocaleString("fr-FR").replace(/[\u202f\u00a0]/g, " ")} FCFA`, period: "", items: p.items, featured: p.featured }));
+      return <RichServicePage tile={t} page={{ ...pg, offers }} others={others} form={<HousingForm cfg={hc} submitText={pg.submitText} successText={pg.successText} />} />;
+    }
     const form = key === "edl"
       ? <EdlForm extraFields={pg.fields} submitText={pg.submitText} successText={pg.successText} />
       : isMissionKey(key) ? <MissionForm service={key} price={t.price} fields={pg.fields} submitText={pg.submitText} successText={pg.successText} /> : null;
@@ -68,7 +75,7 @@ export default async function ServicePage({ params }: { params: { slug: string }
             {key === "loyer" ? <LoyerForm zones={zones} /> : null}
             {key === "foncier" ? <FoncierForm zones={zones} /> : null}
             {key === "solvabilite" ? <SolvencyForm {...r.solvency} /> : null}
-            {isMissionKey(key) ? <MissionForm service={key} price={t.price} /> : null}
+            {key === "recherche_logement" && r.housing ? <HousingForm cfg={r.housing} /> : isMissionKey(key) ? <MissionForm service={key} price={t.price} /> : null}
           </div>
         </div>
       </section>
