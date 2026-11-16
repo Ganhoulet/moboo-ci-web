@@ -11,6 +11,8 @@ export type Stage = "requested" | "accepted" | "confirmed" | "ongoing" | "comple
 /** Révélé une fois la réservation confirmée (acompte payé) : façon Airbnb. */
 export interface BookingAccess {
   code: string | null; codeLabel: string; address: string | null; latitude: number | null; longitude: number | null; mapsUrl: string | null;
+  /** Guidage Waze (null sans coordonnées GPS ; absent des anciennes réponses). */
+  wazeUrl?: string | null;
   hostPhone: string | null; checkInTime: string | null; checkOutTime: string | null; instructions: string | null;
   wifiName: string | null; wifiPassword: string | null; houseRules: string | null;
 }

@@ -5,6 +5,7 @@ import { DisputePill, StagePill, StageSteps, fcfa, frDay } from "@/components/bo
 import { CancelBookingButton, DisputeForm } from "@/components/booking-dispute";
 import { getSiteSettings } from "@/lib/settings";
 import { getMyBooking } from "../actions";
+import { ArrivalGuide } from "@/components/arrival-guide";
 
 export const dynamic = "force-dynamic";
 
@@ -78,8 +79,12 @@ export default async function BookingDetail({ params }: { params: { key: string 
             {b.access.wifiName ? <div><dt className="text-muted">Wi‑Fi</dt><dd className="font-semibold text-ink">{b.access.wifiName}{b.access.wifiPassword ? ` · ${b.access.wifiPassword}` : ""}</dd></div> : null}
             {b.access.houseRules ? <div className="sm:col-span-2"><dt className="text-muted">Règlement</dt><dd className="whitespace-pre-line text-ink">{b.access.houseRules}</dd></div> : null}
           </dl>
+          {b.access.latitude != null && b.access.longitude != null ? (
+            <ArrivalGuide settings={settings.maps} lat={b.access.latitude} lng={b.access.longitude} title={b.title}
+              mapsUrl={b.access.mapsUrl} wazeUrl={b.access.wazeUrl ?? null} />
+          ) : null}
           <div className="flex flex-wrap gap-2">
-            {b.access.mapsUrl ? <a href={b.access.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary bg-green-700 hover:bg-green-800">Itinéraire (GPS)</a> : null}
+            {b.access.mapsUrl && (b.access.latitude == null || b.access.longitude == null) ? <a href={b.access.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary bg-green-700 hover:bg-green-800">Itinéraire (GPS)</a> : null}
             {b.access.hostPhone ? <a href={`tel:${b.access.hostPhone}`} className="rounded-full px-4 py-2 text-sm font-semibold text-green-800 ring-1 ring-green-300 hover:bg-green-100">{b.kind === "stay" ? "Appeler l’hôte" : "Appeler le propriétaire"}</a> : null}
           </div>
         </section>

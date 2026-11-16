@@ -67,7 +67,7 @@ export interface StayCheck {
 export const getResidenceCheck = (id: string) => get<StayCheck | null>(`/residence/${encodeURIComponent(id)}/check`);
 export interface Arrival {
   ready: boolean; state: "pending" | "confirmed" | "arrived" | "cancelled" | "done"; place: string; checkIn: string; checkOut: string; nights: number;
-  name: string; bookedBy: string; code?: string; apartment?: string | null; checkInTime?: string | null; address?: string; lat?: number | null; lng?: number | null; mapsUrl?: string | null;
+  name: string; bookedBy: string; code?: string; apartment?: string | null; checkInTime?: string | null; address?: string; lat?: number | null; lng?: number | null; mapsUrl?: string | null; wazeUrl?: string | null;
 }
 export const getArrival = (token: string) => get<Arrival>(`/arrival/${encodeURIComponent(token)}`, 0);
 export const getReviewForm = (token: string) => get<ReviewForm>(`/review/${encodeURIComponent(token)}`, 0);

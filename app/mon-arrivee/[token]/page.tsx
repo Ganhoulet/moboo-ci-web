@@ -3,15 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { getArrival } from "@/lib/stays";
+import { getSiteSettings } from "@/lib/settings";
+import { ArrivalGuide } from "@/components/arrival-guide";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Mon arrivée | Moboo.ci", robots: { index: false, follow: false } };
 
 const day = (s: string) => new Date(s).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 
-/** Page envoyée à la personne qui séjourne (réservé pour un proche) : code d'arrivée, QR, adresse, itinéraire. */
+/** Page d'arrivée envoyée au voyageur (ou au proche pour qui il a réservé) : code d'arrivée, QR, adresse, carte et guidage. */
 export default async function ArrivalPage({ params }: { params: { token: string } }) {
-  const a = await getArrival(params.token);
+  const [a, settings] = await Promise.all([getArrival(params.token), getSiteSettings()]);
   if (!a) notFound();
   const first = a.name.split(" ")[0] || "";
   const qr = a.ready && a.code ? await QRCode.toDataURL(a.code, { margin: 1, width: 240, color: { dark: "#000000", light: "#ffffff" } }) : null;
@@ -32,7 +34,11 @@ export default async function ArrivalPage({ params }: { params: { token: string 
             <h2 className="font-display text-lg font-bold text-ink">Adresse</h2>
             <p className="mt-1 text-ink">{a.address || "L’hôte vous indiquera l’adresse exacte."}{a.apartment ? ` · logement ${a.apartment}` : ""}</p>
             {a.checkInTime ? <p className="mt-1 text-sm text-muted">Arrivée à partir de {a.checkInTime}.</p> : null}
-            {a.mapsUrl ? <a href={a.mapsUrl} target="_blank" rel="noreferrer" className="mt-4 inline-block rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-black">Ouvrir l’itinéraire</a> : null}
+            {a.lat != null && a.lng != null ? (
+              <div className="mt-4">
+                <ArrivalGuide settings={settings.maps} lat={a.lat} lng={a.lng} title={a.place} mapsUrl={a.mapsUrl ?? null} wazeUrl={a.wazeUrl ?? null} />
+              </div>
+            ) : a.mapsUrl ? <a href={a.mapsUrl} target="_blank" rel="noreferrer" className="mt-4 inline-block rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-black">Ouvrir l’itinéraire</a> : null}
           </section>
         </>
       ) : (
