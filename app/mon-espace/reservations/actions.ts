@@ -91,3 +91,9 @@ export async function answerArrivalAction(key: string, answer: ArrivalAnswer, no
   const { ok, data } = await authedFetch(`/site/me/bookings/${encodeURIComponent(key)}/arrival`, { method: "POST", body: JSON.stringify({ answer, note }) });
   return done(ok, data, "Envoi impossible.");
 }
+
+/** Voyageur en route : distance au logement pour l'équipe Moboo (avec son accord). */
+export async function sharePositionAction(key: string, lat: number, lng: number) {
+  await authedFetch(`/site/me/bookings/${encodeURIComponent(key)}/position`, { method: "POST", body: JSON.stringify({ lat, lng }) }).catch(() => null);
+  return { ok: true as const };
+}

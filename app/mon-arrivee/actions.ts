@@ -18,3 +18,13 @@ export async function answerArrivalByToken(token: string, answer: "arrived" | "a
     return { ok: false as const, error: "Connexion impossible, réessayez." };
   }
 }
+
+/** Voyageur en route : distance au logement pour l'équipe Moboo (avec son accord). */
+export async function sharePositionByToken(token: string, lat: number, lng: number) {
+  try {
+    await fetch(`${API_URL}/site/stays/arrival/${encodeURIComponent(token)}/position`, {
+      method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ lat, lng }), cache: "no-store",
+    });
+  } catch { /* le guidage reste utilisable sans envoi */ }
+  return { ok: true as const };
+}

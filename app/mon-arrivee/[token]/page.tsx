@@ -7,7 +7,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { ArrivalGuide } from "@/components/arrival-guide";
 import { ArrivalAnswer } from "@/components/arrival-answer";
 import { cancellationPolicy } from "@/lib/booking-policy";
-import { answerArrivalByToken } from "../actions";
+import { answerArrivalByToken, sharePositionByToken } from "../actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Mon arrivée | Moboo.ci", robots: { index: false, follow: false } };
@@ -40,7 +40,8 @@ export default async function ArrivalPage({ params }: { params: { token: string 
             {a.checkInTime ? <p className="mt-1 text-sm text-muted">Arrivée à partir de {a.checkInTime}.</p> : null}
             {a.lat != null && a.lng != null ? (
               <div className="mt-4">
-                <ArrivalGuide settings={settings.maps} lat={a.lat} lng={a.lng} title={a.place} mapsUrl={a.mapsUrl ?? null} wazeUrl={a.wazeUrl ?? null} />
+                <ArrivalGuide settings={settings.maps} lat={a.lat} lng={a.lng} title={a.place} mapsUrl={a.mapsUrl ?? null} wazeUrl={a.wazeUrl ?? null}
+                  share={a.state === "confirmed" ? sharePositionByToken.bind(null, params.token) : undefined} />
               </div>
             ) : a.mapsUrl ? <a href={a.mapsUrl} target="_blank" rel="noreferrer" className="mt-4 inline-block rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-black">Ouvrir l’itinéraire</a> : null}
           </section>

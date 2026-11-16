@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MapSettings } from "@/lib/settings";
 import { SiteMap, type MapMarker } from "./site-map";
 
@@ -17,7 +17,7 @@ function km(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
  * ou Waze depuis sa position — comme une course VTC.
  */
 export function ArrivalGuide({
-  settings, lat, lng, title, mapsUrl, wazeUrl,
+  settings, lat, lng, title, mapsUrl, wazeUrl, share,
 }: {
   settings: MapSettings;
   lat: number;
@@ -25,6 +25,8 @@ export function ArrivalGuide({
   title: string;
   mapsUrl: string | null;
   wazeUrl: string | null;
+  /** Envoie la position du voyageur (avec son accord) : l'équipe Moboo voit sa distance au logement. */
+  share?: (lat: number, lng: number) => Promise<unknown>;
 }) {
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
   const [status, setStatus] = useState<"idle" | "busy" | "denied">("idle");
@@ -32,11 +34,31 @@ export function ArrivalGuide({
   const markers: MapMarker[] = [{ id: "dest", lat, lng, title }];
   if (me) markers.push({ id: "me", lat: me.lat, lng: me.lng, label: "Vous", title: "Votre position" });
 
+  // Suivi en route : la position est renvoyée au plus toutes les 2 minutes tant que la page est ouverte.
+  const watch = useRef<number | null>(null);
+  const lastSent = useRef(0);
+  useEffect(() => () => { if (watch.current != null) navigator.geolocation?.clearWatch(watch.current); }, []);
+  const send = (p: { lat: number; lng: number }) => {
+    if (!share || Date.now() - lastSent.current < 120_000) return;
+    lastSent.current = Date.now();
+    share(p.lat, p.lng).catch(() => undefined);
+  };
+
   const locate = () => {
     if (!navigator.geolocation) return setStatus("denied");
     setStatus("busy");
     navigator.geolocation.getCurrentPosition(
-      (p) => { setMe({ lat: p.coords.latitude, lng: p.coords.longitude }); setStatus("idle"); },
+      (p) => {
+        const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
+        setMe(pos); setStatus("idle"); send(pos);
+        if (share && watch.current == null) {
+          watch.current = navigator.geolocation.watchPosition(
+            (q) => { const next = { lat: q.coords.latitude, lng: q.coords.longitude }; setMe(next); send(next); },
+            () => undefined,
+            { enableHighAccuracy: true, maximumAge: 60000 },
+          );
+        }
+      },
       () => setStatus("denied"),
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     );
@@ -65,6 +87,7 @@ export function ArrivalGuide({
             </button>
           ) : null}
         </div>
+        {share ? <p className="text-xs text-muted">En vous situant, vous partagez votre distance au logement avec l’équipe Moboo (jamais votre adresse), jusqu’à votre arrivée, pour qu’elle puisse vous aider si besoin.</p> : null}
       </div>
     </div>
   );

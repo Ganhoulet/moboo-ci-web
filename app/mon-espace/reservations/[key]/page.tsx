@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/dashboard-ui";
 import { DisputePill, StagePill, StageSteps, fcfa, frDay } from "@/components/booking-ui";
 import { CancelBookingButton, DisputeForm } from "@/components/booking-dispute";
 import { getSiteSettings } from "@/lib/settings";
-import { answerArrivalAction, getMyBooking } from "../actions";
+import { answerArrivalAction, getMyBooking, sharePositionAction } from "../actions";
 import { ArrivalAnswer } from "@/components/arrival-answer";
 import { cancellationPolicy } from "@/lib/booking-policy";
 import { ArrivalGuide } from "@/components/arrival-guide";
@@ -94,7 +94,8 @@ export default async function BookingDetail({ params }: { params: { key: string 
           </dl>
           {b.access.latitude != null && b.access.longitude != null ? (
             <ArrivalGuide settings={settings.maps} lat={b.access.latitude} lng={b.access.longitude} title={b.title}
-              mapsUrl={b.access.mapsUrl} wazeUrl={b.access.wazeUrl ?? null} />
+              mapsUrl={b.access.mapsUrl} wazeUrl={b.access.wazeUrl ?? null}
+              share={b.stage === "confirmed" ? sharePositionAction.bind(null, b.key) : undefined} />
           ) : null}
           <div className="flex flex-wrap gap-2">
             {b.access.mapsUrl && (b.access.latitude == null || b.access.longitude == null) ? <a href={b.access.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary bg-green-700 hover:bg-green-800">Itinéraire (GPS)</a> : null}
