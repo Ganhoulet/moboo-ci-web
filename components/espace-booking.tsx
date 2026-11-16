@@ -12,7 +12,8 @@ import { API_URL, formatXOF, type OccupiedRange } from "@/lib/api";
 const EVENTS = ["mariage", "anniversaire", "conférence", "séminaire", "réception", "autre"];
 
 type CreneauKey = "matinee" | "apres_midi" | "soiree" | "journee";
-interface Slots { creneaux: { key: CreneauKey; label: string; debut: string; fin: string }[]; days: Record<string, { pris: CreneauKey[]; full: boolean }> }
+interface OptionPayante { id: string; nom: string; prix: number; unite: "forfait" | "par_invite"; description: string | null }
+interface Slots { creneaux: { key: CreneauKey; label: string; debut: string; fin: string }[]; days: Record<string, { pris: CreneauKey[]; full: boolean }>; options?: OptionPayante[] }
 interface Devis { total: number; lignes: { label: string; montant: number }[]; disponible: boolean; start: string; end: string }
 const nextDay = (iso: string) => new Date(Date.parse(`${iso}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
 
@@ -42,6 +43,7 @@ export function EspaceBooking({
 
   // Lot 2 : réservation par créneau (matinée, après-midi, soirée, journée) avec prix calculé.
   const [slots, setSlots] = useState<Slots | null>(null);
+  const [options, setOptions] = useState<string[]>([]); // lot 3 : options payantes cochées
   const [creneau, setCreneau] = useState<CreneauKey | null>(null);
   const [invites, setInvites] = useState(50);
   const [devis, setDevis] = useState<Devis | null>(null);
@@ -64,12 +66,13 @@ export function EspaceBooking({
     if (!parCreneau || !day || !creneau) return;
     const t = setTimeout(() => {
       const q = new URLSearchParams({ date: day, creneau, jours: String(nbJours), invites: String(invites || 1) });
+      if (options.length) q.set("options", options.join(","));
       fetch(`${API_URL}/marketplace/espaces/${encodeURIComponent(espaceId)}/devis?${q}`, { cache: "no-store" })
         .then(async (r) => { const d = await r.json().catch(() => null); if (r.ok) setDevis(d); else setDevisErr(d?.message || "Prix indisponible."); })
         .catch(() => setDevisErr("Prix indisponible."));
     }, 300);
     return () => clearTimeout(t);
-  }, [parCreneau, day, creneau, nbJours, invites, espaceId]);
+  }, [parCreneau, day, creneau, nbJours, invites, espaceId, options]);
 
   const ready = parCreneau ? !!(day && creneau && devis?.disponible) : !!(sel.checkIn && sel.checkOut);
 
@@ -91,6 +94,7 @@ export function EspaceBooking({
       <input type="hidden" name="dateFin" value={parCreneau ? sel.checkIn ?? "" : sel.checkOut ?? ""} />
       {parCreneau ? <input type="hidden" name="creneau" value={creneau ?? ""} /> : null}
       {parCreneau ? <input type="hidden" name="nbJours" value={nbJours} /> : null}
+      {parCreneau ? options.map((o) => <input key={o} type="hidden" name="options" value={o} />) : null}
 
       {fromPrice ? (
         <div className="mb-3 flex items-baseline gap-1">
@@ -125,6 +129,24 @@ export function EspaceBooking({
       ) : null}
 
       <div className="mt-4 grid gap-3">
+        {parCreneau && slots?.options?.length ? (
+          <fieldset className="rounded-xl border border-slate-200 p-3">
+            <legend className="px-1 text-sm font-semibold text-ink">Options proposées par la salle</legend>
+            <div className="grid gap-2">
+              {slots.options.map((o) => (
+                <label key={o.id} className="flex cursor-pointer items-start gap-2 text-sm">
+                  <input type="checkbox" className="mt-1" checked={options.includes(o.id)}
+                    onChange={(e) => setOptions((cur) => (e.target.checked ? [...cur, o.id] : cur.filter((x) => x !== o.id)))} />
+                  <span className="flex-1">
+                    <span className="font-semibold text-ink">{o.nom}</span>
+                    <span className="whitespace-nowrap text-muted"> · {formatXOF(o.prix)}{o.unite === "par_invite" ? " par invité" : ""}</span>
+                    {o.description ? <span className="block text-xs text-muted">{o.description}</span> : null}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ) : null}
         <label className="text-sm font-semibold text-ink">
           Type d'événement
           <select name="typeEvenement" defaultValue="mariage" className="input mt-1">
