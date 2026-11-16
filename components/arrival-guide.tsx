@@ -17,7 +17,7 @@ function km(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
  * ou Waze depuis sa position — comme une course VTC.
  */
 export function ArrivalGuide({
-  settings, lat, lng, title, mapsUrl, wazeUrl, share,
+  settings, lat, lng, title, mapsUrl, wazeUrl, share, place = "du logement",
 }: {
   settings: MapSettings;
   lat: number;
@@ -27,6 +27,8 @@ export function ArrivalGuide({
   wazeUrl: string | null;
   /** Envoie la position du voyageur (avec son accord) : l'équipe Moboo voit sa distance au logement. */
   share?: (lat: number, lng: number) => Promise<unknown>;
+  /** « du logement » (séjours) ou « de la salle » (espaces). */
+  place?: string;
 }) {
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
   const [status, setStatus] = useState<"idle" | "busy" | "denied">("idle");
@@ -73,10 +75,10 @@ export function ArrivalGuide({
       <div className="space-y-3 p-4">
         <p className="text-sm text-ink">
           {d != null
-            ? <>Vous êtes à environ <strong>{d < 1 ? `${Math.round(d * 1000)} m` : `${d.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} km`}</strong> du logement (à vol d’oiseau).</>
+            ? <>Vous êtes à environ <strong>{d < 1 ? `${Math.round(d * 1000)} m` : `${d.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} km`}</strong> {place} (à vol d’oiseau).</>
             : status === "denied"
               ? "Position indisponible : autorisez la localisation dans votre navigateur, ou lancez directement le guidage."
-              : "Le point exact du logement. Situez-vous pour voir la distance, puis lancez le guidage."}
+              : `Le point exact ${place}. Situez-vous pour voir la distance, puis lancez le guidage.`}
         </p>
         <div className="flex flex-wrap gap-2">
           {mapsUrl ? <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary bg-green-700 hover:bg-green-800">Démarrer le guidage (Google Maps)</a> : null}

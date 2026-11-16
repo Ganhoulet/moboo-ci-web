@@ -100,7 +100,8 @@ export function EspaceBooking({
       ) : null}
 
       <div className="rounded-xl border border-slate-200 p-3">
-        <AvailabilityCalendar occupied={parCreneau ? fullDays : liveOcc} onChange={setSel} />
+        <AvailabilityCalendar occupied={parCreneau ? fullDays : liveOcc} onChange={setSel}
+          labels={parCreneau ? { start: "Choisissez la date de l’événement", end: "Date choisie · pour une journée sur plusieurs jours, touchez aussi le dernier jour", range: (n) => `Du premier au dernier jour : ${n} jour${n > 1 ? "s" : ""}` } : undefined} />
       </div>
 
       {parCreneau ? (
@@ -140,7 +141,7 @@ export function EspaceBooking({
       {devis ? (
         <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm">
           {devis.lignes.map((l) => (
-            <div key={l.label} className="flex justify-between gap-3"><span className="text-slate-600">{l.label}</span><span className="font-semibold text-ink">{formatXOF(l.montant)}</span></div>
+            <div key={l.label} className="flex justify-between gap-3"><span className="text-slate-600">{l.label}</span><span className="whitespace-nowrap font-semibold text-ink">{formatXOF(l.montant)}</span></div>
           ))}
           <div className="mt-2 flex justify-between border-t border-slate-200 pt-2 text-base"><span className="font-bold text-ink">Total</span><span className="font-extrabold text-ink">{formatXOF(devis.total)}</span></div>
           {!devis.disponible ? <p className="mt-1 font-semibold text-red-600">Ce créneau vient d’être réservé : choisissez-en un autre.</p> : null}
