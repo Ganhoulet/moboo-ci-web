@@ -38,7 +38,7 @@ export function StageSteps({ stage, kind }: { stage: Stage; kind: "stay" | "even
   if (stage === "cancelled" || stage === "no_show") return null;
   const steps: [Stage, string][] = kind === "stay"
     ? [["requested", "Demande envoyée"], ["accepted", "Acceptée par l’hôte"], ["confirmed", "Acompte payé"], ["ongoing", "Séjour"], ["completed", "Terminé"]]
-    : [["requested", "Demande envoyée"], ["confirmed", "Confirmée"], ["completed", "Événement passé"]];
+    : [["requested", "Demande envoyée"], ["accepted", "Acceptée par le propriétaire"], ["confirmed", "Acompte payé"], ["completed", "Événement passé"]];
   const at = Math.max(0, steps.findIndex(([k]) => k === stage));
   return (
     <ol className="flex flex-wrap items-center gap-x-1 gap-y-2 text-xs">

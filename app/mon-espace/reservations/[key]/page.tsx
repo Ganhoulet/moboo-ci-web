@@ -51,28 +51,34 @@ export default async function BookingDetail({ params }: { params: { key: string 
           {b.host.name ? <div><dt className="text-muted">Hôte</dt><dd className="font-semibold text-ink">{b.host.name}</dd></div> : null}
           {b.cancellationReason ? <div className="sm:col-span-2"><dt className="text-muted">Motif d’annulation</dt><dd className="text-ink">{b.cancellationReason}</dd></div> : null}
         </dl>
-        {b.payBefore ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-900">Payez l’acompte avant le {new Date(b.payBefore).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Abidjan" })} : passé ce délai, la demande est annulée et les dates sont libérées.</p> : null}
+        {b.payBefore ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-900">{b.payLabel === "Payer le solde"
+          ? `Payez le solde avant le ${new Date(b.payBefore).toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "Africa/Abidjan" })} : tout sera réglé avant l’événement.`
+          : `Payez l’acompte avant le ${new Date(b.payBefore).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Abidjan" })} : passé ce délai, la demande est annulée et les dates sont libérées.`}</p> : null}
         <div className="flex flex-wrap gap-2">
-          {b.payUrl ? <a href={b.payUrl} className="btn-primary bg-brand-800 hover:bg-brand-900" rel="noopener noreferrer">Payer l’acompte ({fcfa(b.deposit)})</a> : null}
+          {b.payUrl ? <a href={b.payUrl} className="btn-primary bg-brand-800 hover:bg-brand-900" rel="noopener noreferrer">{b.payLabel === "Payer le solde" ? `Payer le solde (${fcfa(Math.max(0, b.amount - b.paid))})` : `Payer l’acompte (${fcfa(b.deposit)})`}</a> : null}
           {b.href ? <Link href={b.href} className="rounded-full px-4 py-2 text-sm font-semibold text-brand-800 ring-1 ring-brand-200 hover:bg-brand-50">Voir l’annonce</Link> : null}
-          {b.canCancel ? <CancelBookingButton bookingKey={b.key} refund={b.cancelPolicy?.refund} /> : null}
+          {b.canCancel ? <CancelBookingButton bookingKey={b.key} refund={b.cancelPolicy?.refund} amount={b.cancelPolicy?.amount} /> : null}
         </div>
         {b.payUrl || b.stage === "requested" ? <p className="text-xs text-muted"><strong>Annulation :</strong> {policy.cancel} {policy.noShow}</p> : null}
         {b.cancelPolicy ? (
           <p className="text-xs text-muted">
-            {b.cancelPolicy.refund === "full" && b.cancelPolicy.freeUntil
-              ? `Annulation gratuite jusqu’au ${new Date(b.cancelPolicy.freeUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" })} : l’acompte vous est remboursé.`
-              : "Le délai d’annulation gratuite est passé : en cas d’annulation, l’acompte n’est pas remboursé."}
+            {b.cancelPolicy.percent != null && b.cancelPolicy.halfUntil
+              ? `Annulation : remboursé à 100 % jusqu’au ${new Date(b.cancelPolicy.freeUntil ?? "").toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" })}, à ${b.cancelPolicy.halfPercent ?? 50} % jusqu’au ${new Date(b.cancelPolicy.halfUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" })}, plus rien ensuite. Si vous annulez aujourd’hui : ${b.cancelPolicy.percent} % remboursé${b.cancelPolicy.amount ? ` (${fcfa(b.cancelPolicy.amount)})` : ""}.`
+              : b.cancelPolicy.refund === "full" && b.cancelPolicy.freeUntil
+                ? `Annulation gratuite jusqu’au ${new Date(b.cancelPolicy.freeUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" })} : l’acompte vous est remboursé.`
+                : "Le délai d’annulation gratuite est passé : en cas d’annulation, l’acompte n’est pas remboursé."}
           </p>
         ) : null}
-        {b.stage === "requested" ? <p className="text-xs text-muted">L’hôte confirme la disponibilité ; vous recevez ensuite le lien de paiement de l’acompte par WhatsApp ou SMS. L’acompte est conservé par Moboo et versé à l’hôte après votre arrivée.</p> : null}
+        {b.stage === "requested" ? <p className="text-xs text-muted">{b.kind === "event"
+          ? "Le propriétaire confirme la disponibilité et le prix ; vous recevez ensuite le lien de paiement de l’acompte. Le solde se paie en ligne quelques jours avant l’événement. L’argent est conservé par Moboo et versé au propriétaire après l’événement."
+          : "L’hôte confirme la disponibilité ; vous recevez ensuite le lien de paiement de l’acompte par WhatsApp ou SMS. L’acompte est conservé par Moboo et versé à l’hôte après votre arrivée."}</p> : null}
       </section>
 
       {b.arrival?.canAnswer ? <ArrivalAnswer send={answerArrivalAction.bind(null, b.key)} noShow={policy.noShow} /> : null}
 
       {b.access ? (
         <section className="space-y-3 rounded-2xl border border-green-200 bg-green-50 p-5">
-          <h2 className="font-display text-lg font-bold text-ink">Votre arrivée</h2>
+          <h2 className="font-display text-lg font-bold text-ink">{b.kind === "event" ? "Le jour J" : "Votre arrivée"}</h2>
           {b.access.code ? (
             <div>
               <p className="text-sm font-semibold text-green-800">{b.access.codeLabel}</p>

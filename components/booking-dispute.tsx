@@ -9,8 +9,10 @@ import { cancelBookingAction, openDisputeAction, replyDisputeAction, withdrawDis
  * Annuler sa demande (tant que l'hôte n'a pas répondu), ou sa réservation payée
  * (avant le jour d'arrivée) : `refund` dit si l'acompte sera remboursé.
  */
-export function CancelBookingButton({ bookingKey, refund }: { bookingKey: string; refund?: "full" | "none" }) {
-  const question = refund === "full"
+export function CancelBookingButton({ bookingKey, refund, amount }: { bookingKey: string; refund?: "full" | "partial" | "none"; amount?: number }) {
+  const question = refund === "partial"
+    ? `Annuler cette réservation ? Selon les conditions d’annulation, l’équipe Moboo vous rembourse ${amount != null ? `${Math.round(amount).toLocaleString("fr-FR")} FCFA` : "une partie de ce que vous avez payé"}.`
+    : refund === "full"
     ? "Annuler cette réservation ? Vous êtes dans le délai d’annulation gratuite : l’équipe Moboo vous rembourse l’acompte."
     : refund === "none"
       ? "Annuler cette réservation ? Le délai d’annulation gratuite est passé : l’acompte ne sera pas remboursé."
