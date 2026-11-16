@@ -61,6 +61,8 @@ export interface Apartment {
   floor?: number | null;
   nightlyPrice: number | string;
   weeklyPrice: number | string | null;
+  /** Tarifs dégressifs (dès N nuits) réglés dans Moboo Resi. */
+  pricingRules?: { minNights: number; nightlyPrice: number }[];
   monthlyPrice?: number | string | null;
   deposit?: number | string | null;
   photos: string[];

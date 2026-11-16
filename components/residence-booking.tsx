@@ -1,5 +1,6 @@
 "use client";
 
+import { nightlyFor, type PricingRule } from "@/lib/pricing-rules";
 import { BeneficiaryFields } from "@/components/beneficiary-fields";
 import { useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
@@ -10,7 +11,7 @@ import { useLiveOccupied } from "./use-live-occupied";
 import { AvailabilityCalendar, type CalendarSelection } from "./availability-calendar";
 import { formatXOF, type OccupiedRange } from "@/lib/api";
 
-export type BookableApt = { id: string; type: string; nightlyPrice: number };
+export type BookableApt = { id: string; type: string; nightlyPrice: number; pricingRules?: PricingRule[] };
 
 /** Modèle et textes du bloc de réservation (back-office → Réglages → Formulaire de réservation). */
 export interface BookingLook {
@@ -82,7 +83,8 @@ export function ResidenceBooking({
   const apt = apartments.find((a) => a.id === aptId);
   const occ = liveOcc[aptId] ?? [];
   const free = !!(sel.checkIn && sel.checkOut && rangeFree(occ, sel.checkIn, sel.checkOut));
-  const total = apt && sel.nights ? apt.nightlyPrice * sel.nights : 0;
+  const nightly = apt ? nightlyFor(apt.nightlyPrice, apt.pricingRules, sel.nights) : { price: 0, from: null };
+  const total = apt && sel.nights ? nightly.price * sel.nights : 0;
   const deposit = Math.round((total * depositPercent) / 100);
   const ready = !!(aptId && free);
   const guests = look.guestsLabel || DEFAULT_LOOK.guestsLabel;
@@ -124,7 +126,7 @@ export function ResidenceBooking({
 
   const breakdown = sel.nights > 0 && apt ? (
     <div className="space-y-2 text-sm">
-      <div className="flex justify-between text-slate-700"><span>{formatXOF(apt.nightlyPrice)} × {sel.nights} nuit{sel.nights > 1 ? "s" : ""}</span><span>{formatXOF(total)}</span></div>
+      <div className="flex justify-between text-slate-700"><span>{nightly.from ? <><s className="text-slate-400">{formatXOF(apt.nightlyPrice)}</s> </> : null}{formatXOF(nightly.price)} × {sel.nights} nuit{sel.nights > 1 ? "s" : ""}{nightly.from ? ` (tarif dès ${nightly.from} nuits)` : ""}</span><span>{formatXOF(total)}</span></div>
       <div className="flex justify-between text-slate-700"><span>Acompte à la confirmation ({depositPercent} %)</span><span>{formatXOF(deposit)}</span></div>
       <div className="flex justify-between text-slate-700"><span>Reste à régler à l’arrivée</span><span>{formatXOF(total - deposit)}</span></div>
       <div className="flex justify-between border-t border-slate-200 pt-2 font-bold text-ink"><span>Total</span><span>{formatXOF(total)}</span></div>
@@ -181,7 +183,7 @@ export function ResidenceBooking({
               <li key={a.id} className={"flex items-center justify-between gap-3 p-3 " + (chosen ? "bg-brand-50" : "bg-white")}>
                 <div className="min-w-0">
                   <p className="font-semibold text-ink">{a.type}</p>
-                  <p className="text-xs text-slate-600">{known ? `${formatXOF(a.nightlyPrice * sel.nights)} pour ${sel.nights} nuit${sel.nights > 1 ? "s" : ""}` : `${formatXOF(a.nightlyPrice)} / nuit`}</p>
+                  <p className="text-xs text-slate-600">{known ? `${formatXOF(nightlyFor(a.nightlyPrice, a.pricingRules, sel.nights).price * sel.nights)} pour ${sel.nights} nuit${sel.nights > 1 ? "s" : ""}` : `${formatXOF(a.nightlyPrice)} / nuit`}</p>
                   {known ? <p className={"text-xs font-semibold " + (ok ? "text-emerald-700" : "text-red-700")}>{ok ? "Libre à ces dates" : "Complet à ces dates"}</p> : null}
                 </div>
                 <button type="button" disabled={!ok} onClick={() => setAptId(a.id)}

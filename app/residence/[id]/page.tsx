@@ -18,6 +18,7 @@ import {
 } from "@/components/detail";
 import { getSiteSettings } from "@/lib/settings";
 import { cancellationPolicy } from "@/lib/booking-policy";
+import { rulesText } from "@/lib/pricing-rules";
 import { img } from "@/lib/img";
 import { canonicalVideoUrl } from "@/lib/video-resolve";
 import { getResidenceCheck, getResidenceReviews } from "@/lib/stays";
@@ -52,7 +53,7 @@ export default async function ResidencePage({ params, searchParams }: { params: 
 
   // Logements réservables + dates occupées (calendrier), récupérées côté serveur.
   const bookable: BookableApt[] = apts.map((a) => ({
-    id: a.id, type: apartmentLabel(a.type), nightlyPrice: num(a.nightlyPrice),
+    id: a.id, type: apartmentLabel(a.type), nightlyPrice: num(a.nightlyPrice), pricingRules: a.pricingRules ?? [],
   }));
   const occupiedByApt: Record<string, OccupiedRange[]> = {};
   const [similar, reviews, check] = await Promise.all([
@@ -211,6 +212,7 @@ export default async function ResidencePage({ params, searchParams }: { params: 
                     a.floor != null ? (a.floor === 0 ? "Rez-de-chaussée" : `${a.floor}e étage`) : null,
                     num(a.weeklyPrice) ? `${formatXOF(a.weeklyPrice)} / semaine` : null,
                     num(a.monthlyPrice) ? `${formatXOF(a.monthlyPrice)} / mois` : null,
+                    ...rulesText(num(a.nightlyPrice), a.pricingRules, formatXOF),
                   ].filter(Boolean);
                   return (
                     <div key={a.id} className="flex items-center gap-4 p-4">
