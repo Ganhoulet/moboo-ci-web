@@ -59,7 +59,7 @@ export default async function BookingDetail({ params }: { params: { key: string 
           {b.href ? <Link href={b.href} className="rounded-full px-4 py-2 text-sm font-semibold text-brand-800 ring-1 ring-brand-200 hover:bg-brand-50">Voir l’annonce</Link> : null}
           {b.canCancel ? <CancelBookingButton bookingKey={b.key} refund={b.cancelPolicy?.refund} amount={b.cancelPolicy?.amount} /> : null}
         </div>
-        {b.payUrl || b.stage === "requested" ? <p className="text-xs text-muted"><strong>Annulation :</strong> {policy.cancel} {policy.noShow}</p> : null}
+        {(b.payUrl || b.stage === "requested") && b.kind === "stay" ? <p className="text-xs text-muted"><strong>Annulation :</strong> {policy.cancel} {policy.noShow}</p> : null}
         {b.cancelPolicy ? (
           <p className="text-xs text-muted">
             {b.cancelPolicy.percent != null && b.cancelPolicy.halfUntil
@@ -79,6 +79,12 @@ export default async function BookingDetail({ params }: { params: { key: string 
       {b.access ? (
         <section className="space-y-3 rounded-2xl border border-green-200 bg-green-50 p-5">
           <h2 className="font-display text-lg font-bold text-ink">{b.kind === "event" ? "Le jour J" : "Votre arrivée"}</h2>
+          {b.access.inviteUrl ? (
+            <p className="rounded-lg bg-white p-3 text-sm ring-1 ring-green-200">
+              <strong className="text-ink">Pour vos invités :</strong> une page avec le lieu et l’itinéraire, à partager sur WhatsApp.{" "}
+              <a href={b.access.inviteUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-green-800 underline">Ouvrir la page invités</a>
+            </p>
+          ) : null}
           {b.access.code ? (
             <div>
               <p className="text-sm font-semibold text-green-800">{b.access.codeLabel}</p>
@@ -86,7 +92,9 @@ export default async function BookingDetail({ params }: { params: { key: string 
               <p className="text-xs text-slate-600">
                 {b.kind === "stay"
                   ? "Donnez ce code à l’hôte à votre arrivée : il le saisit dans Moboo Resi pour valider votre entrée et débloquer le versement de l’acompte."
-                  : "Présentez cette référence au propriétaire le jour de l’événement : elle prouve que vous venez de Moboo."}
+                  : b.access.codeLabel.startsWith("Code du jour J")
+                    ? "Donnez ce code au propriétaire à votre arrivée le jour de l’événement, pas avant : il le saisit dans Moboo Event et sa part ne lui est versée qu’après l’événement."
+                    : "Présentez cette référence au propriétaire le jour de l’événement : elle prouve que vous venez de Moboo."}
               </p>
             </div>
           ) : null}
@@ -101,7 +109,8 @@ export default async function BookingDetail({ params }: { params: { key: string 
           {b.access.latitude != null && b.access.longitude != null ? (
             <ArrivalGuide settings={settings.maps} lat={b.access.latitude} lng={b.access.longitude} title={b.title}
               mapsUrl={b.access.mapsUrl} wazeUrl={b.access.wazeUrl ?? null}
-              share={b.stage === "confirmed" ? sharePositionAction.bind(null, b.key) : undefined} />
+              place={b.kind === "event" ? "de la salle" : undefined}
+              share={b.stage === "confirmed" && b.kind === "stay" ? sharePositionAction.bind(null, b.key) : undefined} />
           ) : null}
           <div className="flex flex-wrap gap-2">
             {b.access.mapsUrl && (b.access.latitude == null || b.access.longitude == null) ? <a href={b.access.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary bg-green-700 hover:bg-green-800">Itinéraire (GPS)</a> : null}

@@ -26,9 +26,12 @@ export interface CalendarSelection {
 export function AvailabilityCalendar({
   occupied,
   onChange,
+  labels,
 }: {
   occupied: OccupiedRange[];
   onChange?: (sel: CalendarSelection) => void;
+  /** Textes d'aide (espaces : date de l'événement plutôt qu'arrivée / départ). */
+  labels?: { start: string; end: string; range: (n: number) => string };
 }) {
   const today = useMemo(() => {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d;
@@ -160,10 +163,10 @@ export function AvailabilityCalendar({
 
       <p className="mt-3 text-center text-sm text-muted">
         {checkIn && checkOut
-          ? `${nights} nuit(s) sélectionnée(s)`
+          ? labels ? labels.range(nights) : `${nights} nuit(s) sélectionnée(s)`
           : checkIn
-          ? "Choisissez la date de départ"
-          : "Choisissez la date d'arrivée"}
+          ? labels?.end ?? "Choisissez la date de départ"
+          : labels?.start ?? "Choisissez la date d'arrivée"}
       </p>
     </div>
   );

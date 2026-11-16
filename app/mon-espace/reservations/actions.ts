@@ -10,6 +10,8 @@ const errMsg = (data: any, fallback: string) =>
 export type Stage = "requested" | "accepted" | "confirmed" | "ongoing" | "completed" | "cancelled" | "no_show";
 /** Révélé une fois la réservation confirmée (acompte payé) : façon Airbnb. */
 export interface BookingAccess {
+  /** Espaces : page à partager aux invités (lieu, itinéraire). */
+  inviteUrl?: string | null;
   code: string | null; codeLabel: string; address: string | null; latitude: number | null; longitude: number | null; mapsUrl: string | null;
   /** Guidage Waze (null sans coordonnées GPS ; absent des anciennes réponses). */
   wazeUrl?: string | null;
