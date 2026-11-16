@@ -25,7 +25,10 @@ export default async function AmEvents({ searchParams }: { searchParams: { scope
     <div className="space-y-4">
       <AutoRefresh seconds={60} />
       <div>
-        <h1 className="font-display text-2xl font-extrabold text-ink">Événements en cours</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="font-display text-2xl font-extrabold text-ink">Événements en cours</h1>
+          <Link href="/admin/comptes/evenements/reglages" className="rounded-full px-3 py-1 text-sm font-semibold text-brand-800 ring-1 ring-slate-300 hover:bg-slate-50">Réglages et haute saison</Link>
+        </div>
         <p className="max-w-3xl text-sm text-muted">
           Salles réservées sur Moboo.ci : acompte puis solde payés en ligne et gardés par Moboo, code du jour J saisi par le propriétaire,
           part de l’hôte disponible après l’événement. La caution se règle sur place, hors Moboo.

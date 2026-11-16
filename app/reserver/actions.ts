@@ -75,7 +75,11 @@ export async function submitEventReservation(
     typeEvenement: String(formData.get("typeEvenement") || "") || undefined,
     nomEvenement: String(formData.get("nomEvenement") || "") || undefined,
     guestEmail: String(formData.get("guestEmail") || "").trim().slice(0, 160) || undefined,
+    // Lot 2 : créneau choisi (matinée, après-midi, soirée, journée) et nombre de jours.
+    creneau: String(formData.get("creneau") || "") || undefined,
+    nbJours: Number(formData.get("nbJours") || 1) || 1,
   };
+  if (formData.has("creneau") && !payload.creneau) return { ok: false, message: "Choisissez un créneau." };
   if (!espaceId || !payload.guestName || !payload.guestPhone || !payload.dateDebut || !payload.dateFin) {
     return { ok: false, message: "Merci de remplir les dates, vos nom et téléphone." };
   }
@@ -90,7 +94,9 @@ export async function submitEventReservation(
     return {
       ok: true,
       message:
-        "Demande envoyée ! Le propriétaire va vous recontacter pour confirmer la date et le devis. Suivez-la dans Mon espace → Mes réservations (connexion avec ce numéro).",
+        payload.creneau
+          ? "Demande envoyée ! Le propriétaire confirme la date et le prix ; vous recevez ensuite le lien pour payer l’acompte. Suivez-la dans Mon espace → Mes réservations (connexion avec ce numéro)."
+          : "Demande envoyée ! Le propriétaire va vous recontacter pour confirmer la date et le devis. Suivez-la dans Mon espace → Mes réservations (connexion avec ce numéro).",
     };
   } catch {
     return { ok: false, message: "Service indisponible pour le moment. Réessayez plus tard." };

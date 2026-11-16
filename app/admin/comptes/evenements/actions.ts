@@ -21,3 +21,24 @@ export async function cancelEventAction(id: string, motif: string): Promise<R> {
   revalidatePath("/admin/comptes/evenements");
   return { ok: true };
 }
+
+const KEYS = ["depositPercent", "optionHours", "soldeDaysBefore", "soldeNoticeDays", "releaseHoursAfterEnd", "freeCancelDays", "halfCancelDays", "halfCancelPercent"] as const;
+
+/** Réglages des réservations d'espaces en ligne + périodes de haute saison. */
+export async function saveEventSettingsAction(_prev: R | null, formData: FormData): Promise<R> {
+  const patch: Record<string, number> = {};
+  for (const k of KEYS) {
+    const v = String(formData.get(k) ?? "").trim();
+    if (v !== "") patch[k] = Number(v);
+  }
+  const a = await authedFetch("/site/admin/event-online/settings", { method: "PATCH", body: JSON.stringify(patch) });
+  if (!a.ok) return { ok: false, error: err(a.data, "Réglages refusés.") };
+  // Une période par ligne : « Nom | début | fin » (MM-JJ chaque année, ou AAAA-MM-JJ).
+  const saisons = String(formData.get("saisons") ?? "")
+    .split("\n").map((l) => l.split("|").map((x) => x.trim())).filter((p) => p.length === 3 && p[0])
+    .map(([label, from, to]) => ({ label, from, to }));
+  const b = await authedFetch("/site/admin/event-online/saisons", { method: "PUT", body: JSON.stringify({ saisons }) });
+  if (!b.ok) return { ok: false, error: err(b.data, "Périodes de haute saison refusées.") };
+  revalidatePath("/admin/comptes/evenements/reglages");
+  return { ok: true };
+}

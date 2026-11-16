@@ -62,6 +62,7 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/fonctionnalites", ["settings"]],
   ["/admin/formulaires", ["settings"]],
   ["/admin/comptes/reglages", ["settings"]],
+  ["/admin/comptes/evenements/reglages", ["settings"]],
   ["/admin/comptes", ["accounts"]],
   ["/admin", "any"],
 ];

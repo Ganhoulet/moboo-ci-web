@@ -79,6 +79,12 @@ export default async function BookingDetail({ params }: { params: { key: string 
       {b.access ? (
         <section className="space-y-3 rounded-2xl border border-green-200 bg-green-50 p-5">
           <h2 className="font-display text-lg font-bold text-ink">{b.kind === "event" ? "Le jour J" : "Votre arrivée"}</h2>
+          {b.access.inviteUrl ? (
+            <p className="rounded-lg bg-white p-3 text-sm ring-1 ring-green-200">
+              <strong className="text-ink">Pour vos invités :</strong> une page avec le lieu et l’itinéraire, à partager sur WhatsApp.{" "}
+              <a href={b.access.inviteUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-green-800 underline">Ouvrir la page invités</a>
+            </p>
+          ) : null}
           {b.access.code ? (
             <div>
               <p className="text-sm font-semibold text-green-800">{b.access.codeLabel}</p>
