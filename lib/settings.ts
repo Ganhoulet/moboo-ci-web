@@ -79,7 +79,7 @@ export interface SiteSettings {
     deadlineDays: number; deadlineFrom: string; deadlineAction: "block_publish" | "remind";
   };
   moderation: { reportsEnabled: boolean };
-  disputes: { enabled: boolean; windowDays: number; hostReplyHours: number; guestCancel: boolean; intro: string };
+  disputes: { enabled: boolean; windowDays: number; hostReplyHours: number; guestCancel: boolean; intro: string; freeCancelDays: number; noShowRefundPercent: number; arrivalReplyHours: number };
   legal: {
     companyName: string; companyAddress: string; contactEmail: string; contactPhone: string;
     privacyUpdated: string; privacyHtml: string; deletionGraceDays: number; deletionIntro: string;
@@ -182,7 +182,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
   moderation: { reportsEnabled: true },
   disputes: {
-    enabled: true, windowDays: 14, hostReplyHours: 48, guestCancel: true,
+    enabled: true, windowDays: 14, hostReplyHours: 48, guestCancel: true, freeCancelDays: 7, noShowRefundPercent: 0, arrivalReplyHours: 48,
     intro: "Décrivez précisément le problème et joignez des photos : l’équipe Moboo contacte l’hôte et vous répond sous 48 h ouvrées. Pendant l’examen, l’acompte versé n’est pas reversé à l’hôte.",
   },
   legal: {

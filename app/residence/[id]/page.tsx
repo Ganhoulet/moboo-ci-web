@@ -17,6 +17,7 @@ import {
   KeyFacts, Section, displayName, type Fact,
 } from "@/components/detail";
 import { getSiteSettings } from "@/lib/settings";
+import { cancellationPolicy } from "@/lib/booking-policy";
 import { img } from "@/lib/img";
 import { canonicalVideoUrl } from "@/lib/video-resolve";
 import { getResidenceCheck, getResidenceReviews } from "@/lib/stays";
@@ -117,6 +118,7 @@ export default async function ResidencePage({ params, searchParams }: { params: 
   } : null;
 
   const look = (await getSiteSettings()).bookingWidget;
+  const policy = cancellationPolicy((await getSiteSettings()).disputes);
   return (
     <div className="container-page py-8 pb-28 lg:pb-8">
       <JsonLd
@@ -308,6 +310,7 @@ export default async function ResidencePage({ params, searchParams }: { params: 
 
           <Section title="Garantie d’arrivée Moboo" id="garantie">
             <p className="text-sm text-ink">Votre acompte reste chez Moboo jusqu’à votre arrivée. Logement non conforme, accès impossible, eau ou électricité en panne : signalez-le depuis « Mes réservations », le versement à l’hôte est gelé et notre équipe tranche (remboursement total ou partiel). <a href="/garantie-arrivee" className="font-semibold underline">Comment ça marche</a></p>
+            <p className="mt-2 text-sm text-ink"><strong>Annulation :</strong> {policy.cancel} {policy.noShow}</p>
           </Section>
 
           <Section title="Comment se passe la réservation">

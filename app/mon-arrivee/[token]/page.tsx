@@ -5,6 +5,9 @@ import QRCode from "qrcode";
 import { getArrival } from "@/lib/stays";
 import { getSiteSettings } from "@/lib/settings";
 import { ArrivalGuide } from "@/components/arrival-guide";
+import { ArrivalAnswer } from "@/components/arrival-answer";
+import { cancellationPolicy } from "@/lib/booking-policy";
+import { answerArrivalByToken } from "../actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Mon arrivée | Moboo.ci", robots: { index: false, follow: false } };
@@ -24,6 +27,7 @@ export default async function ArrivalPage({ params }: { params: { token: string 
       <p className="mt-2 text-muted"><strong className="text-ink">{a.place}</strong> · arrivée {day(a.checkIn)}, départ {day(a.checkOut)} ({a.nights} nuit{a.nights > 1 ? "s" : ""}).</p>
       {a.ready ? (
         <>
+          {a.canAnswer ? <div className="mt-6"><ArrivalAnswer send={answerArrivalByToken.bind(null, params.token)} noShow={cancellationPolicy(settings.disputes).noShow} /></div> : null}
           <section className="mt-6 rounded-2xl bg-white p-6 text-center ring-1 ring-slate-200">
             <p className="text-xs uppercase tracking-wide text-muted">Code d’arrivée</p>
             <p className="mt-1 font-display text-5xl font-extrabold tracking-[0.2em] text-ink">{a.code}</p>
@@ -43,7 +47,7 @@ export default async function ArrivalPage({ params }: { params: { token: string 
         </>
       ) : (
         <p className="mt-6 rounded-2xl bg-white p-6 text-muted ring-1 ring-slate-200">
-          {a.state === "cancelled" ? "Cette réservation a été annulée." : a.state === "done" ? "Ce séjour est terminé. Merci d’avoir choisi Moboo.ci !" : "Le code d’arrivée et l’adresse s’afficheront ici dès que l’acompte sera payé."}
+          {a.state === "cancelled" ? "Cette réservation a été annulée." : a.state === "no_show" ? "Cette réservation est marquée « non présenté »." : a.state === "done" ? "Ce séjour est terminé. Merci d’avoir choisi Moboo.ci !" : "Le code d’arrivée et l’adresse s’afficheront ici dès que l’acompte sera payé."}
         </p>
       )}
       <p className="mt-6 text-sm text-muted">Une question ? <Link href="/aide" className="font-semibold text-ink underline">Aide Moboo.ci</Link></p>

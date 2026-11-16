@@ -28,6 +28,10 @@ export interface MyBooking {
   guest: { name: string; phone: string }; host: { name: string | null };
   cancellationReason: string | null; createdAt: string;
   access?: BookingAccess | null;
+  /** Code d'arrivée jamais saisi : le client dit s'il est arrivé (à partir du jour d'arrivée). */
+  arrival?: { canAnswer: boolean; answer: string | null } | null;
+  /** Réservation payée : annulation avant le jour d'arrivée, remboursée ou non. */
+  cancelPolicy?: { refund: "full" | "none"; freeUntil: string | null } | null;
 }
 export interface MyBookingDetail extends MyBooking {
   windowDays: number; categories: { key: string; label: string }[]; outcomes: Record<string, string>;
@@ -78,4 +82,12 @@ export async function replyDisputeAction(id: string, input: { body: string; file
 export async function withdrawDisputeAction(id: string) {
   const { ok, data } = await authedFetch(`/site/me/disputes/${encodeURIComponent(id)}/withdraw`, { method: "POST" });
   return done(ok, data, "Action impossible.");
+}
+
+export type ArrivalAnswer = "arrived" | "absent" | "problem";
+
+/** « Êtes-vous bien arrivé ? » : réponse depuis Mes réservations. */
+export async function answerArrivalAction(key: string, answer: ArrivalAnswer, note?: string) {
+  const { ok, data } = await authedFetch(`/site/me/bookings/${encodeURIComponent(key)}/arrival`, { method: "POST", body: JSON.stringify({ answer, note }) });
+  return done(ok, data, "Envoi impossible.");
 }

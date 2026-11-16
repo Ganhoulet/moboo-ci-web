@@ -5,20 +5,28 @@ import { useRouter } from "next/navigation";
 import { fileToDataUri } from "@/lib/file-data-uri";
 import { cancelBookingAction, openDisputeAction, replyDisputeAction, withdrawDisputeAction } from "@/app/mon-espace/reservations/actions";
 
-/** Annuler sa demande (tant que l'hôte n'a pas répondu). */
-export function CancelBookingButton({ bookingKey }: { bookingKey: string }) {
+/**
+ * Annuler sa demande (tant que l'hôte n'a pas répondu), ou sa réservation payée
+ * (avant le jour d'arrivée) : `refund` dit si l'acompte sera remboursé.
+ */
+export function CancelBookingButton({ bookingKey, refund }: { bookingKey: string; refund?: "full" | "none" }) {
+  const question = refund === "full"
+    ? "Annuler cette réservation ? Vous êtes dans le délai d’annulation gratuite : l’équipe Moboo vous rembourse l’acompte."
+    : refund === "none"
+      ? "Annuler cette réservation ? Le délai d’annulation gratuite est passé : l’acompte ne sera pas remboursé."
+      : "Annuler cette demande de réservation ? L’hôte sera prévenu.";
   const router = useRouter();
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   return (
     <div>
       <button data-action="booking.cancel" type="button" disabled={pending}
-        onClick={() => window.confirm("Annuler cette demande de réservation ? L’hôte sera prévenu.") && start(async () => {
+        onClick={() => window.confirm(question) && start(async () => {
           const r = await cancelBookingAction(bookingKey);
           if (!r.ok) setErr(r.error); else router.refresh();
         })}
         className="rounded-full px-4 py-2 text-sm font-semibold text-red-700 ring-1 ring-red-200 hover:bg-red-50 disabled:opacity-50">
-        {pending ? "Annulation…" : "Annuler ma demande"}
+        {pending ? "Annulation…" : refund ? "Annuler ma réservation" : "Annuler ma demande"}
       </button>
       {err ? <p className="mt-1 text-sm text-red-600">{err}</p> : null}
     </div>

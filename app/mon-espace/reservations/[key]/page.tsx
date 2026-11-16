@@ -4,7 +4,9 @@ import { PageHeader } from "@/components/dashboard-ui";
 import { DisputePill, StagePill, StageSteps, fcfa, frDay } from "@/components/booking-ui";
 import { CancelBookingButton, DisputeForm } from "@/components/booking-dispute";
 import { getSiteSettings } from "@/lib/settings";
-import { getMyBooking } from "../actions";
+import { answerArrivalAction, getMyBooking } from "../actions";
+import { ArrivalAnswer } from "@/components/arrival-answer";
+import { cancellationPolicy } from "@/lib/booking-policy";
 import { ArrivalGuide } from "@/components/arrival-guide";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +27,7 @@ export default async function BookingDetail({ params }: { params: { key: string 
   const key = decodeURIComponent(params.key);
   const [b, settings] = await Promise.all([getMyBooking(key), getSiteSettings()]);
   if (!b) notFound();
+  const policy = cancellationPolicy(settings.disputes);
   const disputeOpen = b.dispute && ["open", "awaiting_host", "awaiting_guest", "review"].includes(b.dispute.status);
 
   return (
@@ -52,10 +55,20 @@ export default async function BookingDetail({ params }: { params: { key: string 
         <div className="flex flex-wrap gap-2">
           {b.payUrl ? <a href={b.payUrl} className="btn-primary bg-brand-800 hover:bg-brand-900" rel="noopener noreferrer">Payer l’acompte ({fcfa(b.deposit)})</a> : null}
           {b.href ? <Link href={b.href} className="rounded-full px-4 py-2 text-sm font-semibold text-brand-800 ring-1 ring-brand-200 hover:bg-brand-50">Voir l’annonce</Link> : null}
-          {b.canCancel ? <CancelBookingButton bookingKey={b.key} /> : null}
+          {b.canCancel ? <CancelBookingButton bookingKey={b.key} refund={b.cancelPolicy?.refund} /> : null}
         </div>
+        {b.payUrl || b.stage === "requested" ? <p className="text-xs text-muted"><strong>Annulation :</strong> {policy.cancel} {policy.noShow}</p> : null}
+        {b.cancelPolicy ? (
+          <p className="text-xs text-muted">
+            {b.cancelPolicy.refund === "full" && b.cancelPolicy.freeUntil
+              ? `Annulation gratuite jusqu’au ${new Date(b.cancelPolicy.freeUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" })} : l’acompte vous est remboursé.`
+              : "Le délai d’annulation gratuite est passé : en cas d’annulation, l’acompte n’est pas remboursé."}
+          </p>
+        ) : null}
         {b.stage === "requested" ? <p className="text-xs text-muted">L’hôte confirme la disponibilité ; vous recevez ensuite le lien de paiement de l’acompte par WhatsApp ou SMS. L’acompte est conservé par Moboo et versé à l’hôte après votre arrivée.</p> : null}
       </section>
+
+      {b.arrival?.canAnswer ? <ArrivalAnswer send={answerArrivalAction.bind(null, b.key)} noShow={policy.noShow} /> : null}
 
       {b.access ? (
         <section className="space-y-3 rounded-2xl border border-green-200 bg-green-50 p-5">
