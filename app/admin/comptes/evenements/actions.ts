@@ -42,3 +42,27 @@ export async function saveEventSettingsAction(_prev: R | null, formData: FormDat
   revalidatePath("/admin/comptes/evenements/reglages");
   return { ok: true };
 }
+
+/** L'équipe Moboo corrige les réglages d'une salle : suppléments, heures des créneaux, options, visites. */
+export async function saveSpaceRulesAction(id: string, _prev: R | null, formData: FormData): Promise<R> {
+  const n = (k: string) => { const v = String(formData.get(k) ?? "").trim(); return v === "" ? null : Number(v); };
+  const h = (k: string) => String(formData.get(k) ?? "").trim();
+  const options = String(formData.get("options") ?? "")
+    .split("\n").map((l) => l.split("|").map((x) => x.trim())).filter((p) => p.length >= 2 && p[0])
+    .map(([nom, prix, unite], i) => ({ id: `opt${i + 1}`, nom, prix: Number(String(prix).replace(/\D/g, "")), unite: /invit/i.test(unite ?? "") ? "par_invite" : "forfait" }));
+  const body = {
+    weekendPercent: n("weekendPercent") ?? 0, saisonPercent: n("saisonPercent") ?? 0,
+    invitesInclus: n("invitesInclus"), prixParInviteSup: n("prixParInviteSup") ?? 0,
+    creneaux: {
+      matinee: { debut: h("matinee.debut"), fin: h("matinee.fin") },
+      apres_midi: { debut: h("apres_midi.debut"), fin: h("apres_midi.fin") },
+      soiree: { debut: h("soiree.debut"), fin: h("soiree.fin") },
+    },
+    options,
+    visites: { actif: formData.get("visites.actif") === "on", jours: formData.getAll("visites.jours").map(Number), debut: h("visites.debut"), fin: h("visites.fin"), dureeMin: n("visites.dureeMin") ?? 30 },
+  };
+  const { ok, data } = await authedFetch(`/site/admin/event-online/espaces/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });
+  if (!ok) return { ok: false, error: err(data, "Réglages refusés.") };
+  revalidatePath(`/admin/comptes/evenements/salles/${id}`);
+  return { ok: true };
+}

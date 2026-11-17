@@ -78,6 +78,8 @@ export async function submitEventReservation(
     // Lot 2 : créneau choisi (matinée, après-midi, soirée, journée) et nombre de jours.
     creneau: String(formData.get("creneau") || "") || undefined,
     nbJours: Number(formData.get("nbJours") || 1) || 1,
+    // Lot 3 : options payantes cochées (traiteur, décoration…).
+    options: formData.getAll("options").map(String).filter(Boolean).slice(0, 20),
   };
   if (formData.has("creneau") && !payload.creneau) return { ok: false, message: "Choisissez un créneau." };
   if (!espaceId || !payload.guestName || !payload.guestPhone || !payload.dateDebut || !payload.dateFin) {
@@ -110,4 +112,26 @@ export async function myBookingContact(): Promise<{ name: string; phone: string 
   if (!a) return null;
   const name = displayName(a);
   return { name: name === a.phone ? "" : name, phone: a.phone ?? "" };
+}
+
+export type VisitState = { ok: true; token: string } | { ok: false; message: string } | null;
+
+/** Demande de visite gratuite d'une salle (lot 3) : le propriétaire confirme dans Moboo Event. */
+export async function requestVisit(_prev: VisitState, formData: FormData): Promise<VisitState> {
+  const espaceId = String(formData.get("espaceId") || "");
+  const body = {
+    nom: String(formData.get("nom") || "").trim(),
+    telephone: String(formData.get("telephone") || "").trim(),
+    email: String(formData.get("email") || "").trim().slice(0, 160) || undefined,
+    debut: String(formData.get("debut") || ""),
+  };
+  if (!espaceId || !body.nom || !body.telephone || !body.debut) return { ok: false, message: "Choisissez un créneau et indiquez votre nom et votre téléphone." };
+  if (!guestPhoneOk(body.telephone)) return { ok: false, message: GUEST_PHONE_ERROR };
+  try {
+    const { ok, data } = await authedFetch(`/marketplace/espaces/${encodeURIComponent(espaceId)}/visites`, { method: "POST", body: JSON.stringify(body) });
+    if (!ok) return { ok: false, message: errMessage(data, "La demande de visite a échoué. Réessayez.") };
+    return { ok: true, token: String((data as any)?.token ?? "") };
+  } catch {
+    return { ok: false, message: "Service indisponible pour le moment. Réessayez plus tard." };
+  }
 }

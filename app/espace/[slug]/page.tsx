@@ -7,6 +7,7 @@ import { formatXOF, getEspace, getEspaceOccupied } from "@/lib/api";
 import { mapEspace, similarEspaces } from "@/lib/property";
 import type { Tarif } from "@/lib/types";
 import { EspaceBooking } from "@/components/espace-booking";
+import { VisitRequest } from "@/components/visit-request";
 import { LocationMap } from "@/components/location-map";
 import { PropertyCard } from "@/components/property-card";
 import { MobileBookBar } from "@/components/mobile-book-bar";
@@ -242,6 +243,7 @@ export default async function EspacePage({ params }: { params: { slug: string } 
           <AsidePerson person={person} />
           <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain lg:pb-2">
             <EspaceBooking espaceId={e.id} occupied={occupied} fromPrice={aPartir} />
+            <VisitRequest espaceId={e.id} />
           </div>
         </aside>
       </div>
