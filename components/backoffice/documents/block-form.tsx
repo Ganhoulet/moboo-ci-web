@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { uploadDocImageAction } from "@/app/admin/documents/actions";
 import { DocShot } from "@/components/documents/doc-render";
 import { fileToDataUri } from "@/lib/file-data-uri";
-import type { Block, ImageBlock, Marker } from "@/lib/documents/types";
+import type { Block, GalleryItem, ImageBlock, Marker } from "@/lib/documents/types";
 
 export const inputCls = "mt-1 w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand-600 focus:outline-none";
 export const labelCls = "block text-[11px] font-semibold uppercase tracking-wide text-slate-500";
@@ -270,7 +270,46 @@ export function BlockForm({ b, onChange }: { b: Block; onChange: (patch: Partial
     case "toc": return <>
       <Text label="Surtitre" value={b.kicker} onChange={(kicker) => set({ kicker })} />
       <Text label="Titre" value={b.title} onChange={(title) => set({ title })} />
+      <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!b.compact} onChange={(e) => set({ compact: e.target.checked })} /> Sommaire compact (pour un long document)</label>
       <p className="text-[11px] text-muted">Le sommaire se remplit tout seul avec les blocs « Titre et chapitre » marqués « Dans le sommaire ».</p>
+    </>;
+    case "gallery": return <>
+      <div className="grid grid-cols-3 gap-2">
+        <Select label="Colonnes" value={String(b.cols) as "2" | "3" | "4"} onChange={(v) => set({ cols: Number(v) })} options={[["2", "2"], ["3", "3"], ["4", "4"]]} />
+        <Select label="Cadre" value={b.frame} onChange={(frame) => set({ frame })} options={[["phone", "Téléphone"], ["shot", "Capture"]]} />
+        <Field label="Hauteur (mm, 0 = auto)"><input type="number" min={0} max={200} value={b.height} onChange={(e) => set({ height: Math.min(200, Math.max(0, Number(e.target.value) || 0)) })} className={inputCls} /></Field>
+      </div>
+      <Items<GalleryItem> label="Images" items={b.items} onChange={(items) => set({ items })} make={() => ({ src: "", caption: "" })} render={(it, s) => <div className="space-y-1">
+        <ImagePick label="Image" value={it.src} onChange={(src) => s({ ...it, src })} />
+        <Text label="Légende" value={it.caption} onChange={(caption) => s({ ...it, caption })} />
+        {b.height ? <Select label="Partie visible" value={it.pos ?? "top"} onChange={(pos) => s({ ...it, pos })} options={[["top", "Haut"], ["center", "Milieu"], ["bottom", "Bas"]]} /> : null}
+      </div>} />
+    </>;
+    case "offers": return <Items label="Offres" items={b.items} onChange={(items) => set({ items })} make={() => ({ name: "Offre", duration: "", price: "", unit: "FCFA", per: "", badge: "", highlight: false, features: [], target: "" })} render={(o, s) => <div className="space-y-1">
+      <div className="grid grid-cols-2 gap-1"><Text label="Nom" value={o.name} onChange={(name) => s({ ...o, name })} /><Text label="Durée" value={o.duration} onChange={(duration) => s({ ...o, duration })} /></div>
+      <div className="grid grid-cols-2 gap-1"><Text label="Prix" value={o.price} onChange={(price) => s({ ...o, price })} /><Text label="Unité" value={o.unit} onChange={(unit) => s({ ...o, unit })} /></div>
+      <Text label="Sous le prix" value={o.per} onChange={(per) => s({ ...o, per })} />
+      <Text label="Bandeau orange (facultatif)" value={o.badge} onChange={(badge) => s({ ...o, badge })} />
+      <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={o.highlight} onChange={(e) => s({ ...o, highlight: e.target.checked })} /> Mettre en avant (bordure orange)</label>
+      <Lines label="Ce qui est inclus" value={o.features} onChange={(features) => s({ ...o, features })} />
+      <Area label="Pour qui" rows={2} value={o.target} onChange={(target) => s({ ...o, target })} />
+      <p className="text-[11px] text-muted">**texte** met en gras.</p>
+    </div>} />;
+    case "story": return <>
+      <Text label="Étiquette orange" value={b.label} onChange={(label) => set({ label })} />
+      <Text label="Titre (facultatif)" value={b.title} onChange={(title) => set({ title })} />
+      <Area label="Récit" rows={7} value={b.text} onChange={(text) => set({ text })} />
+      <p className="text-[11px] text-muted">**texte** met en gras ; les retours à la ligne sont gardés.</p>
+    </>;
+    case "timeline": return <Items label="Étapes" items={b.items} onChange={(items) => set({ items })} make={() => ({ when: "", title: "", text: "" })} render={(t, s) => <div className="space-y-1"><Text label="Quand" value={t.when} onChange={(when) => s({ ...t, when })} /><Text label="Titre" value={t.title} onChange={(title) => s({ ...t, title })} /><Area label="Texte" value={t.text} onChange={(text) => s({ ...t, text })} /></div>} />;
+    case "flow": return <Items label="Étapes" items={b.items} onChange={(items) => set({ items })} make={() => ({ label: "", sub: "", accent: false })} render={(f, s) => <div className="space-y-1"><div className="grid grid-cols-2 gap-1"><Text label="Libellé" value={f.label} onChange={(label) => s({ ...f, label })} /><Text label="Petit texte" value={f.sub} onChange={(sub) => s({ ...f, sub })} /></div><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={f.accent} onChange={(e) => s({ ...f, accent: e.target.checked })} /> En orange</label></div>} />;
+    case "pillars": return <Items label="Piliers" items={b.items} onChange={(items) => set({ items })} make={() => ({ tag: "", accent: false, title: "", text: "" })} render={(k, s) => <div className="space-y-1"><div className="grid grid-cols-2 gap-1"><Text label="Étiquette" value={k.tag} onChange={(tag) => s({ ...k, tag })} /><label className="flex items-end gap-2 pb-2 text-xs"><input type="checkbox" checked={k.accent} onChange={(e) => s({ ...k, accent: e.target.checked })} /> Étiquette orange</label></div><Text label="Titre" value={k.title} onChange={(title) => s({ ...k, title })} /><Area label="Texte" value={k.text} onChange={(text) => s({ ...k, text })} /></div>} />;
+    case "form": return <>
+      <Text label="Titre (facultatif)" value={b.title} onChange={(title) => set({ title })} />
+      <Lines label="Cases à cocher" value={b.checks} onChange={(checks) => set({ checks })} />
+      <Lines label="Champs à remplir" value={b.fields} onChange={(fields) => set({ fields })} />
+      <Items label="Cadres de signature" items={b.signs} onChange={(signs) => set({ signs })} make={() => ({ title: "", sub: "" })} render={(g, s) => <div className="space-y-1"><Text label="Titre" value={g.title} onChange={(title) => s({ ...g, title })} /><Text label="Précision" value={g.sub} onChange={(sub) => s({ ...g, sub })} /></div>} />
+      <Text label="Note en bas" value={b.note} onChange={(note) => set({ note })} />
     </>;
     case "kpis": return <Items label="Chiffres" items={b.items} onChange={(items) => set({ items })} make={() => ({ value: "", label: "" })} render={(k, s) => <div className="space-y-1"><Text label="Chiffre" value={k.value} onChange={(value) => s({ ...k, value })} /><Text label="Libellé" value={k.label} onChange={(label) => s({ ...k, label })} /></div>} />;
     case "benefits": return <><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!b.single} onChange={(e) => set({ single: e.target.checked })} /> Sur une seule colonne</label><Items label="Cartes" items={b.items} onChange={(items) => set({ items })} make={() => ({ title: "", text: "" })} render={(k, s) => <div className="space-y-1"><Text label="Titre" value={k.title} onChange={(title) => s({ ...k, title })} /><Area label="Texte" value={k.text} onChange={(text) => s({ ...k, text })} /></div>} /></>;

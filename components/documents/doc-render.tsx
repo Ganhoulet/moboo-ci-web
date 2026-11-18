@@ -4,7 +4,7 @@ import { formatPrice } from "@/lib/documents/zone";
 import { buildToc, fillVars, type Block, type DocData, type DocMeta, type DocPage, type ImageBlock, type TocEntry } from "@/lib/documents/types";
 
 export type Wrap = (b: Block, node: ReactNode) => ReactNode;
-interface Ctx { meta: Pick<DocMeta, "title" | "edition" | "editionDate"> & { zoneName?: string }; toc: TocEntry[]; wrap?: Wrap }
+interface Ctx { meta: Pick<DocMeta, "title" | "edition" | "editionDate"> & { zoneName?: string }; toc: TocEntry[]; wrap?: Wrap; pro?: boolean }
 
 /** Texte simple avec **gras** (retours à la ligne gardés par le CSS du bloc). */
 function Rich({ t }: { t: string }) {
@@ -28,6 +28,18 @@ export function DocLogo({ ring = "#1e40af", word = "#1e3a8a", big = false }: { r
       <span className="word" style={{ color: word }}>Moboo<span className="ci">.ci</span></span>
     </span>
   );
+}
+
+/** Logo Moboo Pro (mallette), image fixe de la charte. Sur fond bleu, posé sur une pastille blanche. */
+export function DocProLogo({ light = false, big = false }: { light?: boolean; big?: boolean }) {
+  return <span className={"lpro" + (light ? " light" : "") + (big ? " big" : "")}><img src="/documents/brand/moboo-pro.png" alt="" />Moboo<span className="pill">PRO</span></span>;
+}
+
+/** Moboo.ci seul, ou Moboo.ci + Moboo Pro (réglage du document). */
+function Brand({ pro, light = false, big = false }: { pro?: boolean; light?: boolean; big?: boolean }) {
+  const ci = light ? <DocLogo ring="#ffffff" word="#ffffff" big={big} /> : <DocLogo big={big} />;
+  if (!pro) return ci;
+  return <span className={"brand2" + (big ? " big" : "")}>{ci}{big ? <span className="plus">+</span> : null}<DocProLogo light={light} big={big} /></span>;
 }
 
 /** Image recadrée (coordonnées de la page d'origine) ou entière, avec repères numérotés (en % du cadre). */
@@ -74,7 +86,7 @@ function render(b: Block, ctx: Ctx): ReactNode {
   switch (b.type) {
     case "cover": return (
       <div className="cover-wrap">
-        <div className="cover-top"><DocLogo ring="#ffffff" word="#ffffff" big />{b.tag ? <span className="cover-tag">{fillVars(b.tag, ctx.meta)}</span> : null}</div>
+        <div className="cover-top"><Brand pro={ctx.pro} light big />{b.tag ? <span className="cover-tag">{fillVars(b.tag, ctx.meta)}</span> : null}</div>
         <h1 className={"cover-h" + (b.small ? " sm" : "")}>{fillVars(b.title, ctx.meta)}</h1><span className="cover-bar" />
         <p className="cover-sub">{fillVars(b.subtitle, ctx.meta)}</p>
         {b.image ? <div className="cover-shot"><img src={b.image} alt="" /></div> : null}
@@ -83,7 +95,7 @@ function render(b: Block, ctx: Ctx): ReactNode {
     );
     case "back": return (
       <div className="back-wrap">
-        <DocLogo ring="#ffffff" word="#ffffff" big />
+        <Brand pro={ctx.pro} light big />
         <h2>{fillVars(b.title, ctx.meta)}</h2><p>{fillVars(b.text, ctx.meta)}</p>{b.cta ? <span className="cta">{b.cta}</span> : null}
         {b.note ? <p className="note">{fillVars(b.note, ctx.meta)}</p> : null}
         {b.qr ? <div className="back-qr"><Qr url={b.qr} /></div> : null}
@@ -116,16 +128,54 @@ function render(b: Block, ctx: Ctx): ReactNode {
     case "toc": return (
       <div>
         {b.kicker ? <p className="kicker">{b.kicker}</p> : null}<h2>{b.title}</h2>
-        <ol className="toc">{ctx.toc.map((t, i) => <li key={i} className={"l" + t.level}><span>{fillVars(t.label, ctx.meta)}</span><i /><b>{String(t.page).padStart(2, "0")}</b></li>)}</ol>
+        <ol className={"toc" + (b.compact ? " compact" : "")}>{ctx.toc.map((t, i) => <li key={i} className={"l" + t.level}><span>{fillVars(t.label, ctx.meta)}</span><i /><b>{String(t.page).padStart(2, "0")}</b></li>)}</ol>
       </div>
     );
-    case "kpis": return <div className="kpis">{b.items.map((k, i) => <div key={i}><b>{k.value}</b><span><Rich t={k.label} /></span></div>)}</div>;
+    case "kpis": return <div className="kpis" style={b.items.length === 4 ? { gridTemplateColumns: "repeat(4, 1fr)" } : undefined}>{b.items.map((k, i) => <div key={i}><b>{k.value}</b><span><Rich t={k.label} /></span></div>)}</div>;
     case "benefits": return <div className={"benefits" + (b.single ? " one" : "")}>{b.items.map((k, i) => <div key={i}><p className="bt">{k.title}</p><p><Rich t={k.text} /></p></div>)}</div>;
     case "legend": return <ol className="legend">{b.items.map((m, i) => <li key={i}><span className="n">{m.n}</span>{m.text}</li>)}</ol>;
     case "divider": return <div className="dv" />;
     case "bars": return <div className="bars">{b.items.map((r, i) => <div key={i} className="bar"><span className="bl">{r.label}</span><span className="bt"><i style={{ width: `${Math.max(0, Math.min(100, r.pct))}%` }} /></span><span className="bv">{r.value}{r.sub ? <small> · {r.sub}</small> : null}</span></div>)}</div>;
     case "sources": return <p className="srcline"><Rich t={fillVars(b.text, ctx.meta)} /></p>;
     case "qr": return <div className="qrb"><Qr url={b.url} /><span>{fillVars(b.caption, ctx.meta)}</span></div>;
+    case "gallery": return (
+      <div className="gal" style={{ gridTemplateColumns: `repeat(${b.cols}, minmax(0, 1fr))` }}>
+        {b.items.map((it, i) => (
+          <figure key={i}>
+            <div className={"shot " + b.frame} style={b.height ? { height: `${b.height}mm` } : undefined}>
+              {it.src ? <img src={it.src} alt={it.caption} className={b.height ? "fill" : "static"} style={b.height ? { objectPosition: it.pos ?? "top" } : undefined} /> : <div className="empty">Image</div>}
+            </div>
+            {it.caption ? <figcaption><Rich t={fillVars(it.caption, ctx.meta)} /></figcaption> : null}
+          </figure>
+        ))}
+      </div>
+    );
+    case "offers": return (
+      <div className="offers" style={{ gridTemplateColumns: `repeat(${Math.max(1, b.items.length)}, minmax(0, 1fr))` }}>
+        {b.items.map((o, i) => (
+          <div key={i} className={"offer" + (o.highlight ? " hot" : "")}>
+            {o.badge ? <span className="badge">{o.badge}</span> : null}
+            <h3>{o.name}</h3><p className="dur">{o.duration}</p>
+            <p className="price">{o.price} <small>{o.unit}</small></p><p className="per">{o.per}</p>
+            <ul>{o.features.filter(Boolean).map((f, j) => <li key={j}><Rich t={f} /></li>)}</ul>
+            {o.target ? <p className="for"><Rich t={o.target} /></p> : null}
+          </div>
+        ))}
+      </div>
+    );
+    case "story": return <div className="story"><span className="slab">{fillVars(b.label, ctx.meta)}</span>{b.title ? <p className="stit">{fillVars(b.title, ctx.meta)}</p> : null}<p className="stx"><Rich t={fillVars(b.text, ctx.meta)} /></p></div>;
+    case "timeline": return <div className="tl">{b.items.map((t, i) => <div key={i} className="it"><p className="when">{t.when}</p><p className="what">{t.title}</p><p><Rich t={t.text} /></p></div>)}</div>;
+    case "flow": return <div className="flow">{b.items.map((f, i) => <div key={i} className={f.accent ? "o" : ""}>{f.label}{f.sub ? <small>{f.sub}</small> : null}</div>)}</div>;
+    case "pillars": return <div className="pillars" style={{ gridTemplateColumns: `repeat(${Math.max(1, b.items.length)}, minmax(0, 1fr))` }}>{b.items.map((p, i) => <div key={i} className="pillar"><span className="num">{i + 1}</span>{p.tag ? <span className={"tool" + (p.accent ? " o" : "")}>{p.tag}</span> : null}<h4>{p.title}</h4><p><Rich t={p.text} /></p></div>)}</div>;
+    case "form": return (
+      <div className="dform">
+        {b.title ? <h4>{b.title}</h4> : null}
+        {b.checks.filter(Boolean).map((c, i) => <p key={i} className="fchk"><span className="tick" /><Rich t={c} /></p>)}
+        {b.fields.length ? <table><tbody>{b.fields.map((f, i) => <tr key={i}><td>{f}</td><td /></tr>)}</tbody></table> : null}
+        {b.signs.length ? <div className="signs">{b.signs.map((g, i) => <div key={i}><p className="bt">{g.title}</p><p className="small muted">{g.sub}</p><div className="sbox" /></div>)}</div> : null}
+        {b.note ? <p className="small muted fnote">{fillVars(b.note, ctx.meta)}</p> : null}
+      </div>
+    );
     case "zoneStats": return b.items.length ? <div className="kpis">{b.items.map((k, i) => <div key={i}><b>{k.value}</b><span>{k.label}</span></div>)}</div> : <Empty />;
     case "zonePrices": return (
       <div>
@@ -168,12 +218,12 @@ function render(b: Block, ctx: Ctx): ReactNode {
 /** Une page imprimée : mêmes éléments dans l'éditeur, l'aperçu et le PDF. */
 export function DocPageView({ page, index, meta, data, wrap, toc }: { page: DocPage; index: number; meta: Ctx["meta"]; data: DocData; wrap?: Wrap; toc?: TocEntry[] }) {
   const m = { ...meta, zoneName: data.settings.zoneName };
-  const ctx: Ctx = { meta: m, toc: toc ?? buildToc(data.pages), wrap };
+  const ctx: Ctx = { meta: m, toc: toc ?? buildToc(data.pages), wrap, pro: !!data.settings.brandPro };
   const full = page.noChrome || page.blocks.some((b) => b.type === "cover" || b.type === "back");
   if (full) return <section className="page"><Blocks blocks={page.blocks} ctx={ctx} /></section>;
   return (
     <section className="page">
-      <header className="ph"><DocLogo /><span>{fillVars(page.section, m)}</span></header>
+      <header className="ph"><Brand pro={ctx.pro} /><span>{fillVars(page.section, m)}</span></header>
       <div className="pc"><Blocks blocks={page.blocks} ctx={ctx} /></div>
       <footer className="pf"><span>{fillVars(data.settings.footer, m)}</span><b>{String(index + 1).padStart(2, "0")}</b></footer>
     </section>
