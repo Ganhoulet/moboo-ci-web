@@ -128,7 +128,7 @@ function render(b: Block, ctx: Ctx): ReactNode {
     case "toc": return (
       <div>
         {b.kicker ? <p className="kicker">{b.kicker}</p> : null}<h2>{b.title}</h2>
-        <ol className="toc">{ctx.toc.map((t, i) => <li key={i} className={"l" + t.level}><span>{fillVars(t.label, ctx.meta)}</span><i /><b>{String(t.page).padStart(2, "0")}</b></li>)}</ol>
+        <ol className={"toc" + (b.compact ? " compact" : "")}>{ctx.toc.map((t, i) => <li key={i} className={"l" + t.level}><span>{fillVars(t.label, ctx.meta)}</span><i /><b>{String(t.page).padStart(2, "0")}</b></li>)}</ol>
       </div>
     );
     case "kpis": return <div className="kpis" style={b.items.length === 4 ? { gridTemplateColumns: "repeat(4, 1fr)" } : undefined}>{b.items.map((k, i) => <div key={i}><b>{k.value}</b><span><Rich t={k.label} /></span></div>)}</div>;
@@ -163,6 +163,7 @@ function render(b: Block, ctx: Ctx): ReactNode {
         ))}
       </div>
     );
+    case "story": return <div className="story"><span className="slab">{fillVars(b.label, ctx.meta)}</span>{b.title ? <p className="stit">{fillVars(b.title, ctx.meta)}</p> : null}<p className="stx"><Rich t={fillVars(b.text, ctx.meta)} /></p></div>;
     case "timeline": return <div className="tl">{b.items.map((t, i) => <div key={i} className="it"><p className="when">{t.when}</p><p className="what">{t.title}</p><p><Rich t={t.text} /></p></div>)}</div>;
     case "flow": return <div className="flow">{b.items.map((f, i) => <div key={i} className={f.accent ? "o" : ""}>{f.label}{f.sub ? <small>{f.sub}</small> : null}</div>)}</div>;
     case "pillars": return <div className="pillars" style={{ gridTemplateColumns: `repeat(${Math.max(1, b.items.length)}, minmax(0, 1fr))` }}>{b.items.map((p, i) => <div key={i} className="pillar"><span className="num">{i + 1}</span>{p.tag ? <span className={"tool" + (p.accent ? " o" : "")}>{p.tag}</span> : null}<h4>{p.title}</h4><p><Rich t={p.text} /></p></div>)}</div>;

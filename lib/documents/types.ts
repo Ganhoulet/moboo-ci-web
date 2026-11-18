@@ -29,7 +29,7 @@ export type ExampleBlock = B<"example"> & { tone: "good" | "bad"; label: string;
 export type TableBlock = B<"table"> & { head: string[]; rows: string[][]; dense?: boolean; small?: boolean };
 export type ChecklistBlock = B<"checklist"> & { items: { group: boolean; tag: string; text: string }[] };
 export type ColumnsBlock = B<"columns"> & { ratio: "equal" | "wide" | "anat" | "narrow"; left: Block[]; right: Block[] };
-export type TocBlock = B<"toc"> & { kicker: string; title: string };
+export type TocBlock = B<"toc"> & { kicker: string; title: string; compact?: boolean };
 export type KpisBlock = B<"kpis"> & { items: { value: string; label: string }[] };
 export type BenefitsBlock = B<"benefits"> & { single?: boolean; items: { title: string; text: string }[] };
 export type HtmlBlock = B<"html"> & { html: string };
@@ -48,6 +48,7 @@ export type OffersBlock = B<"offers"> & { items: OfferItem[] };
 export type TimelineBlock = B<"timeline"> & { items: { when: string; title: string; text: string }[] };
 export type FlowBlock = B<"flow"> & { items: { label: string; sub: string; accent: boolean }[] };
 export type PillarsBlock = B<"pillars"> & { items: { tag: string; accent: boolean; title: string; text: string }[] };
+export type StoryBlock = B<"story"> & { label: string; title: string; text: string };
 export type FormBlock = B<"form"> & { title: string; checks: string[]; fields: string[]; signs: { title: string; sub: string }[]; note: string };
 export type ZoneStatsBlock = B<"zoneStats"> & { locked: boolean; items: { value: string; label: string }[] };
 export type ZonePricesBlock = B<"zonePrices"> & { locked: boolean; tx: "rent" | "sale"; title: string; entry: boolean; rows: ZonePrice[] };
@@ -58,7 +59,7 @@ export type ZoneTextBlock = B<"zoneText"> & { locked: boolean; html: string };
 export type Block =
   | CoverBlock | BackBlock | HeadingBlock | SubheadingBlock | TextBlock | ImageBlock | CalloutBlock | SpecBlock
   | DoDontBlock | ExampleBlock | TableBlock | ChecklistBlock | ColumnsBlock | TocBlock | KpisBlock | BenefitsBlock | HtmlBlock | LegendBlock | DividerBlock | QrBlock | BarsBlock | SourcesBlock
-  | GalleryBlock | OffersBlock | TimelineBlock | FlowBlock | PillarsBlock | FormBlock
+  | GalleryBlock | OffersBlock | TimelineBlock | FlowBlock | PillarsBlock | FormBlock | StoryBlock
   | ZoneStatsBlock | ZonePricesBlock | ZoneListingsBlock | ZoneProsBlock | ZoneTextBlock;
 export type BlockType = Block["type"];
 
@@ -92,7 +93,7 @@ export const BLOCK_CATALOG: { group: string; items: { type: BlockType; label: st
     { type: "table", label: "Tableau" }, { type: "checklist", label: "Liste à cocher" }, { type: "sources", label: "Sources (bas de page)" },
   ] },
   { group: "Vente", items: [
-    { type: "offers", label: "Cartes d’offres et prix" }, { type: "pillars", label: "Piliers numérotés" }, { type: "flow", label: "Parcours en flèches" },
+    { type: "offers", label: "Cartes d’offres et prix" }, { type: "story", label: "Situation concrète" }, { type: "pillars", label: "Piliers numérotés" }, { type: "flow", label: "Parcours en flèches" },
     { type: "timeline", label: "Frise d’étapes" }, { type: "form", label: "Formulaire à remplir" },
   ] },
   { group: "Données du quartier", items: [
@@ -131,6 +132,7 @@ export function newBlock(type: BlockType): Block {
     case "timeline": return { id, type, items: [{ when: "Étape 1", title: "Titre", text: "Description." }] };
     case "flow": return { id, type, items: [{ label: "Étape 1", sub: "", accent: false }, { label: "Étape 2", sub: "", accent: true }] };
     case "pillars": return { id, type, items: [{ tag: "Moboo.ci", accent: false, title: "Pilier", text: "Explication courte." }] };
+    case "story": return { id, type, label: "Situation concrète", title: "", text: "Racontez une scène vécue par l’agence." };
     case "form": return { id, type, title: "", checks: [], fields: ["Nom", "Téléphone"], signs: [], note: "" };
     case "zoneStats": return { id, type, locked: false, items: [] };
     case "zonePrices": return { id, type, locked: false, tx: "rent", title: "Loyers par type de bien", entry: true, rows: [] };

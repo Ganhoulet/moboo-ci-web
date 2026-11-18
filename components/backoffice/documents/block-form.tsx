@@ -270,6 +270,7 @@ export function BlockForm({ b, onChange }: { b: Block; onChange: (patch: Partial
     case "toc": return <>
       <Text label="Surtitre" value={b.kicker} onChange={(kicker) => set({ kicker })} />
       <Text label="Titre" value={b.title} onChange={(title) => set({ title })} />
+      <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!b.compact} onChange={(e) => set({ compact: e.target.checked })} /> Sommaire compact (pour un long document)</label>
       <p className="text-[11px] text-muted">Le sommaire se remplit tout seul avec les blocs « Titre et chapitre » marqués « Dans le sommaire ».</p>
     </>;
     case "gallery": return <>
@@ -294,6 +295,12 @@ export function BlockForm({ b, onChange }: { b: Block; onChange: (patch: Partial
       <Area label="Pour qui" rows={2} value={o.target} onChange={(target) => s({ ...o, target })} />
       <p className="text-[11px] text-muted">**texte** met en gras.</p>
     </div>} />;
+    case "story": return <>
+      <Text label="Étiquette orange" value={b.label} onChange={(label) => set({ label })} />
+      <Text label="Titre (facultatif)" value={b.title} onChange={(title) => set({ title })} />
+      <Area label="Récit" rows={7} value={b.text} onChange={(text) => set({ text })} />
+      <p className="text-[11px] text-muted">**texte** met en gras ; les retours à la ligne sont gardés.</p>
+    </>;
     case "timeline": return <Items label="Étapes" items={b.items} onChange={(items) => set({ items })} make={() => ({ when: "", title: "", text: "" })} render={(t, s) => <div className="space-y-1"><Text label="Quand" value={t.when} onChange={(when) => s({ ...t, when })} /><Text label="Titre" value={t.title} onChange={(title) => s({ ...t, title })} /><Area label="Texte" value={t.text} onChange={(text) => s({ ...t, text })} /></div>} />;
     case "flow": return <Items label="Étapes" items={b.items} onChange={(items) => set({ items })} make={() => ({ label: "", sub: "", accent: false })} render={(f, s) => <div className="space-y-1"><div className="grid grid-cols-2 gap-1"><Text label="Libellé" value={f.label} onChange={(label) => s({ ...f, label })} /><Text label="Petit texte" value={f.sub} onChange={(sub) => s({ ...f, sub })} /></div><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={f.accent} onChange={(e) => s({ ...f, accent: e.target.checked })} /> En orange</label></div>} />;
     case "pillars": return <Items label="Piliers" items={b.items} onChange={(items) => set({ items })} make={() => ({ tag: "", accent: false, title: "", text: "" })} render={(k, s) => <div className="space-y-1"><div className="grid grid-cols-2 gap-1"><Text label="Étiquette" value={k.tag} onChange={(tag) => s({ ...k, tag })} /><label className="flex items-end gap-2 pb-2 text-xs"><input type="checkbox" checked={k.accent} onChange={(e) => s({ ...k, accent: e.target.checked })} /> Étiquette orange</label></div><Text label="Titre" value={k.title} onChange={(title) => s({ ...k, title })} /><Area label="Texte" value={k.text} onChange={(text) => s({ ...k, text })} /></div>} />;

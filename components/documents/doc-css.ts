@@ -208,6 +208,10 @@ ul.why, ol.why { padding-left: 4.5mm; }
 .tl .when { font-family: var(--font-poppins), Poppins, sans-serif; font-weight: 800; color: #ea580c; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .05em; margin: 0; }
 .tl .what { font-family: var(--font-poppins), Poppins, sans-serif; font-weight: 700; font-size: 10.5pt; margin: .3mm 0 .8mm; }
 .tl p { font-size: 8.7pt; color: #334155; }
+.story { background: #fff7ed; border-left: 1.2mm solid #ea580c; border-radius: 0 2.5mm 2.5mm 0; padding: 3.5mm 4.5mm; margin: 2mm 0 3mm; }
+.story .slab { display: inline-block; font-family: var(--font-poppins), Poppins, sans-serif; font-weight: 800; font-size: 7.4pt; color: #fff; background: #ea580c; text-transform: uppercase; letter-spacing: .06em; padding: .5mm 2mm; border-radius: 1mm; margin-bottom: 1.5mm; }
+.story .stit { font-family: var(--font-poppins), Poppins, sans-serif; font-weight: 700; font-size: 10.5pt; color: #0f172a; margin: 0 0 1mm; }
+.story .stx { font-size: 9pt; color: #334155; margin: 0; white-space: pre-line; line-height: 1.5; }
 .dform h4 { margin-top: 0; color: #1e3a8a; }
 .dform .fchk { font-size: 10pt; margin: 0 0 1.5mm; }
 .dform .tick { display: inline-block; width: 4.2mm; height: 4.2mm; border: .5mm solid #1e40af; border-radius: .8mm; vertical-align: -0.8mm; margin-right: 2mm; }
@@ -217,6 +221,10 @@ ul.why, ol.why { padding-left: 4.5mm; }
 .dform .signs { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: 8mm; }
 .dform .sbox { height: 28mm; border: .3mm dashed #94a3b8; border-radius: 2mm; }
 .dform .fnote { margin-top: 4mm; }
+.toc.compact { margin-top: 2mm; }
+.toc.compact li { padding: .55mm 0; font-size: 9.6pt; }
+.toc.compact li.l0 { font-size: 10pt; margin-top: .4mm; padding-top: 1.2mm; }
+.toc.compact li.l1 { font-size: 8.4pt; padding-top: 0; padding-bottom: 0; }
 .check .grp { font-family: var(--font-poppins), Poppins, sans-serif; font-weight: 700; color: #1e3a8a; font-size: 10pt; border-bottom: .4mm solid #1e40af; padding-top: 4mm; }
 `;
 
