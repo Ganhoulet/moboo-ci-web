@@ -176,6 +176,7 @@ export function DocumentEditor({ doc, zones }: { doc: DocFull; zones: ZoneOption
           <Field label="N° d’édition"><input type="number" min={1} value={meta.edition} onChange={(e) => setM("edition", Number(e.target.value) || 1)} className={inputCls} /></Field>
           <Field label="Date d’édition"><input value={meta.editionDate} onChange={(e) => setM("editionDate", e.target.value)} placeholder="novembre 2026" className={inputCls} /></Field>
           <Field label="Mention en pied de page"><input value={data.settings.footer} onChange={(e) => change((d) => ({ ...d, settings: { ...d.settings, footer: e.target.value } }))} className={inputCls} /></Field>
+          <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!data.settings.brandPro} onChange={(e) => change((d) => ({ ...d, settings: { ...d.settings, brandPro: e.target.checked } }))} /> Afficher aussi le logo Moboo Pro</label>
         </div>
       </div>
 

@@ -41,6 +41,14 @@ export type QrBlock = B<"qr"> & { url: string; caption: string };
 export interface ZoneItem { id: string; title: string; tx: string; price: number; priceUnit: string | null; place: string; bedrooms: number | null; surface: number | null; image: string; url: string; pct?: number }
 export interface ZonePro { name: string; company: string | null; image: string; rating: number; reviews: number; listings: number; verified: boolean; phone: string | null; url: string }
 export interface ZonePrice { label: string; n: number; median: number | null; p25: number | null; p75: number | null }
+export interface GalleryItem { src: string; caption: string; pos?: "top" | "center" | "bottom" }
+export type GalleryBlock = B<"gallery"> & { cols: 2 | 3 | 4; frame: "phone" | "shot"; height: number; items: GalleryItem[] };
+export interface OfferItem { name: string; duration: string; price: string; unit: string; per: string; badge: string; highlight: boolean; features: string[]; target: string }
+export type OffersBlock = B<"offers"> & { items: OfferItem[] };
+export type TimelineBlock = B<"timeline"> & { items: { when: string; title: string; text: string }[] };
+export type FlowBlock = B<"flow"> & { items: { label: string; sub: string; accent: boolean }[] };
+export type PillarsBlock = B<"pillars"> & { items: { tag: string; accent: boolean; title: string; text: string }[] };
+export type FormBlock = B<"form"> & { title: string; checks: string[]; fields: string[]; signs: { title: string; sub: string }[]; note: string };
 export type ZoneStatsBlock = B<"zoneStats"> & { locked: boolean; items: { value: string; label: string }[] };
 export type ZonePricesBlock = B<"zonePrices"> & { locked: boolean; tx: "rent" | "sale"; title: string; entry: boolean; rows: ZonePrice[] };
 export type ZoneListingsBlock = B<"zoneListings"> & { locked: boolean; source: "rent" | "sale" | "deals"; limit: number; items: ZoneItem[] };
@@ -50,11 +58,13 @@ export type ZoneTextBlock = B<"zoneText"> & { locked: boolean; html: string };
 export type Block =
   | CoverBlock | BackBlock | HeadingBlock | SubheadingBlock | TextBlock | ImageBlock | CalloutBlock | SpecBlock
   | DoDontBlock | ExampleBlock | TableBlock | ChecklistBlock | ColumnsBlock | TocBlock | KpisBlock | BenefitsBlock | HtmlBlock | LegendBlock | DividerBlock | QrBlock | BarsBlock | SourcesBlock
+  | GalleryBlock | OffersBlock | TimelineBlock | FlowBlock | PillarsBlock | FormBlock
   | ZoneStatsBlock | ZonePricesBlock | ZoneListingsBlock | ZoneProsBlock | ZoneTextBlock;
 export type BlockType = Block["type"];
 
 export interface DocPage { id: string; section: string; noChrome?: boolean; blocks: Block[] }
-export interface DocSettings { footer: string; author: string; zoneName?: string }
+/** brandPro : le logo Moboo Pro s'affiche à côté de Moboo.ci (en-têtes, couverture, dos). */
+export interface DocSettings { footer: string; author: string; zoneName?: string; brandPro?: boolean }
 export interface DocData { settings: DocSettings; pages: DocPage[] }
 
 export interface DocMeta {
@@ -75,11 +85,15 @@ export const BLOCK_CATALOG: { group: string; items: { type: BlockType; label: st
   ] },
   { group: "Contenu", items: [
     { type: "text", label: "Texte riche" }, { type: "image", label: "Image ou capture" }, { type: "callout", label: "Encadré (conseil, attention)" },
-    { type: "legend", label: "Liste de repères" }, { type: "qr", label: "QR code" }, { type: "kpis", label: "Chiffres clés" }, { type: "bars", label: "Barres comparées" }, { type: "benefits", label: "Cartes d’arguments" },
+    { type: "legend", label: "Liste de repères" }, { type: "gallery", label: "Galerie (2 à 4 images)" }, { type: "qr", label: "QR code" }, { type: "kpis", label: "Chiffres clés" }, { type: "bars", label: "Barres comparées" }, { type: "benefits", label: "Cartes d’arguments" },
   ] },
   { group: "Méthode", items: [
     { type: "spec", label: "Fiche technique" }, { type: "dodont", label: "À faire, à éviter" }, { type: "example", label: "Bon ou mauvais exemple" },
     { type: "table", label: "Tableau" }, { type: "checklist", label: "Liste à cocher" }, { type: "sources", label: "Sources (bas de page)" },
+  ] },
+  { group: "Vente", items: [
+    { type: "offers", label: "Cartes d’offres et prix" }, { type: "pillars", label: "Piliers numérotés" }, { type: "flow", label: "Parcours en flèches" },
+    { type: "timeline", label: "Frise d’étapes" }, { type: "form", label: "Formulaire à remplir" },
   ] },
   { group: "Données du quartier", items: [
     { type: "zoneStats", label: "Chiffres de la zone" }, { type: "zonePrices", label: "Prix par type de bien" }, { type: "zoneListings", label: "Annonces de la zone" },
@@ -112,6 +126,12 @@ export function newBlock(type: BlockType): Block {
     case "bars": return { id, type, items: [{ label: "Cocody", pct: 100, value: "35 000 F", sub: "" }] };
     case "sources": return { id, type, text: "Sources : …" };
     case "qr": return { id, type, url: "https://moboo.ci", caption: "Scannez pour ouvrir Moboo.ci" };
+    case "gallery": return { id, type, cols: 3, frame: "phone", height: 90, items: [{ src: "", caption: "" }, { src: "", caption: "" }, { src: "", caption: "" }] };
+    case "offers": return { id, type, items: [{ name: "Offre", duration: "12 mois", price: "100 000", unit: "FCFA", per: "pour l’année", badge: "", highlight: false, features: ["Premier avantage"], target: "Pour qui ?" }] };
+    case "timeline": return { id, type, items: [{ when: "Étape 1", title: "Titre", text: "Description." }] };
+    case "flow": return { id, type, items: [{ label: "Étape 1", sub: "", accent: false }, { label: "Étape 2", sub: "", accent: true }] };
+    case "pillars": return { id, type, items: [{ tag: "Moboo.ci", accent: false, title: "Pilier", text: "Explication courte." }] };
+    case "form": return { id, type, title: "", checks: [], fields: ["Nom", "Téléphone"], signs: [], note: "" };
     case "zoneStats": return { id, type, locked: false, items: [] };
     case "zonePrices": return { id, type, locked: false, tx: "rent", title: "Loyers par type de bien", entry: true, rows: [] };
     case "zoneListings": return { id, type, locked: false, source: "rent", limit: 9, items: [] };
