@@ -54,6 +54,19 @@ export default async function PrivacyPage() {
               <li><strong>Contacts du téléphone</strong> : uniquement lorsque vous choisissez d’envoyer une annonce à un confrère, l’application ouvre le sélecteur de contacts de votre téléphone. Seul le contact que vous sélectionnez est utilisé pour cet envoi ; votre carnet d’adresses n’est ni copié ni conservé sur nos serveurs.</li>
             </ul>
 
+            <p className="mt-6 font-semibold text-ink">Spécifique à l’application Moboo Pro (agences, agents, propriétaires et locataires)</p>
+            <ul>
+              <li><strong>Gestion locative</strong> : biens, propriétaires, locataires, baux, loyers, encaissements, quittances, relances, mandats, contrats et documents saisis par l’agence. Ces données ne sont visibles que par l’agence et ses agents, par le propriétaire pour ses biens et par le locataire pour son bail.</li>
+              <li><strong>États des lieux</strong> : photos des pièces, commentaires, signatures et rapports PDF.</li>
+              <li><strong>Agenda et prospection</strong> : rendez-vous de visite, contacts de prospects, missions, demandes de maintenance et informations de copropriété saisies par l’agence.</li>
+              <li><strong>QR code d’identité de l’agent</strong> : nom, photo, agence et statut de vérification de l’agent, affichés à la personne qui scanne le QR code.</li>
+              <li><strong>Appareil photo</strong> : photos des biens et des états des lieux, lecture de QR codes. Seules les photos que vous ajoutez à une fiche sont envoyées.</li>
+              <li><strong>Position précise</strong> : uniquement lorsque vous utilisez l’arpenteur GPS ou localisez un bien, et seulement avec votre autorisation.</li>
+              <li><strong>Micro</strong> : notes vocales et interprète, uniquement lorsque vous lancez ces fonctions. La reconnaissance vocale utilise le service vocal de votre téléphone (par exemple Google) ; la traduction se fait sur le téléphone.</li>
+              <li><strong>Bluetooth</strong> : connexion à un télémètre laser pour mesurer les pièces. Aucune donnée personnelle n’est collectée par ce biais.</li>
+            </ul>
+            <p className="mt-2">Moboo Pro n’affiche aucune publicité. Le compte peut être supprimé directement dans l’application (Profil → Supprimer mon compte).</p>
+
             <H>3. Pourquoi nous les utilisons</H>
             <ul>
               <li>Créer et sécuriser votre compte (codes de connexion, double authentification, détection des fraudes) — <em>exécution du service</em>.</li>
