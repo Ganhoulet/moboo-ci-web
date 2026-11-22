@@ -197,6 +197,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Vérification des comptes (demandes + réglages).
     { href: "/admin/verifications", label: "Vérification des comptes", icon: "shield", group: "verifications" },
     { href: "/admin/verifications/reglages", label: "Réglages", icon: "shield", child: true, group: "verifications" },
+    // Moboo Pro : ce que géraient les extensions WordPress de l'application pro.
+    // Placé avant « Application mobile » : ses pages /admin/application/*-pro ouvrent ce groupe.
+    { href: "/admin/moboo-pro", label: "Moboo Pro", icon: "phone", group: "moboo-pro" },
+    ...[
+      ["/admin/moboo-pro", "Agences et liens"],
+      ["/admin/application/bascule-pro", "Bascule vers Render"],
+      ["/admin/application/forfaits-pro", "Forfaits"],
+      ["/admin/application/annonces-pro", "Annonces de l’application"],
+    ].map(([href, label]) => ({ href, label, icon: "phone", child: true, group: "moboo-pro" })),
     // Application mobile Moboo.ci : statistiques, passerelle Houzi, push, contacts.
     { href: "/admin/application", label: "Application mobile", icon: "phone", group: "application" },
     ...[
@@ -207,9 +216,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/application/videos", "Vidéos des annonces"],
       ["/admin/application/contacts", "Contacts"],
       ["/admin/application/appareils", "Appareils"],
-      ["/admin/application/bascule-pro", "Bascule Moboo Pro"],
-      ["/admin/application/forfaits-pro", "Forfaits Moboo Pro"],
-      ["/admin/application/annonces-pro", "Annonces Moboo Pro"],
     ].map(([href, label]) => ({ href, label, icon: "phone", child: true, group: "application" })),
     // Rubriques, chacune suivie de ses sous-rubriques (ex. modèles d'e-mails).
     ...(settings?.schema ?? []).filter((s) => !s.parent && !s.hidden).flatMap((s) => {
