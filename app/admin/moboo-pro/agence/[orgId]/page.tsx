@@ -34,6 +34,11 @@ export default async function ProAgence({ params }: { params: { orgId: string } 
         <Stat label="Sur Render" value={`${onRender} / ${d.bascule.length}`} hint="domaines" />
       </div>
 
+      <Link href={`/admin/moboo-pro/agence/${d.org.id}/parc`} className="flex items-center justify-between rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-brand-500">
+        <span><span className="font-semibold text-ink">Parc de l’agence</span><span className="block text-xs text-muted">Biens, propriétaires, locataires, baux et loyers · export Excel · import des biens et locataires</span></span>
+        <span className="text-sm font-semibold text-brand-800">Ouvrir →</span>
+      </Link>
+
       <Section title="Agents et comptes" hint="Membres de l’agence sur Render, avec leur compte Moboo Pro (WordPress repris).">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[52rem] text-sm">
