@@ -64,6 +64,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const items: AdminNavItem[] = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
     // Statistiques (façon Zillow / Airbnb) : indicateurs, recherches, professionnels.
+    // Intelligence immobilière : marché Moboo.ci en direct par zone, type et prix (version avancée de l'accueil Moboo Pro).
+    { href: "/admin/intelligence", label: "Intelligence immobilière", icon: "gauge" },
     { href: "/admin/statistiques", label: "Statistiques", icon: "gauge", group: "stats" },
     { href: "/admin/statistiques/recherches", label: "Recherches", icon: "gauge", child: true, group: "stats" },
     { href: "/admin/statistiques/professionnels", label: "Professionnels", icon: "gauge", child: true, group: "stats" },
