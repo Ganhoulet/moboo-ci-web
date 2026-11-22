@@ -202,6 +202,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/moboo-pro", label: "Moboo Pro", icon: "phone", group: "moboo-pro" },
     ...[
       ["/admin/moboo-pro", "Agences et liens"],
+      ["/admin/moboo-pro/comptes", "Comptes"],
+      ["/admin/moboo-pro/notifications", "Notifications"],
+      ["/admin/services/support?app=moboo_pro", "Support"],
+      ["/admin/services/application", "Fonctions de l’application"],
       ["/admin/application/bascule-pro", "Bascule vers Render"],
       ["/admin/application/forfaits-pro", "Forfaits"],
       ["/admin/application/annonces-pro", "Annonces de l’application"],
