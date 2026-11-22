@@ -204,6 +204,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ["/admin/moboo-pro", "Agences et liens"],
       ["/admin/moboo-pro/comptes", "Comptes"],
       ["/admin/moboo-pro/notifications", "Notifications"],
+      ["/admin/moboo-pro/demandes-gestion", "Confier ma gestion"],
+      ["/admin/moboo-pro/departs", "Départs signalés"],
       ["/admin/services/support?app=moboo_pro", "Support"],
       ["/admin/services/application", "Fonctions de l’application"],
       ["/admin/application/bascule-pro", "Bascule vers Render"],
