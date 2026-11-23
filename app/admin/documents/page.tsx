@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DocumentListActions } from "@/components/backoffice/documents/document-list-actions";
 import { KIND_LABEL } from "@/lib/documents/types";
+import { FICHE_TEMPLATE } from "@/lib/fiches/fiche";
 import { listDocuments } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,8 @@ const when = (s: string) => new Date(s).toLocaleDateString("fr-FR", { day: "nume
 
 /** Documents imprimables : livres blancs, ebooks, magazines de quartier. */
 export default async function DocumentsPage() {
-  const items = await listDocuments();
+  // Les fiches d'annonces ont leur propre page (Marketing → Fiches d'annonces).
+  const items = (await listDocuments())?.filter((d) => d.template !== FICHE_TEMPLATE) ?? null;
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
