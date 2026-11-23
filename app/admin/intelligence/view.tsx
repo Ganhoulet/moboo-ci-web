@@ -70,7 +70,7 @@ function Meter({ value, max, label, sub }: { value: number; max: number; label: 
 export function IntelligenceView({ d, f, initialEvents }: { d: Intelligence; f: Filtre; initialEvents?: MarketEvent[] }) {
   const t = d.totals;
   const zoneLink = (c: string) => `/admin/intelligence?${qs({ ...f, commune: c, quartier: undefined })}`;
-  const scope = [f.commune, f.quartier, f.type, f.tx === "rent" ? "location" : f.tx === "sale" ? "vente" : null].filter(Boolean).join(" · ");
+  const scope = [f.commune, f.quartier, f.type, f.tx === "rent" ? "location" : f.tx === "sale" ? "vente" : null, f.source === "moboo" ? "Moboo.ci seulement" : f.source === "externe" ? "catalogues d’agences seulement" : null].filter(Boolean).join(" · ");
   const zone1: Zone | undefined = f.commune ? d.zones[0] : undefined;
   const maxType = Math.max(1, ...d.types.map((x) => x.count));
   const maxDem = Math.max(1, ...d.demande.top.map((x) => x.n30));
@@ -109,6 +109,9 @@ export function IntelligenceView({ d, f, initialEvents }: { d: Intelligence; f: 
         <select name="tx" defaultValue={f.tx ?? ""} className="rounded-md border border-slate-300 px-2 py-2 text-sm">
           <option value="">Location et vente</option><option value="rent">Location</option><option value="sale">Vente</option>
         </select>
+        <select name="source" defaultValue={f.source ?? ""} className="rounded-md border border-slate-300 px-2 py-2 text-sm">
+          <option value="">Marché général (toutes sources)</option><option value="moboo">Moboo.ci seulement</option><option value="externe">Catalogues des agences seulement</option>
+        </select>
         <button className="rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Analyser</button>
         {scope ? <Link href="/admin/intelligence" className="px-2 py-2 text-sm font-semibold text-brand-800 hover:underline">Tout le marché</Link> : null}
       </form>
@@ -125,13 +128,21 @@ export function IntelligenceView({ d, f, initialEvents }: { d: Intelligence; f: 
 
       <LiveMarket commune={f.commune ?? ""} initialQuotes={d.quotes} initialEvents={initialEvents} />
 
+      <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white p-3 text-sm shadow-sm ring-1 ring-slate-200">
+        <span className="font-semibold text-slate-600">Sources :</span>
+        <span className="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-800">Moboo.ci · {d.totals.moboo.toLocaleString("fr-FR")} annonces</span>
+        <span className="rounded-full bg-violet-50 px-3 py-1 font-semibold text-violet-800">Catalogues d’agences · {d.totals.externe.toLocaleString("fr-FR")} annonces ({d.sources.catalogues.length} source{d.sources.catalogues.length > 1 ? "s" : ""})</span>
+        <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-800">Loyers signés · {d.loyersSignes.baux} baux, {d.loyersSignes.communes} commune{d.loyersSignes.communes > 1 ? "s" : ""}</span>
+        <Link href="/admin/intelligence/catalogues" className="ml-auto font-semibold text-brand-800 hover:underline">Gérer les catalogues →</Link>
+      </div>
+
       <Section title="Marché par commune" sub="Loyer et prix de vente médians (prix du milieu), variations sur 7 et 30 jours, demande des visiteurs et présence des agences Moboo Pro. Cliquez une commune pour l’analyser.">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-3 py-2">Commune</th><th className="px-2 py-2 text-right">En ligne</th><th className="px-2 py-2 text-right">Nouvelles 30 j</th>
-                <th className="px-2 py-2 text-right">Loyer médian</th><th className="px-2 py-2 text-right">7 j</th><th className="px-2 py-2 text-right">30 j</th>
+                <th className="px-2 py-2 text-right">Loyer médian</th><th className="px-2 py-2 text-right">7 j</th><th className="px-2 py-2 text-right">30 j</th><th className="px-2 py-2 text-right" title="Loyer médian des baux actifs Moboo Pro (au moins 5 baux et 3 agences)">Loyer signé</th>
                 <th className="px-2 py-2 text-right">Vente médiane</th><th className="px-2 py-2 text-right">Recherches 7 j</th><th className="px-2 py-2 text-right" title="Recherches de la semaine par annonce en ligne">Pression</th>
                 <th className="px-2 py-2 text-right">Départs</th><th className="px-3 py-2 text-right">Agences Pro</th>
               </tr>
@@ -145,6 +156,7 @@ export function IntelligenceView({ d, f, initialEvents }: { d: Intelligence; f: 
                   <td className="px-2 py-2 text-right font-semibold tabular-nums">{F(z.rentMedian)}<span className="block text-[11px] font-normal text-muted">{z.rentCount} annonces</span></td>
                   <td className="px-2 py-2 text-right"><Delta v={z.rentChange7} /></td>
                   <td className="px-2 py-2 text-right"><Delta v={z.rentChange30} /></td>
+                  <td className="px-2 py-2 text-right tabular-nums">{z.loyerSigne ? <>{F(z.loyerSigne)}<span className="block text-[11px] text-muted">{z.loyerSigneBaux} baux{z.ecartAffiche != null ? ` · affiché ${pct(z.ecartAffiche)}` : ""}</span></> : "—"}</td>
                   <td className="px-2 py-2 text-right tabular-nums">{Fc(z.saleMedian)} <Delta v={z.saleChange30} /></td>
                   <td className="px-2 py-2 text-right tabular-nums">{z.searches7}{z.zero7 ? <span className="block text-[11px] text-amber-700">{z.zero7} sans résultat</span> : null}</td>
                   <td className="px-2 py-2 text-right tabular-nums">{z.pression >= 2 ? <span className="rounded bg-amber-100 px-1.5 py-0.5 font-bold text-amber-800">{z.pression.toLocaleString("fr-FR")}</span> : z.pression.toLocaleString("fr-FR")}</td>
@@ -152,11 +164,11 @@ export function IntelligenceView({ d, f, initialEvents }: { d: Intelligence; f: 
                   <td className="px-3 py-2 text-right tabular-nums">{z.agences ? <>{z.agences}<span className="block text-[11px] text-muted">{z.biensPro} biens</span></> : "—"}</td>
                 </tr>
               ))}
-              {!d.zones.length ? <tr><td colSpan={11} className="p-6 text-center text-muted">Aucune annonce pour ce filtre.</td></tr> : null}
+              {!d.zones.length ? <tr><td colSpan={12} className="p-6 text-center text-muted">Aucune annonce pour ce filtre.</td></tr> : null}
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-xs text-muted">« — » : moins de {d.minSample} annonces, le prix n’est pas calculé (aucune annonce isolée ne doit être reconnaissable). Pression : recherches de la semaine par annonce en ligne ; au-dessus de 2, la demande dépasse l’offre.</p>
+        <p className="mt-2 text-xs text-muted">« — » : moins de {d.minSample} annonces, le prix n’est pas calculé (aucune annonce isolée ne doit être reconnaissable). Pression : recherches de la semaine par annonce en ligne ; au-dessus de 2, la demande dépasse l’offre. Loyer signé : loyer réel des baux actifs Moboo Pro, affiché à partir de 5 baux et 3 agences ; « affiché +x % » = les annonces sont plus chères que les loyers signés.</p>
       </Section>
 
       {zone1?.quartiers.length ? (
@@ -263,8 +275,8 @@ export function IntelligenceView({ d, f, initialEvents }: { d: Intelligence; f: 
       </div>
 
       <p className="text-xs text-muted">
-        Sources : annonces publiées sur Moboo.ci (site et appli), recherches anonymes des visiteurs, départs signalés par QR, parc des agences Moboo Pro, grille foncière des estimations.
-        Aucune donnée d’autres sites n’est copiée. Calcul du {new Date(d.version).toLocaleString("fr-FR")}, recalculé toutes les 5 minutes ; variations comparées aux relevés quotidiens.
+        Sources : annonces publiées sur Moboo.ci (site et appli), catalogues envoyés par les agences partenaires avec leur accord (non publiés), baux actifs Moboo Pro (agrégés), recherches anonymes des visiteurs, départs signalés par QR, grille foncière des estimations.
+        Aucune donnée n’est copiée d’autres sites. Calcul du {new Date(d.version).toLocaleString("fr-FR")}, recalculé toutes les 5 minutes ; variations comparées aux relevés quotidiens.
       </p>
     </div>
   );
