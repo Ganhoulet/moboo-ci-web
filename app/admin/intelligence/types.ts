@@ -25,8 +25,15 @@ export interface Intelligence {
   foncier: { ville: string; commune: string; zone: string; usage: string; priceSqm: number; priceMin: number; priceMax: number; source: string }[];
   sources: { libelles: Record<string, string>; catalogues: Catalogue[] };
   loyersSignes: { communes: number; baux: number };
+  references: Reference[];
   minSample: number;
 }
+export interface Reference {
+  id: number; source: string; url: string | null; publieLe: string | null; ville: string | null; commune: string | null; quartier: string | null; typeBien: string | null;
+  transaction: Tx; unite: "mois" | "prix" | "m2"; valeur: number; valeurMin: number | null; valeurMax: number | null; note: string | null; saisiLe: string;
+  mobooMedian?: number | null; ecartMoboo?: number | null;
+}
+export const UNITE: Record<Reference["unite"], string> = { mois: "loyer / mois", prix: "prix de vente", m2: "prix au m²" };
 export interface Catalogue { key: string; label: string; total: number; actives: number; maj: string | null; plateformes: string[] }
 
 export const F = (n: number | null | undefined) => (n == null ? "—" : `${Math.round(n).toLocaleString("fr-FR").replace(/[  ]/g, " ")} F`);

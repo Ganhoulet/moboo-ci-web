@@ -68,6 +68,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/intelligence", label: "Intelligence immobilière", icon: "gauge", group: "intel" },
     { href: "/admin/intelligence", label: "Tableau de bord du marché", icon: "gauge", child: true, group: "intel" },
     { href: "/admin/intelligence/catalogues", label: "Catalogues des agences", icon: "gauge", child: true, group: "intel" },
+    { href: "/admin/intelligence/chiffres-publies", label: "Chiffres publiés", icon: "gauge", child: true, group: "intel" },
     { href: "/admin/statistiques", label: "Statistiques", icon: "gauge", group: "stats" },
     { href: "/admin/statistiques/recherches", label: "Recherches", icon: "gauge", child: true, group: "stats" },
     { href: "/admin/statistiques/professionnels", label: "Professionnels", icon: "gauge", child: true, group: "stats" },

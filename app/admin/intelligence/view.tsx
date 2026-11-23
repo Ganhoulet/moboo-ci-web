@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { qs, type Filtre } from "./qs";
 import { LiveMarket } from "./live";
-import { F, Fc, pct, variation, type Intelligence, type MarketEvent, type Zone } from "./types";
+import { F, Fc, pct, UNITE, variation, type Intelligence, type MarketEvent, type Zone } from "./types";
 
 const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 const moisCourt = (m: string) => MOIS[Number(m.slice(5, 7)) - 1] ?? m;
@@ -184,6 +184,26 @@ export function IntelligenceView({ d, f, initialEvents }: { d: Intelligence; f: 
         </Section>
       ) : null}
 
+      <Section title="Chiffres publiés par d’autres sources" sub="Rapports, observatoires et articles saisis à la main, avec leur source, comparés au prix médian Moboo de la même commune." right={<Link href="/admin/intelligence/chiffres-publies" className="text-sm font-semibold text-brand-800 hover:underline">Ajouter un chiffre →</Link>}>
+        {d.references.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead className="text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="py-1.5">Zone · bien</th><th className="py-1.5 text-right">Chiffre publié</th><th className="py-1.5 text-right">Moboo (médiane)</th><th className="py-1.5 pl-6">Source</th></tr></thead>
+              <tbody>
+                {d.references.map((r) => (
+                  <tr key={r.id} className="border-t border-slate-100">
+                    <td className="py-2 font-medium">{[r.quartier, r.commune ?? r.ville ?? "Tout le pays"].filter(Boolean).join(", ")}<span className="block text-[11px] text-muted">{r.typeBien ?? "Tous types"} · {UNITE[r.unite]}</span></td>
+                    <td className="py-2 text-right tabular-nums"><b>{Fc(r.valeur)}</b>{r.valeurMin && r.valeurMax ? <span className="block text-[11px] text-muted">{Fc(r.valeurMin)} – {Fc(r.valeurMax)}</span> : null}</td>
+                    <td className="py-2 text-right tabular-nums">{r.mobooMedian ? <>{Fc(r.mobooMedian)}<span className="block text-[11px] text-muted">Moboo {pct(r.ecartMoboo)}</span></> : "—"}</td>
+                    <td className="py-2 pl-6 text-xs">{r.url ? <a href={r.url} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-800 hover:underline">{r.source}</a> : r.source}{r.publieLe ? <span className="block text-muted">publié le {new Date(r.publieLe).toLocaleDateString("fr-FR")}</span> : null}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <p className="text-sm text-muted">Aucun chiffre saisi pour cette zone. Exemple : le « Panorama du marché de l’immobilier » annuel de H&A Properties.</p>}
+      </Section>
+
       <div className="grid gap-5 xl:grid-cols-2">
         <Section title="Prix affichés par catégorie" sub={`Médiane et fourchette du milieu (25 % – 75 %)${f.commune ? ` à ${f.commune}` : " sur tout le marché"}.`}>
           <table className="w-full text-sm">
@@ -275,7 +295,7 @@ export function IntelligenceView({ d, f, initialEvents }: { d: Intelligence; f: 
       </div>
 
       <p className="text-xs text-muted">
-        Sources : annonces publiées sur Moboo.ci (site et appli), catalogues envoyés par les agences partenaires avec leur accord (non publiés), baux actifs Moboo Pro (agrégés), recherches anonymes des visiteurs, départs signalés par QR, grille foncière des estimations.
+        Sources : annonces publiées sur Moboo.ci (site et appli), catalogues envoyés par les agences partenaires avec leur accord (non publiés), chiffres publiés saisis avec leur source, baux actifs Moboo Pro (agrégés), recherches anonymes des visiteurs, départs signalés par QR, grille foncière des estimations.
         Aucune donnée n’est copiée d’autres sites. Calcul du {new Date(d.version).toLocaleString("fr-FR")}, recalculé toutes les 5 minutes ; variations comparées aux relevés quotidiens.
       </p>
     </div>
