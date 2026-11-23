@@ -2,6 +2,7 @@ import Link from "next/link";
 import { deleteCatalogue } from "./actions";
 import type { Catalogue } from "../types";
 import { ImportForm } from "./import-form";
+import { AgencyMessages } from "./messages";
 
 /** Contenu de la page (séparé pour pouvoir l'afficher avec des données d'essai). */
 export function CataloguesView({ items }: { items: Catalogue[] | null }) {
@@ -15,6 +16,11 @@ export function CataloguesView({ items }: { items: Catalogue[] | null }) {
           Ces annonces <strong>ne sont jamais publiées</strong> sur Moboo.ci : elles servent seulement aux chiffres (« marché général »). N’importez que des catalogues que l’agence vous a remis elle-même.
         </p>
       </div>
+      <section className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+        <h2 className="font-bold text-ink">Proposer aux agences de confier leur catalogue</h2>
+        <p className="mb-3 text-xs text-muted">Messages prêts à l’emploi : choisissez le canal, ajustez le texte si besoin, puis envoyez ou copiez.</p>
+        <AgencyMessages />
+      </section>
       <section className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
         <h2 className="mb-3 font-bold text-ink">Importer un catalogue Excel</h2>
         <ImportForm />
