@@ -55,5 +55,5 @@ function ArrivalGuaranteeContent() {
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function ArrivalGuarantee(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-garantie-arrivee" apercu={props.searchParams?.apercu}>{ArrivalGuaranteeContent()}</EditablePage>;
+  return <EditablePage slug="site-garantie-arrivee" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{ArrivalGuaranteeContent()}</EditablePage>;
 }

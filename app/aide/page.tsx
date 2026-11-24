@@ -78,5 +78,5 @@ async function HelpHomeContent() {
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function HelpHome(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-aide" apercu={props.searchParams?.apercu}>{await HelpHomeContent()}</EditablePage>;
+  return <EditablePage slug="site-aide" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{await HelpHomeContent()}</EditablePage>;
 }

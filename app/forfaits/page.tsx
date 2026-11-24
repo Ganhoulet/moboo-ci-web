@@ -43,5 +43,5 @@ async function ForfaitsPageContent() {
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function ForfaitsPage(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-forfaits" apercu={props.searchParams?.apercu}>{await ForfaitsPageContent()}</EditablePage>;
+  return <EditablePage slug="site-forfaits" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{await ForfaitsPageContent()}</EditablePage>;
 }

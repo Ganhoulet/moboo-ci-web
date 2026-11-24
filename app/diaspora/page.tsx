@@ -64,5 +64,5 @@ async function DiasporaPageContent() {
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function DiasporaPage(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-diaspora" apercu={props.searchParams?.apercu}>{await DiasporaPageContent()}</EditablePage>;
+  return <EditablePage slug="site-diaspora" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{await DiasporaPageContent()}</EditablePage>;
 }
