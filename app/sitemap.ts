@@ -4,6 +4,7 @@ import { getPriceCommunes } from "@/lib/prices";
 import { getHelpSitemap } from "@/lib/help";
 import { getProSitemap, getZones } from "@/lib/pro-reviews";
 import { getLandmarks, getEvents } from "@/lib/stays";
+import { getFreeSitemap } from "@/lib/free-pages";
 
 export const dynamic = "force-dynamic"; // toujours à jour avec les pages SEO publiées
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://moboo.ci").replace(/\/+$/, "");
@@ -50,5 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...((await getEvents()) ?? []).map((e) => ({ url: `${BASE}/ou-dormir/${e.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.6 })),
     ...((await getLandmarks()) ?? []).filter((l) => l.residences > 0).map((l) => ({ url: `${BASE}/meuble-pres-de/${l.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 })),
   ];
-  return [...main, ...seo, ...prices, ...stays, ...help, ...pros, ...agents, ...profiles, ...listings];
+  // Pages libres publiées (back-office › Pages du site).
+  const free = (await getFreeSitemap()).map((f) => ({ url: `${BASE}/pages/${f.path}`, lastModified: f.publishedAt ? new Date(f.publishedAt) : now, changeFrequency: "weekly" as const, priority: 0.6 }));
+  return [...main, ...seo, ...free, ...prices, ...stays, ...help, ...pros, ...agents, ...profiles, ...listings];
 }
