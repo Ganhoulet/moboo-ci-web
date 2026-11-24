@@ -87,20 +87,13 @@ async function Hero({ s, data }: { s: Section; data: HomeData }) {
       )}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/35 via-black/25 to-black/45" />
       <div className="container-page flex min-h-[480px] flex-col items-center justify-center py-16 text-center text-white sm:min-h-[560px]">
-        <h1 className="max-w-3xl font-display text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl">{p.title}</h1>
+        <h1 className="max-w-3xl font-display text-3xl font-black leading-[1.08] tracking-tight sm:text-5xl">{p.title}</h1>
         {p.subtitle ? <p className="mt-4 max-w-2xl text-base text-white/90 sm:text-lg">{p.subtitle}</p> : null}
         <div className="mt-8 w-full"><HeroSearch tabs={p.tabs ?? []} placeholder={p.placeholder ?? ""} types={types.map((t) => ({ slug: t.slug, label: t.label }))} places={Array.from(new Set([...data.areas.map((a) => a.label), ...data.cities.map((c) => c.label)])).slice(0, 12)} /></div>
         {(p.chips as { label: string; href: string }[] | undefined)?.length ? (
           <div className="mt-5 flex max-w-3xl flex-wrap justify-center gap-2">
             {(p.chips as { label: string; href: string }[]).filter((c) => c.label && c.href).map((c) => (
               <Link key={c.label} href={c.href} className="rounded-full bg-white/15 px-3.5 py-1.5 text-sm font-medium text-white ring-1 ring-white/25 backdrop-blur transition hover:bg-white/25">{c.label}</Link>
-            ))}
-          </div>
-        ) : null}
-        {p.showStats && data.totals.listings ? (
-          <div className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-white/85">
-            {liveCounts(data, true).map((c) => (
-              <span key={c.label}><strong className="text-white">{c.value}</strong> {c.label}</span>
             ))}
           </div>
         ) : null}
