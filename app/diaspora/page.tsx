@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { API_URL } from "@/lib/api";
 import { DiasporaForm } from "@/components/diaspora-form";
+import { EditablePage } from "@/components/editable-page";
 
 export const metadata: Metadata = {
   title: "Diaspora : acheter, construire ou louer en Côte d’Ivoire en toute sécurité",
@@ -24,7 +25,7 @@ const STEPS = [
 ];
 
 /** Page Diaspora : accompagnement des Ivoiriens de l'étranger (achat, construction, location, gestion). */
-export default async function DiasporaPage() {
+async function DiasporaPageContent() {
   const p = await getPage();
   if (p && !p.enabled) return <div className="container-page py-16 text-center text-muted">Le service diaspora rouvre bientôt.</div>;
   return (
@@ -59,4 +60,9 @@ export default async function DiasporaPage() {
       </div>
     </div>
   );
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function DiasporaPage(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-diaspora" apercu={props.searchParams?.apercu}>{await DiasporaPageContent()}</EditablePage>;
 }

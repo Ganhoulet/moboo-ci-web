@@ -43,12 +43,15 @@ function Head({ title, subtitle, href, dark }: { title?: string; subtitle?: stri
   );
 }
 
-function Shell({ s, children, pad = "py-12 sm:py-16", edit }: { s: Section; children: React.ReactNode; pad?: string; edit?: boolean }) {
+/** Mode modification : true (accueil) ou adresse du constructeur de la page. */
+type Edit = boolean | string;
+
+function Shell({ s, children, pad = "py-12 sm:py-16", edit }: { s: Section; children: React.ReactNode; pad?: string; edit?: Edit }) {
   const bg = BG[s.props.background as string] ?? "bg-white";
   return (
     <section id={`section-${s.id}`} className={`group/section relative ${bg} ${pad}`}>
       {edit ? (
-        <Link href={`/admin/accueil?section=${encodeURIComponent(s.id)}`}
+        <Link href={`${typeof edit === "string" ? edit : "/admin/accueil"}?section=${encodeURIComponent(s.id)}`}
           className="absolute right-3 top-3 z-20 hidden items-center gap-1.5 rounded-full bg-ink/90 px-3 py-1.5 text-xs font-semibold text-white shadow-lg group-hover/section:inline-flex">
           ✎ Modifier « {blockDef(s.type)?.label} »
         </Link>
@@ -122,7 +125,7 @@ const niceLabel = (slug: string, label: string) =>
  * resserrent sur une ligne à mesure qu'on en ajoute (défilement au-delà).
  * Automatique (types du back-office) ou liste composée à la main.
  */
-function Categories({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
+function Categories({ s, data, edit }: { s: Section; data: HomeData; edit?: Edit }) {
   const p: P = s.props;
   const count = new Map(data.types.map((t) => [t.slug, t] as const));
   const want: string[] = p.types ?? [];
@@ -169,7 +172,7 @@ function Categories({ s, data, edit }: { s: Section; data: HomeData; edit?: bool
   );
 }
 
-function QuickStart({ s, edit }: { s: Section; edit?: boolean }) {
+function QuickStart({ s, edit }: { s: Section; edit?: Edit }) {
   const items = (s.props.items ?? []) as P[];
   const carousel = s.props.mobileLayout !== "list";
   return (
@@ -197,7 +200,7 @@ function QuickStart({ s, edit }: { s: Section; edit?: boolean }) {
 
 const typeList = (p: P) => [...(Array.isArray(p.propertyTypes) ? p.propertyTypes : []), p.propertyType].filter(Boolean).join(",");
 
-async function Listings({ s, edit }: { s: Section; edit?: boolean }) {
+async function Listings({ s, edit }: { s: Section; edit?: Edit }) {
   const p: P = s.props;
   const count = Math.min(24, Math.max(5, Number(p.count) || 12));
   const tx = p.transaction === "rent" || p.transaction === "sale" ? p.transaction : undefined;
@@ -214,7 +217,7 @@ async function Listings({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
-async function Reservables({ s, edit }: { s: Section; edit?: boolean }) {
+async function Reservables({ s, edit }: { s: Section; edit?: Edit }) {
   const p: P = s.props;
   const count = Math.min(24, Math.max(5, Number(p.count) || 12));
   const { items } = p.kind === "event" ? await espacesPage({ perPage: count }) : await residencesPage({ perPage: count });
@@ -227,7 +230,7 @@ async function Reservables({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
-function Localities({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
+function Localities({ s, data, edit }: { s: Section; data: HomeData; edit?: Edit }) {
   const p: P = s.props;
   const count = Math.min(16, Math.max(3, Number(p.count) || 8));
   const items: { name: string; sub: string; image?: string; count?: number }[] = p.mode === "manual" && (p.items as P[])?.length
@@ -255,7 +258,7 @@ function Localities({ s, data, edit }: { s: Section; data: HomeData; edit?: bool
   );
 }
 
-function PropertyTypes({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
+function PropertyTypes({ s, data, edit }: { s: Section; data: HomeData; edit?: Edit }) {
   const p: P = s.props;
   const items = ((p.items ?? []) as P[]).filter((x) => x.type).map((x) => ({ type: String(x.type), image: x.image as string | undefined, t: data.types.find((t) => t.slug === x.type) }));
   if (!items.length) return null;
@@ -280,7 +283,7 @@ function PropertyTypes({ s, data, edit }: { s: Section; data: HomeData; edit?: b
   );
 }
 
-function Banner({ s, edit }: { s: Section; edit?: boolean }) {
+function Banner({ s, edit }: { s: Section; edit?: Edit }) {
   const p: P = s.props;
   const style = p.style as string;
   const box = style === "accent" ? "bg-gradient-to-br from-accent-500 to-accent-700 text-white"
@@ -312,7 +315,7 @@ function Banner({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
-function Steps({ s, edit }: { s: Section; edit?: boolean }) {
+function Steps({ s, edit }: { s: Section; edit?: Edit }) {
   const p: P = s.props;
   const dark = p.background === "brand";
   return (
@@ -332,7 +335,7 @@ function Steps({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
-function Pros({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
+function Pros({ s, data, edit }: { s: Section; data: HomeData; edit?: Edit }) {
   const p: P = s.props;
   const items = data.pros.slice(0, Math.min(12, Math.max(3, Number(p.count) || 8)));
   if (!items.length) return null;
@@ -357,7 +360,7 @@ function Pros({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean })
 }
 
 /** Vrais chiffres de la plateforme (les catégories à zéro sont masquées). */
-async function SeoLinksBlock({ s, edit }: { s: Section; edit?: boolean }) {
+async function SeoLinksBlock({ s, edit }: { s: Section; edit?: Edit }) {
   const p: P = s.props;
   const links = (await getSeoLinks()).filter((l) => l.kind === "landing" && !l.noindex);
   if (!links.length) return null;
@@ -389,7 +392,7 @@ async function SeoLinksBlock({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
-async function Marketing({ s, edit }: { s: Section; edit?: boolean }) {
+async function Marketing({ s, edit }: { s: Section; edit?: Edit }) {
   const items = await getCampaigns("site_banner");
   if (!items.length) return null;
   return (
@@ -418,7 +421,7 @@ function liveCounts(data: HomeData, short: boolean, hidden?: string[]) {
   return rows.filter((r) => (r.v ?? 0) > 0).filter((r) => !hidden?.includes(r.key)).slice(0, 5).map(({ value, label }) => ({ value, label }));
 }
 
-function Stats({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
+function Stats({ s, data, edit }: { s: Section; data: HomeData; edit?: Edit }) {
   const p: P = s.props;
   const items = p.mode === "manual" && (p.items as P[])?.length ? (p.items as P[]) : [
     ...liveCounts(data, false, p.hiddenCounters as string[] | undefined),
@@ -440,7 +443,7 @@ function Stats({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }
   );
 }
 
-function Testimonials({ s, edit }: { s: Section; edit?: boolean }) {
+function Testimonials({ s, edit }: { s: Section; edit?: Edit }) {
   const p: P = s.props;
   const items = ((p.items ?? []) as P[]).filter((x) => x.text);
   if (!items.length) return null;
@@ -466,7 +469,7 @@ function Testimonials({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
-function Articles({ s, edit }: { s: Section; edit?: boolean }) {
+function Articles({ s, edit }: { s: Section; edit?: Edit }) {
   const p: P = s.props;
   const items = ((p.items ?? []) as P[]).filter((x) => x.title);
   if (!items.length) return null;
@@ -491,7 +494,7 @@ function Articles({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
-async function Partners({ s, edit }: { s: Section; edit?: boolean }) {
+async function Partners({ s, edit }: { s: Section; edit?: Edit }) {
   const partners = await getPartners();
   if (!partners.length) return null;
   return (
@@ -508,7 +511,7 @@ async function Partners({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
-async function AppBlock({ s, edit }: { s: Section; edit?: boolean }) {
+async function AppBlock({ s, edit }: { s: Section; edit?: Edit }) {
   const p: P = s.props;
   const settings = await getSiteSettings();
   const mobile = (settings as unknown as Record<string, Record<string, string>>).mobile_app ?? {};
@@ -544,7 +547,7 @@ async function AppBlock({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
-async function ServicesRow({ s, edit }: { s: Section; edit?: boolean }) {
+async function ServicesRow({ s, edit }: { s: Section; edit?: Edit }) {
   const p: P = s.props;
   const only = Array.isArray(p.only) ? (p.only as string[]) : [];
   const items = (await getSiteServices()).items.filter((x) => !only.length || only.includes(x.key));
@@ -579,7 +582,7 @@ function withoutHiddenItems(s: Section): Section {
 }
 
 /** Rendu d'une section publiée (null : type inconnu ou masquée). */
-export async function HomeSection({ s: raw, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
+export async function HomeSection({ s: raw, data, edit }: { s: Section; data: HomeData; edit?: Edit }) {
   if (!raw.enabled) return null;
   // Liens vers un service masqué au back-office : retirés aussi des autres blocs.
   const s = dropHiddenServiceLinks(withoutHiddenItems(raw), await getHiddenServicePaths());

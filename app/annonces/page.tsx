@@ -30,6 +30,7 @@ import { getCardSignals } from "@/lib/signals";
 import { getCampaigns } from "@/lib/marketing";
 import { PropertyCard } from "@/components/property-card";
 import { SiteBanners } from "@/components/marketing/site-banners";
+import { EditablePage } from "@/components/editable-page";
 
 const BASE_METADATA: Metadata = {
   title: "Annonces",
@@ -42,7 +43,7 @@ export function generateMetadata() {
 export const dynamic = "force-dynamic";
 
 
-export default async function AnnoncesPage({
+async function AnnoncesPageContent({
   searchParams,
 }: {
   searchParams: {
@@ -304,4 +305,9 @@ export default async function AnnoncesPage({
       )}
     </div>
   );
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function AnnoncesPage(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-annonces" apercu={props.searchParams?.apercu}>{await AnnoncesPageContent(props)}</EditablePage>;
 }

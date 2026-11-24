@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { DirectoryView } from "@/components/pros/directory-view";
 import { slugZone, type DirectoryQuery } from "@/lib/pro-reviews";
+import { EditablePage } from "@/components/editable-page";
 
 export const revalidate = 60;
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/agents-immobiliers" },
 };
 
-export default function AgentsImmobiliers({ searchParams }: { searchParams: Record<string, string | undefined> }) {
+function AgentsImmobiliersContent({ searchParams }: { searchParams: Record<string, string | undefined> }) {
   // Une zone saisie → page dédiée (adresse propre, indexable).
   const zone = slugZone(searchParams.zone ?? "");
   if (zone) {
@@ -20,4 +21,9 @@ export default function AgentsImmobiliers({ searchParams }: { searchParams: Reco
   }
   const q: DirectoryQuery = { q: searchParams.q, type: searchParams.type, sort: searchParams.sort, verified: searchParams.verified, minRating: searchParams.minRating, page: searchParams.page };
   return <DirectoryView base="/agents-immobiliers" query={q} />;
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function AgentsImmobiliers(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-agents-immobiliers" apercu={props.searchParams?.apercu}>{AgentsImmobiliersContent(props)}</EditablePage>;
 }

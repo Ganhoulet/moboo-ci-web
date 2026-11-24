@@ -5,13 +5,14 @@ import { PackageCards } from "@/components/package-cards";
 import { fcfa, getPackages } from "@/lib/community";
 import { getSession } from "@/lib/session";
 import { getSiteSettings } from "@/lib/settings";
+import { EditablePage } from "@/components/editable-page";
 
 const BASE_METADATA: Metadata = { title: "Forfaits", description: "Publiez plus d’annonces et sponsorisez vos biens sur Moboo.ci." };
 export function generateMetadata() {
   return withSeoOverride("/forfaits", BASE_METADATA);
 }
 
-export default async function ForfaitsPage() {
+async function ForfaitsPageContent() {
   const [settings, packages] = await Promise.all([getSiteSettings(), getPackages()]);
   if (!settings.packages.enabled) notFound();
   const account = getSession();
@@ -38,4 +39,9 @@ export default async function ForfaitsPage() {
       </div>
     </div>
   );
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function ForfaitsPage(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-forfaits" apercu={props.searchParams?.apercu}>{await ForfaitsPageContent()}</EditablePage>;
 }

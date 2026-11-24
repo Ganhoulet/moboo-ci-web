@@ -6,6 +6,7 @@ import { HelpIcon } from "@/components/help/help-icon";
 import { HelpContact } from "@/components/help/help-contact";
 import { FaqList } from "@/components/help/faq-list";
 import { SiteIcon } from "@/components/site-icon";
+import { EditablePage } from "@/components/editable-page";
 
 export const revalidate = 60;
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 /** Centre d'aide (façon Airbnb / Booking) : recherche, publics, guides populaires, FAQ, contact. */
-export default async function HelpHome() {
+async function HelpHomeContent() {
   const d = await getHelpHome();
   return (
     <div className="pb-16">
@@ -73,4 +74,9 @@ export default async function HelpHome() {
       </div>
     </div>
   );
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function HelpHome(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-aide" apercu={props.searchParams?.apercu}>{await HelpHomeContent()}</EditablePage>;
 }
