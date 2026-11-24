@@ -7,6 +7,7 @@ import { getSiteSettings } from "@/lib/settings";
 import { getSession } from "@/lib/session";
 import { SiteIcon } from "@/components/site-icon";
 import { getHiddenServicePaths } from "@/lib/service-visibility";
+import { EditablePage } from "@/components/editable-page";
 
 export const metadata: Metadata = {
   title: "Publier une annonce gratuite — louer ou vendre votre bien",
@@ -41,7 +42,7 @@ const FAQ = [
 ];
 
 /** Page « Publier une annonce » (façon post.magicbricks.com) : accroche + carte de démarrage, avantages, étapes, chiffres, offres pro, FAQ. */
-export default async function PublierLanding() {
+async function PublierLandingContent() {
   const account = getSession();
   const [stats, settings, hiddenServices] = await Promise.all([getProStats(), getSiteSettings(), getHiddenServicePaths()]);
   const mobile = (settings as unknown as Record<string, Record<string, string>>).mobile_app ?? {};
@@ -184,4 +185,9 @@ export default async function PublierLanding() {
       </section>
     </div>
   );
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function PublierLanding(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-publier" apercu={props.searchParams?.apercu}>{await PublierLandingContent()}</EditablePage>;
 }

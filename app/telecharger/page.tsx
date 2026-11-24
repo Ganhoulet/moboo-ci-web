@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { ProStoreButtons } from "@/components/pro-invitation/store-buttons";
+import { EditablePage } from "@/components/editable-page";
 
 export const metadata: Metadata = { title: "Télécharger Moboo Pro", description: "L’application de gestion immobilière des agences, agents et propriétaires en Côte d’Ivoire." };
 
-export default function Telecharger() {
+function TelechargerContent() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-md rounded-2xl bg-white p-7 text-center shadow-card ring-1 ring-slate-200">
@@ -14,4 +15,9 @@ export default function Telecharger() {
       </div>
     </div>
   );
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function Telecharger(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-telecharger" apercu={props.searchParams?.apercu}>{TelechargerContent()}</EditablePage>;
 }

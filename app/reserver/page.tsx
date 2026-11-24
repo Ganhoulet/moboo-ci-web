@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getEspace, getResidence } from "@/lib/api";
 import { BookingForm } from "@/components/booking-form";
 import { EventBookingForm } from "@/components/event-booking-form";
+import { EditablePage } from "@/components/editable-page";
 
 export const metadata: Metadata = { title: "Réserver" };
 
@@ -30,7 +31,7 @@ function StepsPanel() {
   );
 }
 
-export default async function ReserverPage({
+async function ReserverPageContent({
   searchParams,
 }: {
   searchParams: { type?: string; id?: string };
@@ -121,4 +122,9 @@ export default async function ReserverPage({
       </div>
     </div>
   );
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function ReserverPage(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-reserver" apercu={props.searchParams?.apercu}>{await ReserverPageContent(props)}</EditablePage>;
 }

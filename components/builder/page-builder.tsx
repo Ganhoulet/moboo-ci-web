@@ -5,6 +5,7 @@ import { PRO_BLOCKS, newProSection, proBlockDef } from "@/lib/pro-blocks";
 import { BLOCKS, blockDef as homeBlockDef, newSection as homeNewSection, type BlockDef, type Section } from "@/lib/page-blocks";
 import { discardAction, publishAction, restoreAction, saveDraftAction, type AdminPage } from "@/app/admin/accueil/actions";
 import { FieldEditor, type Opt } from "./field-editor";
+import { PAGE_CONTENT_TYPE, SITE_PAGE_BLOCKS, newSitePageSection, sitePageBlockDef } from "@/lib/site-editable";
 
 type Status = { tone: "ok" | "err" | "info"; text: string } | null;
 
@@ -16,15 +17,16 @@ type Status = { tone: "ok" | "err" | "info"; text: string } | null;
 /** Catalogue de blocs utilisé par le constructeur (accueil par défaut ; espace pros…). */
 export interface BuilderCatalog { blocks: BlockDef[]; def: (type: string) => BlockDef | undefined; create: (type: string) => Section }
 // Choisi par une clé (une fonction ne peut pas passer d'un composant serveur à un composant client).
-const CATALOGS: Record<"home" | "pros", BuilderCatalog> = {
+const CATALOGS: Record<"home" | "pros" | "page", BuilderCatalog> = {
   home: { blocks: BLOCKS, def: homeBlockDef, create: homeNewSection },
   pros: { blocks: PRO_BLOCKS, def: proBlockDef, create: newProSection },
+  page: { blocks: SITE_PAGE_BLOCKS, def: sitePageBlockDef, create: newSitePageSection },
 };
 export interface SeoMeta { title: string; description: string }
 
 export function PageBuilder({ initial, meta, types, focus, slug = "home", title = "Page d’accueil", previewPath = "/", catalogKey = "home", seo }: {
   initial: Section[]; meta: AdminPage | null; types: Opt[]; focus?: string;
-  slug?: string; title?: string; previewPath?: string; catalogKey?: "home" | "pros"; seo?: SeoMeta;
+  slug?: string; title?: string; previewPath?: string; catalogKey?: "home" | "pros" | "page"; seo?: SeoMeta;
 }) {
   const catalog = CATALOGS[catalogKey];
   const blockDef = catalog.def;
@@ -210,8 +212,10 @@ export function PageBuilder({ initial, meta, types, focus, slug = "home", title 
                 <div className="flex shrink-0 gap-2 text-xs font-semibold">
                   <button type="button" onClick={() => update(current.id, { enabled: !current.enabled })} title={current.enabled ? "Cacher cette section au public sans la supprimer" : "Rendre cette section visible au public"}
                     className={current.enabled ? "text-slate-700 hover:underline" : "rounded bg-slate-700 px-1.5 text-white hover:bg-slate-800"}>{current.enabled ? "Masquer" : "Masquée · Afficher"}</button>
+                  {current.type !== PAGE_CONTENT_TYPE ? <>
                   <button type="button" onClick={() => duplicate(current)} className="text-brand-800 hover:underline">Dupliquer</button>
                   <button type="button" onClick={() => remove(current)} className="text-red-600 hover:underline">Supprimer</button>
+                  </> : null}
                 </div>
               </div>
               <div className="space-y-4 p-4">
@@ -248,5 +252,6 @@ export function PageBuilder({ initial, meta, types, focus, slug = "home", title 
 
 function sectionTitle(s: Section) {
   const p = s.props ?? {};
+  if (s.type === PAGE_CONTENT_TYPE) return "Formulaires, listes et textes actuels de la page";
   return String(p.title || p.eyebrow || (s.type === "richText" ? String(p.html ?? "").replace(/<[^>]+>/g, " ").trim().slice(0, 40) : "") || s.type);
 }

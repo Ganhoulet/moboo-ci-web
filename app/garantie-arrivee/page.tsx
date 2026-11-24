@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { breadcrumbLd, ldJson } from "@/lib/structured-data";
+import { EditablePage } from "@/components/editable-page";
 
 export const metadata: Metadata = {
   title: { absolute: "Garantie d’arrivée : votre acompte protégé jusqu’à votre arrivée | Moboo.ci" },
@@ -16,7 +17,7 @@ const FAQ = [
 ];
 
 /** Garantie d'arrivée : explication de l'acompte séquestré et du signalement (litiges existants). */
-export default function ArrivalGuarantee() {
+function ArrivalGuaranteeContent() {
   const ld = [
     breadcrumbLd([{ label: "Accueil", href: "/" }, { label: "Garantie d’arrivée" }]),
     { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: FAQ.map((x) => ({ "@type": "Question", name: x.q, acceptedAnswer: { "@type": "Answer", text: x.a } })) },
@@ -50,4 +51,9 @@ export default function ArrivalGuarantee() {
       </div>
     </div>
   );
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function ArrivalGuarantee(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-garantie-arrivee" apercu={props.searchParams?.apercu}>{ArrivalGuaranteeContent()}</EditablePage>;
 }

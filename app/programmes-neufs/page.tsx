@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { KIND_LABEL, listPrograms } from "@/lib/programs";
 import { ProgramCard } from "@/components/program-card";
+import { EditablePage } from "@/components/editable-page";
 
 export const metadata: Metadata = {
   title: "Programmes immobiliers neufs à Abidjan et en Côte d’Ivoire",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 /** Programmes neufs : liste filtrable (commune, type), mis en avant d'abord. */
-export default async function ProgramsPage({ searchParams }: { searchParams: { commune?: string; kind?: string } }) {
+async function ProgramsPageContent({ searchParams }: { searchParams: { commune?: string; kind?: string } }) {
   const all = await listPrograms();
   const communes = [...new Set(all.map((p) => p.commune).filter(Boolean))].sort();
   const items = all.filter((p) => (!searchParams.commune || p.commune === searchParams.commune) && (!searchParams.kind || p.kind === searchParams.kind));
@@ -38,4 +39,9 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { c
       <p className="mt-10 rounded-2xl bg-brand-50 p-4 text-sm text-brand-900">Vous êtes promoteur ? Présentez votre programme à des milliers d’acheteurs en Côte d’Ivoire et dans la diaspora : <Link href="/professionnels" className="font-bold underline">découvrez l’offre professionnels</Link>.</p>
     </div>
   );
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function ProgramsPage(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-programmes-neufs" apercu={props.searchParams?.apercu}>{await ProgramsPageContent(props)}</EditablePage>;
 }

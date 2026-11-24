@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSiteServices, serviceHref } from "@/lib/site-services";
 import { SiteIcon } from "@/components/site-icon";
+import { EditablePage } from "@/components/editable-page";
 
 export const revalidate = 120;
 export const metadata: Metadata = { title: "Services Moboo", description: "État des lieux, estimation de loyer ou de terrain, solvabilité du locataire : les services Moboo pour louer et acheter sereinement." };
 
-export default async function ServicesIndex() {
+async function ServicesIndexContent() {
   const { items } = await getSiteServices();
   return (
     <div className="container-page py-12">
@@ -23,4 +24,9 @@ export default async function ServicesIndex() {
       </div>
     </div>
   );
+}
+
+/** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
+export default async function ServicesIndex(props: { params: any; searchParams: any }) {
+  return <EditablePage slug="site-services" apercu={props.searchParams?.apercu}>{await ServicesIndexContent()}</EditablePage>;
 }
