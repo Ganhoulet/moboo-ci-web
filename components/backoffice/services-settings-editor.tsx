@@ -156,19 +156,25 @@ export function ServicesSettingsEditor({ initial, initialTab }: { initial: Servi
         {tab === "site" ? (
           <>
             <p className="text-sm text-muted">Services proposés sur moboo.ci : rangée « Services » de l’accueil (bloc du constructeur de page) et pages dédiées <code>/services/…</code>. Réordonnez, masquez ou réécrivez chaque service ; il n’apparaît que s’il est aussi activé dans son onglet.</p>
+            <div className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm">
+              <span className="flex-1 text-ink"><b>{cfg.site.order.filter((k) => cfg.site.tiles[k]?.enabled).length}</b> service(s) visible(s) sur {cfg.site.order.filter((k) => cfg.site.tiles[k]).length}. Un service masqué disparaît de tout le site (accueil, page /services, menus, boutons) mais reste enregistré.</span>
+              <button type="button" onClick={() => up("site", { tiles: Object.fromEntries(Object.entries(cfg.site.tiles).map(([k, t]) => [k, { ...t, enabled: false }])) })} className="rounded-md px-3 py-1.5 font-semibold text-ink ring-1 ring-slate-300 hover:bg-white">Tout masquer</button>
+              <button type="button" onClick={() => up("site", { tiles: Object.fromEntries(Object.entries(cfg.site.tiles).map(([k, t]) => [k, { ...t, enabled: true }])) })} className="rounded-md px-3 py-1.5 font-semibold text-ink ring-1 ring-slate-300 hover:bg-white">Tout afficher</button>
+            </div>
             {cfg.site.order.map((k, i) => {
               const t = cfg.site.tiles[k];
               if (!t) return null;
               return (
-                <div key={k} className="rounded-lg p-3 ring-1 ring-slate-200">
+                <div key={k} className={"rounded-lg p-3 ring-1 ring-slate-200" + (t.enabled ? "" : " bg-slate-50 opacity-80")}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-2xl">{t.icon}</span>
                     <p className="flex-1 font-display font-bold text-ink">{SITE_LABEL[k] ?? k}{isMissionKey(k) ? <span className="ml-2 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-800">MISSION MOBOO PRO{t.dispatch === "agents" ? " · AGENTS DE LA ZONE" : " · ATTRIBUÉE PAR MOBOO"}</span> : null} <a href={`/services/${SITE_SLUG[k]}`} target="_blank" rel="noreferrer" className="ml-1 text-xs font-normal text-brand-700 underline">voir la page</a></p>
+                    <button type="button" onClick={() => setTile(k, { enabled: !t.enabled })} className={"rounded-full px-3 py-1 text-xs font-bold " + (t.enabled ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" : "bg-slate-200 text-slate-700 hover:bg-slate-300")} title={t.enabled ? "Cliquer pour masquer" : "Cliquer pour afficher"}>{t.enabled ? "● Visible" : "○ Masqué"}</button>
                     {!serviceOn(k) ? <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">service désactivé dans son onglet</span> : null}
                     <button type="button" aria-label="Monter" disabled={i === 0} onClick={() => moveTile(k, -1)} className="rounded px-2 py-1 text-sm ring-1 ring-slate-300 disabled:opacity-30">↑</button>
                     <button type="button" aria-label="Descendre" disabled={i === cfg.site.order.length - 1} onClick={() => moveTile(k, 1)} className="rounded px-2 py-1 text-sm ring-1 ring-slate-300 disabled:opacity-30">↓</button>
                   </div>
-                  <Check label="Afficher sur le site" checked={t.enabled} onChange={(enabled) => setTile(k, { enabled })} />
+                  <Check label="Afficher sur le site (décochez pour le masquer partout, sans le supprimer)" checked={t.enabled} onChange={(enabled) => setTile(k, { enabled })} />
                   {t.enabled ? (
                     <div className="grid gap-3 sm:grid-cols-[90px_1fr_1fr]">
                       <Field label="Icône"><Text value={t.icon} onChange={(icon) => setTile(k, { icon })} /></Field>

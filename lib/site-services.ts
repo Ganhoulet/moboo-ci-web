@@ -17,7 +17,7 @@ export interface SiteTile {
   price: string; audience: string[]; dispatch: "moboo" | "agents"; proModules: string;
 }
 export interface ServiceTile extends SiteTile { key: ServiceKey }
-export interface SiteServicesData { items: ServiceTile[]; solvency: { incomeMultiple: number; codeTtlMin: number } }
+export interface SiteServicesData { items: ServiceTile[]; solvency: { incomeMultiple: number; codeTtlMin: number }; /** false : API injoignable (liste vide par défaut). */ ok?: boolean }
 
 export const SERVICE_SLUG: Record<ServiceKey, string> = {
   edl: "etat-des-lieux", loyer: "estimation-loyer", foncier: "estimation-terrain", solvabilite: "solvabilite-locataire",
@@ -38,11 +38,11 @@ export const serviceBySlug = (slug: string) => (Object.keys(SERVICE_SLUG) as Ser
 export async function getSiteServices(): Promise<SiteServicesData> {
   try {
     const r = await fetch(`${API_URL}/site/services`, { next: { revalidate: 120, tags: [SITE_SERVICES_TAG] }, headers: { Accept: "application/json", ...relayHeaders(false) } });
-    if (r.ok) return (await r.json()) as SiteServicesData;
+    if (r.ok) return { ...((await r.json()) as SiteServicesData), ok: true };
   } catch {
     /* repli ci-dessous */
   }
-  return { items: [], solvency: { incomeMultiple: 3, codeTtlMin: 30 } };
+  return { items: [], solvency: { incomeMultiple: 3, codeTtlMin: 30 }, ok: false };
 }
 
 // ─── Page détaillée d'un service (réglée au back-office › Pages des services) ──

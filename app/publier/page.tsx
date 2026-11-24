@@ -6,6 +6,7 @@ import { getProStats } from "@/lib/pros";
 import { getSiteSettings } from "@/lib/settings";
 import { getSession } from "@/lib/session";
 import { SiteIcon } from "@/components/site-icon";
+import { getHiddenServicePaths } from "@/lib/service-visibility";
 
 export const metadata: Metadata = {
   title: "Publier une annonce gratuite — louer ou vendre votre bien",
@@ -42,7 +43,7 @@ const FAQ = [
 /** Page « Publier une annonce » (façon post.magicbricks.com) : accroche + carte de démarrage, avantages, étapes, chiffres, offres pro, FAQ. */
 export default async function PublierLanding() {
   const account = getSession();
-  const [stats, settings] = await Promise.all([getProStats(), getSiteSettings()]);
+  const [stats, settings, hiddenServices] = await Promise.all([getProStats(), getSiteSettings(), getHiddenServicePaths()]);
   const mobile = (settings as unknown as Record<string, Record<string, string>>).mobile_app ?? {};
   const play = mobile.playStoreUrl || "https://play.google.com/store/search?q=moboo.ci";
   const figures = [
@@ -122,7 +123,7 @@ export default async function PublierLanding() {
       <section className="bg-white py-14">
         <div className="container-page">
           <h2 className="text-center font-display text-3xl font-extrabold text-ink">Une formule pour chaque besoin</h2>
-          <div className="mt-8 grid gap-5 lg:grid-cols-3">
+          <div className={"mt-8 grid gap-5 " + (hiddenServices.has("/services/mettre-en-location") ? "lg:grid-cols-2" : "lg:grid-cols-3")}>
             <div className="flex flex-col rounded-2xl border border-slate-200 p-6">
               <p className="text-xs font-bold uppercase tracking-wider text-muted">Particulier</p>
               <p className="mt-2 font-display text-2xl font-black text-ink">Gratuit</p>
@@ -135,12 +136,12 @@ export default async function PublierLanding() {
               <ul className="mt-4 flex-1 space-y-2 text-sm text-slate-700">{["Plus d’annonces et mise en vedette", "Page agence, badge vérifié et avis", "Application Moboo Pro : mandats, baux, loyers"].map((x) => <li key={x}>✓ {x}</li>)}</ul>
               <Link href="/forfaits" className="mt-6 rounded-full bg-accent-600 py-3 text-center text-sm font-bold text-white hover:bg-accent-700">Voir les forfaits</Link>
             </div>
-            <div className="flex flex-col rounded-2xl border border-slate-200 p-6">
+            {!hiddenServices.has("/services/mettre-en-location") ? <div className="flex flex-col rounded-2xl border border-slate-200 p-6">
               <p className="text-xs font-bold uppercase tracking-wider text-muted">Pas le temps ?</p>
               <p className="mt-2 font-display text-2xl font-black text-ink">Moboo s’en occupe</p>
               <ul className="mt-4 flex-1 space-y-2 text-sm text-slate-700">{["Photos et annonce par un agent", "Visites et dossier du locataire", "Bail préparé · vous payez une fois loué"].map((x) => <li key={x}>✓ {x}</li>)}</ul>
               <Link href="/services/mettre-en-location" className="mt-6 rounded-full border border-ink py-3 text-center text-sm font-bold text-ink hover:bg-ink hover:text-white">Confier mon bien</Link>
-            </div>
+            </div> : null}
           </div>
         </div>
       </section>
