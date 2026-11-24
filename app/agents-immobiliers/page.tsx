@@ -25,5 +25,5 @@ function AgentsImmobiliersContent({ searchParams }: { searchParams: Record<strin
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function AgentsImmobiliers(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-agents-immobiliers" apercu={props.searchParams?.apercu}>{AgentsImmobiliersContent(props)}</EditablePage>;
+  return <EditablePage slug="site-agents-immobiliers" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{AgentsImmobiliersContent(props)}</EditablePage>;
 }

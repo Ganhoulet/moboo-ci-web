@@ -19,5 +19,5 @@ function TelechargerContent() {
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function Telecharger(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-telecharger" apercu={props.searchParams?.apercu}>{TelechargerContent()}</EditablePage>;
+  return <EditablePage slug="site-telecharger" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{TelechargerContent()}</EditablePage>;
 }

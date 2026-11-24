@@ -309,5 +309,5 @@ async function AnnoncesPageContent({
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function AnnoncesPage(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-annonces" apercu={props.searchParams?.apercu}>{await AnnoncesPageContent(props)}</EditablePage>;
+  return <EditablePage slug="site-annonces" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{await AnnoncesPageContent(props)}</EditablePage>;
 }

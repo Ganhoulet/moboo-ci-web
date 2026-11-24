@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { PRO_BLOCKS, newProSection, proBlockDef } from "@/lib/pro-blocks";
-import { BLOCKS, blockDef as homeBlockDef, newSection as homeNewSection, type BlockDef, type Section } from "@/lib/page-blocks";
+import type { Section } from "@/lib/page-blocks";
 import { discardAction, publishAction, restoreAction, saveDraftAction, type AdminPage } from "@/app/admin/accueil/actions";
 import { FieldEditor, type Opt } from "./field-editor";
-import { PAGE_CONTENT_TYPE, SITE_PAGE_BLOCKS, newSitePageSection, sitePageBlockDef } from "@/lib/site-editable";
+import { PAGE_CONTENT_TYPE } from "@/lib/site-editable";
 
 type Status = { tone: "ok" | "err" | "info"; text: string } | null;
 
@@ -14,19 +13,12 @@ type Status = { tone: "ok" | "err" | "info"; text: string } | null;
  * masquer, dupliquer, supprimer), formulaire du bloc choisi, aperçu en direct
  * du brouillon (ordinateur / téléphone), enregistrement automatique, publication.
  */
-/** Catalogue de blocs utilisé par le constructeur (accueil par défaut ; espace pros…). */
-export interface BuilderCatalog { blocks: BlockDef[]; def: (type: string) => BlockDef | undefined; create: (type: string) => Section }
-// Choisi par une clé (une fonction ne peut pas passer d'un composant serveur à un composant client).
-const CATALOGS: Record<"home" | "pros" | "page", BuilderCatalog> = {
-  home: { blocks: BLOCKS, def: homeBlockDef, create: homeNewSection },
-  pros: { blocks: PRO_BLOCKS, def: proBlockDef, create: newProSection },
-  page: { blocks: SITE_PAGE_BLOCKS, def: sitePageBlockDef, create: newSitePageSection },
-};
+import { CATALOGS, type CatalogKey } from "./catalogs";
 export interface SeoMeta { title: string; description: string }
 
 export function PageBuilder({ initial, meta, types, focus, slug = "home", title = "Page d’accueil", previewPath = "/", catalogKey = "home", seo }: {
   initial: Section[]; meta: AdminPage | null; types: Opt[]; focus?: string;
-  slug?: string; title?: string; previewPath?: string; catalogKey?: "home" | "pros" | "page"; seo?: SeoMeta;
+  slug?: string; title?: string; previewPath?: string; catalogKey?: CatalogKey; seo?: SeoMeta;
 }) {
   const catalog = CATALOGS[catalogKey];
   const blockDef = catalog.def;

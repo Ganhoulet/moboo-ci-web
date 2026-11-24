@@ -126,5 +126,5 @@ async function ReserverPageContent({
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function ReserverPage(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-reserver" apercu={props.searchParams?.apercu}>{await ReserverPageContent(props)}</EditablePage>;
+  return <EditablePage slug="site-reserver" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{await ReserverPageContent(props)}</EditablePage>;
 }

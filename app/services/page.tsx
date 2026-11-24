@@ -28,5 +28,5 @@ async function ServicesIndexContent() {
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function ServicesIndex(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-services" apercu={props.searchParams?.apercu}>{await ServicesIndexContent()}</EditablePage>;
+  return <EditablePage slug="site-services" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{await ServicesIndexContent()}</EditablePage>;
 }

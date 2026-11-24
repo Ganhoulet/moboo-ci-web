@@ -43,5 +43,5 @@ async function ProgramsPageContent({ searchParams }: { searchParams: { commune?:
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function ProgramsPage(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-programmes-neufs" apercu={props.searchParams?.apercu}>{await ProgramsPageContent(props)}</EditablePage>;
+  return <EditablePage slug="site-programmes-neufs" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{await ProgramsPageContent(props)}</EditablePage>;
 }

@@ -7,6 +7,8 @@ import { getHomeData, PAGES_TAG } from "@/lib/pages";
 import { stripHidden, type PageContent } from "@/lib/page-blocks";
 import { editablePage, normalizeSitePage, PAGE_CONTENT_TYPE, type EditableSlug } from "@/lib/site-editable";
 import { HomeSection } from "@/components/home/sections";
+import { LivePage } from "@/components/builder/live-page";
+import { EditButtons } from "@/components/builder/edit-buttons";
 
 async function loadSitePage(slug: string, draft: boolean): Promise<PageContent> {
   if (draft) {
@@ -26,14 +28,20 @@ async function loadSitePage(slug: string, draft: boolean): Promise<PageContent> 
  * le contenu d'origine (children) entouré des blocs ajoutés, ou masqué.
  * Administrateur : bouton « Personnaliser » et aperçu du brouillon (?apercu=1).
  */
-export async function EditablePage({ slug, apercu, children }: { slug: EditableSlug; apercu?: string | string[]; children: React.ReactNode }) {
+export async function EditablePage({ slug, apercu, modifier, children }: { slug: EditableSlug; apercu?: string | string[]; modifier?: string | string[]; children: React.ReactNode }) {
   const isAdmin = !!getSession()?.isAdmin;
-  const draft = isAdmin && apercu === "1";
+  const live = isAdmin && modifier === "1";
+  const draft = isAdmin && (apercu === "1" || live);
   const page = await loadSitePage(slug, draft);
   const sections = page.sections.filter((s) => s.enabled);
   const builder = `/admin/pages-site/${slug}`;
-  const needsData = sections.some((s) => s.type !== PAGE_CONTENT_TYPE);
+  const path = editablePage(slug)?.path ?? "/";
+  const needsData = (live ? page.sections : sections).some((s) => s.type !== PAGE_CONTENT_TYPE);
   const data = needsData ? await getHomeData() : null;
+  if (live) {
+    return <LivePage slug={slug} catalogKey="page" sections={page.sections} exitHref={path} builderHref={builder}
+      render={(s) => (s.type === PAGE_CONTENT_TYPE ? children : <HomeSection s={stripHidden(s)} data={data!} />)} />;
+  }
   return (
     <>
       {draft ? (
@@ -46,11 +54,7 @@ export async function EditablePage({ slug, apercu, children }: { slug: EditableS
           ? <div key={s.id} id={`section-${s.id}`}>{children}</div>
           : <HomeSection key={s.id} s={stripHidden(s)} data={data!} edit={isAdmin && !draft ? builder : false} />,
       )}
-      {isAdmin && !draft ? (
-        <Link href={builder} className="fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white shadow-2xl hover:bg-slate-800 print:hidden">
-          ✎ Personnaliser « {editablePage(slug)?.label} »
-        </Link>
-      ) : null}
+      {isAdmin && !draft ? <EditButtons live={`${path}?modifier=1`} builder={builder} /> : null}
     </>
   );
 }

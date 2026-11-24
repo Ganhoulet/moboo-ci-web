@@ -189,5 +189,5 @@ async function PublierLandingContent() {
 
 /** Page modifiable dans le constructeur (Apparence › Autres pages du site). */
 export default async function PublierLanding(props: { params: any; searchParams: any }) {
-  return <EditablePage slug="site-publier" apercu={props.searchParams?.apercu}>{await PublierLandingContent()}</EditablePage>;
+  return <EditablePage slug="site-publier" apercu={props.searchParams?.apercu} modifier={props.searchParams?.modifier}>{await PublierLandingContent()}</EditablePage>;
 }
