@@ -98,12 +98,13 @@ export function FieldEditor({ f, value, onChange, types }: { f: BlockField; valu
       return (
         <div className="space-y-3">
           {items.map((it, i) => (
-            <div key={i} className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+            <div key={i} className={"rounded-lg border p-3 " + (it?._hidden ? "border-dashed border-slate-300 bg-slate-100 opacity-70" : "border-slate-200 bg-slate-50/60")}>
               <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500">
-                <span>{f.itemLabel ?? "Élément"} {i + 1}{it?.title || it?.label || it?.name ? ` · ${it.title || it.label || it.name}` : ""}</span>
+                <span>{f.itemLabel ?? "Élément"} {i + 1}{it?.title || it?.label || it?.name ? ` · ${it.title || it.label || it.name}` : ""}{it?._hidden ? <span className="ml-2 rounded bg-slate-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">Masqué</span> : null}</span>
                 <span className="flex gap-2">
                   <button type="button" disabled={i === 0} onClick={() => move(i, -1)} className="disabled:opacity-30" aria-label="Monter">▲</button>
                   <button type="button" disabled={i === items.length - 1} onClick={() => move(i, 1)} className="disabled:opacity-30" aria-label="Descendre">▼</button>
+                  <button type="button" onClick={() => set(i, { _hidden: !it?._hidden })} className="text-slate-700" title={it?._hidden ? "Rendre visible au public" : "Cacher au public sans supprimer"}>{it?._hidden ? "Afficher" : "Masquer"}</button>
                   <button type="button" onClick={() => onChange(items.filter((_, j) => j !== i))} className="text-red-600">Supprimer</button>
                 </span>
               </div>

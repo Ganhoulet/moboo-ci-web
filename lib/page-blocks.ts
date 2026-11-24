@@ -69,6 +69,12 @@ const common: BlockField[] = [
   { key: "background", label: "Fond de la section", type: "select", options: BG },
 ];
 
+const COUNTERS = [
+  { value: "listings", label: "Annonces en ligne" }, { value: "agencies", label: "Agences" }, { value: "agents", label: "Agents" },
+  { value: "promoters", label: "Promoteurs" }, { value: "hosts", label: "Résidences et espaces" }, { value: "offices", label: "Bureaux et commerces" },
+  { value: "cities", label: "Villes" }, { value: "commission", label: "0 % de commission" },
+];
+
 export const BLOCKS: BlockDef[] = [
   {
     type: "hero", label: "Bandeau de recherche", icon: "🔎",
@@ -80,12 +86,14 @@ export const BLOCKS: BlockDef[] = [
       { key: "tabs", label: "Onglets de recherche", type: "multi", options: HERO_TABS },
       { key: "placeholder", label: "Texte du champ de recherche", type: "text" },
       { key: "chips", label: "Recherches rapides", type: "list", itemLabel: "Lien", fields: [{ key: "label", label: "Texte", type: "text" }, { key: "href", label: "Lien", type: "url" }] },
+      { key: "showStats", label: "Afficher les chiffres sous la recherche (annonces, agences…)", type: "bool" },
+      { key: "hiddenCounters", label: "Chiffres masqués (cliquer pour masquer / afficher)", type: "multi", options: COUNTERS },
     ],
     defaults: {
       title: "Trouvez le lieu qui vous ressemble",
       subtitle: "Location, vente, meublés et espaces événementiels partout en Côte d’Ivoire. Réservation en ligne quand c’est possible.",
       images: [], tabs: ["rent", "sale", "furnished", "event", "land", "commercial"],
-      placeholder: "Commune, quartier ou ville",
+      placeholder: "Commune, quartier ou ville", showStats: false,
       chips: [
         { label: "Studio à Cocody", href: "/annonces?transaction=rent&propertyType=studio&q=Cocody" },
         { label: "Villa à vendre", href: "/annonces?transaction=sale&propertyType=villa" },
@@ -272,6 +280,7 @@ export const BLOCKS: BlockDef[] = [
     description: "Nombre d’annonces, de pros, de villes (automatique) ou chiffres libres.",
     fields: [
       { key: "mode", label: "Source", type: "select", options: [{ value: "auto", label: "Automatique" }, { value: "manual", label: "Chiffres libres" }] },
+      { key: "hiddenCounters", label: "Automatique : chiffres masqués (cliquer pour masquer / afficher)", type: "multi", options: COUNTERS },
       { key: "items", label: "Chiffres libres", type: "list", itemLabel: "Chiffre", fields: [{ key: "value", label: "Valeur", type: "text" }, { key: "label", label: "Libellé", type: "text" }] },
       ...common,
     ],
@@ -452,6 +461,13 @@ export function normalizeHome(c: PageContent | null | undefined): PageContent {
   return {
     sections: c.sections.filter((s) => blockDef(s.type)).map((s) => ({ ...s, props: { ...structuredClone(blockDef(s.type)!.defaults), ...(s.props ?? {}) } })),
   };
+}
+
+/** Retire, à toute profondeur, les éléments de liste masqués dans le constructeur (« Masquer »). */
+export function stripHidden<T>(v: T): T {
+  if (Array.isArray(v)) return v.filter((x) => !(x && typeof x === "object" && (x as any)._hidden)).map(stripHidden) as T;
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, stripHidden(x)])) as T;
+  return v;
 }
 
 export function normalizeChrome(c: Partial<ChromeContent> | null | undefined): ChromeContent {

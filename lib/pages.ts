@@ -1,7 +1,7 @@
 // Lecture des pages du constructeur (publiées ; brouillon pour l'aperçu admin).
 import { API_URL } from "./api";
 import { relayHeaders } from "./relay";
-import { normalizeChrome, normalizeHome, type ChromeContent, type PageContent } from "./page-blocks";
+import { normalizeChrome, normalizeHome, stripHidden, type ChromeContent, type PageContent } from "./page-blocks";
 
 export const PAGES_TAG = "site-pages";
 
@@ -19,7 +19,7 @@ export async function getHomePage(): Promise<PageContent> {
 }
 
 export async function getChrome(): Promise<ChromeContent> {
-  return normalizeChrome(await published("chrome"));
+  return stripHidden(normalizeChrome(await published("chrome")));
 }
 
 export interface HomeData {
