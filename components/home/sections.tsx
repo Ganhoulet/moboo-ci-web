@@ -15,6 +15,7 @@ import { LoanCalculator } from "./calculator";
 import { Faq } from "./faq";
 import { img as optimized, imgProps } from "@/lib/img";
 import { getSiteServices, serviceHref } from "@/lib/site-services";
+import { dropHiddenServiceLinks, getHiddenServicePaths } from "@/lib/service-visibility";
 import { SiteIcon } from "@/components/site-icon";
 const imgSmall = (u: string | null | undefined) => optimized(u, 320);
 
@@ -580,7 +581,8 @@ function withoutHiddenItems(s: Section): Section {
 /** Rendu d'une section publiée (null : type inconnu ou masquée). */
 export async function HomeSection({ s: raw, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
   if (!raw.enabled) return null;
-  const s = withoutHiddenItems(raw);
+  // Liens vers un service masqué au back-office : retirés aussi des autres blocs.
+  const s = dropHiddenServiceLinks(withoutHiddenItems(raw), await getHiddenServicePaths());
   const p = s.props;
   switch (s.type) {
     case "hero": return <Hero s={s} data={data} />;
