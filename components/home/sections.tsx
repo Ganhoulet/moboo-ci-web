@@ -97,6 +97,13 @@ async function Hero({ s, data }: { s: Section; data: HomeData }) {
             ))}
           </div>
         ) : null}
+        {p.showStats === true && data.totals.listings ? (
+          <div className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-white/85">
+            {liveCounts(data, true, p.hiddenCounters as string[] | undefined).map((c) => (
+              <span key={c.label}><strong className="text-white">{c.value}</strong> {c.label}</span>
+            ))}
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -392,30 +399,31 @@ async function Marketing({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
-function liveCounts(data: HomeData, short: boolean) {
+function liveCounts(data: HomeData, short: boolean, hidden?: string[]) {
   const t = data.totals;
   const n = (v?: number) => (v ?? 0).toLocaleString("fr-FR");
   const plural = (v: number | undefined, one: string, many: string) => ((v ?? 0) > 1 ? many : one);
-  const rows: { v?: number; value: string; label: string }[] = [
-    { v: t.listings, value: n(t.listings), label: short ? "annonces en ligne" : "annonces en ligne" },
-    { v: t.agencies, value: n(t.agencies), label: plural(t.agencies, "agence immobilière", "agences immobilières") },
-    { v: t.agents, value: n(t.agents), label: plural(t.agents, "agent immobilier", "agents immobiliers") },
-    { v: t.promoters, value: n(t.promoters), label: plural(t.promoters, "promoteur", "promoteurs") },
-    { v: t.hosts, value: n(t.hosts), label: plural(t.hosts, "résidence / espace", "résidences et espaces") },
-    { v: t.offices, value: n(t.offices), label: plural(t.offices, "bureau ou commerce disponible", "bureaux et commerces disponibles") },
-    { v: t.cities, value: n(t.cities), label: short ? "villes" : "villes couvertes" },
+  const rows: { key: string; v?: number; value: string; label: string }[] = [
+    { key: "listings", v: t.listings, value: n(t.listings), label: short ? "annonces en ligne" : "annonces en ligne" },
+    { key: "agencies", v: t.agencies, value: n(t.agencies), label: plural(t.agencies, "agence immobilière", "agences immobilières") },
+    { key: "agents", v: t.agents, value: n(t.agents), label: plural(t.agents, "agent immobilier", "agents immobiliers") },
+    { key: "promoters", v: t.promoters, value: n(t.promoters), label: plural(t.promoters, "promoteur", "promoteurs") },
+    { key: "hosts", v: t.hosts, value: n(t.hosts), label: plural(t.hosts, "résidence / espace", "résidences et espaces") },
+    { key: "offices", v: t.offices, value: n(t.offices), label: plural(t.offices, "bureau ou commerce disponible", "bureaux et commerces disponibles") },
+    { key: "cities", v: t.cities, value: n(t.cities), label: short ? "villes" : "villes couvertes" },
   ];
   // Ancienne API (sans détail) : total des professionnels.
-  if (t.agencies === undefined && t.pros) rows.splice(1, 0, { v: t.pros, value: n(t.pros), label: "professionnels" });
-  return rows.filter((r) => (r.v ?? 0) > 0).slice(0, short ? 5 : 5).map(({ value, label }) => ({ value, label }));
+  if (t.agencies === undefined && t.pros) rows.splice(1, 0, { key: "pros", v: t.pros, value: n(t.pros), label: "professionnels" });
+  return rows.filter((r) => (r.v ?? 0) > 0).filter((r) => !hidden?.includes(r.key)).slice(0, 5).map(({ value, label }) => ({ value, label }));
 }
 
 function Stats({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
   const p: P = s.props;
   const items = p.mode === "manual" && (p.items as P[])?.length ? (p.items as P[]) : [
-    ...liveCounts(data, false),
-    { value: "0 %", label: "de commission sur les annonces classiques" },
+    ...liveCounts(data, false, p.hiddenCounters as string[] | undefined),
+    ...((p.hiddenCounters as string[] | undefined)?.includes("commission") ? [] : [{ value: "0 %", label: "de commission sur les annonces classiques" }]),
   ];
+  if (!items.length) return null;
   const dark = p.background === "brand";
   return (
     <Shell s={s} pad="py-10" edit={edit}>
@@ -560,9 +568,19 @@ async function ServicesRow({ s, edit }: { s: Section; edit?: boolean }) {
   );
 }
 
+/** Éléments de liste masqués dans le constructeur (« Masquer ») : jamais montrés au public. */
+function withoutHiddenItems(s: Section): Section {
+  const props: Record<string, any> = {};
+  for (const [k, v] of Object.entries(s.props ?? {})) {
+    props[k] = Array.isArray(v) ? v.filter((x) => !(x && typeof x === "object" && x._hidden)) : v;
+  }
+  return { ...s, props };
+}
+
 /** Rendu d'une section publiée (null : type inconnu ou masquée). */
-export async function HomeSection({ s, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
-  if (!s.enabled) return null;
+export async function HomeSection({ s: raw, data, edit }: { s: Section; data: HomeData; edit?: boolean }) {
+  if (!raw.enabled) return null;
+  const s = withoutHiddenItems(raw);
   const p = s.props;
   switch (s.type) {
     case "hero": return <Hero s={s} data={data} />;
