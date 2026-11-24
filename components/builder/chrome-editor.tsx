@@ -32,7 +32,6 @@ const PAGES: Opt[] = [
   { value: "/compte", label: "Se connecter" },
   { value: "/inscription", label: "Créer un compte" },
   { value: "/mon-espace", label: "Mon espace" },
-  { value: "/administration", label: "Espace administrateur" },
 ];
 
 type Tab = "menus" | "locations" | "footer";

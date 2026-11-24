@@ -80,13 +80,12 @@ export const BLOCKS: BlockDef[] = [
       { key: "tabs", label: "Onglets de recherche", type: "multi", options: HERO_TABS },
       { key: "placeholder", label: "Texte du champ de recherche", type: "text" },
       { key: "chips", label: "Recherches rapides", type: "list", itemLabel: "Lien", fields: [{ key: "label", label: "Texte", type: "text" }, { key: "href", label: "Lien", type: "url" }] },
-      { key: "showStats", label: "Afficher les chiffres (annonces, pros, villes)", type: "bool" },
     ],
     defaults: {
       title: "Trouvez le lieu qui vous ressemble",
       subtitle: "Location, vente, meublés et espaces événementiels partout en Côte d’Ivoire. Réservation en ligne quand c’est possible.",
       images: [], tabs: ["rent", "sale", "furnished", "event", "land", "commercial"],
-      placeholder: "Commune, quartier ou ville", showStats: true,
+      placeholder: "Commune, quartier ou ville",
       chips: [
         { label: "Studio à Cocody", href: "/annonces?transaction=rent&propertyType=studio&q=Cocody" },
         { label: "Villa à vendre", href: "/annonces?transaction=sale&propertyType=villa" },
