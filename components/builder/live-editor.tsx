@@ -22,8 +22,8 @@ const Ctx = createContext<Live | null>(null);
 
 type Status = { tone: "ok" | "err" | "info"; text: string } | null;
 
-export function LiveEditor({ slug, catalogKey, initial, meta, types, exitHref, builderHref, children }: {
-  slug: string; catalogKey: CatalogKey; initial: Section[]; meta: AdminPage | null; types: Opt[];
+export function LiveEditor({ slug, catalogKey, initial, extra, meta, types, exitHref, builderHref, children }: {
+  slug: string; catalogKey: CatalogKey; initial: Section[]; extra?: Record<string, unknown>; meta: AdminPage | null; types: Opt[];
   exitHref: string; builderHref: string; children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -40,11 +40,11 @@ export function LiveEditor({ slug, catalogKey, initial, meta, types, exitHref, b
 
   // La page rechargée renvoie le brouillon enregistré : on repart de lui.
   useEffect(() => { setSections(initial); }, [initial]);
-  useEffect(() => { setForm(current ? structuredClone(current.props) : null); setLibrary(false); }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setForm(current ? structuredClone(current.props) : null); if (selected) setLibrary(false); }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = (next: Section[], text = "Brouillon enregistré : visible ici seulement, pas encore par les visiteurs.") => start(async () => {
     setSections(next);
-    const r = await saveDraftAction(slug, { sections: next });
+    const r = await saveDraftAction(slug, { ...extra, sections: next });
     if (r.ok) { setDirty(true); setStatus({ tone: "info", text }); router.refresh(); }
     else setStatus({ tone: "err", text: r.error ?? "Enregistrement impossible." });
   });
@@ -66,7 +66,7 @@ export function LiveEditor({ slug, catalogKey, initial, meta, types, exitHref, b
     const a = [...sections]; a.splice(i + 1, 0, s); save(a); setSelected(s.id);
   };
   const publish = () => start(async () => {
-    const r = await publishAction(slug, { sections });
+    const r = await publishAction(slug, { ...extra, sections });
     if (r.ok) { setDirty(false); setStatus({ tone: "ok", text: "Publié : les visiteurs voient maintenant cette version." }); router.refresh(); }
     else setStatus({ tone: "err", text: r.error ?? "Publication impossible." });
   });
@@ -91,6 +91,7 @@ export function LiveEditor({ slug, catalogKey, initial, meta, types, exitHref, b
             : dirty ? "Modifications non publiées (visibles ici seulement)." : "Cliquez sur un bloc pour le modifier."}
           {busy ? " · enregistrement…" : ""}
         </span>
+        <button type="button" onClick={() => { setSelected(null); setLibrary(true); }} className="rounded-md px-3 py-1.5 text-sm font-semibold text-brand-800 ring-1 ring-brand-200 hover:bg-brand-50">+ Ajouter un bloc</button>
         <a href={builderHref} className="rounded-md px-3 py-1.5 text-sm font-semibold text-ink ring-1 ring-slate-300 hover:bg-slate-50">Constructeur complet</a>
         {dirty ? <button type="button" onClick={discard} disabled={busy} className="rounded-md px-3 py-1.5 text-sm font-semibold text-red-700 ring-1 ring-red-200 hover:bg-red-50 disabled:opacity-50">Annuler les modifications</button> : null}
         <a href={exitHref} className="rounded-md px-3 py-1.5 text-sm font-semibold text-ink ring-1 ring-slate-300 hover:bg-slate-50">Quitter</a>
@@ -137,6 +138,22 @@ export function LiveEditor({ slug, catalogKey, initial, meta, types, exitHref, b
               <button type="button" onClick={apply} disabled={busy} className="w-full rounded-md bg-brand-700 py-2.5 text-sm font-bold text-white hover:bg-brand-800 disabled:opacity-50">{busy ? "Enregistrement…" : "Appliquer sur la page"}</button>
             </div>
           ) : null}
+        </aside>
+      ) : null}
+      {library && !current ? (
+        <aside className="fixed bottom-14 right-0 top-16 z-50 flex w-full max-w-[380px] flex-col border-l border-slate-200 bg-white shadow-2xl print:hidden">
+          <div className="flex items-center border-b border-slate-100 p-4">
+            <p className="flex-1 font-semibold text-ink">Ajouter un bloc en bas de la page</p>
+            <button type="button" onClick={() => setLibrary(false)} aria-label="Fermer" className="rounded px-2 text-lg text-slate-500 hover:bg-slate-100">×</button>
+          </div>
+          <div className="grid flex-1 gap-1.5 overflow-y-auto p-4">
+            {catalog.blocks.map((b) => (
+              <button key={b.type} type="button" onClick={() => add(b.type)} className="flex items-start gap-2 rounded-md p-2 text-left ring-1 ring-slate-200 hover:bg-brand-50">
+                <span className="text-xl">{b.icon}</span>
+                <span><span className="block text-sm font-semibold text-ink">{b.label}</span><span className="block text-xs text-muted">{b.description}</span></span>
+              </button>
+            ))}
+          </div>
         </aside>
       ) : null}
       <div className="h-16" aria-hidden />
