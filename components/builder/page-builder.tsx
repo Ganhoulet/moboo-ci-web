@@ -208,6 +208,8 @@ export function PageBuilder({ initial, meta, types, focus, slug = "home", title 
                   <p className="text-xs text-muted">{def.description}</p>
                 </div>
                 <div className="flex shrink-0 gap-2 text-xs font-semibold">
+                  <button type="button" onClick={() => update(current.id, { enabled: !current.enabled })} title={current.enabled ? "Cacher cette section au public sans la supprimer" : "Rendre cette section visible au public"}
+                    className={current.enabled ? "text-slate-700 hover:underline" : "rounded bg-slate-700 px-1.5 text-white hover:bg-slate-800"}>{current.enabled ? "Masquer" : "Masquée · Afficher"}</button>
                   <button type="button" onClick={() => duplicate(current)} className="text-brand-800 hover:underline">Dupliquer</button>
                   <button type="button" onClick={() => remove(current)} className="text-red-600 hover:underline">Supprimer</button>
                 </div>
