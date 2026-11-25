@@ -2,23 +2,43 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { decidePhoneAction, openAssistAction, phoneChangeAction, recoveryAction, requestAssistAction } from "@/app/admin/comptes/actions";
+import { decidePhoneAction, openAssistAction, directAssistAction, phoneChangeAction, recoveryAction, requestAssistAction } from "@/app/admin/comptes/actions";
 
 const input = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand-600 focus:outline-none";
 const CH: Record<string, string> = { whatsapp: "WhatsApp", sms: "SMS", email: "e-mail", none: "aucun canal" };
 const ST: Record<string, string> = { pending: "code envoyé", active: "en cours", ended: "terminé", expired: "expiré", cancelled: "annulé", sent: "lien envoyé", used: "mot de passe changé", approved: "validé", rejected: "refusé" };
 
 /** Fiche d'un compte du site : accès assisté, mot de passe oublié, numéro perdu, historique. */
-export function AccessPanel({ accountId, name, history }: { accountId: string; name: string; history: any }) {
+export function AccessPanel({ accountId, name, history, canDirect = false }: { accountId: string; name: string; history: any; canDirect?: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [assist, setAssist] = useState<{ id: string; channel: string; devCode?: string } | null>(null);
   const [code, setCode] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [phone, setPhone] = useState({ open: false, newPhone: "", reason: "" });
+  const [direct, setDirect] = useState({ open: false, reason: "" });
   return (
     <section className="space-y-3 rounded-lg bg-white p-4 ring-1 ring-slate-200" data-access-panel>
       <h2 className="font-display text-base font-bold text-ink">🛟 Aider le client dans son compte</h2>
+
+      {canDirect ? (
+        <div className="rounded-lg bg-amber-50 p-3 ring-1 ring-amber-200">
+          <p className="text-sm font-semibold text-ink">Se connecter directement à son compte</p>
+          <p className="text-xs text-amber-900">Sans code, quand le client vous l’a demandé. Indiquez le motif : le client est prévenu tout de suite et reçoit le détail à la fin. Paiements, mot de passe, numéro et suppression restent bloqués ; tout est noté dans le journal.</p>
+          {!direct.open ? (
+            <button type="button" onClick={() => setDirect({ ...direct, open: true })} className="mt-2 rounded-md bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white">Se connecter au compte</button>
+          ) : (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input className={input + " min-w-[16rem] flex-1"} placeholder="Motif : le client demande de modifier son annonce…" value={direct.reason} onChange={(e) => setDirect({ ...direct, reason: e.target.value })} aria-label="Motif de la connexion" />
+              <button type="button" disabled={pending || direct.reason.trim().length < 5} onClick={() => start(async () => {
+                const r = await directAssistAction(accountId, name, direct.reason);
+                if (r && !r.ok) setMsg({ ok: false, text: r.error ?? "Connexion impossible." });
+              })} className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50">Ouvrir son compte</button>
+              <button type="button" onClick={() => setDirect({ open: false, reason: "" })} className="text-xs font-semibold text-slate-500">Annuler</button>
+            </div>
+          )}
+        </div>
+      ) : null}
 
       <div className="rounded-lg bg-slate-50 p-3">
         <p className="text-sm font-semibold text-ink">Accès assisté ({history.minutes} min, avec son accord)</p>

@@ -24,6 +24,8 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
   if (!d) notFound();
   // Litiges de l'hôte (résidences et espaces) : ouverts en détail, pour répondre à sa place.
   const access = d.kind === "site" ? await getAm<any>(`/accounts/site/${encodeURIComponent(d.id)}/access`) : null;
+  const mine = await getAm<{ permissions?: string[] }>("/me");
+  const canDirect = d.kind === "site" && (mine?.permissions ?? []).includes("am.impersonate");
   const reco = await getAm<any>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/recommendations`);
   const disputes = d.kind === "site" ? null : await getAm<{ items: any[]; awaitingReply: number }>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/disputes`);
   const openDisputes = await Promise.all((disputes?.items ?? []).filter((x) => x.open).slice(0, 5).map((x) => getAm<any>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/disputes/${x.id}`)));
@@ -113,7 +115,7 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
           </section>
         </div>
         <aside className="space-y-4">
-          {access ? <AccessPanel accountId={d.id} name={p.name} history={access} /> : null}
+          {access ? <AccessPanel accountId={d.id} name={p.name} history={access} canDirect={canDirect} /> : null}
           <ActivityForm kind={d.kind} id={d.id} />
           <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
             <h2 className="font-display text-base font-bold text-ink">Tâches</h2>

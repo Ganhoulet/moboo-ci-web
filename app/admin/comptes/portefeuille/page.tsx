@@ -10,7 +10,10 @@ const date = (d?: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR",
 
 /** Portefeuille : comptes suivis, indicateurs de santé, dernier contact, prochaine tâche. */
 export default async function AmPortfolio({ searchParams }: { searchParams: { kind?: string; scope?: string; q?: string; page?: string; manager?: string; flag?: string } }) {
-  const kind = KINDS.some(([k]) => k === searchParams.kind) ? searchParams.kind! : "org";
+  // Spécialité de l'account manager : seulement ses produits (rien de réglé = tous).
+  const mine = await getAm<{ kinds?: string[] }>("/me");
+  const myKinds = KINDS.filter(([k]) => !mine?.kinds?.length || mine.kinds.includes(k) || (mine as any)?.permissions?.includes("accounts.all"));
+  const kind = myKinds.some(([k]) => k === searchParams.kind) ? searchParams.kind! : (myKinds[0]?.[0] ?? "org");
   const qs = new URLSearchParams({ kind, scope: searchParams.scope ?? "mine", q: searchParams.q ?? "", page: searchParams.page ?? "1", manager: searchParams.manager ?? "", flag: searchParams.flag ?? "" });
   const [d, managers] = await Promise.all([getAm<any>(`/portfolio?${qs}`), getAm<{ id: string; name: string; accounts: number }[]>("/managers")]);
   if (!d) return <p className="rounded-lg bg-white p-6 text-sm text-red-600 ring-1 ring-slate-200">Portefeuille indisponible.</p>;
@@ -24,7 +27,7 @@ export default async function AmPortfolio({ searchParams }: { searchParams: { ki
         <p className="max-w-3xl text-sm text-muted">Les comptes que vous suivez, avec leur score de santé sur 100 (Moboo Resi, Moboo Event et Moboo Pro) et leurs signaux d’alerte : réservations à confirmer, annulations, demandes sans suite, annonces hors ligne, comptes jamais contactés ou inactifs.</p>
       </div>
       <div className="flex flex-wrap gap-2 text-sm">
-        {KINDS.map(([k, l]) => <Link key={k} href={`?${new URLSearchParams({ kind: k, scope: d.scope })}`} className={"rounded-full px-3 py-1 font-semibold " + (kind === k ? "bg-brand-800 text-white" : "bg-white ring-1 ring-slate-300")}>{l}</Link>)}
+        {myKinds.map(([k, l]) => <Link key={k} href={`?${new URLSearchParams({ kind: k, scope: d.scope })}`} className={"rounded-full px-3 py-1 font-semibold " + (kind === k ? "bg-brand-800 text-white" : "bg-white ring-1 ring-slate-300")}>{l}</Link>)}
         <span className="mx-1 text-slate-300">|</span>
         {scopes.map(([k, l]) => <Link key={k} href={link({ scope: k, page: "1" })} className={"rounded-full px-3 py-1 font-semibold " + (d.scope === k ? "bg-ink text-white" : "bg-white ring-1 ring-slate-300")}>{l}</Link>)}
       </div>

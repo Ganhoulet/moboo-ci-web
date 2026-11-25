@@ -84,6 +84,13 @@ export async function openAssistAction(sessionId: string, code: string, accountI
   startAssist({ accessToken: data.accessToken, expiresIn: data.expiresIn }, data.account, { id: data.sessionId, accountId, name, endsAt: new Date(data.endsAt).toISOString() });
   redirect("/mon-espace");
 }
+/** Connexion directe au compte d'un client de son portefeuille (permission dédiée, motif obligatoire). */
+export async function directAssistAction(accountId: string, name: string, reason: string): Promise<R> {
+  const { ok, data } = await authedFetch(`/site/admin/am/accounts/site/${encodeURIComponent(accountId)}/direct`, { method: "POST", body: JSON.stringify({ reason }) });
+  if (!ok) return { ok: false, error: err(data, "Connexion impossible.") };
+  startAssist({ accessToken: data.accessToken, expiresIn: data.expiresIn }, data.account, { id: data.sessionId, accountId, name, endsAt: new Date(data.endsAt).toISOString() });
+  redirect("/mon-espace");
+}
 export async function recoveryAction(accountId: string): Promise<R & { data?: any }> {
   return send(`/accounts/site/${encodeURIComponent(accountId)}/recovery`, "POST", {});
 }
