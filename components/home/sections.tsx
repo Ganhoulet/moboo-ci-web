@@ -16,6 +16,8 @@ import { Faq } from "./faq";
 import { img as optimized, imgProps } from "@/lib/img";
 import { getSiteServices, serviceHref } from "@/lib/site-services";
 import { dropHiddenServiceLinks, getHiddenServicePaths } from "@/lib/service-visibility";
+import { BASE_TYPES, BaseElement, ELEMENT_BG, ELEMENT_PAD, color } from "./base-elements";
+import { IMMO_TYPES, ImmoElement } from "./immo-elements";
 import { SiteIcon } from "@/components/site-icon";
 const imgSmall = (u: string | null | undefined) => optimized(u, 320);
 
@@ -47,9 +49,12 @@ function Head({ title, subtitle, href, dark }: { title?: string; subtitle?: stri
 type Edit = boolean | string;
 
 function Shell({ s, children, pad = "py-12 sm:py-16", edit }: { s: Section; children: React.ReactNode; pad?: string; edit?: Edit }) {
-  const bg = BG[s.props.background as string] ?? "bg-white";
+  const bg = BG[s.props.background as string] ?? ELEMENT_BG[s.props.background as string] ?? "bg-white";
+  const custom = s.props.background === "custom" ? color(s.props.bgColor) : undefined;
+  const anchor = typeof s.props.anchor === "string" && /^[a-z0-9-]{1,40}$/i.test(s.props.anchor) ? s.props.anchor : undefined;
   return (
-    <section id={`section-${s.id}`} className={`group/section relative ${bg} ${pad}`}>
+    <section id={`section-${s.id}`} className={`group/section relative ${bg} ${pad}`} style={custom ? { backgroundColor: custom } : undefined}>
+      {anchor ? <span id={anchor} className="absolute -top-20" aria-hidden /> : null}
       {edit ? (
         <Link href={`${typeof edit === "string" ? edit : "/admin/accueil"}?section=${encodeURIComponent(s.id)}`}
           className="absolute right-3 top-3 z-20 hidden items-center gap-1.5 rounded-full bg-ink/90 px-3 py-1.5 text-xs font-semibold text-white shadow-lg group-hover/section:inline-flex">
@@ -626,6 +631,11 @@ export async function HomeSection({ s: raw, data, edit }: { s: Section; data: Ho
           <div className="rich-text max-w-3xl" dangerouslySetInnerHTML={{ __html: String(p.html ?? "") }} />
         </Shell>
       );
-    default: return null;
+    default:
+      // Éléments de base (titre, image, bouton, colonnes…) : marges réglables.
+      if (BASE_TYPES.has(s.type)) return <Shell s={s} edit={edit} pad={ELEMENT_PAD[p.spacing as string] ?? ELEMENT_PAD.small}><BaseElement s={s} /></Shell>;
+      // Éléments « Immobilier & PropTech » (recherche, calculateurs, prix du marché…).
+      if (IMMO_TYPES.has(s.type)) return <Shell s={s} edit={edit} pad={ELEMENT_PAD[p.spacing as string] ?? ELEMENT_PAD.normal}><ImmoElement s={s} /></Shell>;
+      return null;
   }
 }

@@ -14,6 +14,7 @@ type Status = { tone: "ok" | "err" | "info"; text: string } | null;
  * du brouillon (ordinateur / téléphone), enregistrement automatique, publication.
  */
 import { CATALOGS, type CatalogKey } from "./catalogs";
+import { BlockLibrary } from "./block-library";
 export interface SeoMeta { title: string; description: string }
 
 export function PageBuilder({ initial, meta, types, focus, slug = "home", title = "Page d’accueil", previewPath = "/", catalogKey = "home", seo }: {
@@ -158,14 +159,7 @@ export function PageBuilder({ initial, meta, types, focus, slug = "home", title 
             <button type="button" onClick={() => setLibrary((v) => !v)} className="rounded-full bg-brand-700 px-3 py-1 text-xs font-bold text-white hover:bg-brand-800">+ Ajouter</button>
           </div>
           {library ? (
-            <div className="grid max-h-[60vh] grid-cols-1 gap-1.5 overflow-y-auto border-b border-slate-100 p-2">
-              {libraryGroups.map((b) => (
-                <button key={b.type} type="button" onClick={() => add(b.type)} className="flex items-start gap-2 rounded-md p-2 text-left hover:bg-brand-50">
-                  <span className="text-xl">{b.icon}</span>
-                  <span><span className="block text-sm font-semibold text-ink">{b.label}</span><span className="block text-xs text-muted">{b.description}</span></span>
-                </button>
-              ))}
-            </div>
+            <div className="max-h-[70vh] overflow-y-auto border-b border-slate-100 p-2"><BlockLibrary blocks={libraryGroups} onPick={add} /></div>
           ) : null}
           <ul className="max-h-[70vh] overflow-y-auto p-1.5">
             {sections.map((s, i) => {
@@ -245,5 +239,6 @@ export function PageBuilder({ initial, meta, types, focus, slug = "home", title 
 function sectionTitle(s: Section) {
   const p = s.props ?? {};
   if (s.type === PAGE_CONTENT_TYPE) return "Formulaires, listes et textes actuels de la page";
+  if (typeof p.text === "string" && !p.title) return p.text.slice(0, 40);
   return String(p.title || p.eyebrow || (s.type === "richText" ? String(p.html ?? "").replace(/<[^>]+>/g, " ").trim().slice(0, 40) : "") || s.type);
 }
