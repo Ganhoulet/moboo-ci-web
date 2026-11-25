@@ -17,6 +17,7 @@ import { img as optimized, imgProps } from "@/lib/img";
 import { getSiteServices, serviceHref } from "@/lib/site-services";
 import { dropHiddenServiceLinks, getHiddenServicePaths } from "@/lib/service-visibility";
 import { BASE_TYPES, BaseElement, ELEMENT_BG, ELEMENT_PAD, color } from "./base-elements";
+import { IMMO_TYPES, ImmoElement } from "./immo-elements";
 import { SiteIcon } from "@/components/site-icon";
 const imgSmall = (u: string | null | undefined) => optimized(u, 320);
 
@@ -633,6 +634,8 @@ export async function HomeSection({ s: raw, data, edit }: { s: Section; data: Ho
     default:
       // Éléments de base (titre, image, bouton, colonnes…) : marges réglables.
       if (BASE_TYPES.has(s.type)) return <Shell s={s} edit={edit} pad={ELEMENT_PAD[p.spacing as string] ?? ELEMENT_PAD.small}><BaseElement s={s} /></Shell>;
+      // Éléments « Immobilier & PropTech » (recherche, calculateurs, prix du marché…).
+      if (IMMO_TYPES.has(s.type)) return <Shell s={s} edit={edit} pad={ELEMENT_PAD[p.spacing as string] ?? ELEMENT_PAD.normal}><ImmoElement s={s} /></Shell>;
       return null;
   }
 }

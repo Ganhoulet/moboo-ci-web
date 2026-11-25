@@ -28,7 +28,7 @@ export interface BlockDef {
   fields: BlockField[];
   defaults: Record<string, unknown>;
   /** « base » : élément de base (titre, image, bouton…), montré en tuiles en tête de la bibliothèque. */
-  group?: "base" | "sections";
+  group?: "base" | "immo" | "sections";
 }
 
 export interface Section { id: string; type: string; enabled: boolean; props: Record<string, any> }
@@ -78,6 +78,7 @@ const COUNTERS = [
 ];
 
 import { BASE_BLOCKS } from "./base-blocks";
+import { IMMO_BLOCKS } from "./immo-blocks";
 
 const SECTION_BLOCKS: BlockDef[] = [
   {
@@ -379,7 +380,7 @@ const SECTION_BLOCKS: BlockDef[] = [
 ];
 
 /** Éléments de base d'abord, puis les sections prêtes à l'emploi. */
-export const BLOCKS: BlockDef[] = [...BASE_BLOCKS, ...SECTION_BLOCKS];
+export const BLOCKS: BlockDef[] = [...BASE_BLOCKS, ...IMMO_BLOCKS, ...SECTION_BLOCKS];
 export const blockDef = (type: string) => BLOCKS.find((b) => b.type === type);
 
 let seq = 0;

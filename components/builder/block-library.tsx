@@ -11,10 +11,12 @@ export function BlockLibrary({ blocks, onPick }: { blocks: BlockDef[]; onPick: (
   const [q, setQ] = useState("");
   const [openBase, setOpenBase] = useState(true);
   const [openSections, setOpenSections] = useState(true);
+  const [openImmo, setOpenImmo] = useState(true);
   const norm = (v: string) => v.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const match = (b: BlockDef) => !q.trim() || norm(`${b.label} ${b.description}`).includes(norm(q.trim()));
   const base = blocks.filter((b) => b.group === "base" && match(b));
-  const sections = blocks.filter((b) => b.group !== "base" && match(b));
+  const immo = blocks.filter((b) => b.group === "immo" && match(b));
+  const sections = blocks.filter((b) => b.group !== "base" && b.group !== "immo" && match(b));
   return (
     <div className="space-y-3">
       <input className="input w-full text-sm" placeholder="Rechercher un élément…" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -28,6 +30,24 @@ export function BlockLibrary({ blocks, onPick }: { blocks: BlockDef[]; onPick: (
               {base.map((b) => (
                 <button key={b.type} type="button" onClick={() => onPick(b.type)} title={b.description}
                   className="flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-3 text-center transition hover:border-brand-400 hover:bg-brand-50">
+                  <span className="text-2xl leading-none">{b.icon}</span>
+                  <span className="text-xs font-semibold text-ink">{b.label}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      {immo.length ? (
+        <div>
+          <button type="button" onClick={() => setOpenImmo((v) => !v)} className="mb-2 flex items-center gap-1.5 text-sm font-bold text-ink">
+            <span className={"text-[10px] transition " + (openImmo ? "rotate-90" : "")}>▶</span> Immobilier &amp; PropTech
+          </button>
+          {openImmo ? (
+            <div className="grid grid-cols-2 gap-2">
+              {immo.map((b) => (
+                <button key={b.type} type="button" onClick={() => onPick(b.type)} title={b.description}
+                  className="flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-3 text-center transition hover:border-accent-400 hover:bg-accent-50">
                   <span className="text-2xl leading-none">{b.icon}</span>
                   <span className="text-xs font-semibold text-ink">{b.label}</span>
                 </button>
@@ -53,7 +73,7 @@ export function BlockLibrary({ blocks, onPick }: { blocks: BlockDef[]; onPick: (
           ) : null}
         </div>
       ) : null}
-      {!base.length && !sections.length ? <p className="text-sm text-muted">Aucun élément ne correspond.</p> : null}
+      {!base.length && !immo.length && !sections.length ? <p className="text-sm text-muted">Aucun élément ne correspond.</p> : null}
     </div>
   );
 }
