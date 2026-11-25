@@ -10,7 +10,7 @@ const STEPS: Step[] = [
     id: "connexion", title: "1. Se connecter", img: "/guide-am/01-connexion.jpg", alt: "Page de connexion account manager", phone: true,
     why: "Votre espace est réservé : il protège les comptes de nos clients.",
     how: [
-      "Ouvrez am.moboo.ci (ou moboo.ci/am) sur votre téléphone ou votre ordinateur.",
+      "Ouvrez ep.moboo.ci (ou moboo.ci/equipe) sur votre téléphone ou votre ordinateur, puis la rubrique « Mes comptes ».",
       "Choisissez « Par téléphone », saisissez votre numéro, puis le code reçu par SMS ou WhatsApp.",
       "La première fois, activez la double sécurité (application d’authentification ou e-mail) : elle est obligatoire.",
     ],

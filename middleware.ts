@@ -13,31 +13,41 @@ const RT = "moboo_rt";
 const PROFILE = "moboo_profile";
 // Identifiant anonyme du navigateur (anti-fraude : comptes multiples sur un même appareil).
 const DID = "moboo_did";
-// Portail des account managers (moboo.ci/am) : se souvient que l'on y travaille.
+// Espace équipe Moboo (ep.moboo.ci, moboo.ci/equipe) : se souvient que l'on y travaille (le temps de la session).
 const PORTAL = "moboo_portal";
-const AM_BASE = "/admin/comptes";
+const TEAM = "/equipe";
 
 /**
- * Portail des account managers : /am/… affiche les écrans du suivi des comptes
- * (/admin/comptes/…) dans un cadre à part. Tant qu'on y travaille, les liens de
- * ces écrans vers /admin/comptes/… restent dans le portail ; ouvrir une autre
- * rubrique du back-office en sort. Les droits restent ceux de l'API.
+ * Espace équipe : /equipe/… affiche les écrans du back-office (/admin/…) dans un
+ * cadre allégé, selon le rôle. Tant qu'on y travaille, les liens vers /admin/…
+ * y restent ; « Back-office complet » (/admin?complet=1) en sort. Anciennes
+ * adresses du portail des account managers (/am/…) : renvoyées vers l'Espace équipe.
+ * Les droits restent ceux de l'API.
  */
 type Portal = { rewrite?: URL; redirect?: URL; cookie?: "set" | "clear" };
 function portalOf(req: NextRequest): Portal {
   const p = req.nextUrl.pathname;
-  const inPortal = req.cookies.get(PORTAL)?.value === "am";
+  const read = req.method === "GET" || req.method === "HEAD";
+  const cookie = req.cookies.get(PORTAL)?.value ?? "";
+  const inPortal = cookie === "equipe" || cookie === "am";
   if (p === "/am" || p.startsWith("/am/")) {
     const url = req.nextUrl.clone();
-    url.pathname = AM_BASE + p.slice(3);
-    return { rewrite: url, cookie: inPortal ? undefined : "set" };
-  }
-  if (inPortal && (req.method === "GET" || req.method === "HEAD") && (p === AM_BASE || p.startsWith(AM_BASE + "/"))) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/am" + p.slice(AM_BASE.length);
+    url.pathname = `${TEAM}/comptes${p.slice(3)}`;
     return { redirect: url };
   }
-  if (inPortal && p.startsWith("/admin") && (req.method === "GET" || req.method === "HEAD")) return { cookie: "clear" };
+  if (p === TEAM || p.startsWith(TEAM + "/")) {
+    const url = req.nextUrl.clone();
+    url.pathname = p === TEAM ? "/admin/equipe" : "/admin" + p.slice(TEAM.length);
+    return { rewrite: url, cookie: cookie === "equipe" ? undefined : "set" };
+  }
+  if (read && (p === "/admin" || p.startsWith("/admin/"))) {
+    if (req.nextUrl.searchParams.get("complet") === "1") return inPortal ? { cookie: "clear" } : {};
+    if (inPortal) {
+      const url = req.nextUrl.clone();
+      url.pathname = p === "/admin/equipe" ? TEAM : TEAM + p.slice("/admin".length);
+      return { redirect: url };
+    }
+  }
   return {};
 }
 
@@ -52,24 +62,24 @@ export async function middleware(req: NextRequest) {
   const known = req.cookies.get(DID)?.value;
   const did = known && /^[\w-]{16,64}$/.test(known) ? known : crypto.randomUUID();
   req.headers.set("x-moboo-did", did);
-  // Adresse dédiée des account managers (am.moboo.ci) : l'accueil ouvre leur portail,
-  // la connexion porte leur nom ; rien n'y est indexé par les moteurs de recherche.
-  const amHost = /^am\./i.test((req.headers.get("host") || "").split(":")[0]);
-  if (amHost) {
-    req.headers.set("x-moboo-am-host", "1");
+  // Adresse de l'équipe (ep.moboo.ci, equipe.moboo.ci ; am.moboo.ci gardée) : l'accueil ouvre
+  // l'Espace équipe, la connexion porte son nom ; rien n'y est indexé par les moteurs de recherche.
+  const teamHost = /^(ep|equipe|am)\./i.test((req.headers.get("host") || "").split(":")[0]);
+  if (teamHost) {
+    req.headers.set("x-moboo-team-host", "1");
     if (req.nextUrl.pathname === "/") {
       const url = req.nextUrl.clone();
-      url.pathname = "/am";
+      url.pathname = TEAM;
       return NextResponse.redirect(url, 307);
     }
-  } else req.headers.delete("x-moboo-am-host");
+  } else req.headers.delete("x-moboo-team-host");
   const portal = portalOf(req);
   if (portal.redirect) return NextResponse.redirect(portal.redirect, 307);
   const res = await handle(req, portal.rewrite);
   if (did !== known) res.cookies.set(DID, did, { ...cookieOpts, maxAge: 60 * 60 * 24 * 365 });
-  if (portal.cookie === "set") res.cookies.set(PORTAL, "am", { ...cookieOpts, maxAge: 60 * 60 * 24 * 30 });
+  if (portal.cookie === "set") res.cookies.set(PORTAL, "equipe", cookieOpts);
   if (portal.cookie === "clear") res.cookies.delete(PORTAL);
-  if (amHost) res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  if (teamHost) res.headers.set("X-Robots-Tag", "noindex, nofollow");
   return res;
 }
 
@@ -93,7 +103,7 @@ async function handle(req: NextRequest, rewrite?: URL): Promise<NextResponse> {
   }
   // Chemin de la page pour les server components (SEO des pages existantes : lib/seo).
   req.headers.set("x-moboo-path", rewrite ? rewrite.pathname : req.nextUrl.pathname);
-  if (rewrite) req.headers.set("x-moboo-portal", "am");
+  if (rewrite) req.headers.set("x-moboo-portal", "equipe");
   else req.headers.delete("x-moboo-portal");
   const forward = () => (rewrite ? NextResponse.rewrite(rewrite, { request: { headers: req.headers } }) : NextResponse.next({ request: { headers: req.headers } }));
   const next = forward;
