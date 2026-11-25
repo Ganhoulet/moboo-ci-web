@@ -51,7 +51,10 @@ export async function generateMetadata(): Promise<Metadata> {
       description: branding.seoDescription,
       type: "website",
       locale: "fr_CI",
+      siteName: branding.siteName,
+      url: "https://moboo.ci" + (headers().get("x-moboo-path") || "/"),
     },
+    twitter: { card: "summary_large_image", title: branding.seoTitle, description: branding.seoDescription },
     ...(branding.faviconUrl ? { icons: { icon: branding.faviconUrl, shortcut: branding.faviconUrl } } : {}),
   });
 }
