@@ -108,3 +108,14 @@ export async function saveGoalsAction(managerId: string, period: string, goals: 
 export async function runJourneyTasksAction(): Promise<void> {
   await send("/journey/tasks/run", "POST", {});
 }
+
+// ─── Lien support (client : message + capture) ────────────────────────────
+export async function createSupportLinkAction(accountId: string, subject: string): Promise<R & { data?: { url: string; phone: string | null; whatsappText: string; id: string } }> {
+  return send(`/accounts/site/${encodeURIComponent(accountId)}/support-link`, "POST", { subject });
+}
+export async function supportReplyAction(id: string, message: string): Promise<R> {
+  return send(`/support/${encodeURIComponent(id)}/reply`, "POST", { message });
+}
+export async function supportStatusAction(id: string, status: "ouvert" | "ferme"): Promise<R> {
+  return send(`/support/${encodeURIComponent(id)}/status`, "POST", { status });
+}

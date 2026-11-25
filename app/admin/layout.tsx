@@ -16,7 +16,7 @@ import { getAm } from "./comptes/actions";
 import { AmPortalNav, type AmPortalItem } from "@/components/backoffice/am-portal-nav";
 
 /** Permissions d'un rôle « account manager » (ou de son responsable) : ce rôle travaille dans le portail /am. */
-const AM_ONLY = ["users.view", "accounts", "accounts.all", "disputes", "analytics", "am.bookings", "am.studio", "am.links", "am.assist", "am.reco", "am.prospect", "am.impersonate"];
+const AM_ONLY = ["users.view", "accounts", "accounts.all", "disputes", "analytics", "am.bookings", "am.studio", "am.links", "am.assist", "am.reco", "am.prospect", "am.impersonate", "am.support"];
 
 export const metadata: Metadata = { title: "Back-office", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -63,8 +63,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Account manager : son poste de travail est le portail /am (pas le back-office complet).
   if (amOnly && path === "/admin") redirect("/am");
   if (headers().get("x-moboo-portal") === "am") {
-    const [amBadge, mine] = await Promise.all([
+    const [amBadge, amSupport, mine] = await Promise.all([
       can(perms, "accounts") ? getAm<{ urgent: number; pending: number }>("/badge").catch(() => null) : null,
+      can(perms, "am.support") ? getAm<{ unread: number }>("/support?status=ouvert").catch(() => null) : null,
       getAm<{ name: string; avatarUrl: string | null; kinds: string[]; listingTypes: string[]; zones: string[]; team: { name: string } | null }>("/me").catch(() => null),
     ]);
     // Spécialité : produits suivis (rien de réglé = tout ; le responsable voit tout).
@@ -86,6 +87,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       { href: "/am/studio", label: "Publier", emoji: "✍️", main: true },
       { href: "/am/liens-rapides", label: "Liens rapides", emoji: "🔗" },
       { href: "/am/opportunites", label: "Opportunités", emoji: "💡" },
+      { href: "/am/support", label: "Support", emoji: "💬", badge: amSupport?.unread ?? 0 },
       { href: "/am/taches", label: "Tâches", emoji: "✅" },
       { href: "/am/performance", label: "Objectifs", emoji: "🎯" },
       { href: "/am/journal", label: "Mes actions", emoji: "🗂️" },
@@ -248,6 +250,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/comptes/studio", label: "Studio de publication", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/liens-rapides", label: "Liens rapides", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/opportunites", label: "Centre des opportunités", icon: "users", child: true, group: "comptes" },
+    { href: "/admin/comptes/support", label: "Support de mes clients", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/taches", label: "Tâches", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/equipes", label: "Équipes et zones", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/performance", label: "Objectifs et performance", icon: "users", child: true, group: "comptes" },
