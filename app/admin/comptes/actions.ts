@@ -119,3 +119,17 @@ export async function supportReplyAction(id: string, message: string): Promise<R
 export async function supportStatusAction(id: string, status: "ouvert" | "ferme"): Promise<R> {
   return send(`/support/${encodeURIComponent(id)}/status`, "POST", { status });
 }
+
+// ─── Académie (messages prêts à l'emploi) ────────────────────────────────
+export async function saveTemplateAction(id: string | null, input: Record<string, unknown>): Promise<R> {
+  const { ok, data } = await authedFetch(`/site/admin/am/academy/templates${id ? `/${encodeURIComponent(id)}` : ""}`, { method: id ? "PUT" : "POST", body: JSON.stringify(input) });
+  if (!ok) return { ok: false, error: err(data, "Enregistrement impossible.") };
+  revalidatePath("/admin/comptes/academie");
+  return { ok: true };
+}
+export async function deleteTemplateAction(id: string): Promise<R> {
+  const { ok, data } = await authedFetch(`/site/admin/am/academy/templates/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!ok) return { ok: false, error: err(data, "Suppression impossible.") };
+  revalidatePath("/admin/comptes/academie");
+  return { ok: true };
+}

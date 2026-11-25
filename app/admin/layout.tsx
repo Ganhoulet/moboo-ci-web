@@ -91,6 +91,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       { href: "/am/taches", label: "Tâches", emoji: "✅" },
       { href: "/am/performance", label: "Objectifs", emoji: "🎯" },
       { href: "/am/journal", label: "Mes actions", emoji: "🗂️" },
+      { href: "/am/academie", label: "Académie", emoji: "🎓" },
+      { href: "/am/guide", label: "Guide", emoji: "📘" },
       ...(can(perms, "accounts.all") ? [{ href: "/am/equipes", label: "Équipes et zones", emoji: "🗺️" }] : []),
     ];
     const ok = canAccess(perms, path);
@@ -251,6 +253,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/comptes/liens-rapides", label: "Liens rapides", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/opportunites", label: "Centre des opportunités", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/support", label: "Support de mes clients", icon: "users", child: true, group: "comptes" },
+    { href: "/admin/comptes/academie", label: "Académie (messages)", icon: "users", child: true, group: "comptes" },
+    { href: "/admin/comptes/guide", label: "Guide de l’account manager", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/taches", label: "Tâches", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/equipes", label: "Équipes et zones", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/performance", label: "Objectifs et performance", icon: "users", child: true, group: "comptes" },

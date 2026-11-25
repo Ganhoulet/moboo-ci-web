@@ -117,6 +117,7 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
           </section>
         </div>
         <aside className="space-y-4">
+          <Link href={`/admin/comptes/academie?kind=${d.kind}&id=${encodeURIComponent(d.id)}`} className="flex items-center justify-between rounded-lg bg-white p-4 text-sm font-semibold text-brand-800 ring-1 ring-slate-200 hover:bg-slate-50">🎓 Écrire au client avec l’Académie <span aria-hidden>→</span></Link>
           {canSupport ? <SupportLinkButton accountId={d.id} /> : null}
           {access ? <AccessPanel accountId={d.id} name={p.name} history={access} canDirect={canDirect} /> : null}
           <ActivityForm kind={d.kind} id={d.id} />
