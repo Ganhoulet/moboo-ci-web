@@ -4,7 +4,7 @@
 
 import { DEFAULT_LOCATIONS, DEFAULT_MENU_STYLE, normalizeMenus, type MenuLocation, type MenuStyle, type SiteMenu } from "./menus";
 
-export type FieldType = "text" | "textarea" | "html" | "image" | "url" | "number" | "bool" | "select" | "multi" | "list";
+export type FieldType = "text" | "textarea" | "html" | "image" | "url" | "number" | "bool" | "select" | "multi" | "list" | "color" | "icon";
 
 export interface BlockField {
   key: string;
@@ -27,6 +27,8 @@ export interface BlockDef {
   description: string;
   fields: BlockField[];
   defaults: Record<string, unknown>;
+  /** « base » : élément de base (titre, image, bouton…), montré en tuiles en tête de la bibliothèque. */
+  group?: "base" | "sections";
 }
 
 export interface Section { id: string; type: string; enabled: boolean; props: Record<string, any> }
@@ -75,7 +77,9 @@ const COUNTERS = [
   { value: "cities", label: "Villes" }, { value: "commission", label: "0 % de commission" },
 ];
 
-export const BLOCKS: BlockDef[] = [
+import { BASE_BLOCKS } from "./base-blocks";
+
+const SECTION_BLOCKS: BlockDef[] = [
   {
     type: "hero", label: "Bandeau de recherche", icon: "🔎",
     description: "Grand titre, image de fond et recherche à onglets (Louer, Acheter, Meublés…).",
@@ -374,6 +378,8 @@ export const BLOCKS: BlockDef[] = [
   },
 ];
 
+/** Éléments de base d'abord, puis les sections prêtes à l'emploi. */
+export const BLOCKS: BlockDef[] = [...BASE_BLOCKS, ...SECTION_BLOCKS];
 export const blockDef = (type: string) => BLOCKS.find((b) => b.type === type);
 
 let seq = 0;

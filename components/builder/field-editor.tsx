@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { BlockField } from "@/lib/page-blocks";
 import { uploadImageAction } from "@/app/mon-espace/actions";
+import { ICON_NAMES, SiteIcon } from "@/components/site-icon";
 
 export type Opt = { value: string; label: string };
 
@@ -59,6 +60,27 @@ export function FieldEditor({ f, value, onChange, types }: { f: BlockField; valu
           <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 accent-brand-700" />
           {f.label}
         </label>
+      );
+    case "color": {
+      const v = typeof value === "string" ? value : "";
+      return (
+        <div className="flex items-center gap-2">
+          <input type="color" className="h-9 w-12 cursor-pointer rounded border border-slate-300" value={/^#[0-9a-f]{6}$/i.test(v) ? v : "#ffffff"} onChange={(e) => onChange(e.target.value)} />
+          <input className="input w-32 text-sm" placeholder="Par défaut" value={v} onChange={(e) => onChange(e.target.value)} />
+          {v ? <button type="button" onClick={() => onChange("")} className="text-xs font-semibold text-slate-500 hover:underline">Par défaut</button> : null}
+        </div>
+      );
+    }
+    case "icon":
+      return (
+        <div className="grid max-h-40 grid-cols-8 gap-1 overflow-y-auto rounded-md border border-slate-200 p-1.5">
+          <button type="button" onClick={() => onChange("")} title="Aucune" className={"grid h-8 place-items-center rounded text-xs " + (!value ? "bg-brand-100 ring-1 ring-brand-400" : "hover:bg-slate-100")}>∅</button>
+          {ICON_NAMES.map((n) => (
+            <button key={n} type="button" title={n} onClick={() => onChange(n)} className={"grid h-8 place-items-center rounded " + (value === n ? "bg-brand-100 ring-1 ring-brand-400" : "hover:bg-slate-100")}>
+              <SiteIcon value={n} size={18} />
+            </button>
+          ))}
+        </div>
       );
     case "textarea":
       return <textarea className="input min-h-[80px] text-sm" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />;

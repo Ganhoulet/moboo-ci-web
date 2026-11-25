@@ -7,6 +7,7 @@ import { PAGE_CONTENT_TYPE } from "@/lib/site-editable";
 import { discardAction, publishAction, saveDraftAction, type AdminPage } from "@/app/admin/accueil/actions";
 import { FieldEditor, type Opt } from "./field-editor";
 import { CATALOGS, type CatalogKey } from "./catalogs";
+import { BlockLibrary } from "./block-library";
 
 /**
  * Modification directe sur le site (façon Elementor) : l'administrateur voit le
@@ -117,14 +118,7 @@ export function LiveEditor({ slug, catalogKey, initial, extra, meta, types, exit
           </div>
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
             {library ? (
-              <div className="grid gap-1.5">
-                {catalog.blocks.map((b) => (
-                  <button key={b.type} type="button" onClick={() => add(b.type)} className="flex items-start gap-2 rounded-md p-2 text-left ring-1 ring-slate-200 hover:bg-brand-50">
-                    <span className="text-xl">{b.icon}</span>
-                    <span><span className="block text-sm font-semibold text-ink">{b.label}</span><span className="block text-xs text-muted">{b.description}</span></span>
-                  </button>
-                ))}
-              </div>
+              <BlockLibrary blocks={catalog.blocks} onPick={add} />
             ) : def.fields.length ? def.fields.map((f) => (
               <div key={f.key}>
                 {f.type !== "bool" ? <p className="mb-1 text-sm font-semibold text-ink">{f.label}</p> : null}
@@ -146,14 +140,7 @@ export function LiveEditor({ slug, catalogKey, initial, extra, meta, types, exit
             <p className="flex-1 font-semibold text-ink">Ajouter un bloc en bas de la page</p>
             <button type="button" onClick={() => setLibrary(false)} aria-label="Fermer" className="rounded px-2 text-lg text-slate-500 hover:bg-slate-100">×</button>
           </div>
-          <div className="grid flex-1 gap-1.5 overflow-y-auto p-4">
-            {catalog.blocks.map((b) => (
-              <button key={b.type} type="button" onClick={() => add(b.type)} className="flex items-start gap-2 rounded-md p-2 text-left ring-1 ring-slate-200 hover:bg-brand-50">
-                <span className="text-xl">{b.icon}</span>
-                <span><span className="block text-sm font-semibold text-ink">{b.label}</span><span className="block text-xs text-muted">{b.description}</span></span>
-              </button>
-            ))}
-          </div>
+          <div className="flex-1 overflow-y-auto p-4"><BlockLibrary blocks={catalog.blocks} onPick={add} /></div>
         </aside>
       ) : null}
       <div className="h-16" aria-hidden />
