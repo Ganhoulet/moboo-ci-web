@@ -13,7 +13,8 @@ import { getModerationSummary } from "./backoffice-actions";
 import { getDisputeCounts } from "./litiges/actions";
 import { getServicesBadges } from "./services/actions";
 import { getAm } from "./comptes/actions";
-import { AmPortalNav, type AmPortalItem } from "@/components/backoffice/am-portal-nav";
+import { TeamNav } from "@/components/backoffice/team-nav";
+import { teamGroupsFor } from "@/lib/team-space";
 
 /** Permissions d'un rôle « account manager » (ou de son responsable) : ce rôle travaille dans le portail /am. */
 const AM_ONLY = ["users.view", "accounts", "accounts.all", "disputes", "analytics", "am.bookings", "am.studio", "am.links", "am.assist", "am.reco", "am.prospect", "am.impersonate", "am.support"];
@@ -60,74 +61,58 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const perms = account.permissions ?? [];
   const path = headers().get("x-moboo-path") ?? "/admin";
   const amOnly = perms.includes("accounts") && perms.every((p) => AM_ONLY.includes(p));
-  // Account manager : son poste de travail est le portail /am (pas le back-office complet).
-  if (amOnly && path === "/admin") redirect("/am");
-  if (headers().get("x-moboo-portal") === "am") {
+  // Rôle limité au suivi des comptes : son poste de travail est l'Espace équipe (pas le back-office complet).
+  if (amOnly && path === "/admin") redirect("/equipe");
+  if (headers().get("x-moboo-portal") === "equipe") {
+    const isAm = can(perms, "accounts");
     const [amBadge, amSupport, mine] = await Promise.all([
-      can(perms, "accounts") ? getAm<{ urgent: number; pending: number }>("/badge").catch(() => null) : null,
+      isAm ? getAm<{ urgent: number; pending: number }>("/badge").catch(() => null) : null,
       can(perms, "am.support") ? getAm<{ unread: number }>("/support?status=ouvert").catch(() => null) : null,
-      getAm<{ name: string; avatarUrl: string | null; kinds: string[]; listingTypes: string[]; zones: string[]; team: { name: string } | null }>("/me").catch(() => null),
+      isAm ? getAm<{ name: string; avatarUrl: string | null; kinds: string[]; listingTypes: string[]; zones: string[]; team: { name: string } | null }>("/me").catch(() => null) : null,
     ]);
-    // Spécialité : produits suivis (rien de réglé = tout ; le responsable voit tout).
+    // Spécialité de l'account manager : produits suivis (rien de réglé = tout ; le responsable voit tout).
     const kinds = can(perms, "accounts.all") || !mine?.kinds?.length ? ["org", "event", "site"] : mine.kinds;
-    const hosts = kinds.includes("org") || kinds.includes("event");
-    const ads = kinds.includes("site");
     const KIND_NAME: Record<string, string> = { org: "Résidences meublées", event: "Espaces événementiels", site: "Annonces immobilières" };
-    const specialty = [
+    const specialty = isAm ? [
       mine?.kinds?.length ? mine.kinds.map((k) => KIND_NAME[k] ?? k).join(", ") : "Tous les produits",
       mine?.listingTypes?.length ? mine.listingTypes.join(", ") : null,
       mine?.zones?.length ? mine.zones.slice(0, 4).join(", ") + (mine.zones.length > 4 ? "…" : "") : null,
-    ].filter(Boolean).join(" · ");
-    const tabs: AmPortalItem[] = [
-      { href: "/am", label: "Aujourd’hui", emoji: "📞", badge: amBadge?.urgent ?? 0, main: true },
-      { href: "/am/reservations", label: "Réservations", emoji: "🛎️", badge: amBadge?.pending ?? 0, main: true },
-      { href: "/am/sejours", label: "Séjours", emoji: "🧳" },
-      { href: "/am/portefeuille", label: "Portefeuille", emoji: "👥", main: true },
-      { href: "/am/appels", label: "Appels", emoji: "☎️" },
-      { href: "/am/studio", label: "Publier", emoji: "✍️", main: true },
-      { href: "/am/liens-rapides", label: "Liens rapides", emoji: "🔗" },
-      { href: "/am/opportunites", label: "Opportunités", emoji: "💡" },
-      { href: "/am/support", label: "Support", emoji: "💬", badge: amSupport?.unread ?? 0 },
-      { href: "/am/taches", label: "Tâches", emoji: "✅" },
-      { href: "/am/performance", label: "Objectifs", emoji: "🎯" },
-      { href: "/am/journal", label: "Mes actions", emoji: "🗂️" },
-      { href: "/am/academie", label: "Académie", emoji: "🎓" },
-      { href: "/am/guide", label: "Guide", emoji: "📘" },
-      ...(can(perms, "accounts.all") ? [{ href: "/am/equipes", label: "Équipes et zones", emoji: "🗺️" }] : []),
-    ];
+    ].filter(Boolean).join(" · ") : null;
+    const groups = teamGroupsFor({
+      perms, hosts: kinds.includes("org") || kinds.includes("event"), ads: kinds.includes("site"),
+      badges: { urgent: amBadge?.urgent ?? 0, pending: amBadge?.pending ?? 0, support: amSupport?.unread ?? 0 },
+    });
     const ok = canAccess(perms, path);
-    // Onglets selon les fonctions du rôle (réglables dans Rôles et permissions).
-    const BY_KIND: Record<string, boolean> = { "/am/reservations": hosts, "/am/sejours": hosts, "/am/opportunites": hosts, "/am/studio": ads, "/am/liens-rapides": ads };
-    const allowedTabs = tabs.filter((t) => canAccess(perms, t.href.replace(/^\/am/, "/admin/comptes")) && BY_KIND[t.href] !== false);
+    const avatar = mine?.avatarUrl ?? account.avatarUrl ?? null;
     return (
       <div className="min-h-[calc(100dvh-4rem)] bg-slate-100 pb-20 sm:pb-6">
-        <div className="mx-auto max-w-5xl px-3 pt-4 sm:px-6">
+        <div className="mx-auto max-w-6xl px-3 pt-4 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-3">
               <Link href="/mon-espace/profil" className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-brand-800 font-bold text-white" title="Mon profil (photo, coordonnées)">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {mine?.avatarUrl ? <img src={mine.avatarUrl} alt="" className="h-full w-full object-cover" /> : (displayName(account) || "AM").slice(0, 2).toUpperCase()}
+                {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : (displayName(account) || "M").slice(0, 2).toUpperCase()}
               </Link>
               <div>
-                <p className="font-display text-lg font-black text-ink">Espace account manager</p>
+                <p className="font-display text-lg font-black text-ink">Espace équipe Moboo</p>
                 <p className="text-xs text-muted">{displayName(account)}{account.adminRole ? ` · ${account.adminRole.name}` : ""}{mine?.team ? ` · ${mine.team.name}` : ""}</p>
-                <p className="text-[11px] font-semibold text-brand-800">{specialty}</p>
+                {specialty ? <p className="text-[11px] font-semibold text-brand-800">{specialty}</p> : null}
               </div>
             </div>
             <div className="flex gap-2 text-xs font-semibold">
               <Link href="/mon-espace/profil" className="rounded-full bg-white px-3 py-1.5 text-ink ring-1 ring-slate-200">👤 Mon profil</Link>
               <Link href="/admin/securite" className="rounded-full bg-white px-3 py-1.5 text-ink ring-1 ring-slate-200">🔐 Sécurité</Link>
-              {!amOnly ? <Link href="/admin" className="rounded-full bg-ink px-3 py-1.5 text-white">Back-office complet</Link> : null}
+              {!amOnly ? <Link href="/admin?complet=1" className="rounded-full bg-ink px-3 py-1.5 text-white">Back-office complet</Link> : null}
             </div>
           </div>
-          <div className="mt-3"><AmPortalNav items={allowedTabs} /></div>
+          <div className="mt-3"><TeamNav groups={groups} /></div>
           <main className="mt-4 min-w-0">
             {ok ? children : (
               <div className="mx-auto max-w-lg rounded-lg bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
                 <p className="text-3xl">🔒</p>
                 <h1 className="mt-2 font-display text-xl font-extrabold text-ink">Accès refusé</h1>
                 <p className="mt-2 text-sm text-muted">Votre rôle ({account.adminRole?.name ?? "—"}) ne donne pas accès à cet écran.</p>
-                <Link href="/am" className="mt-5 inline-flex rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Aujourd’hui</Link>
+                <Link href="/equipe" className="mt-5 inline-flex rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Accueil de l’Espace équipe</Link>
               </div>
             )}
           </main>
@@ -145,6 +130,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const am = can(perms, "accounts") ? await getAm<{ urgent: number; pending: number }>("/badge").catch(() => null) : null;
   const items: AdminNavItem[] = [
     { href: "/admin", label: "Tableau de bord", icon: "dashboard" },
+    // Espace équipe (ep.moboo.ci) : la vue allégée de chaque membre de l'équipe, selon son rôle.
+    { href: "/equipe", label: "Ouvrir l’Espace équipe", icon: "users" },
     // Statistiques (façon Zillow / Airbnb) : indicateurs, recherches, professionnels.
     // Intelligence immobilière : marché Moboo.ci en direct par zone, type et prix (version avancée de l'accueil Moboo Pro).
     { href: "/admin/intelligence", label: "Intelligence immobilière", icon: "gauge", group: "intel" },
@@ -243,7 +230,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ].map(([href, label]) => ({ href, label, icon: "building", child: true, group: "immobilier" })),
     // Account managers (façon Booking.com) : réservations à confirmer pour l'hôte, portefeuille, suivi.
     { href: "/admin/comptes", label: "Suivi des comptes", icon: "users", group: "comptes", badge: am?.urgent ?? 0 },
-    { href: "/am", label: "Ouvrir l’espace account manager", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/appels", label: "Appels du jour", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/reservations", label: "Réservations à confirmer", icon: "users", child: true, group: "comptes", badge: am?.pending ?? 0 },
     { href: "/admin/comptes/sejours", label: "Séjours en cours", icon: "users", child: true, group: "comptes" },

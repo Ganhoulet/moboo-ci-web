@@ -76,8 +76,9 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/comptes/opportunites", ["am.reco"]],
   ["/admin/comptes/support", ["am.support"]],
   ["/admin/comptes", ["accounts"]],
-  // Portail des account managers (moboo.ci/am → écrans du suivi des comptes).
-  ["/am", ["accounts"]],
+  // Espace équipe (moboo.ci/equipe → écrans du back-office selon le rôle) : accueil ouvert à toute l'équipe.
+  ["/admin/equipe", "any"],
+  ["/equipe", "any"],
   ["/admin", "any"],
 ];
 
