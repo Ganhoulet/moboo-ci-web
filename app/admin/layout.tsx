@@ -14,6 +14,7 @@ import { getDisputeCounts } from "./litiges/actions";
 import { getServicesBadges } from "./services/actions";
 import { getAm } from "./comptes/actions";
 import { TeamNav } from "@/components/backoffice/team-nav";
+import { SoundAlerts } from "@/components/backoffice/sound-alerts";
 import { teamGroupsFor } from "@/lib/team-space";
 
 /** Permissions d'un rôle « account manager » (ou de son responsable) : ce rôle travaille dans le portail /am. */
@@ -99,7 +100,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 {specialty ? <p className="text-[11px] font-semibold text-brand-800">{specialty}</p> : null}
               </div>
             </div>
-            <div className="flex gap-2 text-xs font-semibold">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+              <SoundAlerts />
               <Link href="/mon-espace/profil" className="rounded-full bg-white px-3 py-1.5 text-ink ring-1 ring-slate-200">👤 Mon profil</Link>
               <Link href="/admin/securite" className="rounded-full bg-white px-3 py-1.5 text-ink ring-1 ring-slate-200">🔐 Sécurité</Link>
               {!amOnly ? <Link href="/admin?complet=1" className="rounded-full bg-ink px-3 py-1.5 text-white">Back-office complet</Link> : null}
@@ -329,6 +331,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className="font-display text-lg font-black text-white">Moboo</span>
             <span className="text-xs font-semibold text-slate-400">Back-office</span>
           </div>
+          <div className="px-4 pb-3 lg:pt-1"><SoundAlerts compact /></div>
           <AdminNav items={visible} />
           <p className="hidden px-4 py-5 text-xs text-slate-500 lg:block">
             Connecté : {displayName(account)}
