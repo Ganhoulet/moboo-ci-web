@@ -13,7 +13,9 @@ import { getModerationSummary } from "./backoffice-actions";
 import { getDisputeCounts } from "./litiges/actions";
 import { getServicesBadges } from "./services/actions";
 import { getAm } from "./comptes/actions";
-import { TeamNav } from "@/components/backoffice/team-nav";
+import { TeamMobileNav, TeamSidebar } from "@/components/backoffice/team-nav";
+import { Icon } from "@/components/team-icons";
+import { SoundAlerts } from "@/components/backoffice/sound-alerts";
 import { teamGroupsFor } from "@/lib/team-space";
 
 /** Permissions d'un rôle « account manager » (ou de son responsable) : ce rôle travaille dans le portail /am. */
@@ -85,37 +87,65 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const ok = canAccess(perms, path);
     const avatar = mine?.avatarUrl ?? account.avatarUrl ?? null;
     return (
-      <div className="min-h-[calc(100dvh-4rem)] bg-slate-100 pb-20 sm:pb-6">
-        <div className="mx-auto max-w-6xl px-3 pt-4 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <Link href="/mon-espace/profil" className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-brand-800 font-bold text-white" title="Mon profil (photo, coordonnées)">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : (displayName(account) || "M").slice(0, 2).toUpperCase()}
-              </Link>
-              <div>
-                <p className="font-display text-lg font-black text-ink">Espace équipe Moboo</p>
-                <p className="text-xs text-muted">{displayName(account)}{account.adminRole ? ` · ${account.adminRole.name}` : ""}{mine?.team ? ` · ${mine.team.name}` : ""}</p>
-                {specialty ? <p className="text-[11px] font-semibold text-brand-800">{specialty}</p> : null}
+      <div className="min-h-[calc(100dvh-4rem)] bg-slate-50 pb-20 lg:pb-8">
+        <div className="mx-auto flex max-w-[1500px] gap-6 px-3 pt-4 sm:px-6 lg:pt-6">
+          {/* Colonne de gauche (ordinateur) : qui je suis, puis le menu de mes rubriques. */}
+          <aside className="hidden w-64 shrink-0 lg:block print:hidden">
+            <div className="sticky top-4 space-y-4">
+              <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-brand-800">Espace équipe Moboo</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <Link href="/mon-espace/profil" className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-brand-800 text-sm font-bold text-white" title="Mon profil (photo, coordonnées)">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : (displayName(account) || "M").slice(0, 2).toUpperCase()}
+                  </Link>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-ink">{displayName(account)}</p>
+                    <p className="truncate text-xs text-muted">{account.adminRole?.name ?? "Équipe"}{mine?.team ? ` · ${mine.team.name}` : ""}</p>
+                  </div>
+                </div>
+                {specialty ? <p className="mt-2 text-[11px] font-medium leading-snug text-slate-500">{specialty}</p> : null}
+              </div>
+              <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200"><TeamSidebar groups={groups} /></div>
+              <div className="space-y-0.5 px-1 text-sm">
+                <Link href="/mon-espace/profil" className="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-slate-600 hover:bg-white hover:text-ink"><Icon name="user" size={16} />Mon profil</Link>
+                <Link href="/admin/securite" className="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-slate-600 hover:bg-white hover:text-ink"><Icon name="lock" size={16} />Sécurité</Link>
+                {!amOnly ? <Link href="/admin?complet=1" className="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-slate-600 hover:bg-white hover:text-ink"><Icon name="layout" size={16} />Back-office complet</Link> : null}
               </div>
             </div>
-            <div className="flex gap-2 text-xs font-semibold">
-              <Link href="/mon-espace/profil" className="rounded-full bg-white px-3 py-1.5 text-ink ring-1 ring-slate-200">👤 Mon profil</Link>
-              <Link href="/admin/securite" className="rounded-full bg-white px-3 py-1.5 text-ink ring-1 ring-slate-200">🔐 Sécurité</Link>
-              {!amOnly ? <Link href="/admin?complet=1" className="rounded-full bg-ink px-3 py-1.5 text-white">Back-office complet</Link> : null}
+          </aside>
+
+          <div className="min-w-0 flex-1">
+            {/* Barre du haut : identité (téléphone), alertes sonores, raccourcis. */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-3 lg:hidden">
+                <Link href="/mon-espace/profil" className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-brand-800 text-sm font-bold text-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : (displayName(account) || "M").slice(0, 2).toUpperCase()}
+                </Link>
+                <div>
+                  <p className="font-display font-black text-ink">Espace équipe Moboo</p>
+                  <p className="text-xs text-muted">{displayName(account)}{account.adminRole ? ` · ${account.adminRole.name}` : ""}</p>
+                </div>
+              </div>
+              <div className="ml-auto flex flex-wrap items-center gap-2 text-xs font-semibold">
+                <SoundAlerts />
+                <Link href="/mon-espace/profil" className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-ink ring-1 ring-slate-200 lg:hidden"><Icon name="user" size={14} />Profil</Link>
+                {!amOnly ? <Link href="/admin?complet=1" className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-white lg:hidden"><Icon name="layout" size={14} />Back-office</Link> : null}
+              </div>
             </div>
+            <div className="mt-3 lg:hidden"><TeamMobileNav groups={groups} /></div>
+            <main className="mt-4 min-w-0">
+              {ok ? children : (
+                <div className="mx-auto max-w-lg rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
+                  <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-500"><Icon name="lock" size={22} /></span>
+                  <h1 className="mt-3 font-display text-xl font-extrabold text-ink">Accès refusé</h1>
+                  <p className="mt-2 text-sm text-muted">Votre rôle ({account.adminRole?.name ?? "—"}) ne donne pas accès à cet écran.</p>
+                  <Link href="/equipe" className="mt-5 inline-flex rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Accueil de l’Espace équipe</Link>
+                </div>
+              )}
+            </main>
           </div>
-          <div className="mt-3"><TeamNav groups={groups} /></div>
-          <main className="mt-4 min-w-0">
-            {ok ? children : (
-              <div className="mx-auto max-w-lg rounded-lg bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
-                <p className="text-3xl">🔒</p>
-                <h1 className="mt-2 font-display text-xl font-extrabold text-ink">Accès refusé</h1>
-                <p className="mt-2 text-sm text-muted">Votre rôle ({account.adminRole?.name ?? "—"}) ne donne pas accès à cet écran.</p>
-                <Link href="/equipe" className="mt-5 inline-flex rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Accueil de l’Espace équipe</Link>
-              </div>
-            )}
-          </main>
         </div>
       </div>
     );
@@ -329,6 +359,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className="font-display text-lg font-black text-white">Moboo</span>
             <span className="text-xs font-semibold text-slate-400">Back-office</span>
           </div>
+          <div className="px-4 pb-3 lg:pt-1"><SoundAlerts compact /></div>
           <AdminNav items={visible} />
           <p className="hidden px-4 py-5 text-xs text-slate-500 lg:block">
             Connecté : {displayName(account)}

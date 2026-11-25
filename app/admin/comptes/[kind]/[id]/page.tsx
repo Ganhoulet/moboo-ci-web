@@ -10,10 +10,11 @@ import { HostActivityPanel } from "@/components/backoffice/am-activity";
 import { HealthPanel } from "@/components/backoffice/am-health";
 import { JourneySteps } from "@/components/backoffice/am-journey";
 import { getAm } from "../../actions";
+import { Icon, type TeamIcon } from "@/components/team-icons";
 
 export const dynamic = "force-dynamic";
 
-const TYPE_ICON: Record<string, string> = { call: "📞", whatsapp: "💬", email: "✉️", visit: "🏠", note: "📝", task: "⏰", booking: "🛎️", alert: "🔔", dispute: "⚖️" };
+const TYPE_ICON: Record<string, TeamIcon> = { call: "phone", whatsapp: "message", email: "mail", visit: "home", note: "pen", task: "bell", booking: "concierge", alert: "bell", dispute: "scale" };
 const OUTCOME: Record<string, string> = { joint: "Joint", sans_reponse: "Sans réponse", rappeler: "À rappeler", interesse: "Intéressé", pas_interesse: "Pas intéressé", confirme: "Réservation confirmée", refuse: "Réservation refusée", dates: "Dates changées", alerte: "Alerte", escalade: "Escalade" };
 const UPCOMING = ["PENDING", "ACCEPTED", "CONFIRMED", "OPTION", "CONFIRME"];
 const STATUS: Record<string, string> = { PENDING: "Demande", ACCEPTED: "Acceptée (paiement attendu)", CONFIRMED: "Confirmée", CHECKED_IN: "En cours", CHECKED_OUT: "Terminée", CANCELLED: "Annulée", NO_SHOW: "Non présenté", OPTION: "Demande", CONFIRME: "Confirmée", ANNULE: "Annulée", TERMINE: "Terminée", ACTIVE: "En ligne", DISABLED: "Masquée", PENDING_REVIEW: "En validation" };
@@ -46,7 +47,7 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
           <p className="text-sm text-slate-600">{[p.place, p.email].filter(Boolean).join(" · ")}</p>
           <p className="text-xs text-muted">Inscrit le {new Date(p.createdAt).toLocaleDateString("fr-FR")}{p.lastLoginAt ? ` · dernière connexion ${new Date(p.lastLoginAt).toLocaleDateString("fr-FR")}` : ""}{p.verified ? " · ✓ vérifié" : ""}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {p.phone ? <a href={`tel:${p.phone}`} className="rounded-full bg-brand-800 px-3 py-1.5 text-sm font-bold text-white">📞 {p.phone}</a> : null}
+            {p.phone ? <a href={`tel:${p.phone}`} className="rounded-full bg-brand-800 px-3 py-1.5 text-sm font-bold text-white"><Icon name="phone" size={15} className="mr-1 inline-block -mt-0.5" />{p.phone}</a> : null}
             {wa ? <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer" className="rounded-full bg-[#25D366] px-3 py-1.5 text-sm font-bold text-white">WhatsApp</a> : null}
             {p.adminHref ? <Link href={p.adminHref} className="rounded-full px-3 py-1.5 text-sm font-semibold text-brand-800 ring-1 ring-slate-300">Fiche 360° du compte</Link> : null}
             {p.publicHref ? <Link href={p.publicHref} target="_blank" className="rounded-full px-3 py-1.5 text-sm font-semibold text-brand-800 ring-1 ring-slate-300">Page publique ↗</Link> : null}
@@ -86,7 +87,7 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
           </section>
           {disputes ? (
             <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
-              <h2 className="font-display text-lg font-bold text-ink">⚖️ Litiges {disputes.awaitingReply ? <span className="ml-1 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{disputes.awaitingReply} réponse(s) attendue(s)</span> : null}</h2>
+              <h2 className="font-display text-lg font-bold text-ink"><Icon name="scale" size={15} className="mr-1 inline-block -mt-0.5" />Litiges {disputes.awaitingReply ? <span className="ml-1 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{disputes.awaitingReply} réponse(s) attendue(s)</span> : null}</h2>
               <div className="mt-2 space-y-3">
                 {openDisputes.filter(Boolean).map((x: any) => (
                   <details key={x.id} className="rounded-lg bg-slate-50 p-3" open={x.replyExpected}>
@@ -108,7 +109,7 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
             <ol className="mt-3 space-y-3 border-l-2 border-slate-100 pl-4 text-sm">
               {log.map((a: any) => (
                 <li key={a.id}>
-                  <p className="text-xs text-muted">{TYPE_ICON[a.type] ?? "•"} {dt(a.createdAt)} · {a.managerName ?? "Équipe"}{a.outcome ? ` · ${OUTCOME[a.outcome] ?? a.outcome}` : ""}{a.refKey ? ` · ${a.refKey.startsWith("stay") ? "séjour" : a.refKey.startsWith("event") ? "espace" : "litige"}` : ""}</p>
+                  <p className="text-xs text-muted"><Icon name={TYPE_ICON[a.type] ?? "pen"} size={13} className="mr-1 inline-block -mt-0.5" />{dt(a.createdAt)} · {a.managerName ?? "Équipe"}{a.outcome ? ` · ${OUTCOME[a.outcome] ?? a.outcome}` : ""}{a.refKey ? ` · ${a.refKey.startsWith("stay") ? "séjour" : a.refKey.startsWith("event") ? "espace" : "litige"}` : ""}</p>
                   <p className="whitespace-pre-line text-ink">{a.body}</p>
                 </li>
               ))}
@@ -117,7 +118,7 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
           </section>
         </div>
         <aside className="space-y-4">
-          <Link href={`/admin/comptes/academie?kind=${d.kind}&id=${encodeURIComponent(d.id)}`} className="flex items-center justify-between rounded-lg bg-white p-4 text-sm font-semibold text-brand-800 ring-1 ring-slate-200 hover:bg-slate-50">🎓 Écrire au client avec l’Académie <span aria-hidden>→</span></Link>
+          <Link href={`/admin/comptes/academie?kind=${d.kind}&id=${encodeURIComponent(d.id)}`} className="flex items-center justify-between rounded-lg bg-white p-4 text-sm font-semibold text-brand-800 ring-1 ring-slate-200 hover:bg-slate-50"><Icon name="graduation" size={15} className="mr-1 inline-block -mt-0.5" />Écrire au client avec l’Académie <span aria-hidden>→</span></Link>
           {canSupport ? <SupportLinkButton accountId={d.id} /> : null}
           {access ? <AccessPanel accountId={d.id} name={p.name} history={access} canDirect={canDirect} /> : null}
           <ActivityForm kind={d.kind} id={d.id} />

@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { fcfa, since } from "@/lib/am";
 import { addActivityAction, assignAction, bookingContactAction, changeDatesAction, confirmBookingAction, declineBookingAction, disputeReplyAction, sendPaymentLinkAction, taskDoneAction } from "@/app/admin/comptes/actions";
+import { Icon } from "@/components/team-icons";
 
 const input = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand-600 focus:outline-none";
 const digits = (p?: string | null) => String(p ?? "").replace(/\D/g, "");
@@ -62,7 +63,7 @@ export function AwaitingPaymentCard({ b }: { b: AwaitingPayment }) {
           <p className="text-xs font-semibold text-muted">Client</p>
           <p className="font-semibold text-ink">{b.guest.name || "—"}</p>
           <div className="mt-1 flex flex-wrap gap-2">
-            {b.guest.phone ? <a href={`tel:${b.guest.phone}`} onClick={() => bookingContactAction(b.key, "call", "", "Appel au client (acompte)")} className="rounded-full bg-brand-800 px-3 py-1 text-xs font-bold text-white">📞 Appeler {b.guest.phone}</a> : <span className="text-xs text-red-600">Pas de téléphone</span>}
+            {b.guest.phone ? <a href={`tel:${b.guest.phone}`} onClick={() => bookingContactAction(b.key, "call", "", "Appel au client (acompte)")} className="rounded-full bg-brand-800 px-3 py-1 text-xs font-bold text-white"><Icon name="phone" size={15} className="mr-1 inline-block -mt-0.5" />Appeler {b.guest.phone}</a> : <span className="text-xs text-red-600">Pas de téléphone</span>}
             {guestWa ? <a href={`https://wa.me/${guestWa}?text=${waText}`} target="_blank" rel="noreferrer" onClick={() => bookingContactAction(b.key, "whatsapp", "", "Lien de paiement envoyé au client par WhatsApp")} className="rounded-full bg-[#25D366] px-3 py-1 text-xs font-bold text-white">WhatsApp{url ? " + lien de paiement" : ""}</a> : null}
             <button type="button" disabled={pending} onClick={resend} className="rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300 disabled:opacity-50">{pending ? "…" : "Renvoyer le lien (SMS)"}</button>
           </div>
@@ -71,7 +72,7 @@ export function AwaitingPaymentCard({ b }: { b: AwaitingPayment }) {
         <div className="rounded-lg bg-slate-50 p-3">
           <p className="text-xs font-semibold text-muted">Hôte</p>
           <p className="font-semibold text-ink">{b.host.name || "—"}</p>
-          {b.host.phone ? <a href={`tel:${b.host.phone}`} className="mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300">📞 {b.host.phone}</a> : null}
+          {b.host.phone ? <a href={`tel:${b.host.phone}`} className="mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300"><Icon name="phone" size={15} className="mr-1 inline-block -mt-0.5" />{b.host.phone}</a> : null}
         </div>
       </div>
       <p className="mt-2 text-xs text-muted">
@@ -118,7 +119,7 @@ export function PendingBookingCard({ b }: { b: PendingBooking }) {
           <p className="text-sm text-slate-600">{b.place ? `${b.place} · ` : ""}{b.start} → {b.end} · {b.guests} pers. · {fcfa(b.amount)}{b.deposit ? ` (acompte ${fcfa(b.deposit)})` : ""}</p>
         </div>
         <span className={"shrink-0 rounded-full px-3 py-1 text-xs font-bold " + (b.urgent ? "bg-red-600 text-white" : "bg-amber-100 text-amber-900")}>
-          {b.urgent ? "📞 À appeler · " : "En attente · "}{since(b.waitingMinutes)}
+          {b.urgent ? "À appeler · " : "En attente · "}{since(b.waitingMinutes)}
         </span>
       </div>
       <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
@@ -126,7 +127,7 @@ export function PendingBookingCard({ b }: { b: PendingBooking }) {
           <p className="text-xs font-semibold text-muted">Hôte</p>
           <p className="font-semibold text-ink">{b.host.name || "—"}</p>
           <div className="mt-1 flex flex-wrap gap-2">
-            {b.host.phone ? <a href={`tel:${b.host.phone}`} onClick={() => bookingContactAction(b.key, "call", "", "Appel à l’hôte")} className="rounded-full bg-brand-800 px-3 py-1 text-xs font-bold text-white">📞 Appeler {b.host.phone}</a> : <span className="text-xs text-red-600">Pas de téléphone</span>}
+            {b.host.phone ? <a href={`tel:${b.host.phone}`} onClick={() => bookingContactAction(b.key, "call", "", "Appel à l’hôte")} className="rounded-full bg-brand-800 px-3 py-1 text-xs font-bold text-white"><Icon name="phone" size={15} className="mr-1 inline-block -mt-0.5" />Appeler {b.host.phone}</a> : <span className="text-xs text-red-600">Pas de téléphone</span>}
             {hostWa ? <a href={`https://wa.me/${hostWa}?text=${waText}`} target="_blank" rel="noreferrer" onClick={() => bookingContactAction(b.key, "whatsapp", "", "Message WhatsApp à l’hôte")} className="rounded-full bg-[#25D366] px-3 py-1 text-xs font-bold text-white">WhatsApp</a> : null}
             {b.host.id ? <Link href={`/admin/comptes/${b.host.kind}/${b.host.id}`} className="rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300">Fiche de suivi</Link> : null}
           </div>
@@ -135,7 +136,7 @@ export function PendingBookingCard({ b }: { b: PendingBooking }) {
           <p className="text-xs font-semibold text-muted">Client</p>
           <p className="font-semibold text-ink">{b.guest.name || "—"}</p>
           {!b.guest.phone ? <span className="text-xs text-red-600">Pas de téléphone</span> : null}
-          {b.guest.phone ? <div className="mt-1 flex flex-wrap gap-2"><a href={`tel:${b.guest.phone}`} onClick={() => bookingContactAction(b.key, "call", "", "Appel au client")} className="rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300">📞 Appeler {b.guest.phone}</a><a href={`https://wa.me/${digits(b.guest.phone)}`} target="_blank" rel="noreferrer" className="rounded-full px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-slate-300">WhatsApp</a></div> : null}
+          {b.guest.phone ? <div className="mt-1 flex flex-wrap gap-2"><a href={`tel:${b.guest.phone}`} onClick={() => bookingContactAction(b.key, "call", "", "Appel au client")} className="rounded-full px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300"><Icon name="phone" size={15} className="mr-1 inline-block -mt-0.5" />Appeler {b.guest.phone}</a><a href={`https://wa.me/${digits(b.guest.phone)}`} target="_blank" rel="noreferrer" className="rounded-full px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-slate-300">WhatsApp</a></div> : null}
         </div>
       </div>
       <p className="mt-2 text-xs text-muted">
@@ -171,7 +172,7 @@ export function PendingBookingCard({ b }: { b: PendingBooking }) {
   );
 }
 
-const TYPES: [string, string][] = [["call", "📞 Appel"], ["whatsapp", "💬 WhatsApp"], ["email", "✉️ E-mail"], ["visit", "🏠 Visite"], ["note", "📝 Note"], ["task", "⏰ Tâche à faire"]];
+const TYPES: [string, string][] = [["call", "Appel"], ["whatsapp", "WhatsApp"], ["email", "E-mail"], ["visit", "Visite"], ["note", "Note"], ["task", "Tâche à faire"]];
 
 /** Ajouter un contact, une note ou une tâche à la fiche de suivi. */
 export function ActivityForm({ kind, id }: { kind: string; id: string }) {
@@ -248,7 +249,7 @@ export function ChangeDates({ bookingKey, start: s0, end: e0, compact }: { booki
   const [pending, start] = useTransition();
   const [f, setF] = useState({ start: s0.slice(0, 10), end: e0.slice(0, 10), note: "", host: false, guest: false });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  if (!open) return <button type="button" onClick={() => setOpen(true)} className={compact ? "text-xs font-semibold text-brand-800 hover:underline" : "rounded-md px-3 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"}>📅 Changer les dates</button>;
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className={compact ? "text-xs font-semibold text-brand-800 hover:underline" : "rounded-md px-3 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"}><Icon name="calendar" size={15} className="mr-1 inline-block -mt-0.5" />Changer les dates</button>;
   return (
     <div className="mt-2 w-full space-y-2 rounded-lg bg-sky-50 p-3 text-sm" data-dates={bookingKey}>
       <div className="flex flex-wrap gap-2">

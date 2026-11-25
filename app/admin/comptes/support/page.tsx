@@ -29,7 +29,7 @@ export default async function AmSupport({ searchParams }: { searchParams: { stat
               {t.unread ? <span className="mt-1.5 h-2.5 w-2.5 rounded-full bg-amber-500" aria-label="Nouveau message" /> : <span className="mt-1.5 h-2.5 w-2.5" />}
               <span className="min-w-0 flex-1">
                 <span className="block font-semibold text-ink">{t.client?.name ?? "Client"} · <span className="font-normal">{t.subject}</span></span>
-                <span className="block truncate text-sm text-muted">{t.last ? `${t.last.staff ? "Vous : " : ""}${t.last.file ? "📷 " : ""}${t.last.body}` : "—"}</span>
+                <span className="block truncate text-sm text-muted">{t.last ? `${t.last.staff ? "Vous : " : ""}${t.last.file ? "" : ""}${t.last.body}` : "—"}</span>
               </span>
               <span className="text-right text-xs text-muted">
                 <span className={"mb-1 inline-block rounded-full px-2 py-0.5 font-semibold " + (ST[t.status]?.[1] ?? "")}>{ST[t.status]?.[0] ?? t.status}</span><br />{dt(t.updatedAt)}
