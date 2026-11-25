@@ -13,6 +13,10 @@ import { getModerationSummary } from "./backoffice-actions";
 import { getDisputeCounts } from "./litiges/actions";
 import { getServicesBadges } from "./services/actions";
 import { getAm } from "./comptes/actions";
+import { AmPortalNav, type AmPortalItem } from "@/components/backoffice/am-portal-nav";
+
+/** Permissions d'un rôle « account manager » (ou de son responsable) : ce rôle travaille dans le portail /am. */
+const AM_ONLY = ["users.view", "accounts", "accounts.all", "disputes", "analytics"];
 
 export const metadata: Metadata = { title: "Back-office", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -54,6 +58,56 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const perms = account.permissions ?? [];
+  const path = headers().get("x-moboo-path") ?? "/admin";
+  const amOnly = perms.includes("accounts") && perms.every((p) => AM_ONLY.includes(p));
+  // Account manager : son poste de travail est le portail /am (pas le back-office complet).
+  if (amOnly && path === "/admin") redirect("/am");
+  if (headers().get("x-moboo-portal") === "am") {
+    const amBadge = can(perms, "accounts") ? await getAm<{ urgent: number; pending: number }>("/badge").catch(() => null) : null;
+    const tabs: AmPortalItem[] = [
+      { href: "/am", label: "Aujourd’hui", emoji: "📞", badge: amBadge?.urgent ?? 0, main: true },
+      { href: "/am/reservations", label: "Réservations", emoji: "🛎️", badge: amBadge?.pending ?? 0, main: true },
+      { href: "/am/sejours", label: "Séjours", emoji: "🧳" },
+      { href: "/am/portefeuille", label: "Portefeuille", emoji: "👥", main: true },
+      { href: "/am/appels", label: "Appels", emoji: "☎️" },
+      { href: "/am/studio", label: "Publier", emoji: "✍️", main: true },
+      { href: "/am/liens-rapides", label: "Liens rapides", emoji: "🔗" },
+      { href: "/am/opportunites", label: "Opportunités", emoji: "💡" },
+      { href: "/am/taches", label: "Tâches", emoji: "✅" },
+      { href: "/am/performance", label: "Objectifs", emoji: "🎯" },
+      { href: "/am/journal", label: "Mes actions", emoji: "🗂️" },
+      ...(can(perms, "accounts.all") ? [{ href: "/am/equipes", label: "Équipes et zones", emoji: "🗺️" }] : []),
+    ];
+    const ok = canAccess(perms, path);
+    return (
+      <div className="min-h-[calc(100dvh-4rem)] bg-slate-100 pb-20 sm:pb-6">
+        <div className="mx-auto max-w-5xl px-3 pt-4 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="font-display text-lg font-black text-ink">Espace account manager</p>
+              <p className="text-xs text-muted">{displayName(account)}{account.adminRole ? ` · ${account.adminRole.name}` : ""}</p>
+            </div>
+            <div className="flex gap-2 text-xs font-semibold">
+              <Link href="/admin/securite" className="rounded-full bg-white px-3 py-1.5 text-ink ring-1 ring-slate-200">🔐 Sécurité</Link>
+              {!amOnly ? <Link href="/admin" className="rounded-full bg-ink px-3 py-1.5 text-white">Back-office complet</Link> : null}
+            </div>
+          </div>
+          <div className="mt-3"><AmPortalNav items={tabs} /></div>
+          <main className="mt-4 min-w-0">
+            {ok ? children : (
+              <div className="mx-auto max-w-lg rounded-lg bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
+                <p className="text-3xl">🔒</p>
+                <h1 className="mt-2 font-display text-xl font-extrabold text-ink">Accès refusé</h1>
+                <p className="mt-2 text-sm text-muted">Votre rôle ({account.adminRole?.name ?? "—"}) ne donne pas accès à cet écran.</p>
+                <Link href="/am" className="mt-5 inline-flex rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Aujourd’hui</Link>
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   const [settings, mod] = await Promise.all([
     getAdminSettings(),
     can(perms, "moderation") ? getModerationSummary() : Promise.resolve(null),
@@ -161,6 +215,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ].map(([href, label]) => ({ href, label, icon: "building", child: true, group: "immobilier" })),
     // Account managers (façon Booking.com) : réservations à confirmer pour l'hôte, portefeuille, suivi.
     { href: "/admin/comptes", label: "Suivi des comptes", icon: "users", group: "comptes", badge: am?.urgent ?? 0 },
+    { href: "/am", label: "Ouvrir l’espace account manager", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/appels", label: "Appels du jour", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/reservations", label: "Réservations à confirmer", icon: "users", child: true, group: "comptes", badge: am?.pending ?? 0 },
     { href: "/admin/comptes/sejours", label: "Séjours en cours", icon: "users", child: true, group: "comptes" },
@@ -247,7 +302,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ];
   // Menu limité aux rubriques du rôle ; une adresse ouverte directement sans droit affiche « Accès refusé ».
   const visible = items.filter((it) => canAccess(perms, it.href));
-  const path = headers().get("x-moboo-path") ?? "/admin";
   const allowed = canAccess(perms, path);
 
   return (

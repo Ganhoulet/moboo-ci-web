@@ -14,7 +14,7 @@ export function VerificationDeadlineBar({ d, docs }: { d: VerificationDeadline; 
   useEffect(() => {
     try { if (sessionStorage.getItem(KEY) === "1") setHidden(true); } catch { /* stockage indisponible */ }
   }, []);
-  if (path.startsWith("/admin") || path.startsWith("/mon-espace/verification")) return null;
+  if (path.startsWith("/admin") || path === "/am" || path.startsWith("/am/") || path.startsWith("/mon-espace/verification")) return null;
   const urgent = d.overdue || d.daysLeft <= 7;
   if (hidden && !urgent) return null;
 
