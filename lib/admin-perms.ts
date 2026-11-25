@@ -66,6 +66,8 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/formulaires", ["settings"]],
   ["/admin/comptes/reglages", ["settings"]],
   ["/admin/comptes", ["accounts"]],
+  // Portail des account managers (moboo.ci/am → écrans du suivi des comptes).
+  ["/am", ["accounts"]],
   ["/admin", "any"],
 ];
 
