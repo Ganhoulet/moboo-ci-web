@@ -84,6 +84,13 @@ export async function openAssistAction(sessionId: string, code: string, accountI
   startAssist({ accessToken: data.accessToken, expiresIn: data.expiresIn }, data.account, { id: data.sessionId, accountId, name, endsAt: new Date(data.endsAt).toISOString() });
   redirect("/mon-espace");
 }
+/** Connexion directe au compte d'un client de son portefeuille (permission dédiée, motif obligatoire). */
+export async function directAssistAction(accountId: string, name: string, reason: string): Promise<R> {
+  const { ok, data } = await authedFetch(`/site/admin/am/accounts/site/${encodeURIComponent(accountId)}/direct`, { method: "POST", body: JSON.stringify({ reason }) });
+  if (!ok) return { ok: false, error: err(data, "Connexion impossible.") };
+  startAssist({ accessToken: data.accessToken, expiresIn: data.expiresIn }, data.account, { id: data.sessionId, accountId, name, endsAt: new Date(data.endsAt).toISOString() });
+  redirect("/mon-espace");
+}
 export async function recoveryAction(accountId: string): Promise<R & { data?: any }> {
   return send(`/accounts/site/${encodeURIComponent(accountId)}/recovery`, "POST", {});
 }
@@ -100,4 +107,29 @@ export async function saveGoalsAction(managerId: string, period: string, goals: 
 /** Parcours de démarrage : créer tout de suite les tâches de relance des hôtes bloqués (sinon chaque matin). */
 export async function runJourneyTasksAction(): Promise<void> {
   await send("/journey/tasks/run", "POST", {});
+}
+
+// ─── Lien support (client : message + capture) ────────────────────────────
+export async function createSupportLinkAction(accountId: string, subject: string): Promise<R & { data?: { url: string; phone: string | null; whatsappText: string; id: string } }> {
+  return send(`/accounts/site/${encodeURIComponent(accountId)}/support-link`, "POST", { subject });
+}
+export async function supportReplyAction(id: string, message: string): Promise<R> {
+  return send(`/support/${encodeURIComponent(id)}/reply`, "POST", { message });
+}
+export async function supportStatusAction(id: string, status: "ouvert" | "ferme"): Promise<R> {
+  return send(`/support/${encodeURIComponent(id)}/status`, "POST", { status });
+}
+
+// ─── Académie (messages prêts à l'emploi) ────────────────────────────────
+export async function saveTemplateAction(id: string | null, input: Record<string, unknown>): Promise<R> {
+  const { ok, data } = await authedFetch(`/site/admin/am/academy/templates${id ? `/${encodeURIComponent(id)}` : ""}`, { method: id ? "PUT" : "POST", body: JSON.stringify(input) });
+  if (!ok) return { ok: false, error: err(data, "Enregistrement impossible.") };
+  revalidatePath("/admin/comptes/academie");
+  return { ok: true };
+}
+export async function deleteTemplateAction(id: string): Promise<R> {
+  const { ok, data } = await authedFetch(`/site/admin/am/academy/templates/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!ok) return { ok: false, error: err(data, "Suppression impossible.") };
+  revalidatePath("/admin/comptes/academie");
+  return { ok: true };
 }

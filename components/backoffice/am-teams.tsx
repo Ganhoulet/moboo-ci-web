@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { deleteTeamAction, distributeAction, runAlertsAction, saveMemberAction, saveTeamAction } from "@/app/admin/comptes/actions";
 
 const input = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand-600 focus:outline-none";
+/** Spécialité d'un account manager : produits suivis (rien de coché = tout). */
+export const SPECIALTIES: [string, string][] = [["org", "Résidences meublées"], ["event", "Espaces événementiels"], ["site", "Annonces immobilières"]];
+
 export interface AmTeam { id: string; name: string; zones: string[]; leadId: string | null; members: string[] }
-export interface AmManager { id: string; name: string; phone: string; lead: boolean; teamId: string | null; zones: string[]; active: boolean; alertPhone: string | null; maxAccounts: number | null; accounts: number }
+export interface AmManager { id: string; name: string; phone: string; lead: boolean; teamId: string | null; zones: string[]; active: boolean; alertPhone: string | null; maxAccounts: number | null; accounts: number; kinds?: string[]; listingTypes?: string[] }
 
 /** Équipe d'account managers : nom, zones couvertes, responsable, membres. */
 export function TeamCard({ team, managers, canEdit }: { team: AmTeam | null; managers: AmManager[]; canEdit: boolean }) {
@@ -56,10 +59,13 @@ export function TeamCard({ team, managers, canEdit }: { team: AmTeam | null; man
 export function MemberRow({ m, teams, canEdit, isMe }: { m: AmManager; teams: AmTeam[]; canEdit: boolean; isMe: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [f, setF] = useState({ teamId: m.teamId ?? "", zones: m.zones.join(", "), active: m.active, alertPhone: m.alertPhone ?? "", maxAccounts: m.maxAccounts ? String(m.maxAccounts) : "" });
+  const [f, setF] = useState({ teamId: m.teamId ?? "", zones: m.zones.join(", "), active: m.active, alertPhone: m.alertPhone ?? "", maxAccounts: m.maxAccounts ? String(m.maxAccounts) : "", kinds: m.kinds ?? [], listingTypes: (m.listingTypes ?? []).join(", ") });
+  const toggleKind = (k: string) => setF({ ...f, kinds: f.kinds.includes(k) ? f.kinds.filter((x) => x !== k) : [...f.kinds, k] });
   const [msg, setMsg] = useState<string | null>(null);
   const save = () => start(async () => {
-    const body = canEdit ? { teamId: f.teamId || null, zones: f.zones, active: f.active, alertPhone: f.alertPhone, maxAccounts: f.maxAccounts } : { active: f.active, alertPhone: f.alertPhone };
+    const body = canEdit
+      ? { teamId: f.teamId || null, zones: f.zones, active: f.active, alertPhone: f.alertPhone, maxAccounts: f.maxAccounts, kinds: f.kinds, listingTypes: f.listingTypes.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean) }
+      : { active: f.active, alertPhone: f.alertPhone };
     const r = await saveMemberAction(m.id, body);
     setMsg(r.ok ? "✓" : r.error ?? "Erreur."); if (r.ok) router.refresh();
   });
@@ -68,6 +74,15 @@ export function MemberRow({ m, teams, canEdit, isMe }: { m: AmManager; teams: Am
     <tr className="border-t border-slate-100 align-top" data-member={m.id}>
       <td className="p-3"><b>{m.name}</b>{m.lead ? <span className="ml-1 rounded bg-violet-50 px-1.5 text-[11px] font-semibold text-violet-800">responsable</span> : null}<br /><span className="text-xs text-muted">{m.phone} · {m.accounts} compte(s)</span></td>
       <td className="p-3"><select className={input} value={f.teamId} disabled={!canEdit} onChange={(e) => setF({ ...f, teamId: e.target.value })} aria-label="Équipe"><option value="">— Sans équipe —</option>{teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></td>
+      <td className="p-3">
+        <div className="flex flex-col gap-1 text-xs">
+          {SPECIALTIES.map(([k, l]) => (
+            <label key={k} className="flex items-center gap-1.5"><input type="checkbox" className="h-3.5 w-3.5" checked={f.kinds.includes(k)} disabled={!canEdit} onChange={() => toggleKind(k)} />{l}</label>
+          ))}
+          <span className="text-[11px] text-muted">{f.kinds.length ? "" : "Rien de coché : tout"}</span>
+        </div>
+        {!f.kinds.length || f.kinds.includes("site") ? <input className={input + " mt-1"} placeholder="Types d’annonces : terrain, villa…" value={f.listingTypes} disabled={!canEdit} onChange={(e) => setF({ ...f, listingTypes: e.target.value })} aria-label="Types d’annonces suivis" /> : null}
+      </td>
       <td className="p-3"><input className={input} placeholder="Zones en plus de l’équipe" value={f.zones} disabled={!canEdit} onChange={(e) => setF({ ...f, zones: e.target.value })} aria-label="Zones propres" /></td>
       <td className="p-3"><input className={input} placeholder="Numéro d’alerte" value={f.alertPhone} disabled={!edit} onChange={(e) => setF({ ...f, alertPhone: e.target.value })} aria-label="Numéro d’alerte" /></td>
       <td className="p-3"><input className={input + " w-20"} inputMode="numeric" placeholder="∞" value={f.maxAccounts} disabled={!canEdit} onChange={(e) => setF({ ...f, maxAccounts: e.target.value.replace(/\D/g, "") })} aria-label="Plafond" /></td>

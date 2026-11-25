@@ -5,7 +5,7 @@ import { Journey, JourneyChip } from "@/components/backoffice/am-journey";
 export const dynamic = "force-dynamic";
 
 type Funnel = {
-  product: string; scope: string; stage: string | null; stuckOnly: boolean; canSeeAll: boolean; total: number;
+  product: string; scope: string; stage: string | null; stuckOnly: boolean; canSeeAll: boolean; canProspect?: boolean; total: number;
   stages: { key: string; label: string; count: number; stuck: number }[];
   items: { id: string; kind: string; name: string; phone: string | null; whatsapp: string | null; city: string | null; journey: Journey; managerName: string | null }[];
 };
@@ -25,7 +25,7 @@ export default async function AmJourney({ searchParams }: { searchParams: { scop
   const d = await getAm<Funnel>(`/journey?${qs}`);
   if (!d) return <p className="rounded-lg bg-white p-6 text-sm text-red-600 ring-1 ring-slate-200">Parcours indisponible.</p>;
   const link = (p: Record<string, string>) => `?${new URLSearchParams({ product, scope: d.scope, ...(d.stage ? { stage: d.stage } : {}), ...(d.stuckOnly ? { stuck: "1" } : {}), ...p })}`;
-  const scopes: [string, string][] = [["mine", "Mon portefeuille"], ["unassigned", "Sans account manager"], ...(d.canSeeAll ? [["all", "Tous les comptes"] as [string, string]] : [])];
+  const scopes: [string, string][] = [["mine", "Mon portefeuille"], ...(d.canProspect !== false ? [["unassigned", "Sans account manager"] as [string, string]] : []), ...(d.canSeeAll ? [["all", "Tous les comptes"] as [string, string]] : [])];
   const max = Math.max(1, ...d.stages.map((s) => s.count));
   return (
     <div className="space-y-4">

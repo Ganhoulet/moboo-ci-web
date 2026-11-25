@@ -38,7 +38,7 @@ export default async function AmTeams() {
         <h2 className="font-display text-lg font-bold text-ink">Account managers</h2>
         <div className="overflow-x-auto rounded-lg bg-white ring-1 ring-slate-200">
           <table className="w-full min-w-[960px] text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase text-muted"><tr><th className="p-3">Nom</th><th className="p-3">Équipe</th><th className="p-3">Zones propres</th><th className="p-3">Alertes au</th><th className="p-3">Plafond</th><th className="p-3">Disponibilité</th><th className="p-3" /></tr></thead>
+            <thead className="bg-slate-50 text-left text-xs uppercase text-muted"><tr><th className="p-3">Nom</th><th className="p-3">Équipe</th><th className="p-3">Spécialité</th><th className="p-3">Zones propres</th><th className="p-3">Alertes au</th><th className="p-3">Plafond</th><th className="p-3">Disponibilité</th><th className="p-3" /></tr></thead>
             <tbody>
               {d.managers.map((m) => <MemberRow key={`${m.id}-${m.teamId}-${m.zones.join(",")}-${m.active}-${m.alertPhone}-${m.maxAccounts}`} m={m} teams={d.teams} canEdit={canEdit} isMe={m.id === meId} />)}
               {!d.managers.length ? <tr><td colSpan={7} className="p-6 text-center text-muted">Donnez le rôle « Account manager » à vos commerciaux dans <Link href="/admin/administrateurs" className="underline">Administrateurs</Link>.</td></tr> : null}

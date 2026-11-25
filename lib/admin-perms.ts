@@ -4,7 +4,9 @@
 
 export type Permission =
   | "users.view" | "users.manage" | "roles" | "audit" | "moderation" | "listings" | "realestate"
-  | "verifications" | "billing" | "disputes" | "services" | "analytics" | "marketing" | "seo" | "pages" | "app" | "settings" | "accounts" | "accounts.all";
+  | "verifications" | "billing" | "disputes" | "services" | "analytics" | "marketing" | "seo" | "pages" | "app" | "settings" | "accounts" | "accounts.all"
+  // Fonctions du poste d'account manager (réglables par rôle).
+  | "am.bookings" | "am.studio" | "am.links" | "am.assist" | "am.reco" | "am.prospect" | "am.impersonate" | "am.support";
 
 /** Permission(s) exigée(s) par chaque rubrique (préfixe d'adresse ; la plus précise gagne). */
 const RULES: [string, Permission[] | "any" | "super"][] = [
@@ -65,6 +67,14 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/fonctionnalites", ["settings"]],
   ["/admin/formulaires", ["settings"]],
   ["/admin/comptes/reglages", ["settings"]],
+  ["/admin/comptes/reservations", ["am.bookings"]],
+  ["/admin/comptes/sejours", ["am.bookings"]],
+  ["/admin/comptes/studio/reglages", ["settings"]],
+  ["/admin/comptes/studio", ["am.studio"]],
+  ["/admin/comptes/liens-rapides/reglages", ["settings"]],
+  ["/admin/comptes/liens-rapides", ["am.links"]],
+  ["/admin/comptes/opportunites", ["am.reco"]],
+  ["/admin/comptes/support", ["am.support"]],
   ["/admin/comptes", ["accounts"]],
   // Portail des account managers (moboo.ci/am → écrans du suivi des comptes).
   ["/am", ["accounts"]],

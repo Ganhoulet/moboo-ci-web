@@ -52,12 +52,24 @@ export async function middleware(req: NextRequest) {
   const known = req.cookies.get(DID)?.value;
   const did = known && /^[\w-]{16,64}$/.test(known) ? known : crypto.randomUUID();
   req.headers.set("x-moboo-did", did);
+  // Adresse dédiée des account managers (am.moboo.ci) : l'accueil ouvre leur portail,
+  // la connexion porte leur nom ; rien n'y est indexé par les moteurs de recherche.
+  const amHost = /^am\./i.test((req.headers.get("host") || "").split(":")[0]);
+  if (amHost) {
+    req.headers.set("x-moboo-am-host", "1");
+    if (req.nextUrl.pathname === "/") {
+      const url = req.nextUrl.clone();
+      url.pathname = "/am";
+      return NextResponse.redirect(url, 307);
+    }
+  } else req.headers.delete("x-moboo-am-host");
   const portal = portalOf(req);
   if (portal.redirect) return NextResponse.redirect(portal.redirect, 307);
   const res = await handle(req, portal.rewrite);
   if (did !== known) res.cookies.set(DID, did, { ...cookieOpts, maxAge: 60 * 60 * 24 * 365 });
   if (portal.cookie === "set") res.cookies.set(PORTAL, "am", { ...cookieOpts, maxAge: 60 * 60 * 24 * 30 });
   if (portal.cookie === "clear") res.cookies.delete(PORTAL);
+  if (amHost) res.headers.set("X-Robots-Tag", "noindex, nofollow");
   return res;
 }
 

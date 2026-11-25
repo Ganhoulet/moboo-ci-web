@@ -16,7 +16,7 @@ import { getAm } from "./comptes/actions";
 import { AmPortalNav, type AmPortalItem } from "@/components/backoffice/am-portal-nav";
 
 /** Permissions d'un rôle « account manager » (ou de son responsable) : ce rôle travaille dans le portail /am. */
-const AM_ONLY = ["users.view", "accounts", "accounts.all", "disputes", "analytics"];
+const AM_ONLY = ["users.view", "accounts", "accounts.all", "disputes", "analytics", "am.bookings", "am.studio", "am.links", "am.assist", "am.reco", "am.prospect", "am.impersonate", "am.support"];
 
 export const metadata: Metadata = { title: "Back-office", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -63,7 +63,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Account manager : son poste de travail est le portail /am (pas le back-office complet).
   if (amOnly && path === "/admin") redirect("/am");
   if (headers().get("x-moboo-portal") === "am") {
-    const amBadge = can(perms, "accounts") ? await getAm<{ urgent: number; pending: number }>("/badge").catch(() => null) : null;
+    const [amBadge, amSupport, mine] = await Promise.all([
+      can(perms, "accounts") ? getAm<{ urgent: number; pending: number }>("/badge").catch(() => null) : null,
+      can(perms, "am.support") ? getAm<{ unread: number }>("/support?status=ouvert").catch(() => null) : null,
+      getAm<{ name: string; avatarUrl: string | null; kinds: string[]; listingTypes: string[]; zones: string[]; team: { name: string } | null }>("/me").catch(() => null),
+    ]);
+    // Spécialité : produits suivis (rien de réglé = tout ; le responsable voit tout).
+    const kinds = can(perms, "accounts.all") || !mine?.kinds?.length ? ["org", "event", "site"] : mine.kinds;
+    const hosts = kinds.includes("org") || kinds.includes("event");
+    const ads = kinds.includes("site");
+    const KIND_NAME: Record<string, string> = { org: "Résidences meublées", event: "Espaces événementiels", site: "Annonces immobilières" };
+    const specialty = [
+      mine?.kinds?.length ? mine.kinds.map((k) => KIND_NAME[k] ?? k).join(", ") : "Tous les produits",
+      mine?.listingTypes?.length ? mine.listingTypes.join(", ") : null,
+      mine?.zones?.length ? mine.zones.slice(0, 4).join(", ") + (mine.zones.length > 4 ? "…" : "") : null,
+    ].filter(Boolean).join(" · ");
     const tabs: AmPortalItem[] = [
       { href: "/am", label: "Aujourd’hui", emoji: "📞", badge: amBadge?.urgent ?? 0, main: true },
       { href: "/am/reservations", label: "Réservations", emoji: "🛎️", badge: amBadge?.pending ?? 0, main: true },
@@ -73,26 +87,40 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       { href: "/am/studio", label: "Publier", emoji: "✍️", main: true },
       { href: "/am/liens-rapides", label: "Liens rapides", emoji: "🔗" },
       { href: "/am/opportunites", label: "Opportunités", emoji: "💡" },
+      { href: "/am/support", label: "Support", emoji: "💬", badge: amSupport?.unread ?? 0 },
       { href: "/am/taches", label: "Tâches", emoji: "✅" },
       { href: "/am/performance", label: "Objectifs", emoji: "🎯" },
       { href: "/am/journal", label: "Mes actions", emoji: "🗂️" },
+      { href: "/am/academie", label: "Académie", emoji: "🎓" },
+      { href: "/am/guide", label: "Guide", emoji: "📘" },
       ...(can(perms, "accounts.all") ? [{ href: "/am/equipes", label: "Équipes et zones", emoji: "🗺️" }] : []),
     ];
     const ok = canAccess(perms, path);
+    // Onglets selon les fonctions du rôle (réglables dans Rôles et permissions).
+    const BY_KIND: Record<string, boolean> = { "/am/reservations": hosts, "/am/sejours": hosts, "/am/opportunites": hosts, "/am/studio": ads, "/am/liens-rapides": ads };
+    const allowedTabs = tabs.filter((t) => canAccess(perms, t.href.replace(/^\/am/, "/admin/comptes")) && BY_KIND[t.href] !== false);
     return (
       <div className="min-h-[calc(100dvh-4rem)] bg-slate-100 pb-20 sm:pb-6">
         <div className="mx-auto max-w-5xl px-3 pt-4 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="font-display text-lg font-black text-ink">Espace account manager</p>
-              <p className="text-xs text-muted">{displayName(account)}{account.adminRole ? ` · ${account.adminRole.name}` : ""}</p>
+            <div className="flex items-center gap-3">
+              <Link href="/mon-espace/profil" className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-brand-800 font-bold text-white" title="Mon profil (photo, coordonnées)">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {mine?.avatarUrl ? <img src={mine.avatarUrl} alt="" className="h-full w-full object-cover" /> : (displayName(account) || "AM").slice(0, 2).toUpperCase()}
+              </Link>
+              <div>
+                <p className="font-display text-lg font-black text-ink">Espace account manager</p>
+                <p className="text-xs text-muted">{displayName(account)}{account.adminRole ? ` · ${account.adminRole.name}` : ""}{mine?.team ? ` · ${mine.team.name}` : ""}</p>
+                <p className="text-[11px] font-semibold text-brand-800">{specialty}</p>
+              </div>
             </div>
             <div className="flex gap-2 text-xs font-semibold">
+              <Link href="/mon-espace/profil" className="rounded-full bg-white px-3 py-1.5 text-ink ring-1 ring-slate-200">👤 Mon profil</Link>
               <Link href="/admin/securite" className="rounded-full bg-white px-3 py-1.5 text-ink ring-1 ring-slate-200">🔐 Sécurité</Link>
               {!amOnly ? <Link href="/admin" className="rounded-full bg-ink px-3 py-1.5 text-white">Back-office complet</Link> : null}
             </div>
           </div>
-          <div className="mt-3"><AmPortalNav items={tabs} /></div>
+          <div className="mt-3"><AmPortalNav items={allowedTabs} /></div>
           <main className="mt-4 min-w-0">
             {ok ? children : (
               <div className="mx-auto max-w-lg rounded-lg bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
@@ -224,6 +252,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/comptes/studio", label: "Studio de publication", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/liens-rapides", label: "Liens rapides", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/opportunites", label: "Centre des opportunités", icon: "users", child: true, group: "comptes" },
+    { href: "/admin/comptes/support", label: "Support de mes clients", icon: "users", child: true, group: "comptes" },
+    { href: "/admin/comptes/academie", label: "Académie (messages)", icon: "users", child: true, group: "comptes" },
+    { href: "/admin/comptes/guide", label: "Guide de l’account manager", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/taches", label: "Tâches", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/equipes", label: "Équipes et zones", icon: "users", child: true, group: "comptes" },
     { href: "/admin/comptes/performance", label: "Objectifs et performance", icon: "users", child: true, group: "comptes" },

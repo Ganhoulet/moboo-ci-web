@@ -10,7 +10,9 @@ const KIND_LABEL: Record<string, string> = { org: "Résidences (Moboo Resi)", ev
 
 /** Account manager : à appeler maintenant, tâches du jour, portefeuille. */
 export default async function AmDashboard() {
-  const d = await getAm<any>("/overview");
+  const [d, mine] = await Promise.all([getAm<any>("/overview"), getAm<{ kinds?: string[] }>("/me")]);
+  // Spécialité : seulement ses produits dans « Mon portefeuille » (rien de réglé = tous).
+  const kinds = Object.keys(KIND_LABEL).filter((k) => d?.canSeeAll || !mine?.kinds?.length || mine.kinds.includes(k));
   const phoneChanges = d?.canSeeAll ? await getAm<any[]>("/phone-changes") : null;
   if (!d) return <p className="rounded-lg bg-white p-6 text-sm text-red-600 ring-1 ring-slate-200">Suivi des comptes indisponible.</p>;
   return (
@@ -25,7 +27,7 @@ export default async function AmDashboard() {
       </div>
 
       <PhoneChangeQueue items={phoneChanges ?? []} meId={getSession()?.id ?? ""} />
-      <section className="space-y-3">
+      {d.canBookings !== false ? <section className="space-y-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-display text-lg font-bold text-ink">📞 À appeler maintenant ({d.urgent.length})</h2>
           <Link href="/admin/comptes/reservations" className="text-sm font-semibold text-brand-800 hover:underline">Toutes les demandes en attente ({d.pendingCount}) →</Link>
@@ -33,7 +35,7 @@ export default async function AmDashboard() {
         {d.urgent.length ? d.urgent.map((b: PendingBooking) => <PendingBookingCard key={b.key} b={b} />) : (
           <p className="rounded-lg bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">Aucune réservation en retard : les hôtes de votre portefeuille ont tous répondu.</p>
         )}
-      </section>
+      </section> : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
@@ -55,15 +57,15 @@ export default async function AmDashboard() {
         <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
           <h2 className="font-display text-lg font-bold text-ink">💼 Mon portefeuille</h2>
           <ul className="mt-2 space-y-2 text-sm">
-            {Object.entries(KIND_LABEL).map(([k, l]) => (
+            {kinds.map((k) => [k, KIND_LABEL[k]] as const).map(([k, l]) => (
               <li key={k} className="flex items-center justify-between">
                 <Link href={`/admin/comptes/portefeuille?kind=${k}`} className="font-semibold text-brand-800 hover:underline">{l}</Link>
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 font-bold text-ink">{d.portfolio[k] ?? 0}</span>
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-xs text-muted">Un compte rejoint votre portefeuille quand on vous l’attribue, ou dès votre premier contact noté s’il n’a pas encore d’account manager.</p>
-          <Link href="/admin/comptes/portefeuille?kind=org&scope=unassigned" className="mt-2 inline-block text-sm font-semibold text-brand-800 hover:underline">Comptes sans account manager →</Link>
+          <p className="mt-3 text-xs text-muted">{d.canProspect !== false ? "Un compte rejoint votre portefeuille quand on vous l’attribue, ou dès votre premier contact noté s’il n’a pas encore d’account manager." : "Votre portefeuille : les comptes qu’un responsable vous a attribués."}</p>
+          {d.canProspect !== false ? <Link href="/admin/comptes/portefeuille?kind=org&scope=unassigned" className="mt-2 inline-block text-sm font-semibold text-brand-800 hover:underline">Comptes sans account manager →</Link> : null}
         </section>
       </div>
 

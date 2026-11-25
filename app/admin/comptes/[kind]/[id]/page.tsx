@@ -5,6 +5,7 @@ import { ActivityForm, AssignControl, ChangeDates, DisputeReply, TaskCheck } fro
 import { fcfa } from "@/lib/am";
 import { RecoList } from "@/components/backoffice/am-reco";
 import { AccessPanel } from "@/components/backoffice/am-access";
+import { SupportLinkButton } from "@/components/backoffice/am-support";
 import { HostActivityPanel } from "@/components/backoffice/am-activity";
 import { HealthPanel } from "@/components/backoffice/am-health";
 import { JourneySteps } from "@/components/backoffice/am-journey";
@@ -24,6 +25,9 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
   if (!d) notFound();
   // Litiges de l'hôte (résidences et espaces) : ouverts en détail, pour répondre à sa place.
   const access = d.kind === "site" ? await getAm<any>(`/accounts/site/${encodeURIComponent(d.id)}/access`) : null;
+  const mine = await getAm<{ permissions?: string[] }>("/me");
+  const canDirect = d.kind === "site" && (mine?.permissions ?? []).includes("am.impersonate");
+  const canSupport = d.kind === "site" && (mine?.permissions ?? []).includes("am.support");
   const reco = await getAm<any>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/recommendations`);
   const disputes = d.kind === "site" ? null : await getAm<{ items: any[]; awaitingReply: number }>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/disputes`);
   const openDisputes = await Promise.all((disputes?.items ?? []).filter((x) => x.open).slice(0, 5).map((x) => getAm<any>(`/accounts/${d.kind}/${encodeURIComponent(d.id)}/disputes/${x.id}`)));
@@ -113,7 +117,9 @@ export default async function AmAccount({ params, searchParams }: { params: { ki
           </section>
         </div>
         <aside className="space-y-4">
-          {access ? <AccessPanel accountId={d.id} name={p.name} history={access} /> : null}
+          <Link href={`/admin/comptes/academie?kind=${d.kind}&id=${encodeURIComponent(d.id)}`} className="flex items-center justify-between rounded-lg bg-white p-4 text-sm font-semibold text-brand-800 ring-1 ring-slate-200 hover:bg-slate-50">🎓 Écrire au client avec l’Académie <span aria-hidden>→</span></Link>
+          {canSupport ? <SupportLinkButton accountId={d.id} /> : null}
+          {access ? <AccessPanel accountId={d.id} name={p.name} history={access} canDirect={canDirect} /> : null}
           <ActivityForm kind={d.kind} id={d.id} />
           <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
             <h2 className="font-display text-base font-bold text-ink">Tâches</h2>

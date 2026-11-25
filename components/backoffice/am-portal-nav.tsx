@@ -32,9 +32,9 @@ export function AmPortalNav({ items }: { items: AmPortalItem[] }) {
         </ul>
       </nav>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden">
-        <ul className="grid grid-cols-4">
+        <ul className="flex">
           {items.filter((it) => it.main).map((it) => (
-            <li key={it.href}>
+            <li key={it.href} className="flex-1">
               <Link href={it.href} className={"flex flex-col items-center gap-0.5 py-2 text-[11px] font-semibold " + (on(it.href) ? "text-brand-800" : "text-slate-500")}>
                 <span className="relative text-lg leading-none" aria-hidden>
                   {it.emoji}
