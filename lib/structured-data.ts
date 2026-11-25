@@ -28,6 +28,15 @@ export function organizationLd(o: { name: string; logoUrl?: string; sameAs?: str
   };
 }
 
+/** Le site pour Google : nom affiché dans les résultats et champ de recherche des annonces. */
+export function websiteLd(name: string) {
+  return {
+    "@context": "https://schema.org", "@type": "WebSite",
+    name: name || "Moboo.ci", alternateName: ["Moboo", "moboo.ci"], url: SITE_URL, inLanguage: "fr-CI",
+    potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/annonces?q={search_term_string}` }, "query-input": "required name=search_term_string" },
+  };
+}
+
 /** Vidéo de présentation d'une fiche (YouTube, TikTok, Bunny, fichier). Null si pas de miniature possible. */
 export function videoLd(v: { url: string | null | undefined; name: string; description?: string | null; thumbnail?: string | null; uploadDate?: string | null }) {
   if (!v.url || !/^https?:\/\//i.test(v.url)) return null;

@@ -106,8 +106,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   branding: {
     siteName: "Moboo.ci", logoUrl: "", logoHeight: 32, faviconUrl: "",
     footerTagline: "Louer, acheter, réserver — l’immobilier en Côte d’Ivoire.",
-    seoTitle: "Moboo.ci — Louer, acheter & réserver en Côte d’Ivoire",
-    seoDescription: "L’immobilier en Côte d’Ivoire : biens à louer, à vendre, résidences meublées et espaces événementiels. Réservation en ligne sécurisée quand c’est possible.",
+    seoTitle: "Location, vente, meublés à Abidjan et en Côte d’Ivoire | Moboo.ci",
+    seoDescription: "Appartements, maisons, villas et studios à louer ou à vendre, meublés et terrains à Abidjan et en Côte d’Ivoire. Contact direct avec agences et propriétaires.",
   },
   header: {
     headerStyle: "classic", headerLayout: "container", navAlign: "center", headerAddress: "", headerHours: "",

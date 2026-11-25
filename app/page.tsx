@@ -5,7 +5,7 @@ import { getHomeData, getHomePage } from "@/lib/pages";
 import { normalizeHome } from "@/lib/page-blocks";
 import { HomeSection } from "@/components/home/sections";
 import { getSiteSettings } from "@/lib/settings";
-import { ldJson, organizationLd } from "@/lib/structured-data";
+import { ldJson, organizationLd, websiteLd } from "@/lib/structured-data";
 import { LivePage } from "@/components/builder/live-page";
 import { EditButtons } from "@/components/builder/edit-buttons";
 
@@ -36,6 +36,7 @@ export default async function HomePage({ searchParams }: { searchParams: { aperc
   return (
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(org) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(websiteLd(branding.siteName)) }} />
       {preview && !live ? (
         <div className="sticky top-16 z-30 bg-amber-400 px-4 py-2 text-center text-sm font-semibold text-amber-950">
           Aperçu du brouillon — non visible des visiteurs. <Link href="/admin/accueil" className="underline">Retour au constructeur</Link>
