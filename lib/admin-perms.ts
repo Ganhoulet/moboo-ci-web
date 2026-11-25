@@ -3,7 +3,7 @@
 // « Accès refusé » au lieu d'une page vide.
 
 export type Permission =
-  | "users.view" | "users.manage" | "roles" | "audit" | "moderation" | "listings" | "realestate"
+  | "users.view" | "users.manage" | "backoffice" | "roles" | "audit" | "moderation" | "listings" | "realestate"
   | "verifications" | "billing" | "disputes" | "services" | "analytics" | "marketing" | "seo" | "pages" | "app" | "settings" | "accounts" | "accounts.all"
   // Fonctions du poste d'account manager (réglables par rôle).
   | "am.bookings" | "am.studio" | "am.links" | "am.assist" | "am.reco" | "am.prospect" | "am.impersonate" | "am.support";

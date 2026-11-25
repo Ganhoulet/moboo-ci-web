@@ -18,8 +18,6 @@ import { Icon } from "@/components/team-icons";
 import { SoundAlerts } from "@/components/backoffice/sound-alerts";
 import { teamGroupsFor } from "@/lib/team-space";
 
-/** Permissions d'un rôle « account manager » (ou de son responsable) : ce rôle travaille dans le portail /am. */
-const AM_ONLY = ["users.view", "accounts", "accounts.all", "disputes", "analytics", "am.bookings", "am.studio", "am.links", "am.assist", "am.reco", "am.prospect", "am.impersonate", "am.support"];
 
 export const metadata: Metadata = { title: "Back-office", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -62,10 +60,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const perms = account.permissions ?? [];
   const path = headers().get("x-moboo-path") ?? "/admin";
-  const amOnly = perms.includes("accounts") && perms.every((p) => AM_ONLY.includes(p));
-  // Rôle limité au suivi des comptes : son poste de travail est l'Espace équipe (pas le back-office complet).
-  if (amOnly && path === "/admin") redirect("/equipe");
-  if (headers().get("x-moboo-portal") === "equipe") {
+  // Back-office complet : réservé aux rôles qui ont la case « Accès au back-office complet »
+  // (Rôles et permissions). Avant la mise à jour de l'API, les rôles qui gèrent les rôles ET
+  // les réglages y gardent accès. Les autres travaillent dans l'Espace équipe (ep.moboo.ci) :
+  // toute adresse /admin/… y est renvoyée. Les droits restent vérifiés par l'API.
+  const fullAccess = perms.includes("backoffice") || (perms.includes("roles") && perms.includes("settings"));
+  const inTeam = headers().get("x-moboo-portal") === "equipe";
+  if (!fullAccess && !inTeam) redirect(path === "/admin" ? "/equipe" : "/equipe" + path.slice("/admin".length));
+  const amOnly = !fullAccess;
+  if (inTeam) {
     const isAm = can(perms, "accounts");
     const [amBadge, amSupport, mine] = await Promise.all([
       isAm ? getAm<{ urgent: number; pending: number }>("/badge").catch(() => null) : null,
