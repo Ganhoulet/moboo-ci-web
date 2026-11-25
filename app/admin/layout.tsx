@@ -16,7 +16,7 @@ import { getAm } from "./comptes/actions";
 import { AmPortalNav, type AmPortalItem } from "@/components/backoffice/am-portal-nav";
 
 /** Permissions d'un rôle « account manager » (ou de son responsable) : ce rôle travaille dans le portail /am. */
-const AM_ONLY = ["users.view", "accounts", "accounts.all", "disputes", "analytics"];
+const AM_ONLY = ["users.view", "accounts", "accounts.all", "disputes", "analytics", "am.bookings", "am.studio", "am.links", "am.assist", "am.reco", "am.prospect"];
 
 export const metadata: Metadata = { title: "Back-office", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -79,6 +79,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ...(can(perms, "accounts.all") ? [{ href: "/am/equipes", label: "Équipes et zones", emoji: "🗺️" }] : []),
     ];
     const ok = canAccess(perms, path);
+    // Onglets selon les fonctions du rôle (réglables dans Rôles et permissions).
+    const allowedTabs = tabs.filter((t) => canAccess(perms, t.href.replace(/^\/am/, "/admin/comptes")));
     return (
       <div className="min-h-[calc(100dvh-4rem)] bg-slate-100 pb-20 sm:pb-6">
         <div className="mx-auto max-w-5xl px-3 pt-4 sm:px-6">
@@ -92,7 +94,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               {!amOnly ? <Link href="/admin" className="rounded-full bg-ink px-3 py-1.5 text-white">Back-office complet</Link> : null}
             </div>
           </div>
-          <div className="mt-3"><AmPortalNav items={tabs} /></div>
+          <div className="mt-3"><AmPortalNav items={allowedTabs} /></div>
           <main className="mt-4 min-w-0">
             {ok ? children : (
               <div className="mx-auto max-w-lg rounded-lg bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">

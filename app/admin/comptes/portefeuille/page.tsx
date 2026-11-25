@@ -15,7 +15,7 @@ export default async function AmPortfolio({ searchParams }: { searchParams: { ki
   const [d, managers] = await Promise.all([getAm<any>(`/portfolio?${qs}`), getAm<{ id: string; name: string; accounts: number }[]>("/managers")]);
   if (!d) return <p className="rounded-lg bg-white p-6 text-sm text-red-600 ring-1 ring-slate-200">Portefeuille indisponible.</p>;
   const link = (p: Record<string, string>) => `?${new URLSearchParams({ kind, scope: d.scope, ...(searchParams.q ? { q: searchParams.q } : {}), ...(d.scope === "manager" && searchParams.manager ? { manager: searchParams.manager } : {}), ...p })}`;
-  const scopes: [string, string][] = [["mine", "Mon portefeuille"], ["unassigned", "Sans account manager"], ...(d.canSeeAll ? [["all", "Tous les comptes"] as [string, string]] : [])];
+  const scopes: [string, string][] = [["mine", "Mon portefeuille"], ...(d.canProspect !== false ? [["unassigned", "Sans account manager"] as [string, string]] : []), ...(d.canSeeAll ? [["all", "Tous les comptes"] as [string, string]] : [])];
   const pages = Math.max(1, Math.ceil(d.total / d.perPage));
   return (
     <div className="space-y-4">
