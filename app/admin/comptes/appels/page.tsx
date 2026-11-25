@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAm } from "../actions";
 import { HealthBadge, Health } from "@/components/backoffice/am-health";
+import { Icon } from "@/components/team-icons";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,7 @@ export default async function AmToday({ searchParams }: { searchParams: { scope?
                 <div className="mt-1 flex flex-wrap gap-1">{a.why.map((w) => <span key={w} className={"rounded-full px-2 py-0.5 text-[11px] font-semibold " + (/sans réponse|Bloqué|risque/i.test(w) ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-800")}>{w}</span>)}</div>
               </div>
               <div className="flex flex-wrap gap-2">
-                {a.phone ? <a href={`tel:${a.phone}`} className="rounded-full bg-brand-800 px-3 py-1.5 text-sm font-bold text-white">📞 Appeler</a> : null}
+                {a.phone ? <a href={`tel:${a.phone}`} className="rounded-full bg-brand-800 px-3 py-1.5 text-sm font-bold text-white"><Icon name="phone" size={15} className="mr-1 inline-block -mt-0.5" />Appeler</a> : null}
                 {a.whatsappUrl ? <a href={a.whatsappUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#25D366] px-3 py-1.5 text-sm font-bold text-white">WhatsApp</a> : null}
                 <Link href={`/admin/comptes/${a.kind}/${a.id}`} className="rounded-full px-3 py-1.5 text-sm font-semibold text-brand-800 ring-1 ring-slate-300">Noter l’appel</Link>
               </div>

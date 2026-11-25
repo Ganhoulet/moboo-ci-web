@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAm } from "../../actions";
 import { SupportReply } from "@/components/backoffice/am-support";
+import { Icon } from "@/components/team-icons";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export default async function AmSupportThread({ params }: { params: { tid: strin
             <div className={"max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm " + (m.staff ? "bg-brand-800 text-white" : "bg-white text-ink ring-1 ring-slate-200")}>
               {m.file ? (
                 /\.pdf($|\?)/i.test(m.file)
-                  ? <a href={m.file} target="_blank" rel="noreferrer" className="underline">📄 Document joint</a>
+                  ? <a href={m.file} target="_blank" rel="noreferrer" className="underline"><Icon name="file" size={15} className="mr-1 inline-block -mt-0.5" />Document joint</a>
                   // eslint-disable-next-line @next/next/no-img-element
                   : <a href={m.file} target="_blank" rel="noreferrer"><img src={m.file} alt="Capture du client" className="mb-1.5 max-h-80 rounded-lg" /></a>
               ) : null}

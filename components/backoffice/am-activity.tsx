@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { fcfa } from "@/lib/am";
+import { Icon } from "@/components/team-icons";
 
 /* Activité complète des hôtes (Moboo Resi, Moboo Event, Moboo Pro et Moboo.ci) : composants serveur. */
 
@@ -80,11 +81,11 @@ export function HostActivityPanel({ a }: { a: { period: string; current: Activit
   const u = c.unit === "nuit" ? "nuits" : "jours";
   return (
     <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200" data-host-activity>
-      <h2 className="font-display text-lg font-bold text-ink">📊 Activité du mois — applications et Moboo.ci</h2>
+      <h2 className="font-display text-lg font-bold text-ink"><Icon name="chart" size={15} className="mr-1 inline-block -mt-0.5" />Activité du mois — applications et Moboo.ci</h2>
       <p className="mb-3 text-xs text-muted">Tout ce que l’hôte enregistre dans Moboo Resi, Moboo Event ou Moboo Pro (réservations directes, WhatsApp, Airbnb…, encaissements, dépenses, baux, loyers) et ce que Moboo.ci lui apporte.</p>
       {a.boost.reasons.length ? (
         <div className={"mb-4 rounded-lg p-3 text-sm " + (a.boost.level === "fort" ? "bg-orange-50 ring-1 ring-orange-200" : "bg-amber-50 ring-1 ring-amber-200")} data-why-boost={a.boost.level}>
-          <p className="font-bold text-ink">🚀 Pourquoi booster {a.boost.level === "fort" ? "maintenant" : ""}</p>
+          <p className="font-bold text-ink"><Icon name="trending" size={15} className="mr-1 inline-block -mt-0.5" />Pourquoi booster {a.boost.level === "fort" ? "maintenant" : ""}</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-5">{a.boost.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
         </div>
       ) : null}
@@ -129,7 +130,7 @@ export function PortfolioComparison({ comparison, boost }: { comparison: { curre
         {c.pro ? <div className="mt-4"><ProBlock pro={c.pro} /></div> : null}
       </section>
       <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200" data-boost-list>
-        <h2 className="font-display text-lg font-bold text-ink">🚀 Hôtes à booster</h2>
+        <h2 className="font-display text-lg font-bold text-ink"><Icon name="trending" size={15} className="mr-1 inline-block -mt-0.5" />Hôtes à booster</h2>
         <p className="mb-3 text-xs text-muted">Calculé sur toute leur activité (apps + Moboo.ci) : dates libres, faible part de Moboo.ci, baisse du chiffre d’affaires, biens Moboo Pro non loués.</p>
         <ul className="divide-y divide-slate-100 text-sm">
           {boost.map((b) => (

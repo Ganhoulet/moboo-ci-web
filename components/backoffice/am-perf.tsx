@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveGoalsAction } from "@/app/admin/comptes/actions";
+import { Icon } from "@/components/team-icons";
 
 export interface Metric { key: string; label: string; unit?: string; lower?: boolean; goal: boolean }
 const fmt = (v: number | null | undefined, unit?: string) => v == null ? "—" : unit === "F" ? `${new Intl.NumberFormat("fr-FR").format(v)} F` : `${new Intl.NumberFormat("fr-FR").format(v)}${unit === "min" ? " min" : unit === "%" ? " %" : ""}`;
@@ -26,7 +27,7 @@ export function GoalsEditor({ managerId, label, period, metrics, initial }: { ma
   const [v, setV] = useState<Record<string, string>>(Object.fromEntries(metrics.filter((m) => m.goal).map((m) => [m.key, initial[m.key] != null ? String(initial[m.key]) : ""])));
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
-  if (!open) return <button type="button" onClick={() => setOpen(true)} className="rounded-md px-2.5 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300">🎯 {label}</button>;
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className="rounded-md px-2.5 py-1 text-xs font-semibold text-brand-800 ring-1 ring-slate-300"><Icon name="target" size={15} className="mr-1 inline-block -mt-0.5" />{label}</button>;
   return (
     <div className="mt-2 rounded-lg bg-slate-50 p-3 text-left" data-goals={managerId}>
       <div className="grid gap-2 sm:grid-cols-3">

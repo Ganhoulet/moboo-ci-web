@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { fcfa, since } from "@/lib/am";
+import { Icon } from "@/components/team-icons";
 
 export interface TrackedStep { key: string; label: string; at: string | null; done: boolean; note?: string | null }
 export interface TrackedStay {
@@ -54,7 +55,7 @@ export function TrackedStayCard({ s }: { s: TrackedStay }) {
           {s.dispute ? <Link href={`/admin/litiges/${s.dispute.id}`} className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-900">Litige {s.dispute.number}</Link> : null}
           {s.distance ? (
             <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-900" title="Distance à vol d’oiseau, partagée par le client depuis sa page d’arrivée">
-              🧭 Client à {km(s.distance.km)} · il y a {since(s.distance.minutesAgo)}
+              <Icon name="compass" size={15} className="mr-1 inline-block -mt-0.5" />Client à {km(s.distance.km)} · il y a {since(s.distance.minutesAgo)}
             </span>
           ) : null}
         </div>
@@ -72,9 +73,9 @@ export function TrackedStayCard({ s }: { s: TrackedStay }) {
       <Progress steps={s.steps} />
 
       <div className="flex flex-wrap gap-2 text-xs">
-        {s.guest.phone ? <a href={`tel:${s.guest.phone}`} className="rounded-full bg-brand-800 px-3 py-1 font-bold text-white">📞 Client {s.guest.name ? `(${s.guest.name})` : ""}</a> : null}
+        {s.guest.phone ? <a href={`tel:${s.guest.phone}`} className="rounded-full bg-brand-800 px-3 py-1 font-bold text-white"><Icon name="phone" size={15} className="mr-1 inline-block -mt-0.5" />Client {s.guest.name ? `(${s.guest.name})` : ""}</a> : null}
         {s.guest.phone ? <a href={`https://wa.me/${digits(s.guest.phone)}`} target="_blank" rel="noreferrer" className="rounded-full px-3 py-1 font-semibold text-emerald-700 ring-1 ring-slate-300">WhatsApp client</a> : null}
-        {s.host.phone ? <a href={`tel:${s.host.phone}`} className="rounded-full px-3 py-1 font-semibold text-brand-800 ring-1 ring-slate-300">📞 Hôte {s.host.name ? `(${s.host.name})` : ""}</a> : null}
+        {s.host.phone ? <a href={`tel:${s.host.phone}`} className="rounded-full px-3 py-1 font-semibold text-brand-800 ring-1 ring-slate-300"><Icon name="phone" size={15} className="mr-1 inline-block -mt-0.5" />Hôte {s.host.name ? `(${s.host.name})` : ""}</a> : null}
       </div>
     </article>
   );

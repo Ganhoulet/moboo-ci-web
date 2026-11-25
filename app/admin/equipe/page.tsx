@@ -4,6 +4,7 @@ import { displayName } from "@/lib/session";
 import type { SiteAccount } from "@/lib/api";
 import { can } from "@/lib/admin-perms";
 import { teamGroupsFor } from "@/lib/team-space";
+import { Icon, type TeamIcon } from "@/components/team-icons";
 import { getAm } from "../comptes/actions";
 import { listInvoices } from "../immobilier/actions";
 import { listCampaigns } from "../marketing/actions";
@@ -26,7 +27,7 @@ const safe = <T,>(p: Promise<T>) => p.catch(() => null);
 
 /** Une tuile du tableau de bord : un chiffre, ce qu'il veut dire, où aller. « todo » : à traiter (orange si > 0). */
 interface Tile { label: string; value: string; href: string; todo?: number; hint?: string; change?: number | null }
-interface Block { id: string; title: string; emoji: string; tiles: Tile[] }
+interface Block { id: string; title: string; icon: TeamIcon; tiles: Tile[] }
 
 function TileCard({ t }: { t: Tile }) {
   const hot = (t.todo ?? 0) > 0;
@@ -68,7 +69,7 @@ export default async function TeamHome() {
   const blocks: Block[] = [];
   if (am) {
     const portfolio = Object.values((am.portfolio ?? {}) as Record<string, number>).reduce((s, v) => s + (Number(v) || 0), 0);
-    blocks.push({ id: "comptes", title: "Mes comptes", emoji: "💼", tiles: [
+    blocks.push({ id: "comptes", title: "Mes comptes", icon: "briefcase", tiles: [
       ...(am.canBookings !== false ? [
         { label: "À appeler maintenant", value: n(am.urgent?.length), todo: am.urgent?.length ?? 0, href: "/equipe/comptes", hint: "Hôtes sans réponse" },
         { label: "Réservations en attente", value: n(am.pendingCount), todo: am.pendingCount ?? 0, href: "/equipe/comptes/reservations" },
@@ -80,7 +81,7 @@ export default async function TeamHome() {
   }
   if (invoices) {
     const c = invoices.counts ?? {};
-    blocks.push({ id: "compta", title: "Comptabilité", emoji: "🧾", tiles: [
+    blocks.push({ id: "compta", title: "Comptabilité", icon: "receipt", tiles: [
       { label: "Factures en attente", value: n(c.pending), todo: c.pending ?? 0, href: "/equipe/immobilier/factures?status=pending" },
       { label: "Factures payées", value: n(c.paid), href: "/equipe/immobilier/factures?status=paid" },
       { label: "Encaissé", value: fcfa(invoices.revenue), href: "/equipe/immobilier/factures", hint: "Total des factures payées" },
@@ -90,7 +91,7 @@ export default async function TeamHome() {
     const live = (campaigns ?? []).filter((c) => c.active);
     const views = live.reduce((s, c) => s + (c.views ?? 0), 0);
     const clicks = live.reduce((s, c) => s + (c.clicks ?? 0), 0);
-    blocks.push({ id: "marketing", title: "Marketing", emoji: "📣", tiles: [
+    blocks.push({ id: "marketing", title: "Marketing", icon: "megaphone", tiles: [
       { label: "Campagnes en cours", value: n(live.length), href: "/equipe/marketing" },
       { label: "Vues des campagnes", value: n(views), href: "/equipe/marketing", hint: views ? `${((clicks / views) * 100).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} % de clics` : undefined },
       ...(leads ? [{ label: "Demandes de rappel", value: n(leads.counts?.new), todo: leads.counts?.new ?? 0, href: "/equipe/professionnels/demandes?status=new", hint: "Nouvelles, à rappeler" }] : []),
@@ -98,7 +99,7 @@ export default async function TeamHome() {
   }
   if (stats) {
     const k = stats.kpis;
-    blocks.push({ id: "donnees", title: "Données (7 derniers jours)", emoji: "📊", tiles: [
+    blocks.push({ id: "donnees", title: "Données (7 derniers jours)", icon: "chart", tiles: [
       { label: "Nouveaux comptes", value: n(k.accounts.value), change: k.accounts.change, href: "/equipe/statistiques?range=7" },
       { label: "Vues des annonces", value: n(k.views.value), change: k.views.change, href: "/equipe/statistiques?range=7" },
       { label: "Contacts", value: n(k.contacts.value), change: k.contacts.change, href: "/equipe/statistiques?range=7", hint: `${n(k.contacts.calls)} appels · ${n(k.contacts.whatsapp)} WhatsApp` },
@@ -106,14 +107,14 @@ export default async function TeamHome() {
     ] });
   }
   if (mod) {
-    blocks.push({ id: "moderation", title: "Modération", emoji: "🛡️", tiles: [
+    blocks.push({ id: "moderation", title: "Modération", icon: "shield", tiles: [
       { label: "Annonces à valider", value: n(mod.pending), todo: mod.pending, href: "/equipe/moderation" },
       { label: "Modifications à revoir", value: n(mod.changes), todo: mod.changes, href: "/equipe/moderation" },
       { label: "Signalements", value: n(mod.reports), todo: mod.reports, href: "/equipe/moderation?tab=reports" },
     ] });
   }
   if (disputes || help) {
-    blocks.push({ id: "support", title: "Support client", emoji: "🎧", tiles: [
+    blocks.push({ id: "support", title: "Support client", icon: "headset", tiles: [
       ...(help ? [{ label: "Demandes d’aide à lire", value: n(help.unread), todo: help.unread, href: "/equipe/services/support" }] : []),
       ...(disputes ? [
         { label: "Litiges ouverts", value: n(disputes.open), todo: disputes.open, href: "/equipe/litiges" },
@@ -126,7 +127,7 @@ export default async function TeamHome() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-extrabold text-ink">{hello()}{first ? ` ${first}` : ""} 👋</h1>
+        <h1 className="font-display text-2xl font-extrabold text-ink">{hello()}{first ? ` ${first}` : ""}</h1>
         <p className="text-sm text-muted">
           {account?.adminRole ? `${account.adminRole.name} · ` : ""}
           {blocks.length ? (todo ? `${n(todo)} élément(s) vous attendent aujourd’hui.` : "Rien d’urgent pour l’instant : beau travail !") : "Votre espace de travail Moboo."}
@@ -135,7 +136,7 @@ export default async function TeamHome() {
 
       {blocks.map((b) => (
         <section key={b.id}>
-          <h2 className="mb-2 flex items-center gap-2 font-display text-base font-bold text-ink"><span aria-hidden>{b.emoji}</span>{b.title}</h2>
+          <h2 className="mb-2 flex items-center gap-2 font-display text-base font-bold text-ink"><span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-50 text-brand-800"><Icon name={b.icon} size={16} /></span>{b.title}</h2>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">{b.tiles.map((t) => <TileCard key={t.label} t={t} />)}</div>
         </section>
       ))}
@@ -147,7 +148,7 @@ export default async function TeamHome() {
             {groups.map((g) => (
               <Link key={g.id} href={g.tabs[0].href} className="rounded-xl bg-white p-4 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:ring-brand-400">
                 <span className="flex items-center gap-2">
-                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-50 text-lg" aria-hidden>{g.emoji}</span>
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-50 text-brand-800"><Icon name={g.icon} /></span>
                   <span className="font-display font-bold text-ink">{g.label}</span>
                 </span>
                 <span className="mt-1.5 block text-sm text-muted">{g.desc}</span>
@@ -160,8 +161,8 @@ export default async function TeamHome() {
       </section>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Link href="/mon-espace/profil" className="rounded-xl bg-white p-4 text-sm ring-1 ring-slate-200 hover:ring-brand-400"><b className="text-ink">👤 Mon profil</b><br /><span className="text-muted">Photo, coordonnées et présentation visibles par les clients.</span></Link>
-        <Link href="/admin/securite" className="rounded-xl bg-white p-4 text-sm ring-1 ring-slate-200 hover:ring-brand-400"><b className="text-ink">🔐 Ma sécurité</b><br /><span className="text-muted">Double authentification de votre accès.</span></Link>
+        <Link href="/mon-espace/profil" className="rounded-xl bg-white p-4 text-sm ring-1 ring-slate-200 hover:ring-brand-400"><b className="flex items-center gap-2 text-ink"><Icon name="user" size={16} />Mon profil</b><br /><span className="text-muted">Photo, coordonnées et présentation visibles par les clients.</span></Link>
+        <Link href="/admin/securite" className="rounded-xl bg-white p-4 text-sm ring-1 ring-slate-200 hover:ring-brand-400"><b className="flex items-center gap-2 text-ink"><Icon name="lock" size={16} />Ma sécurité</b><br /><span className="text-muted">Double authentification de votre accès.</span></Link>
       </div>
     </div>
   );

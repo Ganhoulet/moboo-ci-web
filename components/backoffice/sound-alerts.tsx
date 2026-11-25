@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSignals, type SignalType, type Signals } from "@/app/admin/signals-actions";
+import { Icon } from "@/components/team-icons";
 
 /** Chaque type de demande a son propre son (notes en Hz, durée en s) et son message. */
 const TYPES: { key: SignalType; label: string; toast: string; notes: [number, number][]; wave: OscillatorType }[] = [
@@ -96,9 +97,9 @@ export function SoundAlerts({ compact = false }: { compact?: boolean }) {
       <div className="relative">
         <span className="inline-flex overflow-hidden rounded-full ring-1 ring-slate-200">
           <button type="button" onClick={toggle} className={"px-3 py-1.5 text-xs font-semibold " + (prefs.on ? "bg-emerald-600 text-white" : "bg-white text-ink")} title="Alertes sonores">
-            {prefs.on ? "🔔 Sons activés" : compact ? "🔕 Sons" : "🔕 Activer les sons"}
+            <span className="inline-flex items-center gap-1.5"><Icon name={prefs.on ? "bell" : "bellOff"} size={14} />{prefs.on ? "Sons activés" : compact ? "Sons" : "Activer les sons"}</span>
           </button>
-          <button type="button" onClick={() => setOpen(!open)} className="border-l border-slate-200 bg-white px-2 text-xs text-ink" aria-label="Régler les sons">⚙︎</button>
+          <button type="button" onClick={() => setOpen(!open)} className="border-l border-slate-200 bg-white px-2 text-xs text-ink" aria-label="Régler les sons"><Icon name="settings" size={14} /></button>
         </span>
         {open ? (
           <div className={"absolute z-50 mt-2 w-80 " + (compact ? "left-0" : "right-0") + " rounded-xl bg-white p-3 text-sm shadow-xl ring-1 ring-slate-200"}>
@@ -109,7 +110,7 @@ export function SoundAlerts({ compact = false }: { compact?: boolean }) {
                 <li key={t.key} className="flex items-center gap-2">
                   <input type="checkbox" className="h-4 w-4" checked={!prefs.off.includes(t.key)} onChange={(e) => save({ ...prefs, off: e.target.checked ? prefs.off.filter((x) => x !== t.key) : [...prefs.off, t.key] })} aria-label={t.label} />
                   <span className="flex-1 text-xs">{t.label}</span>
-                  <button type="button" onClick={() => play(t.key)} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-ink">▶︎ Écouter</button>
+                  <button type="button" onClick={() => play(t.key)} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-ink">Écouter</button>
                 </li>
               ))}
             </ul>
@@ -120,7 +121,7 @@ export function SoundAlerts({ compact = false }: { compact?: boolean }) {
         <div className="fixed bottom-20 right-3 z-50 space-y-2 sm:bottom-4" role="status" aria-live="polite">
           {toasts.map((t) => (
             <div key={t.id} className="flex max-w-xs items-start gap-2 rounded-xl bg-ink px-3.5 py-2.5 text-sm text-white shadow-xl">
-              <span aria-hidden>🔔</span><span>{t.text}</span>
+              <Icon name="bell" size={16} className="mt-0.5 shrink-0 text-amber-300" /><span>{t.text}</span>
               <button type="button" onClick={() => setToasts((x) => x.filter((y) => y.id !== t.id))} className="ml-1 text-white/60" aria-label="Fermer">×</button>
             </div>
           ))}

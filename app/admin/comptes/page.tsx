@@ -3,6 +3,7 @@ import { AutoRefresh, PendingBookingCard, type PendingBooking } from "@/componen
 import { getAm } from "./actions";
 import { PhoneChangeQueue } from "@/components/backoffice/am-access";
 import { getSession } from "@/lib/session";
+import { Icon } from "@/components/team-icons";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export default async function AmDashboard() {
       <PhoneChangeQueue items={phoneChanges ?? []} meId={getSession()?.id ?? ""} />
       {d.canBookings !== false ? <section className="space-y-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-display text-lg font-bold text-ink">📞 À appeler maintenant ({d.urgent.length})</h2>
+          <h2 className="font-display text-lg font-bold text-ink"><Icon name="phone" size={15} className="mr-1 inline-block -mt-0.5" />À appeler maintenant ({d.urgent.length})</h2>
           <Link href="/admin/comptes/reservations" className="text-sm font-semibold text-brand-800 hover:underline">Toutes les demandes en attente ({d.pendingCount}) →</Link>
         </div>
         {d.urgent.length ? d.urgent.map((b: PendingBooking) => <PendingBookingCard key={b.key} b={b} />) : (
@@ -40,7 +41,7 @@ export default async function AmDashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
           <div className="flex items-baseline justify-between">
-            <h2 className="font-display text-lg font-bold text-ink">⏰ Rappels du jour ({d.tasksDue.length})</h2>
+            <h2 className="font-display text-lg font-bold text-ink"><Icon name="bell" size={15} className="mr-1 inline-block -mt-0.5" />Rappels du jour ({d.tasksDue.length})</h2>
             <Link href="/admin/comptes/taches" className="text-sm font-semibold text-brand-800 hover:underline">Toutes mes tâches{d.tasksLater ? ` (+${d.tasksLater})` : ""} →</Link>
           </div>
           <ul className="mt-2 divide-y divide-slate-100 text-sm">
@@ -55,7 +56,7 @@ export default async function AmDashboard() {
           </ul>
         </section>
         <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
-          <h2 className="font-display text-lg font-bold text-ink">💼 Mon portefeuille</h2>
+          <h2 className="font-display text-lg font-bold text-ink"><Icon name="briefcase" size={15} className="mr-1 inline-block -mt-0.5" />Mon portefeuille</h2>
           <ul className="mt-2 space-y-2 text-sm">
             {kinds.map((k) => [k, KIND_LABEL[k]] as const).map(([k, l]) => (
               <li key={k} className="flex items-center justify-between">
@@ -71,7 +72,7 @@ export default async function AmDashboard() {
 
       {d.canSeeAll ? (
         <section className="rounded-lg bg-white p-4 ring-1 ring-slate-200">
-          <h2 className="font-display text-lg font-bold text-ink">👥 Équipe : contacts des 7 derniers jours</h2>
+          <h2 className="font-display text-lg font-bold text-ink"><Icon name="users" size={15} className="mr-1 inline-block -mt-0.5" />Équipe : contacts des 7 derniers jours</h2>
           <ul className="mt-2 divide-y divide-slate-100 text-sm">
             {d.team.map((t: any) => <li key={t.managerId} className="flex justify-between py-1.5"><Link href={`/admin/comptes/portefeuille?kind=org&scope=manager&manager=${t.managerId}`} className="hover:underline">{t.name}</Link><b>{t.contacts7d}</b></li>)}
             {!d.team.length ? <li className="py-2 text-muted">Aucun contact enregistré cette semaine.</li> : null}

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { decidePhoneAction, openAssistAction, directAssistAction, phoneChangeAction, recoveryAction, requestAssistAction } from "@/app/admin/comptes/actions";
+import { Icon } from "@/components/team-icons";
 
 const input = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand-600 focus:outline-none";
 const CH: Record<string, string> = { whatsapp: "WhatsApp", sms: "SMS", email: "e-mail", none: "aucun canal" };
@@ -19,7 +20,7 @@ export function AccessPanel({ accountId, name, history, canDirect = false }: { a
   const [direct, setDirect] = useState({ open: false, reason: "" });
   return (
     <section className="space-y-3 rounded-lg bg-white p-4 ring-1 ring-slate-200" data-access-panel>
-      <h2 className="font-display text-base font-bold text-ink">🛟 Aider le client dans son compte</h2>
+      <h2 className="font-display text-base font-bold text-ink"><Icon name="help" size={15} className="mr-1 inline-block -mt-0.5" />Aider le client dans son compte</h2>
 
       {canDirect ? (
         <div className="rounded-lg bg-amber-50 p-3 ring-1 ring-amber-200">
@@ -110,7 +111,7 @@ export function PhoneChangeQueue({ items, meId }: { items: any[]; meId: string }
   if (!items.length) return null;
   return (
     <section className="rounded-lg bg-amber-50 p-4 ring-1 ring-amber-200">
-      <h2 className="font-display text-lg font-bold text-amber-900">🔐 Changements de numéro à valider ({items.length})</h2>
+      <h2 className="font-display text-lg font-bold text-amber-900"><Icon name="lock" size={15} className="mr-1 inline-block -mt-0.5" />Changements de numéro à valider ({items.length})</h2>
       <ul className="mt-2 space-y-2 text-sm">
         {items.map((r) => (
           <li key={r.id} className="rounded-md bg-white p-3 ring-1 ring-amber-100" data-phone-change={r.id}>

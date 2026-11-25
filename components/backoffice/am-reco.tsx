@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { dismissRecoAction, sendRecoAction } from "@/app/admin/comptes/actions";
+import { Icon } from "@/components/team-icons";
 
 export interface RecoItem {
   code: string; itemId: string; item: string; category: string; impact: "fort" | "moyen" | "faible";
@@ -77,7 +78,7 @@ export function RecoList({ kind, id, data }: { kind: string; id: string; data: {
       <div className="flex flex-wrap items-center gap-4">
         <ScoreRing score={data.score} />
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-lg font-bold text-ink">💡 Recommandations</h2>
+          <h2 className="font-display text-lg font-bold text-ink"><Icon name="lightbulb" size={15} className="mr-1 inline-block -mt-0.5" />Recommandations</h2>
           <p className="text-sm text-muted">{active.length ? `${active.length} point(s) à améliorer, ${active.filter((r) => r.impact === "fort").length} à fort impact.` : "Rien à améliorer pour l’instant."} {data.fixed ? `${data.fixed} déjà corrigée(s) après envoi.` : ""}</p>
         </div>
         {data.items.length !== active.length ? <button type="button" onClick={() => setShowAll(!showAll)} className="text-xs font-semibold text-brand-800">{showAll ? "Masquer les ignorées" : "Voir les ignorées"}</button> : null}

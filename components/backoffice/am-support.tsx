@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createSupportLinkAction, supportReplyAction, supportStatusAction } from "@/app/admin/comptes/actions";
+import { Icon } from "@/components/team-icons";
 
 const input = "w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm";
 const digits = (s?: string | null) => String(s ?? "").replace(/\D/g, "");
@@ -15,7 +16,7 @@ export function SupportLinkButton({ accountId }: { accountId: string }) {
   const [err, setErr] = useState<string | null>(null);
   return (
     <section className="space-y-2 rounded-lg bg-white p-4 ring-1 ring-slate-200" data-support-link>
-      <h2 className="font-display text-base font-bold text-ink">💬 Lien support</h2>
+      <h2 className="font-display text-base font-bold text-ink"><Icon name="message" size={15} className="mr-1 inline-block -mt-0.5" />Lien support</h2>
       <p className="text-xs text-muted">Le client ouvre le lien sur son téléphone, décrit son problème et envoie une capture d’écran, sans se connecter. Vous répondez depuis l’onglet Support.</p>
       {!res ? (
         <>
