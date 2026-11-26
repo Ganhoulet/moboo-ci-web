@@ -1,3 +1,4 @@
+import agent2027 from "./data/livre-blanc-agent-2027.json";
 import guideMeubles from "./data/guide-residences-meublees.json";
 import livreBlanc from "./data/livre-blanc-page-pro.json";
 import proposition2027 from "./data/proposition-commerciale-2027.json";
@@ -96,6 +97,7 @@ function magazine(): DocData {
 }
 
 export const TEMPLATES: DocTemplate[] = [
+  { key: "livre-blanc-agent-2027", name: "Livre blanc agent 2027", description: "Le livre blanc « L’agent immobilier en 2027 (Côte d’Ivoire) » : marché et prix par commune, attentes des clients, métier et éthique, digital, méthode pas à pas avec Moboo.ci et Moboo Pro, captures réelles. 26 pages A4, modifiable bloc par bloc.", kind: "livre-blanc", format: "A4", title: "L’agent immobilier en 2027 (Côte d’Ivoire)", editionDate: "novembre 2026", build: () => JSON.parse(JSON.stringify(agent2027)) as DocData },
   { key: "proposition-commerciale-2027", name: "Proposition commerciale 2027", description: "La proposition commerciale aux agences : Moboo.ci + Moboo Pro, trois offres (300 000, 500 000 et 1 000 000 FCFA), captures réelles, rentabilité et bon de commande. 24 pages A4, modifiable bloc par bloc (prix, offres, textes, images).", kind: "autre", format: "A4", title: "Proposition commerciale Moboo 2027", editionDate: "novembre 2026", build: () => JSON.parse(JSON.stringify(proposition2027)) as DocData },
   { key: "guide-residences-meublees", name: "Guide résidences meublées", description: "Le guide « Résidences meublées en Côte d’Ivoire » : prix réels par commune, rentabilité, publication et gestion avec Moboo Resi. 20 pages A4, modifiable bloc par bloc.", kind: "livre-blanc", format: "A4", title: "Résidences meublées en Côte d’Ivoire", editionDate: "novembre 2026", build: () => JSON.parse(JSON.stringify(guideMeubles)) as DocData },
   { key: "magazine-quartier", name: "Magazine de quartier", description: "Chiffres, prix par type de bien, bons plans, annonces, agents et agences : remplis avec les données réelles de la zone choisie.", kind: "magazine", format: "A4", title: "L’immobilier dans votre quartier", needsZone: true, build: magazine },
