@@ -31,7 +31,7 @@ function Actions({ settings, tone, mobile }: { settings: SiteSettings; tone: Ton
       <FavoritesNavButton tone={tone} />
       {account ? <MessagesBell tone={tone} /> : null}
       {account?.isAdmin ? (
-        <Link href="/admin" title="Back-office" className={"hidden items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-bold transition lg:inline-flex " + ghost}>
+        <Link href="/admin?complet=1" title="Back-office" className={"hidden items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-bold transition lg:inline-flex " + ghost}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></svg>
           Back-office
         </Link>
