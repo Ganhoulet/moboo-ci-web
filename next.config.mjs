@@ -28,6 +28,11 @@ const nextConfig = {
   async rewrites() {
     const api = (process.env.NEXT_PUBLIC_API_URL || 'https://resi.moboo.ci/api/v1').replace(/\/+$/, '');
     const media = (process.env.WP_MEDIA_BASE_URL || '').replace(/\/+$/, '');
+    // WordPress gardé après la bascule (ex. https://blog.moboo.ci, même variable que l'API) :
+    // les pages publiques de Moboo Pro pas encore refaites ici y sont transmises, pour que les
+    // liens déjà envoyés (SMS, WhatsApp, QR imprimés) restent valables. Retirer chaque ligne
+    // quand la page correspondante existe sur ce site.
+    const wp = (process.env.MOBOO_WP_URL || '').replace(/\/+$/, '');
     return {
       beforeFiles: [
         { source: '/wp-json', destination: `${api}/wp-json` },
@@ -37,6 +42,18 @@ const nextConfig = {
         { source: '/api/v1/wp-json', destination: `${api}/wp-json` },
         { source: '/api/v1/wp-json/:path*', destination: `${api}/wp-json/:path*` },
         ...(media ? [{ source: '/wp-content/uploads/:path*', destination: `${media}/:path*` }] : []),
+        ...(wp ? [
+          // Invitations locataire / propriétaire, rattachement, dossier locataire, départ.
+          ...['rejoindre', 'proprietaire', 'rattachement', 'dossier', 'depart'].flatMap((slug) => [
+            { source: `/${slug}`, destination: `${wp}/${slug}/` },
+            { source: `/${slug}/:path*`, destination: `${wp}/${slug}/:path*` },
+          ]),
+          // Lien partageable d'annonce (/app/?p=ID) ; /app/co/… est une page de ce site.
+          { source: '/app', has: [{ type: 'query', key: 'p' }], destination: `${wp}/app/` },
+          // QR « document authentique » et achat de packs d'états des lieux (boutique WordPress).
+          { source: '/', has: [{ type: 'query', key: 'moboo_verify_doc' }], destination: `${wp}/` },
+          { source: '/', has: [{ type: 'query', key: 'add-to-cart-sku' }], destination: `${wp}/` },
+        ] : []),
       ],
     };
   },
