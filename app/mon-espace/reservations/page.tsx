@@ -36,9 +36,9 @@ export default async function MyBookings() {
           {b.nights ? ` · ${b.nights} nuit${b.nights > 1 ? "s" : ""}` : ""} · {b.guests} {b.kind === "stay" ? "voyageur" : "invité"}{b.guests > 1 ? "s" : ""}
           {b.amount ? ` · ${fcfa(b.amount)}` : ""}
         </span>
-        {b.payBefore ? <span className="block text-xs font-semibold text-amber-700">Acompte à payer avant le {new Date(b.payBefore).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Abidjan" })}</span> : null}
+        {b.payBefore ? <span className="block text-xs font-semibold text-amber-700">{b.payLabel === "Payer le solde" ? "Solde" : "Acompte"} à payer avant le {new Date(b.payBefore).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Abidjan" })}</span> : null}
       </span>
-      {b.payUrl ? <span className="self-center rounded-full bg-brand-800 px-3 py-1.5 text-xs font-bold text-white">Payer l’acompte</span> : null}
+      {b.payUrl ? <span className="self-center rounded-full bg-brand-800 px-3 py-1.5 text-xs font-bold text-white">{b.payLabel ?? "Payer l’acompte"}</span> : null}
     </Link>
   );
 

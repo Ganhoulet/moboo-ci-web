@@ -31,7 +31,10 @@ export interface MyBooking {
   /** Code d'arrivée jamais saisi : le client dit s'il est arrivé (à partir du jour d'arrivée). */
   arrival?: { canAnswer: boolean; answer: string | null } | null;
   /** Réservation payée : annulation avant le jour d'arrivée, remboursée ou non. */
-  cancelPolicy?: { refund: "full" | "none"; freeUntil: string | null } | null;
+  /** Espaces : barème 100 / 50 / 0 % (percent, amount, halfUntil). */
+  cancelPolicy?: { refund: "full" | "partial" | "none"; freeUntil: string | null; percent?: number; amount?: number; halfUntil?: string; halfPercent?: number } | null;
+  /** Paiement en cours : « Payer l’acompte » ou « Payer le solde » (espaces). */
+  payLabel?: string | null;
 }
 export interface MyBookingDetail extends MyBooking {
   windowDays: number; categories: { key: string; label: string }[]; outcomes: Record<string, string>;
