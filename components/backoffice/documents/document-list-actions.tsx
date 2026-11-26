@@ -5,13 +5,13 @@ import { useState, useTransition } from "react";
 import { deleteDocumentAction, duplicateDocumentAction } from "@/app/admin/documents/actions";
 
 /** Nouvelle édition, copie et suppression, depuis la liste des documents. */
-export function DocumentListActions({ id, title, edition }: { id: string; title: string; edition: number }) {
+export function DocumentListActions({ id, title, edition, base = "/admin/documents" }: { id: string; title: string; edition: number; base?: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
   const dup = (mode: "edition" | "copy") => start(async () => {
     const r = await duplicateDocumentAction(id, mode);
-    if (r.ok && r.id) router.push(`/admin/documents/${r.id}`); else setError(r.error ?? "Erreur.");
+    if (r.ok && r.id) router.push(`${base}/${r.id}`); else setError(r.error ?? "Erreur.");
   });
   const a = "font-semibold text-brand-700 hover:underline disabled:opacity-40";
   return (

@@ -37,6 +37,7 @@ const RULES: [string, Permission[] | "any" | "super"][] = [
   ["/admin/moboo-pro", ["app"]],
   ["/admin/marketing", ["marketing"]],
   ["/admin/documents", ["marketing"]],
+  ["/admin/fiches", ["marketing"]],
   ["/admin/affiches-qr/modele", ["settings"]],
   ["/admin/affiches-qr", ["marketing"]],
   ["/admin/centre-marketing/reglages", ["settings"]],
